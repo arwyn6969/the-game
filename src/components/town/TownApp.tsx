@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Download, Pause, Pin, Play, SkipForward, Upload, X } from "lucide-react";
 import type { Agent, AgentId, Face, ThinkJob, Town } from "@/game/types";
-import { applyPlayerAction, applyResult, playerActions, spreadView } from "@/game/effects";
+import {
+  applyPlayerAction,
+  applyResult,
+  BABA_LOAF,
+  playerActions,
+  spreadView,
+} from "@/game/effects";
 import { agentById } from "@/game/memory";
 import { mindAvailability, thinkTown } from "@/lib/mind.functions";
 import { offlineResult, prepareRetrievals } from "@/game/offline";
@@ -1573,7 +1579,12 @@ function Mind({
             {(player.projects ?? [])
               .filter((project) => project.status === "open")
               .map((project) => (
-                <li key={project.id}>Commitment: {project.text}</li>
+                <li key={project.id}>
+                  {project.kind === "other" && project.text === BABA_LOAF
+                    ? "Carrying"
+                    : "Commitment"}
+                  : {project.text}
+                </li>
               ))}
             {favors.map((favor) => (
               <li key={favor.id}>

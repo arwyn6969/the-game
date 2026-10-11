@@ -13,7 +13,7 @@ const server = await createServer({
 });
 const { createTown } = await server.ssrLoadModule("/src/game/town.ts");
 const { advanceTown, stepMinute } = await server.ssrLoadModule("/src/game/sim.ts");
-const { applyResult, playerActions, applyPlayerAction } =
+const { applyResult, playerActions, applyPlayerAction, BABA_LOAF } =
   await server.ssrLoadModule("/src/game/effects.ts");
 const { offlineResult, prepareRetrievals } = await server.ssrLoadModule("/src/game/offline.ts");
 const save = await server.ssrLoadModule("/src/game/save.ts");
@@ -906,6 +906,150 @@ test("an empty till explains the unpaid shift instead of paying it", () => {
   minutes(town, 180);
   assert.equal(player.money, before);
   assert.equal(player.memories.filter((m) => m.text.includes("cannot pay the full")).length, 1);
+});
+
+test("taking bread gives a loaf, and eating it does not settle the tab", () => {
+  const town = createTown("Ada");
+  const before = balances(town);
+  say(town, "Do you sell bread?");
+  assert.equal(town.favors.length, 0);
+  say(town, "I'll take the bread on a tab.");
+  assert.equal(town.favors.length, 0, "free text cannot accept the loaf or its debt");
+  assert.equal(choose(town, "baba", "bread").ok, true);
+  const player = agent(town, "player");
+  assert.equal(town.favors[0].status, "owed");
+  assert.equal(town.favors[0].amount, 2);
+  assert.ok(player.projects.some((p) => p.status === "open" && p.text.includes("loaf")));
+  assert.deepEqual(balances(town), before);
+  const held = save.parseTownFile(save.exportTown(town));
+  assert.equal(agent(held, "player").projects.find((p) => p.text === BABA_LOAF).status, "open");
+  assert.equal(held.favors[0].status, "owed");
+  say(town, "I'll eat the bread.");
+  assert.ok(
+    player.projects.some((p) => p.status === "open" && p.text === BABA_LOAF),
+    "speech cannot consume it",
+  );
+  const eatQuote = actionQuote(town, "baba", "eat-loaf");
+  const eaten = applyPlayerAction(town, "baba", eatQuote.id);
+  assert.equal(eaten.ok, true);
+  assert.match(eaten.reply, /eat the loaf/i);
+  assert.ok(player.projects.some((p) => p.status === "done" && p.text.includes("loaf")));
+  assert.equal(town.favors[0].status, "owed");
+  assert.deepEqual(balances(town), before);
+  const finished = commitments(town);
+  assert.equal(applyPlayerAction(town, "baba", eatQuote.id).ok, false);
+  assert.deepEqual(commitments(town), finished, "repeated eating does nothing");
+  const again = say(town, "I'll eat the bread.");
+  assert.match(again.reply, /not carrying/i);
+  assert.equal(town.favors.length, 1);
+  const remembered = say(town, "Hello.");
+  assert.match(remembered.reply, /ate the loaf/i);
+  assert.match(remembered.reply, /owe 2/i);
+  const kept = save.parseTownFile(save.exportTown(town));
+  assert.equal(agent(kept, "player").projects.find((p) => p.text.includes("loaf")).status, "done");
+  assert.equal(kept.favors[0].status, "owed");
+});
+
+test("a bread tab and loaf are refused together when either cannot be recorded", () => {
+  for (const scenario of [
+    "item-capacity",
+    "held-loaf",
+    "conflicting-item",
+    "debt-capacity",
+    "capacity-changed",
+  ]) {
+    const town = createTown("Ada");
+    near(town, "baba");
+    const originalQuote = actionQuote(town, "baba", "bread");
+    const player = agent(town, "player");
+    if (scenario === "item-capacity" || scenario === "capacity-changed") {
+      player.projects = Array.from({ length: 4 }, (_, i) => ({
+        id: `item${i}`,
+        owner: "player",
+        kind: "other",
+        text: `Existing item ${i}`,
+        status: "open",
+        day: 1,
+      }));
+    } else if (scenario === "held-loaf" || scenario === "conflicting-item") {
+      player.projects.push({
+        id: "held",
+        owner: "player",
+        kind: scenario === "held-loaf" ? "other" : "notes",
+        text: BABA_LOAF,
+        status: "open",
+        day: 1,
+      });
+    } else {
+      town.favors = Array.from({ length: 24 }, (_, i) => ({
+        id: `tab${i}`,
+        from: "northern",
+        to: "baba",
+        amount: 2,
+        text: `Existing tab ${i}`,
+        status: "owed",
+        day: 1,
+      }));
+    }
+    const quote =
+      scenario === "capacity-changed" ? originalQuote : actionQuote(town, "baba", "bread");
+    const before = copy(town);
+    assert.equal(applyPlayerAction(town, "baba", quote.id).ok, false, scenario);
+    assert.deepEqual(town, before, `${scenario}: neither item nor debt nor partial memories`);
+  }
+});
+
+test("paying keeps the loaf, and an old eating quote cannot consume a later loaf", () => {
+  const town = createTown("Ada");
+  choose(town, "baba", "bread");
+  assert.equal(settle(town).ok, true);
+  const player = agent(town, "player");
+  const firstLoaf = player.projects.find((p) => p.text === BABA_LOAF && p.status === "open");
+  assert.ok(firstLoaf);
+  assert.equal(town.favors[0].status, "paid");
+  assert.ok(
+    actionQuote(town, "baba", "bread").disabledReason,
+    "cannot accumulate a second held loaf",
+  );
+  const original = actionQuote(town, "baba", "eat-loaf");
+  const paidMoney = balances(town);
+  assert.equal(applyPlayerAction(town, "baba", original.id).ok, true);
+  assert.deepEqual(balances(town), paidMoney);
+  assert.equal(town.favors[0].status, "paid");
+  assert.equal(choose(town, "baba", "bread").ok, true);
+  const before = commitments(town);
+  assert.equal(applyPlayerAction(town, "baba", original.id).ok, false);
+  assert.deepEqual(commitments(town), before);
+  assert.equal(
+    player.projects.filter((p) => p.text === BABA_LOAF && p.status === "open").length,
+    1,
+  );
+});
+
+test("refusals, eating text and model item edits cannot consume the held loaf", () => {
+  const town = createTown("Ada");
+  choose(town, "baba", "bread");
+  const loaf = agent(town, "player").projects.find((p) => p.text === BABA_LOAF);
+  const before = commitments(town);
+  for (const text of [
+    "I'll eat the bread.",
+    "I won’t eat the loaf.",
+    "Can I eat the bread?",
+    "Don’t eat my loaf.",
+  ]) {
+    say(town, text);
+    applyResult(town, {
+      kind: "player",
+      mind: "grok",
+      agentId: "baba",
+      playerText: text,
+      reply: "You ate it.",
+      delta: 0,
+      note: "",
+      project: { owner: "player", action: "done", id: loaf.id, kind: "other", text: BABA_LOAF },
+    });
+    assert.deepEqual(commitments(town), before, text);
+  }
 });
 
 test("offline bread offer, inspection and repayment never duplicate a charge", () => {

@@ -415,13 +415,14 @@ export type PlayerAction = {
 };
 
 type QuotedAction = PlayerAction & {
-  kind: "bread" | "pay" | "shift-start" | "shift-stop";
+  kind: "bread" | "eat-loaf" | "pay" | "shift-start" | "shift-stop";
   reference?: string;
 };
 
 // Shared contract identity while retaining the existing v1 Project schema.
 export const PLAYER_CAFE_SHIFT =
   "Cafe shift, 16:00 to 19:00 each day until cancelled; 5 after three hours if the till can pay.";
+export const BABA_LOAF = "A loaf from Baba. It can be eaten.";
 
 function quotedPlayerActions(town: Town, target: AgentId): QuotedAction[] {
   const player = maybeAgent(town, "player");
@@ -443,6 +444,21 @@ function quotedPlayerActions(town: Town, target: AgentId): QuotedAction[] {
   const debts = (town.favors ?? []).filter(
     (f) => f.from === "player" && f.to === target && f.status === "owed",
   );
+  const loaf = (player.projects ?? []).find(
+    (project) =>
+      project.owner === "player" &&
+      project.kind === "other" &&
+      project.status === "open" &&
+      project.text === BABA_LOAF,
+  );
+  if (loaf) {
+    add(
+      "eat-loaf",
+      "Eat loaf",
+      "Eat your held loaf once. It will be gone; any unpaid tab stays open. Eating does not move money.",
+      loaf.id,
+    );
+  }
   for (const debt of debts) {
     const validAmount = Number.isInteger(debt.amount) && debt.amount >= 0 && debt.amount <= 30;
     const canPay =
@@ -468,14 +484,21 @@ function quotedPlayerActions(town: Town, target: AgentId): QuotedAction[] {
     );
   }
   if (target === "baba" && debts.length === 0) {
+    const conflictingLoaf = (player.projects ?? []).some(
+      (project) => project.status === "open" && project.text === BABA_LOAF,
+    );
     add(
       "bread",
       "Accept bread tab · 2",
-      "Accept Baba's bread tab. You will owe Baba 2; no money moves until you choose to pay. This records a debt, not an inventory item.",
+      "Receive one loaf from Baba and owe Baba 2. No money moves until you choose to pay. You can eat the loaf once; eating does not pay the tab.",
       undefined,
-      (town.favors ?? []).filter((f) => f.status === "owed").length >= 24
-        ? "The town cannot record another open tab yet."
-        : undefined,
+      conflictingLoaf
+        ? "You already have a loaf or a conflicting item. Finish it before taking another."
+        : (player.projects ?? []).filter((project) => project.status === "open").length >= 4
+          ? "There is no room to carry a loaf. Finish an open item or project first."
+          : (town.favors ?? []).filter((f) => f.status === "owed").length >= 24
+            ? "The town cannot record another open tab yet."
+            : undefined,
     );
   }
   if (target === "kevin") {
@@ -556,12 +579,75 @@ export function applyPlayerAction(
   if (action.disabledReason) return { ok: false, reply: action.disabledReason };
   let reply: string;
   if (action.kind === "bread") {
-    applyFavor(
-      town,
-      { action: "offer", from: "player", to: "baba", amount: 2, text: "Bread, to be paid back." },
-      ["player", target],
+    // Stage both effects before adopting either: a refused item must never
+    // leave the player owing for a loaf they did not receive.
+    try {
+      const staged = structuredClone(town);
+      const stagedPlayer = maybeAgent(staged, "player")!;
+      const stagedBaba = maybeAgent(staged, "baba")!;
+      const previousFavors = staged.favors.length;
+      applyFavor(
+        staged,
+        { action: "offer", from: "player", to: "baba", amount: 2, text: "Bread, to be paid back." },
+        ["player", "baba"],
+      );
+      applyProject(staged, {
+        owner: "player",
+        action: "start",
+        kind: "other",
+        place: "grocery",
+        text: BABA_LOAF,
+      });
+      const received = stagedPlayer.projects.some(
+        (project) =>
+          project.owner === "player" &&
+          project.kind === "other" &&
+          project.text === BABA_LOAF &&
+          project.status === "open",
+      );
+      const debt = staged.favors.at(-1);
+      if (
+        !received ||
+        staged.favors.length !== previousFavors + 1 ||
+        debt?.from !== "player" ||
+        debt.to !== "baba" ||
+        debt.amount !== 2 ||
+        debt.status !== "owed"
+      ) {
+        return {
+          ok: false,
+          reply:
+            "The loaf and its tab could not both be recorded. You received no loaf and owe nothing new.",
+        };
+      }
+      town.favors = staged.favors;
+      town.nextId = staged.nextId;
+      player.projects = stagedPlayer.projects;
+      player.memories = stagedPlayer.memories;
+      player.newMemories = stagedPlayer.newMemories;
+      other.memories = stagedBaba.memories;
+      other.newMemories = stagedBaba.newMemories;
+    } catch {
+      return {
+        ok: false,
+        reply:
+          "The loaf and its tab could not both be recorded. You received no loaf and owe nothing new.",
+      };
+    }
+    reply =
+      "You received one loaf and accepted a tab of 2 with Baba. No money has moved. You can choose Eat loaf when you want it.";
+  } else if (action.kind === "eat-loaf") {
+    const loaf = player.projects.find(
+      (project) =>
+        project.id === action.reference &&
+        project.owner === "player" &&
+        project.kind === "other" &&
+        project.text === BABA_LOAF &&
+        project.status === "open",
     );
-    reply = "You accepted a bread tab of 2 with Baba. No money has moved.";
+    if (!loaf) return { ok: false, reply: "You are not carrying that loaf anymore." };
+    loaf.status = "done";
+    reply = "You eat the loaf. It is gone. Any unpaid tab stays open; no money moved.";
   } else if (action.kind === "pay") {
     const debt = town.favors.find(
       (f) =>

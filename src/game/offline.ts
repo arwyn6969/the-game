@@ -1,6 +1,6 @@
 import type { Agent, AgentId, Block, MindResult, ThinkJob, ThreadEdit, Town } from "./types";
 import { NPC_IDS } from "./types";
-import { openThreadText } from "./effects";
+import { BABA_LOAF, openThreadText } from "./effects";
 import { absMinute, agentById, retrieve } from "./memory";
 import { promptMemories } from "./retrieval";
 import { beatAt } from "./plan";
@@ -615,9 +615,22 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
     reply = `${reply} If you can switch a mind on, do. Until then I am only this place, this hour, and what I already retrieved.`;
   }
   const debt = town.favors.find((f) => f.from === "player" && f.to === id && f.status === "owed");
+  const carrying = (player.projects ?? []).find(
+    (p) =>
+      p.owner === "player" && p.kind === "other" && p.status === "open" && p.text === BABA_LOAF,
+  );
+  const ateLoaf = (player.projects ?? []).some(
+    (p) =>
+      p.owner === "player" && p.kind === "other" && p.status === "done" && p.text === BABA_LOAF,
+  );
+  const asksAboutEating = /\b(?:eat|eating|loaf)\b/i.test(text);
   const workTalk =
     agent.id === "kevin" && /\b(?:shift|job|wage|earn|work|quit|cancel)\b/i.test(text);
-  if (workTalk) {
+  if (asksAboutEating) {
+    reply = carrying
+      ? "You are carrying a loaf. Choose Eat loaf below when you want to eat it. The tab stays open until paid; talking does not consume the loaf."
+      : "You are not carrying a loaf.";
+  } else if (workTalk) {
     const shift = (player.projects ?? []).find(
       (p) => p.owner === "player" && p.kind === "shift" && p.status === "open",
     );
@@ -630,7 +643,7 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
   ) {
     reply = debt
       ? `Your tab is still ${debt.amount}: ${debt.text} Talking does not pay it. Use the quoted payment action when you choose.`
-      : "Bread is 2 on a tab. Read the terms below and choose Accept if you want that debt. Asking or refusing does not buy anything.";
+      : "Bread is 2 on a tab, with one loaf to eat. Read the terms below and choose Accept if you want it. Asking or refusing does not buy anything.";
   } else if (agent.id === "kevin" && !probing) {
     const paid = (player.memories ?? []).some(
       (m) =>
@@ -641,8 +654,12 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
     if (paid)
       reply = `${reply} You worked the floor. The till paid you 5. I have not forgotten that.`;
   }
-  if (!debt && /\b(?:inspect|owe|pay|repay|settle)\b/i.test(text) && !workTalk)
+  if (!debt && /\b(?:inspect|owe|pay|repay|settle)\b/i.test(text) && !workTalk && !asksAboutEating)
     reply = "There is no open tab between us. Nothing to pay.";
+  if (agent.id === "baba" && debt && !asksAboutEating) {
+    if (carrying) reply = `${reply} You are carrying the loaf. The tab is ${debt.amount}.`;
+    else if (ateLoaf) reply = `${reply} You ate the loaf. You still owe ${debt.amount}.`;
+  }
   return {
     kind: "player",
     mind: "offline",
