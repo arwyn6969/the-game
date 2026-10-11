@@ -1,5 +1,7 @@
 # Astra direction review — 11 October 2026
 
+**Subsequent economic amendment:** Arwyn asked where value originates, when money is created or invested, where it flows and who keeps fair accounts. Astra reconsidered the scope: include paid, budgeted contributions and a deterministic ledger in the first shared project; defer only the generic job system. The [economic design](../design/economy-and-fair-contribution.md) supersedes the deferral of all paid work below. The original review is retained as the decision record.
+
 **Decision: make a town where solving a small shared problem changes how people work with you.** The player is a resident and collaborator. Kevin World contributes differing expertise, disagreement and withdrawal to that experience. Keep the five residents; give their existing relationships something concrete to act upon.
 
 ## Evidence and provenance
