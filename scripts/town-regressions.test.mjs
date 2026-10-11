@@ -583,6 +583,33 @@ test("an empty till explains the unpaid shift instead of paying it", () => {
   assert.equal(player.memories.filter((m) => m.text.includes("cannot pay the full")).length, 1);
 });
 
+test("taking bread gives a loaf, and eating it does not settle the tab", () => {
+  const town = createTown("Ada");
+  const before = balances(town);
+  say(town, "Do you sell bread?");
+  assert.equal(town.favors.length, 0);
+  say(town, "I'll take the bread on a tab.");
+  const player = agent(town, "player");
+  assert.equal(town.favors[0].status, "owed");
+  assert.equal(town.favors[0].amount, 2);
+  assert.ok(player.projects.some((p) => p.status === "open" && p.text.includes("loaf")));
+  assert.deepEqual(balances(town), before);
+  const eaten = say(town, "I'll eat the bread.");
+  assert.match(eaten.reply, /eat the loaf/i);
+  assert.ok(player.projects.some((p) => p.status === "done" && p.text.includes("loaf")));
+  assert.equal(town.favors[0].status, "owed");
+  assert.deepEqual(balances(town), before);
+  const again = say(town, "I'll eat the bread.");
+  assert.match(again.reply, /not carrying/i);
+  assert.equal(town.favors.length, 1);
+  const remembered = say(town, "Hello.");
+  assert.match(remembered.reply, /ate the loaf/i);
+  assert.match(remembered.reply, /owe 2/i);
+  const kept = save.parseTownFile(save.exportTown(town));
+  assert.equal(agent(kept, "player").projects.find((p) => p.text.includes("loaf")).status, "done");
+  assert.equal(kept.favors[0].status, "owed");
+});
+
 test("offline bread offer, inspection and repayment never duplicate a charge", () => {
   const town = createTown("Ada");
   const before = balances(town);

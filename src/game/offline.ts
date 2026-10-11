@@ -572,6 +572,8 @@ function acceptsWork(text: string): boolean {
   );
 }
 
+const LOAF = "A loaf from Baba. It can be eaten.";
+
 function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
   ensureLists(town);
   const agent = agentById(town, id);
@@ -665,9 +667,22 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
     Number.isInteger(agent.money) &&
     agent.money >= 0 &&
     agent.money + debt.amount <= 999;
+  const carrying = (player.projects ?? []).find((p) => p.status === "open" && p.text === LOAF);
+  const ateLoaf = (player.projects ?? []).some((p) => p.status === "done" && p.text === LOAF);
+  const eating =
+    /\bi(?:'ll| will) eat\b/i.test(text) &&
+    /\b(?:bread|loaf)\b/i.test(text) &&
+    !declined(text) &&
+    !inquiring(text);
   let favor: import("./types").FavorEdit | null = null;
   if (workTalk) {
     /* The shift answer is the whole action. It must not also open a tab. */
+  } else if (eating) {
+    if (!carrying) reply = "You are not carrying a loaf.";
+    else {
+      reply = "You eat the loaf. It is gone. The tab, if it is still open, stays written down.";
+      project = { owner: "player", action: "done", kind: "other", id: carrying.id, text: carrying.text };
+    }
   } else if (repaying) {
     if (!debt) reply = "There is no open tab between us. Nothing to pay again.";
     else if (!canPay)
@@ -690,7 +705,7 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
   } else if (wantsBread && debt) {
     reply = "You already owe me for bread. I am not opening a second tab.";
   } else if (wantsBread) {
-    reply = "Bread is 2. I will write it as a tab. Pay it when you have it.";
+    reply = "Bread is 2. I will write it as a tab. The loaf is yours to eat. Pay the 2 when you have it.";
     favor = {
       action: "offer",
       from: "player",
@@ -698,8 +713,13 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
       amount: 2,
       text: "Bread, to be paid back.",
     };
+    project = { owner: "player", action: "start", kind: "other", place: "grocery", text: LOAF };
   } else if (introducing) {
     reply = `${reply} All right. I will remember that you introduced us. That is not the same as knowing him.`;
+  }
+  if (agent.id === "baba" && debt && !eating && !wantsBread && !repaying && !inspecting) {
+    if (carrying) reply = `${reply} You are carrying the loaf. The tab is ${debt.amount}.`;
+    else if (ateLoaf) reply = `${reply} You ate the loaf. You still owe ${debt.amount}.`;
   }
   return {
     kind: "player",
