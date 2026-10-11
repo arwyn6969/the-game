@@ -20,6 +20,8 @@ The town saves in this browser. A failed save shows a warning and offers a downl
 
 The full app source as of October 2026: the town (`src/game`), the screen (`src/components/town`), the mind call, styles, and the day-two check (`scripts/town-day.test.mjs`).
 
+The [producer roadmap](docs/ROADMAP.md) connects the next playable day to Kevin World. The [Astra review brief](docs/prompts/ASTRA.md) gives the local project chat a shared starting point and concrete questions to challenge.
+
 `npm run test:town` runs the town, save, economy, retrieval, conversation and collision regressions without a running Vite app. The day-two check verifies that the question travels, the seed cannot be closed, money stays a number, and a later hour does not repeat the same line.
 
 ## Development and two-agent setup
