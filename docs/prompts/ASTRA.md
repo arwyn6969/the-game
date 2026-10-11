@@ -1,5 +1,7 @@
 # Astra: independent review of THE GAME and Kevin World
 
+Completed on 11 October 2026 by an Astra subagent. Read the [decision memo](../reviews/2026-10-11-astra-direction.md) and [coordinated evidence](../reviews/2026-10-11-astra-evidence.md). The original assignment below is retained for context; it is no longer an undispatched task.
+
 Use this brief in the existing local THE GAME project chat with Astra selected in the model controls. The text does not select a model or reasoning setting. This assignment is a product and systems review; no Astra review has been performed merely by writing the brief.
 
 ## Assignment
