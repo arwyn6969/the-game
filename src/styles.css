@@ -125,6 +125,17 @@
   border-top: 1px solid var(--color-line);
 }
 
+.crowd {
+  position: absolute;
+  z-index: 4;
+  top: 0.6rem;
+  left: 0.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  max-width: min(22rem, calc(100% - 1.2rem));
+}
+
 .scrub {
   flex: 1;
   min-width: 8rem;

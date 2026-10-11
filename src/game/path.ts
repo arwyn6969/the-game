@@ -6,7 +6,7 @@ function key(x: number, y: number) {
   return y * MAP_W + x;
 }
 
-export function findPath(start: P, goalIn: P): P[] {
+export function findPath(start: P, goalIn: P, blocked?: ReadonlySet<string>): P[] {
   const goal = nearestWalkable(goalIn.x, goalIn.y);
   const s = walkable(start.x, start.y) ? start : nearestWalkable(start.x, start.y);
   if (s.x === goal.x && s.y === goal.y) return [];
@@ -79,6 +79,7 @@ export function findPath(start: P, goalIn: P): P[] {
       const ny = cy + dy;
       if (nx < 0 || ny < 0 || nx >= MAP_W || ny >= MAP_H) continue;
       if (!walkable(nx, ny)) continue;
+      if (blocked?.has(`${nx},${ny}`) && !(nx === goal.x && ny === goal.y)) continue;
       const ni = key(nx, ny);
       if (closed[ni]) continue;
       const ng = gScore[cur.i]! + 1;

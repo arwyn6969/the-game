@@ -21,3 +21,9 @@ Base: `b8d6c97ebe5d88b2f97a56e5e5edc82287554ad1` on `codex/agent-collaboration-s
 ## Not fixed here
 
 Sol still owns long-play import limits, silent save failure, debt settlement, wages, offline repayment, and the memory packet. A reply is detected from a new chat id after `applyResult`, not by re-reading the saved sentence.
+
+## Standing on each other
+
+People no longer step onto a tile someone else is on. A saved pile is split on the next minute, and the player cannot walk through a person. If a click still covers more than one sprite, buttons name each of them.
+
+The console lines about `__grok-preview/status`, `postMessage`, and `contentscript.js` are the preview frame and a browser extension, not the town. `manifest.webmanifest` 401 is the preview gate in front of the app. Vite's dev server is what the content-security warning means by `eval`. The page now saves on `pagehide` instead of `beforeunload`. Download inside this frame copies the town, because the frame is not allowed to save a file.

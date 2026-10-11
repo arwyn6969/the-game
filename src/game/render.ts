@@ -404,6 +404,27 @@ export function screenToWorld(sx: number, sy: number, camX: number, camY: number
   return { x: (sx + camX) / TILE, y: (sy + camY) / TILE };
 }
 
+export function pickAgents(
+  sx: number,
+  sy: number,
+  camX: number,
+  camY: number,
+  positions: Record<AgentId, { x: number; y: number }>,
+): AgentId[] {
+  const world = screenToWorld(sx, sy, camX, camY);
+  const hits: { id: AgentId; d: number }[] = [];
+  for (const id of AGENT_IDS) {
+    const p = positions[id];
+    if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
+    const dx = world.x - (p.x + 0.5);
+    const dy = world.y - (p.y + 0.75);
+    if (Math.abs(dx) > 0.7 || dy > 0.25 || dy < -1.9) continue;
+    hits.push({ id, d: Math.hypot(dx, dy) });
+  }
+  hits.sort((a, b) => a.d - b.d || AGENT_IDS.indexOf(a.id) - AGENT_IDS.indexOf(b.id));
+  return hits.map((hit) => hit.id);
+}
+
 export function pickAgent(
   sx: number,
   sy: number,
@@ -411,19 +432,7 @@ export function pickAgent(
   camY: number,
   positions: Record<AgentId, { x: number; y: number }>,
 ): AgentId | null {
-  const world = screenToWorld(sx, sy, camX, camY);
-  let best: AgentId | null = null;
-  let dist = 0.7;
-  for (const id of AGENT_IDS) {
-    const p = positions[id];
-    if (!p) continue;
-    const d = Math.hypot(p.x + 0.5 - world.x, p.y + 0.5 - world.y);
-    if (d < dist) {
-      dist = d;
-      best = id;
-    }
-  }
-  return best;
+  return pickAgents(sx, sy, camX, camY, positions)[0] ?? null;
 }
 
 export function onBoard(x: number, y: number): boolean {

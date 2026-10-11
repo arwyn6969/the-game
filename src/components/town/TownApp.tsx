@@ -20,7 +20,7 @@ import {
   glideOf,
   onBoard,
   paint,
-  pickAgent,
+  pickAgents,
   resetGlide,
   syncGlide,
 } from "@/game/render";
@@ -161,6 +161,8 @@ export function TownApp() {
   const [hint, setHint] = useState(townRef.current ? !townRef.current.sawHint : true);
   const [inspect, setInspect] = useState(false);
   const [sendNote, setSendNote] = useState("");
+  const [crowd, setCrowd] = useState<AgentId[] | null>(null);
+  const [exportNote, setExportNote] = useState("");
   const panelRef = useRef<AgentId | null>(null);
   const boardRef = useRef(false);
 
@@ -290,6 +292,7 @@ export function TownApp() {
           setPinned(false);
           setPanel(null);
         }
+        setCrowd(null);
         if (boardRef.current) setBoard(false);
         return;
       }
@@ -372,7 +375,7 @@ export function TownApp() {
       if (!walkable(player.tile.x, player.tile.y)) player.tile = nearestWalkable(player.tile.x, player.tile.y);
       const nx = player.tile.x + x;
       const ny = player.tile.y + y;
-      if (!walkable(nx, ny)) {
+      if (!walkable(nx, ny) || live.agents.some((agent) => agent.id !== "player" && agent.tile.x === nx && agent.tile.y === ny)) {
         moveCool = 0.16;
         return;
       }
@@ -473,7 +476,7 @@ export function TownApp() {
     const onHide = () => {
       if (document.visibilityState === "hidden" && townRef.current) saveTown(townRef.current);
     };
-    window.addEventListener("beforeunload", onLeave);
+    window.addEventListener("pagehide", onLeave);
     document.addEventListener("visibilitychange", onHide);
 
     const player = () => agentById(townRef.current!, "player");
@@ -518,7 +521,7 @@ export function TownApp() {
 
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener("beforeunload", onLeave);
+      window.removeEventListener("pagehide", onLeave);
       document.removeEventListener("visibilitychange", onHide);
       delete window.__controlsTest;
       delete window.__game;
@@ -594,11 +597,17 @@ export function TownApp() {
     const positions = positionsFor(live, null);
     const playerPos = positions.player ?? { x: 0, y: 0 };
     const cam = cameraFor(playerPos.x, playerPos.y, rect.width, rect.height);
-    const hit = pickAgent(sx, sy, cam.camX, cam.camY, positions);
-    if (hit) {
-      if (!pinned) setPanel(hit);
+    const hit = pickAgents(sx, sy, cam.camX, cam.camY, positions);
+    if (hit.length > 1) {
+      setCrowd(hit);
+      return;
+    }
+    setCrowd(null);
+    const one = hit[0];
+    if (one) {
+      if (!pinned || one === "player") setPanel(one);
       else setPanel("kevin");
-      if (hit === "kevin" && (live.guide ?? 0) < 2) {
+      if (one === "kevin" && (live.guide ?? 0) < 2) {
         live.guide = 2;
         saveTown(live);
         setTick((n) => n + 1);
@@ -671,6 +680,7 @@ export function TownApp() {
           </label>
           <input
             id="town-name"
+            name="town-name"
             className="field mt-2"
             maxLength={18}
             autoComplete="off"
@@ -756,6 +766,27 @@ export function TownApp() {
           onClick={onCanvasClick}
           aria-label="The town"
         />
+        {crowd && crowd.length > 1 && (
+          <div className="crowd" role="listbox" aria-label="Who is here">
+            {crowd.map((id) => {
+              const person = town.agents.find((agent) => agent.id === id);
+              return (
+                <button
+                  key={id}
+                  className="btn"
+                  type="button"
+                  onClick={() => {
+                    setCrowd(null);
+                    if (!pinned || id === "player") setPanel(id);
+                    else setPanel("kevin");
+                  }}
+                >
+                  {person?.name ?? id}
+                </button>
+              );
+            })}
+          </div>
+        )}
         <div className="dpad" aria-hidden={false}>
           <Pad code="ArrowUp" keys={keysRef} className="u" label="North">
             N
@@ -817,6 +848,8 @@ export function TownApp() {
         )}
         <input
           id="scrub"
+          name="scrub"
+          aria-label="Replay minute"
           className="scrub"
           type="range"
           min={0}
@@ -874,14 +907,24 @@ export function TownApp() {
         >
           {town.notices.length ? `Board · ${town.notices.length}` : "Board"}
         </button>
-        <button className="btn" type="button" onClick={() => download(town)}>
+        <button
+          className="btn"
+          type="button"
+          onClick={() => {
+            void saveCopy(town).then((note) => setExportNote(note));
+          }}
+        >
           <Download className="inline size-4" aria-hidden /> Download town
         </button>
+        {exportNote && <p className="text-sm text-muted">{exportNote}</p>}
         <button className="btn" type="button" onClick={() => fileRef.current?.click()}>
           <Upload className="inline size-4" aria-hidden /> Import
         </button>
         <input
           ref={fileRef}
+          id="town-import"
+          name="town-import"
+          aria-label="Import a town file"
           className="hidden"
           type="file"
           accept="application/json,.json"
@@ -983,14 +1026,28 @@ function positionsFor(town: Town, replay: Replay | null) {
   return out;
 }
 
-function download(town: Town) {
-  const blob = new Blob([exportTown(town)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `the-game-day-${town.day}.json`;
-  link.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+function saveCopy(town: Town) {
+  const text = exportTown(town);
+  const framed = (() => {
+    try {
+      return window.self !== window.top;
+    } catch {
+      return true;
+    }
+  })();
+  if (!framed) {
+    const blob = new Blob([text], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `the-game-day-${town.day}.json`;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  return navigator.clipboard
+    .writeText(text)
+    .then(() => (framed ? "Copied. This preview cannot save a file." : "Copied, and the file was saved."))
+    .catch(() => (framed ? "This preview cannot save a file or use the clipboard." : "The file was saved."));
 }
 
 function Pad({
@@ -1109,8 +1166,8 @@ function Mind({
             ))}
           </ul>
         </section>
-        <label className="mt-4 flex items-center gap-2 text-sm text-muted">
-          <input type="checkbox" checked={inspect} onChange={(event) => onInspect(event.target.checked)} />
+        <label className="mt-4 flex items-center gap-2 text-sm text-muted" htmlFor="mind-inspect">
+          <input id="mind-inspect" name="inspect" type="checkbox" checked={inspect} onChange={(event) => onInspect(event.target.checked)} />
           Developer inspector. Not part of the town.
         </label>
         {inspect && <Inspector town={town} agent={agent} />}

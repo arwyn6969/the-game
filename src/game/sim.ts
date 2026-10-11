@@ -16,6 +16,52 @@ export function pairKey(a: AgentId, b: AgentId): string {
   return a < b ? `${a}|${b}` : `${b}|${a}`;
 }
 
+function occupied(town: Town, x: number, y: number, except: AgentId): boolean {
+  return town.agents.some((a) => a.id !== except && a.tile?.x === x && a.tile?.y === y);
+}
+
+function blockedTiles(town: Town, except: AgentId): Set<string> {
+  const taken = new Set<string>();
+  for (const agent of town.agents) {
+    if (agent.id === except || !Number.isFinite(agent.tile?.x) || !Number.isFinite(agent.tile?.y)) continue;
+    taken.add(`${agent.tile.x},${agent.tile.y}`);
+  }
+  return taken;
+}
+
+function nudgeApart(town: Town) {
+  const seen = new Set<string>();
+  const ordered = [...town.agents].sort((a, b) => (a.id === "player" ? -1 : b.id === "player" ? 1 : 0));
+  const dirs = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+    [1, 1],
+    [-1, 1],
+    [1, -1],
+    [-1, -1],
+  ] as const;
+  for (const agent of ordered) {
+    if (!agent.tile) continue;
+    const key = `${agent.tile.x},${agent.tile.y}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      continue;
+    }
+    for (const [dx, dy] of dirs) {
+      const nx = agent.tile.x + dx;
+      const ny = agent.tile.y + dy;
+      const next = `${nx},${ny}`;
+      if (!walkable(nx, ny) || seen.has(next)) continue;
+      agent.tile = { x: nx, y: ny };
+      agent.path = [];
+      seen.add(next);
+      break;
+    }
+  }
+}
+
 function npcs(town: Town): Agent[] {
   const out: Agent[] = [];
   for (const id of NPC_IDS) {
@@ -44,15 +90,20 @@ function moveNpc(town: Town, agent: Agent, hourStart: boolean) {
   agent.status = agent.id === "kevin" && mentionsSeed(beat.status) ? "on the floor, not saying much" : beat.status;
   const goal = goalFor(agent, beat);
   const at = agent.tile.x === goal.x && agent.tile.y === goal.y;
+  const blocked = blockedTiles(town, agent.id);
   if (hourStart || agent.path.length === 0) {
-    agent.path = at ? [] : findPath(agent.tile, goal);
+    agent.path = at ? [] : findPath(agent.tile, goal, blocked);
   }
   let steps = STEP;
   while (steps-- > 0 && agent.path.length) {
     const next = agent.path[0]!;
     const beside = Math.abs(next.x - agent.tile.x) + Math.abs(next.y - agent.tile.y) === 1;
     if (!beside || !walkable(next.x, next.y)) {
-      agent.path = findPath(agent.tile, goal);
+      agent.path = findPath(agent.tile, goal, blocked);
+      break;
+    }
+    if (occupied(town, next.x, next.y, agent.id)) {
+      agent.path = next.x === goal.x && next.y === goal.y ? [] : findPath(agent.tile, goal, blockedTiles(town, agent.id));
       break;
     }
     const dx = next.x - agent.tile.x;
@@ -276,6 +327,7 @@ export function stepMinute(town: Town, online: boolean): ThinkJob | null {
     }
     if (!online && town.askedMindDay !== town.day && town.minute === 8 * 60) askForMind(town);
   }
+  nudgeApart(town);
   for (const agent of npcs(town)) moveNpc(town, agent, hourStart);
   updateColocation(town);
   if (!job) {
