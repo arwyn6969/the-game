@@ -1,5 +1,5 @@
 import type { Agent, ThinkJob, Town } from "./types";
-import { absMinute, logRetrieval, scoreMemories } from "./memory";
+import { absMinute, logRetrieval, scoreResidentMemories } from "./memory";
 import { clip, mentionsSeed, plain } from "./text";
 import { placeTitle, zoneAt } from "./world";
 
@@ -17,7 +17,7 @@ export function promptMemories(town: Town, agent: Agent, job: ThinkJob) {
     .filter((t) => t.open)
     .map((t) => t.text)
     .join(" ")} ${agent.want ?? ""}`;
-  const ranked = scoreMemories(agent.memories ?? [], query, absMinute(town.day, town.minute));
+  const ranked = scoreResidentMemories(agent, query, absMinute(town.day, town.minute));
   const selected = ranked.slice(0, 4);
   const keptMemory = (agent.memories ?? []).find(
     (m) => m.seed || (m.protected && m.type === "favor"),

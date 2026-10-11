@@ -16,7 +16,10 @@ const { applyResult } = await server.ssrLoadModule("/src/game/effects.ts");
 const { offlineResult, prepareRetrievals } = await server.ssrLoadModule("/src/game/offline.ts");
 const save = await server.ssrLoadModule("/src/game/save.ts");
 const { buildPrompt } = await server.ssrLoadModule("/src/game/prompt.ts");
-const { makeMemory } = await server.ssrLoadModule("/src/game/memory.ts");
+const { makeMemory, scoreMemories, scoreResidentMemories } = await server.ssrLoadModule(
+  "/src/game/memory.ts",
+);
+const { memoryInterestScore } = await server.ssrLoadModule("/src/game/interests.ts");
 const { ANCHORS } = await server.ssrLoadModule("/src/game/world.ts");
 const { plain } = await server.ssrLoadModule("/src/game/text.ts");
 const storageDescriptor = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
@@ -594,4 +597,144 @@ test("another resident's private seed is never retrieved without a witnessed cop
   });
   const witnessed = packetFor(town, "baba", question);
   assert.ok(witnessed.memories.some((m) => m.text.includes("Kevin told me")));
+});
+
+test("Kevin's technology interest recognizes terms without treating ordinary 'it' as IT", () => {
+  for (const text of [
+    "New TECHNOLOGY arrived.",
+    "These technologies need reviewing.",
+    "Information-technology training starts tomorrow.",
+    "The data backup failed.",
+    "New Software, HARDWARE and Network equipment.",
+    "We maintain networks and networking equipment.",
+    "The IT department called.",
+    "I.T. support fixed the kettle.",
+  ])
+    assert.equal(memoryInterestScore("kevin", text), 0.25, text);
+  for (const text of [
+    "I put it on the table.",
+    "It is late; is it ready?",
+    "The invitation has a date and metadata about a knit pattern.",
+    "A networker discussed softwarehouse and hardwarestore names.",
+    "",
+  ])
+    assert.equal(memoryInterestScore("kevin", text), 0, text);
+  assert.equal(memoryInterestScore("baba", "Software and network data"), 0);
+  assert.equal(memoryInterestScore("kevin", "Software network data ".repeat(20)), 0.25);
+});
+
+test("technology breaks a tie for Kevin while retaining every ordinary memory and other residents' ranking", () => {
+  const town = createTown("Ada");
+  const memories = [
+    makeMemory(town, 1, 420, "observe", "An amber mug is on the shelf.", 5),
+    makeMemory(town, 1, 420, "observe", "The software update fixed a network fault.", 5),
+  ];
+  const before = copy(memories);
+  const ranked = scoreResidentMemories({ id: "kevin", memories }, "hello", 420);
+  assert.equal(ranked[0].memory.id, memories[1].id);
+  assert.equal(ranked[0].roleRelevance, 0.25);
+  assert.equal(ranked.length, memories.length, "interests must not filter memories");
+  assert.deepEqual(memories, before, "ranking must not rewrite or reorder saved history");
+  assert.deepEqual(
+    scoreResidentMemories({ id: "baba", memories }, "hello", 420).map(
+      ({ roleRelevance, ...hit }) => {
+        assert.equal(roleRelevance, 0);
+        return hit;
+      },
+    ),
+    scoreMemories(memories, "hello", 420),
+  );
+});
+
+test("Kevin's interest cannot crowd out a direct nontechnical question or urgent important memories", () => {
+  const town = createTown("Ada");
+  const memories = [
+    makeMemory(town, 1, 420, "observe", "Software and network equipment were delivered.", 10),
+    makeMemory(town, 1, 420, "chat", "The missing emerald violin is beside the fountain.", 5),
+  ];
+  assert.equal(
+    scoreResidentMemories({ id: "kevin", memories }, "Where is the missing emerald violin?", 420)[0]
+      .memory.id,
+    memories[1].id,
+  );
+  const urgent = makeMemory(town, 30, 420, "favor", "A friend needs immediate help.", 10);
+  const oldTech = makeMemory(town, 1, 0, "observe", "Software arrived.", 10);
+  assert.equal(
+    scoreResidentMemories({ id: "kevin", memories: [oldTech, urgent] }, "hello", 30 * 1440)[0]
+      .memory.id,
+    urgent.id,
+  );
+});
+
+test("Kevin's technology selection reaches the prompt and matching diagnostics", () => {
+  const town = createTown("Ada");
+  const kevin = agent(town, "kevin");
+  kevin.memories = [];
+  for (let i = 0; i < 5; i++)
+    kevin.memories.push(makeMemory(town, 1, 420, "observe", `An amber mug is on shelf ${i}.`, 5));
+  kevin.memories.push(
+    makeMemory(town, 1, 420, "observe", "The SOFTWARE update fixed the NETWORK fault.", 5),
+  );
+  const job = { kind: "player", agentId: "kevin", text: "Hello", day: 1, minute: 420 };
+  prepareRetrievals(town, job);
+  const packet = packetFor(town, "kevin", job.text);
+  assert.match(packet.memories[0].text, /SOFTWARE/);
+  assert.equal(packet.memories.length, 4);
+  assert.equal(town.retrievals.length, 1);
+  assert.deepEqual(
+    town.retrievals[0].top.map(({ text, type }) => ({ text, type })),
+    packet.memories.map(({ text, type }) => ({ text, type })),
+  );
+  assert.equal(town.retrievals[0].top[0].score, 1.75);
+});
+
+test("technology interests stay inside each resident's witnessed memory stream", () => {
+  const town = createTown("Ada");
+  const privateEvent = "The private network password is hidden beneath an amber mug.";
+  agent(town, "baba").memories.push(makeMemory(town, 1, 420, "chat", privateEvent, 10));
+  const first = packetFor(town, "kevin", "Where is the private network password?");
+  assert.ok(first.memories.every((m) => !m.text.includes("private network password")));
+  agent(town, "kevin").memories.push(makeMemory(town, 1, 420, "chat", privateEvent, 10));
+  const witnessed = packetFor(town, "kevin", "Where is the private network password?");
+  assert.ok(witnessed.memories.some((m) => m.text.includes("private network password")));
+});
+
+test("offline quotes use Kevin's interest and version-1 towns retain identity and history", () => {
+  const town = createTown("Ada");
+  town.minute = 480;
+  const kevin = agent(town, "kevin");
+  const originalIdentity = kevin.identity;
+  kevin.memories = [
+    makeMemory(town, 1, 480, "observe", "An amber mug is on the shelf.", 5),
+    makeMemory(town, 1, 480, "observe", "The software update fixed a network fault.", 5),
+  ];
+  kevin.threads = [];
+  kevin.want = "";
+  const before = copy(kevin.memories);
+  const result = offlineResult(town, {
+    kind: "player",
+    agentId: "kevin",
+    text: "Hello",
+    day: 1,
+    minute: 480,
+  });
+  assert.match(result.reply, /software update/);
+  assert.deepEqual(kevin.memories, before);
+  const loaded = save.parseTownFile(JSON.stringify(town));
+  assert.equal(loaded.version, 1);
+  assert.equal(agent(loaded, "kevin").identity, originalIdentity);
+  assert.equal(agent(loaded, "kevin").role, "Cafe owner");
+  const ranked = scoreResidentMemories(agent(loaded, "kevin"), "hello", 480);
+  assert.ok(
+    ranked.some((hit) => hit.memory.seed),
+    "loading still repairs a missing identity seed",
+  );
+  assert.ok(
+    ranked.findIndex((hit) => hit.memory.id === before[1].id) <
+      ranked.findIndex((hit) => hit.memory.id === before[0].id),
+  );
+  assert.deepEqual(
+    agent(loaded, "kevin").memories.filter((m) => before.some((old) => old.id === m.id)),
+    before.map((m) => ({ ...m, protected: false, seed: false })),
+  );
 });

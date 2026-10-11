@@ -1,7 +1,7 @@
 import type { Agent, AgentId, Block, MindResult, ThinkJob, ThreadEdit, Town } from "./types";
 import { NPC_IDS } from "./types";
 import { openThreadText } from "./effects";
-import { absMinute, agentById, retrieve } from "./memory";
+import { absMinute, agentById, retrieveResident } from "./memory";
 import { promptMemories } from "./retrieval";
 import { beatAt } from "./plan";
 import { clip, formatClock, mentionsSeed, periodName } from "./text";
@@ -23,7 +23,7 @@ export function prepareRetrievals(town: Town, job: ThinkJob) {
 }
 
 function quote(town: Town, agent: Agent, query: string): string {
-  const hit = retrieve(agent.memories, query, absMinute(town.day, town.minute), 1)[0];
+  const hit = retrieveResident(agent, query, absMinute(town.day, town.minute), 1)[0];
   return clip(hit?.memory.text ?? agent.selfSentence, 100);
 }
 

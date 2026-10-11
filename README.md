@@ -20,6 +20,8 @@ The town saves in this browser. A failed save shows a warning and offers a downl
 
 The full app source as of October 2026: the town (`src/game`), the screen (`src/components/town`), the mind call, styles, and the day-two check (`scripts/town-day.test.mjs`).
 
+The [Kevin World notes](docs/KEVIN_WORLD.md) preserve Arwyn's original vision and explain Kevin's technology memory preference. The current town keeps its five residents; the larger cast is future work.
+
 `npm run test:town` runs the town, save, economy, retrieval, conversation and collision regressions without a running Vite app. The day-two check verifies that the question travels, the seed cannot be closed, money stays a number, and a later hour does not repeat the same line.
 
 ## Development and two-agent setup
