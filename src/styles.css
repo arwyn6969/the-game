@@ -125,6 +125,17 @@
   border-top: 1px solid var(--color-line);
 }
 
+.crowd {
+  position: absolute;
+  z-index: 4;
+  top: 0.6rem;
+  left: 0.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  max-width: min(22rem, calc(100% - 1.2rem));
+}
+
 .scrub {
   flex: 1;
   min-width: 8rem;
@@ -138,11 +149,38 @@
   right: 0;
   bottom: 0;
   width: min(26rem, 100%);
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--color-surface);
   border-left: 1px solid var(--color-line);
-  padding: 1rem 1rem 1.5rem;
   box-shadow: -12px 0 40px rgba(0, 0, 0, 0.28);
+}
+
+.mind-bar,
+.mind-say {
+  flex: none;
+  padding: 0.75rem 1rem;
+  background: var(--color-raised);
+}
+
+.mind-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.mind-body {
+  flex: 1;
+  overflow: auto;
+  padding: 1rem;
+}
+
+.mind-say {
+  border-top: 1px solid var(--color-line);
+  padding-bottom: calc(0.75rem + var(--vv-bottom, 0px));
 }
 
 .gate {
@@ -199,7 +237,23 @@
 
 @media (max-width: 860px), (pointer: coarse) {
   .dpad { display: grid; }
-  .mind { width: 100%; }
+  .town[data-talking="true"] .dpad { display: none; }
+  .mind {
+    top: auto;
+    left: 0;
+    width: 100%;
+    height: min(72dvh, 100%);
+    border-left: 0;
+    border-top: 1px solid var(--color-line);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mind,
+  .warn,
+  .btn {
+    transition: none;
+  }
 }
 
 .meter {
