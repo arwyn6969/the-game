@@ -6,13 +6,13 @@ This is the current web game: `arwyn6969/the-game`. The separate `arwyn6969/THE_
 
 ## Play
 
-Name yourself. The clock starts paused on the row.
+Name yourself. The clock starts paused in the plaza.
 
 1. Press 1× and walk to Hobbs Cafe.
 2. Click Kevin.
 3. Ask him who he is.
 
-The question can travel onto the board and into other people's memories. Ask Baba for bread and she writes a tab of 2. Ask what you owe, then pay it when you have the money. Wages require an agreed shift and real attendance; visiting a counter does not earn a wage.
+The question can travel onto the board and into other people's memories. Ask Baba for bread and she writes a tab of 2. Ask what you owe, then pay it when you have the money. The wage engine supports agreed shifts and real attendance; the player's offline shift agreement is not yet implemented. The [playability review](docs/reviews/2026-10-11-playability.md) records this and other current gameplay gaps.
 
 The town saves in this browser. A failed save shows a warning and offers a downloadable backup. Download and import keep the debts, notes, and selves, including older version-1 towns. Portable files omit disposable replay frames and use an 8 MiB import limit.
 
