@@ -22,6 +22,10 @@ The full app source as of October 2026: the town (`src/game`), the screen (`src/
 
 `npm run test:town` runs the town, save, economy, retrieval, conversation and collision regressions without a running Vite app. The day-two check verifies that the question travels, the seed cannot be closed, money stays a number, and a later hour does not repeat the same line.
 
+## New contributors
+
+Start with the [technical contributor handoff](docs/handoffs/new-developer.md): current source status, Node 24 setup, a bounded AI usage-metering task, file ownership and the draft-PR checklist. It distinguishes the Freeman Show pilot from the later shared-world service.
+
 ## Development and two-agent setup
 
 Use Node 24 (`.nvmrc`), then `npm ci` and `npm run dev`. The development server uses port 8080. AI dialogue requires a server-side `XAI_API_KEY`; without it the town uses offline dialogue. Do not put the key in browser code or a `VITE_` variable.
