@@ -7,15 +7,18 @@ const server = await createServer({
   configFile: false,
   appType: "custom",
   logLevel: "error",
+  optimizeDeps: { noDiscovery: true },
   server: { middlewareMode: true, hmr: false, ws: false, watch: null },
 });
 const storageDescriptor = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
 try {
   const { createTown } = await server.ssrLoadModule("/src/game/town.ts");
   const { advanceTown } = await server.ssrLoadModule("/src/game/sim.ts");
-  const { applyResult } = await server.ssrLoadModule("/src/game/effects.ts");
+  const { applyResult, playerActions, applyPlayerAction } =
+    await server.ssrLoadModule("/src/game/effects.ts");
   const { offlineResult } = await server.ssrLoadModule("/src/game/offline.ts");
-  const { exportTown, parseTownFile, saveTown, getLastSaveResult } = await server.ssrLoadModule("/src/game/save.ts");
+  const { exportTown, parseTownFile, saveTown, getLastSaveResult } =
+    await server.ssrLoadModule("/src/game/save.ts");
   const { buildPrompt } = await server.ssrLoadModule("/src/game/prompt.ts");
   const { makeMemory, pushMemory, retrieve } = await server.ssrLoadModule("/src/game/memory.ts");
   const { auditWorld } = await server.ssrLoadModule("/src/game/world.ts");
@@ -51,20 +54,12 @@ try {
   const debt = createTown("Ada");
   const debtor = debt.agents.find((a) => a.id === "player");
   const baba = debt.agents.find((a) => a.id === "baba");
-  const say = (text) =>
-    applyResult(
-      debt,
-      offlineResult(debt, {
-        kind: "player",
-        agentId: "baba",
-        text,
-        day: debt.day,
-        minute: debt.minute,
-      }),
-    );
-  say("I'll take the bread on a tab.");
+  debtor.tile = { ...baba.tile };
+  const bread = playerActions(debt, "baba").find((a) => a.label.startsWith("Accept bread"));
+  applyPlayerAction(debt, "baba", bread.id);
   debtor.money = 20;
-  say("I want to pay my tab of 2. Here is your money.");
+  const payment = playerActions(debt, "baba").find((a) => a.label === "Pay 2");
+  applyPlayerAction(debt, "baba", payment.id);
   findings.offlineRepayment = {
     debt: debt.favors,
     playerMoney: debtor.money,

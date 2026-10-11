@@ -6,7 +6,7 @@ export type FocusLike = {
   closest?: (selector: string) => unknown;
 } | null;
 
-const CONTROLS = new Set(["BUTTON", "A", "INPUT", "TEXTAREA", "SELECT"]);
+const CONTROLS = new Set(["BUTTON", "A", "INPUT", "TEXTAREA", "SELECT", "SUMMARY"]);
 
 export function playerChatIds(memories: ChatMark[]): string[] {
   return memories.filter((m) => m.type === "chat" && m.with === "player").map((m) => m.id);
@@ -18,7 +18,12 @@ export function exchangeLanded(before: string[], after: string[]): boolean {
   return after.some((id) => !seen.has(id));
 }
 
-export function nextDraft(current: string, sent: string, sameContext: boolean, landed: boolean): string {
+export function nextDraft(
+  current: string,
+  sent: string,
+  sameContext: boolean,
+  landed: boolean,
+): string {
   if (landed && sameContext && current.trim() === sent) return "";
   return current;
 }
@@ -28,7 +33,9 @@ export function interactiveControl(target: FocusLike): boolean {
   const tag = (target.tagName ?? "").toUpperCase();
   if (CONTROLS.has(tag)) return true;
   if (target.role === "button" || target.role === "link") return true;
-  return Boolean(target.closest?.("button, a, input, textarea, select, [role='button'], [role='link']"));
+  return Boolean(
+    target.closest?.("button, a, input, textarea, select, summary, [role='button'], [role='link']"),
+  );
 }
 
 /** Enter / E open talk only from the town itself, not from a focused control, and not during a conversation. */
@@ -64,7 +71,10 @@ export function spokenTurns(text: string): { who: string; line: string }[] {
 }
 
 /** True when the reader is already at the newest lines, so a new reply may scroll into view. */
-export function followingLatest(scrollTop: number, scrollHeight: number, clientHeight: number): boolean {
-  if (scrollHeight <= clientHeight + 1) return true;
-  return scrollHeight - scrollTop - clientHeight < 48;
+export function followingLatest(
+  scrollTop: number,
+  latestBottom: number,
+  clientHeight: number,
+): boolean {
+  return latestBottom >= scrollTop && latestBottom - scrollTop - clientHeight < 48;
 }
