@@ -6,6 +6,17 @@ import { mentionsSeed, plain, purse } from "./text";
 import { nearestWalkable } from "./world";
 
 const KEY = "the-game-town-v1";
+export const MAX_TOWN_FILE_BYTES = 8 * 1024 * 1024;
+
+export type SaveResult =
+  | { ok: true; bytes: number; replayOmitted: boolean }
+  | { ok: false; reason: "unavailable" | "serialization" | "quota" | "storage" };
+
+let lastSaveResult: SaveResult | null = null;
+
+export function getLastSaveResult(): SaveResult | null {
+  return lastSaveResult;
+}
 const FACES = new Set<Face>(["n", "s", "e", "w"]);
 const MEMORY_TYPES = new Set<MemoryType>(["observe", "chat", "plan", "reflect", "favor"]);
 const FAVOR_STATUS = new Set(["owed", "paid", "forgiven", "broken"]);
@@ -238,33 +249,17 @@ export function validateTown(value: unknown): value is Town {
   return true;
 }
 
-function serialize(town: Town): string {
+function serialize(town: Town, omitReplay = false): string {
   const clone = JSON.parse(JSON.stringify(town)) as Town;
   for (const agent of clone.agents) agent.path = [];
+  if (omitReplay) clone.scrub = [];
   return JSON.stringify({ version: 1, town: clone });
 }
 
-function shed(town: Town) {
-  for (const agent of town.agents) {
-    const bulky = agent.memories.filter(
-      (m) => !m.protected && !m.seed && !mentionsSeed(m.text) && m.type !== "favor" && m.type !== "reflect",
-    );
-    bulky.sort((a, b) => a.day - b.day || a.minute - b.minute);
-    const drop = new Set(bulky.slice(0, 12).map((m) => m.id));
-    if (drop.size) agent.memories = agent.memories.filter((m) => !drop.has(m.id));
-  }
-  const settled = town.favors.filter((f) => f.status !== "owed");
-  if (settled.length > 20) {
-    const drop = new Set(settled.slice(0, settled.length - 20).map((f) => f.id));
-    town.favors = town.favors.filter((f) => !drop.has(f.id));
-  }
-  if (town.notices.length > 16) {
-    const keep = town.notices.filter((n) => mentionsSeed(n.text));
-    const rest = town.notices.filter((n) => !mentionsSeed(n.text));
-    town.notices = [...rest.slice(-(16 - Math.min(keep.length, 8))), ...keep].slice(-24);
-  }
-  if (town.retrievals.length > 8) town.retrievals.splice(0, town.retrievals.length - 8);
-  if (town.scrub.length > 180) town.scrub.splice(0, town.scrub.length - 180);
+function isQuota(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const { name, message } = error as { name?: unknown; message?: unknown };
+  return /QuotaExceededError|NS_ERROR_DOM_QUOTA_REACHED/i.test(`${name} ${message}`);
 }
 
 export function loadTown(): Town | null {
@@ -279,35 +274,52 @@ export function loadTown(): Town | null {
   }
 }
 
-export function saveTown(town: Town) {
+export function saveTownWithStatus(town: Town): SaveResult {
+  const done = (result: SaveResult) => (lastSaveResult = result);
   const box = store();
-  if (!box) return;
+  if (!box) return done({ ok: false, reason: "unavailable" });
+  let raw: string;
   try {
-    box.setItem(KEY, serialize(town));
+    raw = serialize(town);
   } catch {
+    return done({ ok: false, reason: "serialization" });
+  }
+  try {
+    box.setItem(KEY, raw);
+    return done({
+      ok: true,
+      bytes: new TextEncoder().encode(raw).byteLength,
+      replayOmitted: false,
+    });
+  } catch (error) {
+    if (!isQuota(error)) return done({ ok: false, reason: "storage" });
+    if (!town.scrub?.length) return done({ ok: false, reason: "quota" });
+    // Replay is disposable. Memories, identity and debts remain in both the save and the live town.
     try {
-      shed(town);
-      box.setItem(KEY, serialize(town));
-    } catch {
-      try {
-        shed(town);
-        box.setItem(KEY, serialize(town));
-      } catch {
-        /* The live town keeps running even if this browser cannot store it. */
-      }
+      raw = serialize(town, true);
+      box.setItem(KEY, raw);
+      return done({
+        ok: true,
+        bytes: new TextEncoder().encode(raw).byteLength,
+        replayOmitted: true,
+      });
+    } catch (retryError) {
+      return done({ ok: false, reason: isQuota(retryError) ? "quota" : "storage" });
     }
   }
 }
 
+export function saveTown(town: Town): void {
+  saveTownWithStatus(town);
+}
+
 export function exportTown(town: Town): string {
-  const clone = JSON.parse(JSON.stringify(town)) as Town;
-  for (const agent of clone.agents) agent.path = [];
-  return JSON.stringify({ version: 1, town: clone }, null, 2);
+  return serialize(town, true);
 }
 
 export function parseTownFile(text: string): Town | null {
   try {
-    if (text.length > 1_500_000) return null;
+    if (text.length > MAX_TOWN_FILE_BYTES || new TextEncoder().encode(text).byteLength > MAX_TOWN_FILE_BYTES) return null;
     const data = JSON.parse(text) as { version?: number; town?: unknown };
     const town = data && typeof data === "object" && "town" in data ? data.town : data;
     if (!validateTown(town)) return null;

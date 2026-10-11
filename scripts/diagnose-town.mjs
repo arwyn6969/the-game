@@ -15,7 +15,7 @@ try {
   const { advanceTown } = await server.ssrLoadModule("/src/game/sim.ts");
   const { applyResult } = await server.ssrLoadModule("/src/game/effects.ts");
   const { offlineResult } = await server.ssrLoadModule("/src/game/offline.ts");
-  const { exportTown, parseTownFile, saveTown } = await server.ssrLoadModule("/src/game/save.ts");
+  const { exportTown, parseTownFile, saveTown, getLastSaveResult } = await server.ssrLoadModule("/src/game/save.ts");
   const { buildPrompt } = await server.ssrLoadModule("/src/game/prompt.ts");
   const { makeMemory, pushMemory, retrieve } = await server.ssrLoadModule("/src/game/memory.ts");
   const { auditWorld } = await server.ssrLoadModule("/src/game/world.ts");
@@ -35,6 +35,7 @@ try {
         day: long.day,
         minute: long.minute,
         exportCharacters: exported.length,
+        exportUtf8Bytes: Buffer.byteLength(exported, "utf8"),
         compactCharacters: JSON.stringify(long).length,
         importsOwnExport: parseTownFile(exported) !== null,
         memoryCount: long.agents.reduce((n, a) => n + a.memories.length, 0),
@@ -163,6 +164,7 @@ try {
   findings.failedSave = {
     attempts,
     result: String(result),
+    status: getLastSaveResult(),
     memoryCountBefore: beforeQuota,
     memoryCountAfter: quota.agents.reduce((n, a) => n + a.memories.length, 0),
   };

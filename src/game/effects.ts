@@ -166,12 +166,14 @@ function applyFavor(town: Town, edit: FavorEdit | null | undefined, allowed?: Ag
   const to = maybeAgent(town, edit.to);
   if (!from || !to) return;
   if (!Array.isArray(town.favors)) town.favors = [];
-  from.money = purse(from.money);
-  to.money = purse(to.money);
   if (edit.action === "offer") {
     if (town.favors.filter((f) => f.status === "owed").length >= 24) return;
     const text = clip(edit.text || "A favor, still unnamed.", 180);
-    if (town.favors.some((f) => f.status === "owed" && f.from === from.id && f.to === to.id && f.text === text))
+    if (
+      town.favors.some(
+        (f) => f.status === "owed" && f.from === from.id && f.to === to.id && f.text === text,
+      )
+    )
       return;
     const amount = purse(edit.amount, 30);
     const favor: Favor = {
@@ -185,19 +187,23 @@ function applyFavor(town: Town, edit: FavorEdit | null | undefined, allowed?: Ag
     };
     town.favors.push(favor);
     const line = `${from.name} owes ${to.name}: ${text}${favor.amount ? ` (${favor.amount})` : ""}.`;
-    pushMemory(from, makeMemory(town, town.day, town.minute, "favor", line, 7, { protected: true }));
+    pushMemory(
+      from,
+      makeMemory(town, town.day, town.minute, "favor", line, 7, { protected: true }),
+    );
     pushMemory(to, makeMemory(town, town.day, town.minute, "favor", line, 7, { protected: true }));
     return;
   }
   const favor = edit.id
     ? town.favors.find((f) => f.id === edit.id && f.status === "owed")
     : town.favors.find((f) => f.status === "owed" && f.from === from.id && f.to === to.id);
-  if (!favor) return;
+  if (!favor || favor.from !== from.id || favor.to !== to.id) return;
   if (edit.action === "pay") {
-    const amount = purse(favor.amount, 30);
-    if (amount <= 0) return;
-    favor.amount = amount;
-    if (from.money < amount) {
+    const amount = favor.amount;
+    if (!Number.isInteger(amount) || amount < 0 || amount > 30) return;
+    if (!Number.isInteger(from.money) || from.money < 0 || from.money > 999) return;
+    if (!Number.isInteger(to.money) || to.money < 0 || to.money > 999) return;
+    if (from.money < amount || to.money + amount > 999) {
       pushMemory(
         from,
         makeMemory(
@@ -205,15 +211,17 @@ function applyFavor(town: Town, edit: FavorEdit | null | undefined, allowed?: Ag
           town.day,
           town.minute,
           "favor",
-          `I tried to pay ${to.name} and did not have ${amount}. The tab stays.`,
+          from.money < amount
+            ? `I tried to pay ${to.name} and did not have ${amount}. The tab stays.`
+            : `I tried to pay ${to.name}, but their purse could not hold ${amount}. The tab stays.`,
           6,
           { protected: true },
         ),
       );
       return;
     }
-    from.money = purse(from.money - amount);
-    to.money = purse(to.money + amount);
+    from.money -= amount;
+    to.money += amount;
     favor.status = "paid";
   } else if (edit.action === "forgive") {
     favor.status = "forgiven";

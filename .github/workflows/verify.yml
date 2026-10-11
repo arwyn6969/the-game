@@ -1,0 +1,27 @@
+name: Verify
+on:
+  pull_request:
+  push:
+    branches: [main, codex/agent-collaboration-setup]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: ""
+      XAI_API_KEY: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test:town
+      - run: npm test
+      - run: npm run diagnose:town
+      - run: npm run build

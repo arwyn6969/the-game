@@ -31,8 +31,10 @@ export function purse(n: unknown, cap = 999): number {
 /** Whether a line is about Kevin's private question: who he is, and the help he needs. */
 export function mentionsSeed(text: string): boolean {
   const t = text.toLowerCase();
-  if (t.includes("who he is") || t.includes("who kevin is") || t.includes("man under the apron")) return true;
-  if (t.includes("where i came") || t.includes("where he came") || t.includes("where kevin came")) return true;
+  if (t.includes("who he is") || t.includes("who kevin is") || t.includes("man under the apron"))
+    return true;
+  if (t.includes("where i came") || t.includes("where he came") || t.includes("where kevin came"))
+    return true;
   const aboutHim = t.includes("kevin") || t.includes("the cafe owner");
   if (
     aboutHim &&
@@ -52,11 +54,16 @@ export function mentionsSeed(text: string): boolean {
 }
 
 export function clip(text: string, n: number): string {
-  const t = String(text ?? "").replace(/\s+/g, " ").trim();
+  const t = String(text ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
   if (t.length <= n) return t;
   return `${t.slice(0, Math.max(1, n) - 1).trim()}…`;
 }
 
 export function plain(text: string, n: number): string {
-  return clip(String(text ?? "").replace(/[\u0000-\u001f`"]/g, " "), n);
+  const clean = Array.from(String(text ?? ""), (char) =>
+    char.charCodeAt(0) < 32 || char === "`" || char === '"' ? " " : char,
+  ).join("");
+  return clip(clean, n);
 }

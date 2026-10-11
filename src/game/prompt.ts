@@ -1,26 +1,15 @@
 import type { Agent, MindResult, ThinkJob, Town } from "./types";
 import { AGENT_IDS, NPC_IDS } from "./types";
 import { openThreadText } from "./effects";
-import { absMinute, agentById, retrieve } from "./memory";
+import { agentById } from "./memory";
+import { promptMemories } from "./retrieval";
 import { beatAt } from "./plan";
 import { clip, formatClock, periodName, plain } from "./text";
 import { placeTitle, zoneAt } from "./world";
 
-function packet(town: Town, agent: Agent) {
-  const now = absMinute(town.day, town.minute);
+function packet(town: Town, agent: Agent, job: ThinkJob) {
   const threads = Array.isArray(agent.threads) ? agent.threads : [];
-  const query = `${placeTitle(zoneAt(agent.tile.x, agent.tile.y))} ${threads
-    .map((t) => t.text)
-    .join(" ")} ${agent.want ?? ""}`;
-  const memories = retrieve(agent.memories ?? [], query, now, 4).map((s) => ({
-    text: clip(s.memory.text, 110),
-    type: s.memory.type,
-    importance: s.memory.importance,
-  }));
-  const kept = (agent.memories ?? []).find((m) => m.seed || (m.protected && m.type === "favor"));
-  if (kept && !memories.some((m) => m.text === clip(kept.text, 110))) {
-    memories.unshift({ text: clip(kept.text, 110), type: kept.type, importance: kept.importance });
-  }
+  const memories = promptMemories(town, agent, job);
   const owed = (town.favors ?? []).find((f) => f.status === "owed" && (f.from === agent.id || f.to === agent.id));
   const relationships = agent.relationships && typeof agent.relationships === "object" ? agent.relationships : {};
   return {
@@ -67,7 +56,7 @@ export function buildPrompt(town: Town, job: ThinkJob): string {
   const places =
     "cafe, library, dorms, park, townhouses, grocery, noticeboard, plaza, street";
   if (job.kind === "plan") {
-    const people = NPC_IDS.map((id) => packet(town, agentById(town, id)));
+    const people = NPC_IDS.map((id) => packet(town, agentById(town, id), job));
     return `${clock} Write the dawn plan for every resident except the player. Places must be one of: ${places}. Spot is "home" or "out". Cover 0–24 with blocks, no gaps. Status lines are what a neighbor would see — Kevin does not announce who he is in a status, and where he came from is that question, not a place. He may revise his private want. ${
       job.weekly
         ? "It is a 7th dawn: each resident rewrites selfSentence, one sentence, who they are right now. Identity drifts. It does not reset."
@@ -76,21 +65,21 @@ export function buildPrompt(town: Town, job: ThinkJob): string {
 People: ${JSON.stringify(people)}`;
   }
   if (job.kind === "reflect") {
-    const people = job.agents.map((id) => packet(town, agentById(town, id)));
+    const people = job.agents.map((id) => packet(town, agentById(town, id), job));
     return `${clock} Write exactly 2 first-person reflections for each listed resident, grounded in their retrieved memories. No advice to the player about software. ${
       job.weekly ? "Also rewrite selfSentence." : "Do not include selfSentence."
     } JSON: {"agents":[{"id":"arwyn","reflections":["",""],"selfSentence":""}]}
 People: ${JSON.stringify(people)}`;
   }
   if (job.kind === "talk") {
-    const a = packet(town, agentById(town, job.a));
-    const b = packet(town, agentById(town, job.b));
+    const a = packet(town, agentById(town, job.a), job);
+    const b = packet(town, agentById(town, job.b), job);
     return `${clock} These two are in the same place. Write at most 4 short spoken lines. Ground them in a retrieved memory and an open thread. They may offer, pay, forgive, or break a favor; open or rewrite a thread; pin one noticeboard note; start or drop a project; or replan only the remaining hours. Kevin reveals who he is — where he came from is that same question, not a place — and that he needs money or help ONLY if this conversation earned it. Relationship delta is -1, 0, or 1. No ending, no party. JSON: {"lines":[{"speaker":"kevin","text":""}],"relationships":[{"owner":"kevin","about":"arwyn","delta":1,"note":""}],"favor":null,"thread":null,"notice":null,"project":null,"replan":[],"revealedSeed":false}
 A: ${JSON.stringify(a)}
 B: ${JSON.stringify(b)}`;
   }
   const agent = agentById(town, job.agentId);
-  const body = packet(town, agent);
+  const body = packet(town, agent, job);
   const said = plain(job.text, 400);
   return `${clock} The player, ${plain(town.playerName, 18)}, says to ${agent.name}: "${said}". Reply in character, one or two sentences. You may use a retrieved memory and an open thread (${openThreadText(agent)}). You may ask them for time, money, an introduction, or — if you are stuck repeating yourself — for a mind to be switched on. You cannot obtain anything outside this town. You may start or drop one project of your own. JSON: {"reply":"","delta":0,"note":"","favor":null,"thread":null,"notice":null,"project":null}
 Resident: ${JSON.stringify(body)}
