@@ -14,11 +14,8 @@ The question can travel onto the board and into other people's memories. Ask Bab
 
 The town saves in this browser. Download and import keep the debts, notes, and selves.
 
-## Source
+## What is in this repo
 
-- `src/game` is the town: clock, memory, minds, pathfinding, and the picture.
-- `src/components/town/TownApp.tsx` is the screen.
-- `src/lib/mind.functions.ts` is the mind call.
-- `scripts/town-day.test.mjs` checks that after two days the question has traveled, the seed cannot be closed, money stays a number, and a later hour does not repeat the same line.
+The full app source as of October 2026: the town (`src/game`), the screen (`src/components/town`), the mind call, styles, and the day-two check (`scripts/town-day.test.mjs`).
 
-This is the simulation as of October 2026.
+`node scripts/town-day.test.mjs` needs the Vite app beside it. It checks that after two days the question has traveled, the seed cannot be closed, money stays a number, and a later hour does not repeat the same line.
