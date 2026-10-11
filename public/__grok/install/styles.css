@@ -1,0 +1,93 @@
+:root {
+  color-scheme: dark;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  background: #111;
+  color: #fafafa;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+.page {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: max(2rem, env(safe-area-inset-top)) 1.5rem 2rem;
+}
+.powered {
+  color: #aaa;
+  font-size: 0.9rem;
+}
+.powered-brand {
+  margin-left: 0.3rem;
+  color: #fafafa;
+}
+.content {
+  min-height: 65vh;
+  display: flex;
+  align-items: center;
+}
+.copy {
+  width: 100%;
+}
+h1 {
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.steps {
+  margin-top: 2rem;
+  line-height: 2.3;
+}
+.muted,
+.desktop-note {
+  color: #bbb;
+}
+.glass,
+.add-label {
+  display: inline-block;
+  padding: 0 0.6rem;
+  border: 1px solid #555;
+  border-radius: 0.4rem;
+}
+.desktop-open {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.9rem 1.2rem;
+  color: #111;
+  background: #fafafa;
+  border-radius: 0.5rem;
+}
+.desktop-open:focus-visible {
+  outline: 3px solid #e08a3c;
+  outline-offset: 4px;
+}
+.content-desktop,
+.step-ios27,
+.loc-ipad {
+  display: none;
+}
+.device-desktop .content {
+  display: none;
+}
+.device-desktop .content-desktop {
+  display: flex;
+}
+.device-tablet .loc-phone {
+  display: none;
+}
+.device-tablet .loc-ipad {
+  display: inline;
+}
+.ios-27-plus .step-ios-legacy {
+  display: none;
+}
+.ios-27-plus .step-ios27 {
+  display: block;
+}

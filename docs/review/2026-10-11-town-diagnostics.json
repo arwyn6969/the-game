@@ -1,0 +1,145 @@
+{
+  "reviewedBaselineCommit": "ee5ff6575300bbe8a3ff6509ffb1bc2fcd1e85e3",
+  "mode": "deterministic offline observations of the current checkout; not a passing regression suite",
+  "worldAudit": [],
+  "longevity": [
+    {
+      "day": 1,
+      "minute": 420,
+      "exportCharacters": 44451,
+      "compactCharacters": 25081,
+      "importsOwnExport": true,
+      "memoryCount": 7,
+      "northernMoney": 2,
+      "northernWages": 0
+    },
+    {
+      "day": 2,
+      "minute": 420,
+      "exportCharacters": 483256,
+      "compactCharacters": 163884,
+      "importsOwnExport": true,
+      "memoryCount": 69,
+      "northernMoney": 2,
+      "northernWages": 0
+    },
+    {
+      "day": 5,
+      "minute": 420,
+      "exportCharacters": 1688016,
+      "compactCharacters": 506015,
+      "importsOwnExport": false,
+      "memoryCount": 243,
+      "northernMoney": 2,
+      "northernWages": 0
+    },
+    {
+      "day": 7,
+      "minute": 420,
+      "exportCharacters": 2464565,
+      "compactCharacters": 712571,
+      "importsOwnExport": false,
+      "memoryCount": 364,
+      "northernMoney": 2,
+      "northernWages": 0
+    },
+    {
+      "day": 14,
+      "minute": 420,
+      "exportCharacters": 3060823,
+      "compactCharacters": 937915,
+      "importsOwnExport": false,
+      "memoryCount": 655,
+      "northernMoney": 2,
+      "northernWages": 0
+    },
+    {
+      "day": 30,
+      "minute": 420,
+      "exportCharacters": 3562249,
+      "compactCharacters": 1230253,
+      "importsOwnExport": false,
+      "memoryCount": 1188,
+      "northernMoney": 2,
+      "northernWages": 0
+    }
+  ],
+  "offlineRepayment": {
+    "debt": [
+      {
+        "id": "f11",
+        "from": "player",
+        "to": "baba",
+        "text": "Bread, to be paid back.",
+        "amount": 2,
+        "status": "owed",
+        "day": 1
+      }
+    ],
+    "playerMoney": 20,
+    "babaMoney": 9
+  },
+  "offlineHostileTrust": {
+    "score": 3,
+    "note": "Ada said: I hate you."
+  },
+  "retrieval": {
+    "queryAwareTop": "My missing emerald violin is hidden beside the fountain.",
+    "actualPromptMemories": [
+      {
+        "text": "The grocery ledger bread apples stock 0.",
+        "type": "observe",
+        "importance": 8
+      },
+      {
+        "text": "The grocery ledger bread apples stock 1.",
+        "type": "observe",
+        "importance": 8
+      },
+      {
+        "text": "The grocery ledger bread apples stock 2.",
+        "type": "observe",
+        "importance": 8
+      },
+      {
+        "text": "The grocery ledger bread apples stock 3.",
+        "type": "observe",
+        "importance": 8
+      }
+    ],
+    "hasRelevantMemory": false
+  },
+  "wrongDebtId": {
+    "favor": {
+      "id": "foreign",
+      "from": "northern",
+      "to": "baba",
+      "amount": 2,
+      "status": "paid",
+      "text": "Bread",
+      "day": 1
+    },
+    "balancesBefore": {
+      "kevin": 11,
+      "arwyn": 8,
+      "northern": 2,
+      "baba": 9,
+      "sub": 5,
+      "player": 4
+    },
+    "balancesAfter": {
+      "kevin": 13,
+      "arwyn": 8,
+      "northern": 2,
+      "baba": 9,
+      "sub": 5,
+      "player": 2
+    }
+  },
+  "failedSave": {
+    "attempts": 3,
+    "result": "undefined",
+    "memoryCountBefore": 7,
+    "memoryCountAfter": 7
+  }
+}

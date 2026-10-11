@@ -16,6 +16,52 @@ export function pairKey(a: AgentId, b: AgentId): string {
   return a < b ? `${a}|${b}` : `${b}|${a}`;
 }
 
+function occupied(town: Town, x: number, y: number, except: AgentId): boolean {
+  return town.agents.some((a) => a.id !== except && a.tile?.x === x && a.tile?.y === y);
+}
+
+function blockedTiles(town: Town, except: AgentId): Set<string> {
+  const taken = new Set<string>();
+  for (const agent of town.agents) {
+    if (agent.id === except || !Number.isFinite(agent.tile?.x) || !Number.isFinite(agent.tile?.y)) continue;
+    taken.add(`${agent.tile.x},${agent.tile.y}`);
+  }
+  return taken;
+}
+
+function nudgeApart(town: Town) {
+  const seen = new Set<string>();
+  const ordered = [...town.agents].sort((a, b) => (a.id === "player" ? -1 : b.id === "player" ? 1 : 0));
+  const dirs = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+    [1, 1],
+    [-1, 1],
+    [1, -1],
+    [-1, -1],
+  ] as const;
+  for (const agent of ordered) {
+    if (!agent.tile) continue;
+    const key = `${agent.tile.x},${agent.tile.y}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      continue;
+    }
+    for (const [dx, dy] of dirs) {
+      const nx = agent.tile.x + dx;
+      const ny = agent.tile.y + dy;
+      const next = `${nx},${ny}`;
+      if (!walkable(nx, ny) || seen.has(next)) continue;
+      agent.tile = { x: nx, y: ny };
+      agent.path = [];
+      seen.add(next);
+      break;
+    }
+  }
+}
+
 function npcs(town: Town): Agent[] {
   const out: Agent[] = [];
   for (const id of NPC_IDS) {
@@ -44,15 +90,20 @@ function moveNpc(town: Town, agent: Agent, hourStart: boolean) {
   agent.status = agent.id === "kevin" && mentionsSeed(beat.status) ? "on the floor, not saying much" : beat.status;
   const goal = goalFor(agent, beat);
   const at = agent.tile.x === goal.x && agent.tile.y === goal.y;
+  const blocked = blockedTiles(town, agent.id);
   if (hourStart || agent.path.length === 0) {
-    agent.path = at ? [] : findPath(agent.tile, goal);
+    agent.path = at ? [] : findPath(agent.tile, goal, blocked);
   }
   let steps = STEP;
   while (steps-- > 0 && agent.path.length) {
     const next = agent.path[0]!;
     const beside = Math.abs(next.x - agent.tile.x) + Math.abs(next.y - agent.tile.y) === 1;
     if (!beside || !walkable(next.x, next.y)) {
-      agent.path = findPath(agent.tile, goal);
+      agent.path = findPath(agent.tile, goal, blocked);
+      break;
+    }
+    if (occupied(town, next.x, next.y, agent.id)) {
+      agent.path = next.x === goal.x && next.y === goal.y ? [] : findPath(agent.tile, goal, blockedTiles(town, agent.id));
       break;
     }
     const dx = next.x - agent.tile.x;
@@ -103,67 +154,84 @@ function tillsOf(town: Town) {
   return town.tills;
 }
 
-function working(agent: Agent, zone: string, hour: number): "cafe" | "grocery" | null {
+function working(agent: Agent, zone: string, minute: number): "cafe" | "grocery" | null {
+  const beat = beatAt(agent, minute);
+  // A commitment, the current planned interval and physical attendance are all required.
+  // Status prose is never proof of work; approved shifts may run after the shop's usual hours.
+  if (beat.spot !== "out" || beat.place !== zone) return null;
+  const hour = Math.floor(minute / 60);
   if (agent.id === "kevin" && zone === "cafe" && hour >= 8 && hour < 17) return "cafe";
   if (agent.id === "baba" && zone === "grocery" && hour >= 8 && hour < 18) return "grocery";
-  const projects = Array.isArray(agent.projects) ? agent.projects : [];
-  const shift = projects.find((p) => p.status === "open" && p.kind === "shift");
-  if (shift && zone === "cafe" && hour >= 8 && hour < 17 && (shift.place === "cafe" || !shift.place)) return "cafe";
-  if (shift && zone === "grocery" && hour >= 8 && hour < 18 && shift.place === "grocery") return "grocery";
-  return null;
+  const shift = (agent.projects ?? []).find(
+    (p) =>
+      p.owner === agent.id &&
+      p.status === "open" &&
+      p.kind === "shift" &&
+      (p.place ?? "cafe") === zone,
+  );
+  return shift && (zone === "cafe" || zone === "grocery") ? zone : null;
 }
 
 function wages(town: Town) {
-  const hour = Math.floor(town.minute / 60);
-  for (const agent of npcs(town)) {
+  for (const agent of town.agents) {
     if (agent.paidToday) continue;
     if (!Number.isFinite(agent.shiftHours) || agent.shiftHours < 0) agent.shiftHours = 0;
-    const where = working(agent, zoneAt(agent.tile.x, agent.tile.y), hour);
+    const where = working(agent, zoneAt(agent.tile.x, agent.tile.y), town.minute);
     if (!where) continue;
-    agent.shiftHours += 1;
+    // Credit the minute being completed, rather than sampling attendance once an hour.
+    agent.shiftHours = (Math.round(agent.shiftHours * 60) + 1) / 60;
     if (agent.shiftHours < 3) continue;
     const wage = where === "cafe" ? 5 : 4;
+    if (!Number.isInteger(agent.money) || agent.money < 0 || agent.money > 999) continue;
     const tills = tillsOf(town);
     const till = purse(tills[where], 999);
-    const paid = Math.min(wage, till);
-    tills[where] = till - paid;
-    agent.money = purse(agent.money + paid);
+    if (till < wage || agent.money + wage > 999) {
+      const line =
+        till < wage
+          ? `I worked a shift at ${placeTitle(where)}, but the till cannot pay the full ${wage} yet.`
+          : `I worked a shift at ${placeTitle(where)}, but my purse cannot hold the wage yet.`;
+      if (
+        !agent.memories.some((m) => m.day === town.day && m.type === "favor" && m.text === line)
+      ) {
+        pushMemory(
+          agent,
+          makeMemory(town, town.day, town.minute, "favor", line, 6, { protected: true }),
+        );
+      }
+      continue;
+    }
+    tills[where] = till - wage;
+    agent.money += wage;
     agent.paidToday = true;
-    const line =
-      paid > 0
-        ? `${placeTitle(where)} paid me ${paid} for a shift I actually worked.`
-        : `I worked a shift at ${placeTitle(where)} and the till was empty.`;
-    pushMemory(agent, makeMemory(town, town.day, town.minute, "favor", line, 6, { protected: true }));
+    pushMemory(
+      agent,
+      makeMemory(
+        town,
+        town.day,
+        town.minute,
+        "favor",
+        `${placeTitle(where)} paid me ${wage} for a shift I actually worked.`,
+        6,
+        { protected: true },
+      ),
+    );
   }
   const player = town.agents.find((a) => a.id === "player");
-  if (player && !player.paidToday && hour >= 8 && hour < 17) {
-    const zone = zoneAt(player.tile.x, player.tile.y);
-    const where = zone === "cafe" ? "cafe" : zone === "grocery" && hour < 18 ? "grocery" : null;
-    if (where) {
-      if (!Number.isFinite(player.shiftHours) || player.shiftHours < 0) player.shiftHours = 0;
-      player.shiftHours += 1;
-      if (player.shiftHours >= 3) {
-        const wage = where === "cafe" ? 5 : 4;
-        const tills = tillsOf(town);
-        const till = purse(tills[where], 999);
-        const paid = Math.min(wage, till);
-        tills[where] = till - paid;
-        player.money = purse(player.money + paid);
-        player.paidToday = true;
-        const line =
-          paid > 0
-            ? `${placeTitle(where)} paid me ${paid}. I stood the shift.`
-            : `I stood a shift at ${placeTitle(where)} and the till was empty.`;
-        pushMemory(player, makeMemory(town, town.day, town.minute, "favor", line, 6, { protected: true }));
-      }
-    }
-  }
-  if (hour === 12 && player && zoneAt(player.tile.x, player.tile.y) !== "cafe") {
-    const already = player.memories?.some((m) => m.day === town.day && m.text.includes("missed Hobbs"));
+  if (town.minute === 12 * 60 && player && zoneAt(player.tile.x, player.tile.y) !== "cafe") {
+    const already = player.memories?.some(
+      (m) => m.day === town.day && m.text.includes("missed Hobbs"),
+    );
     if (!already) {
       pushMemory(
         player,
-        makeMemory(town, town.day, town.minute, "observe", "I missed Hobbs at noon. The day I wrote for myself went on without me.", 4),
+        makeMemory(
+          town,
+          town.day,
+          town.minute,
+          "observe",
+          "I missed Hobbs at noon. The day I wrote for myself went on without me.",
+          4,
+        ),
       );
     }
   }
@@ -240,6 +308,7 @@ export function stepMinute(town: Town, online: boolean): ThinkJob | null {
   if (!Array.isArray(town.agents) || town.agents.length === 0) return null;
   if (!Number.isFinite(town.day) || town.day < 1) town.day = 1;
   if (!Number.isFinite(town.minute)) town.minute = 0;
+  wages(town);
   town.minute += 1;
   if (town.minute >= 1440) {
     town.minute = 0;
@@ -258,7 +327,6 @@ export function stepMinute(town: Town, online: boolean): ThinkJob | null {
   if (hourStart) {
     for (const agent of npcs(town)) agent.callUsed = false;
     observe(town);
-    wages(town);
     if (town.minute === 5 * 60) {
       for (const agent of npcs(town)) agent.callUsed = true;
       job = { kind: "plan", day: town.day, minute: town.minute, weekly: town.day % 7 === 0 };
@@ -276,6 +344,7 @@ export function stepMinute(town: Town, online: boolean): ThinkJob | null {
     }
     if (!online && town.askedMindDay !== town.day && town.minute === 8 * 60) askForMind(town);
   }
+  nudgeApart(town);
   for (const agent of npcs(town)) moveNpc(town, agent, hourStart);
   updateColocation(town);
   if (!job) {

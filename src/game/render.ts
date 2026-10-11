@@ -1,8 +1,8 @@
 import type { AgentId, Town } from "./types";
 import { AGENT_IDS } from "./types";
 import { absMinute } from "./memory";
-import { mentionsSeed, periodName } from "./text";
-import { MAP_H, MAP_W, TILE, cell, cellsAll, zoneAt } from "./world";
+import { periodName } from "./text";
+import { ANCHORS, MAP_H, MAP_W, TILE, cell, cellsAll, zoneAt } from "./world";
 
 const PALETTE: Record<
   AgentId,
@@ -282,7 +282,8 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
   ctx.translate(-camX, -camY);
   ctx.drawImage(base, 0, 0);
   const period = periodName(minute);
-  const t = performance.now() / 500;
+  const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const t = reduced ? 0 : performance.now() / 500;
   ctx.fillStyle = "rgba(186, 214, 232, 0.35)";
   for (let y = 0; y < MAP_H; y++) {
     for (let x = 0; x < MAP_W; x++) {
@@ -317,7 +318,7 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
   ctx.fillStyle = "#8a5a32";
   ctx.fillRect(8 * TILE + 4, 18 * TILE + 18, TILE * 3, 6);
   const order = [...AGENT_IDS].sort((a, b) => (positions[a]?.y ?? 0) - (positions[b]?.y ?? 0));
-  const bob = Math.sin(performance.now() / 160) * 1.2;
+  const bob = reduced ? 0 : Math.sin(performance.now() / 160) * 1.2;
   const showingNow = minute === town.minute;
   for (const id of order) {
     const pos = positions[id];
@@ -339,22 +340,6 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
     ctx.fillStyle = id === "player" ? "#e7c27a" : "#f3ead7";
     ctx.fillText(label, px, py - 41);
     const agent = town.agents.find((a) => a.id === id);
-    const holds = agent && id !== "kevin" && id !== "player" && (agent.memories ?? []).some((m) => m.seed || mentionsSeed(m.text));
-    if (holds) {
-      ctx.fillStyle = "#e08a3c";
-      ctx.fillRect(px + w / 2 - 2, py - 50, 5, 5);
-    }
-    const playerPos = positions.player;
-    const nearYou = playerPos && Math.abs(playerPos.x - pos.x) + Math.abs(playerPos.y - pos.y) <= 3;
-    if (nearYou && agent?.selfSentence && id !== "player") {
-      const sentence = agent.selfSentence.slice(0, 42);
-      ctx.font = "500 10px Outfit, sans-serif";
-      const sw = ctx.measureText(sentence).width + 8;
-      ctx.fillStyle = "rgba(28,23,18,0.72)";
-      ctx.fillRect(px - sw / 2, py - 36, sw, 12);
-      ctx.fillStyle = "#f3ead7";
-      ctx.fillText(sentence, px, py - 27);
-    }
     const now = absMinute(opts.day, minute);
     if (showingNow && agent?.bubble && typeof agent.bubble.text === "string" && agent.bubble.until >= now) {
       const text = agent.bubble.text.slice(0, 78);
@@ -367,6 +352,32 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
     }
   }
   ctx.restore();
+  const playerPos = positions.player;
+  if (playerPos && opts.day === 1) {
+    const dx = ANCHORS.cafe.x - playerPos.x;
+    const dy = ANCHORS.cafe.y - playerPos.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > 4) {
+      const ang = Math.atan2(dy, dx);
+      const cx = viewW / 2 + Math.cos(ang) * 72;
+      const cy = viewH / 2 + Math.sin(ang) * 48;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(ang);
+      ctx.fillStyle = "rgba(224, 138, 60, 0.9)";
+      ctx.fillRect(0, -3, 16, 6);
+      ctx.beginPath();
+      ctx.moveTo(16, -8);
+      ctx.lineTo(28, 0);
+      ctx.lineTo(16, 8);
+      ctx.fill();
+      ctx.restore();
+      ctx.font = "600 11px Outfit, sans-serif";
+      ctx.fillStyle = "#f3ead7";
+      ctx.textAlign = "center";
+      ctx.fillText("Hobbs", cx, cy - 14);
+    }
+  }
   const shade =
     period === "Night" ? "rgba(18, 28, 58, 0.42)" : period === "Dusk" ? "rgba(120, 58, 28, 0.18)" : period === "Dawn" ? "rgba(214, 140, 90, 0.16)" : "rgba(0,0,0,0)";
   if (period !== "Day") {
@@ -393,6 +404,27 @@ export function screenToWorld(sx: number, sy: number, camX: number, camY: number
   return { x: (sx + camX) / TILE, y: (sy + camY) / TILE };
 }
 
+export function pickAgents(
+  sx: number,
+  sy: number,
+  camX: number,
+  camY: number,
+  positions: Record<AgentId, { x: number; y: number }>,
+): AgentId[] {
+  const world = screenToWorld(sx, sy, camX, camY);
+  const hits: { id: AgentId; d: number }[] = [];
+  for (const id of AGENT_IDS) {
+    const p = positions[id];
+    if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
+    const dx = world.x - (p.x + 0.5);
+    const dy = world.y - (p.y + 0.75);
+    if (Math.abs(dx) > 0.7 || dy > 0.25 || dy < -1.9) continue;
+    hits.push({ id, d: Math.hypot(dx, dy) });
+  }
+  hits.sort((a, b) => a.d - b.d || AGENT_IDS.indexOf(a.id) - AGENT_IDS.indexOf(b.id));
+  return hits.map((hit) => hit.id);
+}
+
 export function pickAgent(
   sx: number,
   sy: number,
@@ -400,19 +432,7 @@ export function pickAgent(
   camY: number,
   positions: Record<AgentId, { x: number; y: number }>,
 ): AgentId | null {
-  const world = screenToWorld(sx, sy, camX, camY);
-  let best: AgentId | null = null;
-  let dist = 0.7;
-  for (const id of AGENT_IDS) {
-    const p = positions[id];
-    if (!p) continue;
-    const d = Math.hypot(p.x + 0.5 - world.x, p.y + 0.5 - world.y);
-    if (d < dist) {
-      dist = d;
-      best = id;
-    }
-  }
-  return best;
+  return pickAgents(sx, sy, camX, camY, positions)[0] ?? null;
 }
 
 export function onBoard(x: number, y: number): boolean {

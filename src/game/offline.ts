@@ -1,23 +1,11 @@
 import type { Agent, AgentId, Block, MindResult, ThinkJob, ThreadEdit, Town } from "./types";
 import { NPC_IDS } from "./types";
 import { openThreadText } from "./effects";
-import { absMinute, agentById, logRetrieval, retrieve } from "./memory";
+import { absMinute, agentById, retrieve } from "./memory";
+import { promptMemories } from "./retrieval";
 import { beatAt } from "./plan";
 import { clip, formatClock, mentionsSeed, periodName } from "./text";
 import { placeTitle, placeTitleOf, zoneAt } from "./world";
-
-function presenceQuery(town: Town, agent: Agent): string {
-  const zone = zoneAt(agent.tile.x, agent.tile.y);
-  const near = town.agents
-    .filter(
-      (o) =>
-        o.id !== agent.id &&
-        zoneAt(o.tile.x, o.tile.y) === zone,
-    )
-    .map((o) => o.name);
-  const threads = agent.threads.filter((t) => t.open).map((t) => t.text).join(" ");
-  return `${placeTitle(zone)} ${near.join(" ")} ${threads} ${agent.selfSentence}`;
-}
 
 export function prepareRetrievals(town: Town, job: ThinkJob) {
   const ids: AgentId[] =
@@ -30,14 +18,7 @@ export function prepareRetrievals(town: Town, job: ThinkJob) {
           : [job.agentId];
   for (const id of ids) {
     const agent = agentById(town, id);
-    if (
-      town.retrievals.some(
-        (r) => r.day === town.day && r.minute === town.minute && r.agentId === id,
-      )
-    ) {
-      continue;
-    }
-    logRetrieval(town, agent, presenceQuery(town, agent));
+    promptMemories(town, agent, job);
   }
 }
 
@@ -569,16 +550,13 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
   ensureLists(town);
   const agent = agentById(town, id);
   const player = agentById(town, "player");
-  const place = placeTitle(zoneAt(agent.tile.x, agent.tile.y));
-  const mem = quote(town, agent, `${text} ${player.name} ${place}`);
-  const thread = openThreadText(agent);
-  const clock = formatClock(town.minute);
-  const probing = /who are you|who is he|who he is|who you are|man under|where (?:did|do) you come|came from|your story|origin|need(?:s)? help with who/i.test(text);
+  const probing =
+    /who are you|who is he|who he is|who you are|man under|where (?:did|do) you come|came from|your story|origin|need(?:s)? help with who/i.test(
+      text,
+    );
   let reply = compose(town, agent, player);
-  let revealed = false;
   if (agent.id === "kevin" && probing) {
     reply = `${reply} You asked, so I will not dodge it. I want to find out who I am. Where I came from is that same question — not a town, the man under the apron. I need to know where I am going, and how to make some money. I will need friends and help.`;
-    revealed = true;
   } else if (agent.id === "kevin") {
     reply = `${reply} I am not putting the private part on the counter. Not for a stranger's first question. Stay, if you mean to.`;
   } else if (probing && holds(agent)) {
@@ -587,12 +565,58 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
     reply = `${reply} If you can switch a mind on, do. Until then I am only this place, this hour, and what I already retrieved.`;
   }
   const wantsBread = agent.id === "baba" && /\b(bread|apples?|food|eat|buy)\b/i.test(text);
-  const alreadyOwes = (town.favors ?? []).some((f) => f.from === "player" && f.to === "baba" && f.status === "owed");
-  const introducing = /\bintroduc/i.test(text) && (agent.id === "kevin" || agent.id === "northern");
-  if (wantsBread && alreadyOwes) {
-    reply = `${reply} You already owe me for bread. I am not opening a second tab.`;
+  const debt = town.favors.find((f) => f.from === "player" && f.to === id && f.status === "owed");
+  const repaying = /\b(repay|pay|settle)\b/i.test(text);
+  const inspecting =
+    /\b(?:what|how much)\b.*\b(?:owe|tab|debt)\b|\b(?:inspect|check|show)\b.*\b(?:tab|debt)\b|^\s*(?:my )?(?:tab|debt)\s*\??\s*$/i.test(
+      text,
+    );
+  const introducing =
+    /\bintroduc/i.test(text) &&
+    ((id === "kevin" && /\bnorthern\b/i.test(text)) ||
+      (id === "northern" && /\bkevin\b/i.test(text)));
+  const canPay =
+    debt &&
+    Number.isInteger(debt.amount) &&
+    debt.amount >= 0 &&
+    debt.amount <= 30 &&
+    Number.isInteger(player.money) &&
+    player.money >= debt.amount &&
+    player.money <= 999 &&
+    Number.isInteger(agent.money) &&
+    agent.money >= 0 &&
+    agent.money + debt.amount <= 999;
+  let favor: import("./types").FavorEdit | null = null;
+  if (repaying) {
+    if (!debt) reply = "There is no open tab between us. Nothing to pay again.";
+    else if (!canPay)
+      reply = `The tab is ${debt.amount}. We cannot transfer that in full right now; it stays open.`;
+    else {
+      reply = debt.amount
+        ? `Paid: ${debt.amount}. That tab is closed.`
+        : "That favor is completed. No money changed hands.";
+      favor = {
+        action: "pay",
+        id: debt.id,
+        from: debt.from,
+        to: debt.to,
+        amount: debt.amount,
+        text: debt.text,
+      };
+    }
+  } else if (inspecting) {
+    reply = debt ? `You owe me ${debt.amount}: ${debt.text}` : "There is no open tab between us.";
+  } else if (wantsBread && debt) {
+    reply = "You already owe me for bread. I am not opening a second tab.";
   } else if (wantsBread) {
-    reply = `${reply} Bread is 2. I will write it as a tab. Pay it when you have it.`;
+    reply = "Bread is 2. I will write it as a tab. Pay it when you have it.";
+    favor = {
+      action: "offer",
+      from: "player",
+      to: "baba",
+      amount: 2,
+      text: "Bread, to be paid back.",
+    };
   } else if (introducing) {
     reply = `${reply} All right. I will remember that you introduced us. That is not the same as knowing him.`;
   }
@@ -602,12 +626,17 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
     agentId: id,
     playerText: text,
     reply,
-    delta: text.trim().length > 1 ? 1 : 0,
+    delta: 0,
     note: clip(`${player.name} said: ${text}`, 160),
-    favor: wantsBread && !alreadyOwes ? { action: "offer", from: "player", to: "baba", amount: 2, text: "Bread, to be paid back." } : null,
-    thread: introducing
-      ? { owner: agent.id, action: "open" as const, text: `${player.name} introduced Northern and Kevin. It is not friendship yet.` }
-      : null,
+    favor,
+    thread:
+      introducing && !repaying && !inspecting
+        ? {
+            owner: agent.id,
+            action: "open" as const,
+            text: `${player.name} introduced Northern and Kevin. It is not friendship yet.`,
+          }
+        : null,
     notice: null,
   };
 }

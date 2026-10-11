@@ -1,13 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  Download,
-  Pause,
-  Pin,
-  Play,
-  SkipForward,
-  Upload,
-  X,
-} from "lucide-react";
+import { Download, Pause, Pin, Play, SkipForward, Upload, X } from "lucide-react";
 import type { Agent, AgentId, Face, ThinkJob, Town } from "@/game/types";
 import { applyResult, spreadView } from "@/game/effects";
 import { agentById } from "@/game/memory";
@@ -20,15 +12,39 @@ import {
   glideOf,
   onBoard,
   paint,
-  pickAgent,
+  pickAgents,
   resetGlide,
   syncGlide,
 } from "@/game/render";
-import { exportTown, loadTown, parseTownFile, saveTown } from "@/game/save";
+import {
+  exportTown,
+  loadTown,
+  MAX_TOWN_FILE_BYTES,
+  parseTownFile,
+  saveTownWithStatus,
+  type SaveResult,
+} from "@/game/save";
 import { advanceTown, frameAt, stepMinute } from "@/game/sim";
 import { formatClock, periodName } from "@/game/text";
 import { createTown } from "@/game/town";
-import { auditWorld, cell, nearestWalkable, placeTitle, TILE, walkable, zoneAt } from "@/game/world";
+import {
+  auditWorld,
+  ANCHORS,
+  cell,
+  nearestWalkable,
+  placeTitle,
+  TILE,
+  walkable,
+  zoneAt,
+} from "@/game/world";
+import {
+  exchangeLanded,
+  interactiveControl,
+  nextDraft,
+  opensTalk,
+  playerChatIds,
+  type FocusLike,
+} from "./talk";
 
 declare global {
   interface Window {
@@ -51,13 +67,46 @@ declare global {
 
 type Replay = { d: number; m: number };
 
-function previewDay(text: string): number | null {
+function previewDay(text: string): { day: number; version: number | null } | null {
   try {
-    const value = JSON.parse(text) as { day?: unknown };
-    return typeof value.day === "number" && Number.isFinite(value.day) ? value.day : null;
+    const value = JSON.parse(text) as {
+      day?: unknown;
+      version?: unknown;
+      town?: { day?: unknown };
+    };
+    const raw =
+      value && typeof value === "object" && value.town && typeof value.town === "object"
+        ? value.town.day
+        : value.day;
+    if (typeof raw !== "number" || !Number.isFinite(raw)) return null;
+    return { day: raw, version: typeof value.version === "number" ? value.version : null };
   } catch {
     return null;
   }
+}
+
+function hobbsWay(x: number, y: number): string {
+  const dx = ANCHORS.cafe.x - x;
+  const dy = ANCHORS.cafe.y - y;
+  if (Math.abs(dx) + Math.abs(dy) <= 3) return "Hobbs is here.";
+  const parts: string[] = [];
+  if (dy < -1) parts.push("north");
+  if (dy > 1) parts.push("south");
+  if (dx > 1) parts.push("east");
+  if (dx < -1) parts.push("west");
+  return `Hobbs is ${parts.join(" and ")}.`;
+}
+
+function besideYou(town: Town): AgentId | null {
+  const player = agentById(town, "player");
+  let best: { id: AgentId; d: number } | null = null;
+  for (const agent of town.agents) {
+    if (agent.id === "player") continue;
+    const d = Math.abs(agent.tile.x - player.tile.x) + Math.abs(agent.tile.y - player.tile.y);
+    if (d > 2) continue;
+    if (!best || d < best.d) best = { id: agent.id, d };
+  }
+  return best?.id ?? null;
 }
 
 const GAME_KEYS = new Set([
@@ -89,10 +138,13 @@ function axis(keys: Set<string>) {
   return { x, y };
 }
 
-function typingTarget(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) return false;
-  const tag = target.tagName;
-  return tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable;
+function focusOf(target: EventTarget | null): FocusLike {
+  if (!(target instanceof Element)) return null;
+  return {
+    tagName: target.tagName,
+    role: target.getAttribute("role"),
+    closest: (selector) => target.closest(selector),
+  };
 }
 
 export function TownApp() {
@@ -129,6 +181,18 @@ export function TownApp() {
   const [importError, setImportError] = useState("");
   const [draft, setDraft] = useState("");
   const [hint, setHint] = useState(townRef.current ? !townRef.current.sawHint : true);
+  const [inspect, setInspect] = useState(false);
+  const [sendNote, setSendNote] = useState("");
+  const [crowd, setCrowd] = useState<AgentId[] | null>(null);
+  const [exportNote, setExportNote] = useState("");
+  const [saveStatus, setSaveStatus] = useState<SaveResult | null>(null);
+  const panelRef = useRef<AgentId | null>(null);
+  const boardRef = useRef(false);
+
+  function persistTown(live: Town) {
+    const result = saveTownWithStatus(live);
+    if (mounted.current) setSaveStatus(result);
+  }
 
   useEffect(() => {
     onlineRef.current = online;
@@ -165,6 +229,22 @@ export function TownApp() {
   }, []);
 
   useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const apply = () => {
+      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      document.documentElement.style.setProperty("--vv-bottom", `${inset}px`);
+    };
+    apply();
+    vv.addEventListener("resize", apply);
+    vv.addEventListener("scroll", apply);
+    return () => {
+      vv.removeEventListener("resize", apply);
+      vv.removeEventListener("scroll", apply);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!hiccup) return;
     const id = window.setTimeout(() => setHiccup(false), 4000);
     return () => window.clearTimeout(id);
@@ -176,6 +256,9 @@ export function TownApp() {
     if (mounted.current) setThinking(job.kind);
     let timed: number | undefined;
     let applied = false;
+    let landed = false;
+    const mark = () =>
+      job.kind === "player" ? playerChatIds(agentById(live, job.agentId).memories ?? []) : [];
     try {
       prepareRetrievals(live, job);
       const res = await new Promise<Awaited<ReturnType<typeof thinkTown>>>((resolve, reject) => {
@@ -187,8 +270,10 @@ export function TownApp() {
       if (res.text.length > 20_000) throw new Error("huge");
       const parsed = parseMind(job, res.text);
       try {
+        const before = mark();
         if (parsed) applyResult(live, parsed);
         else applyResult(live, offlineResult(live, job));
+        if (job.kind === "player") landed = exchangeLanded(before, mark());
         applied = true;
         if (!parsed && mounted.current) setHiccup(true);
       } catch {
@@ -197,7 +282,9 @@ export function TownApp() {
     } catch {
       if (townRef.current === live && !applied) {
         try {
+          const before = mark();
           applyResult(live, offlineResult(live, job));
+          if (job.kind === "player") landed = exchangeLanded(before, mark());
         } catch {
           /* The clock must resume even if the fallback cannot land. */
         }
@@ -206,17 +293,53 @@ export function TownApp() {
     } finally {
       if (timed) window.clearTimeout(timed);
       pendingRef.current = false;
-      if (townRef.current === live) saveTown(live);
+      if (townRef.current === live) persistTown(live);
       if (mounted.current) {
         setThinking("");
         setTick((n) => n + 1);
+        if (job.kind === "player") {
+          const same = townRef.current === live && panelRef.current === job.agentId;
+          setDraft((current) => nextDraft(current, job.text, same, landed));
+          if (townRef.current === live) {
+            setSendNote(landed ? "They heard you." : "That did not land. Your line is still here.");
+          }
+          if (landed && townRef.current === live && (live.guide ?? 0) < 3) {
+            live.guide = 3;
+            live.sawHint = true;
+            setHint(false);
+            persistTown(live);
+          }
+        }
       }
     }
   };
 
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
-      if (typingTarget(event.target)) return;
+      if (event.code === "Escape") {
+        if (panelRef.current) {
+          setPinned(false);
+          setPanel(null);
+        }
+        setCrowd(null);
+        if (boardRef.current) setBoard(false);
+        return;
+      }
+      if (interactiveControl(focusOf(event.target))) return;
+      if (opensTalk(event.code, false, Boolean(panelRef.current || boardRef.current))) {
+        const live = townRef.current;
+        if (!live || replayRef.current) return;
+        const nearId = besideYou(live);
+        if (!nearId) return;
+        event.preventDefault();
+        setPanel(nearId);
+        if (nearId === "kevin" && (live.guide ?? 0) < 2) {
+          live.guide = 2;
+          persistTown(live);
+          setTick((n) => n + 1);
+        }
+        return;
+      }
       if (!GAME_KEYS.has(event.code)) return;
       event.preventDefault();
       keysRef.current.add(event.code);
@@ -267,7 +390,7 @@ export function TownApp() {
 
     const stepPlayer = () => {
       const live = townRef.current;
-      if (!live || replayRef.current !== null) return;
+      if (!live || replayRef.current !== null || pendingRef.current) return;
       const { x, y } = axis(keysRef.current);
       if (!x && !y) {
         moveCool = 0;
@@ -278,10 +401,16 @@ export function TownApp() {
       }
       if (moveCool > 0) return;
       const player = agentById(live, "player");
-      if (!walkable(player.tile.x, player.tile.y)) player.tile = nearestWalkable(player.tile.x, player.tile.y);
+      if (!walkable(player.tile.x, player.tile.y))
+        player.tile = nearestWalkable(player.tile.x, player.tile.y);
       const nx = player.tile.x + x;
       const ny = player.tile.y + y;
-      if (!walkable(nx, ny)) {
+      if (
+        !walkable(nx, ny) ||
+        live.agents.some(
+          (agent) => agent.id !== "player" && agent.tile.x === nx && agent.tile.y === ny,
+        )
+      ) {
         moveCool = 0.16;
         return;
       }
@@ -290,7 +419,7 @@ export function TownApp() {
       player.status = `walking ${placeTitle(zoneAt(nx, ny))}`;
       if ((live.guide ?? 0) < 1 && zoneAt(nx, ny) === "cafe") {
         live.guide = 1;
-        saveTown(live);
+        persistTown(live);
         setTick((n) => n + 1);
       }
       moveCool = 0.16;
@@ -302,70 +431,78 @@ export function TownApp() {
 
     const loop = (now: number) => {
       try {
-      const dt = Math.min(0.05, (now - last) / 1000);
-      last = now;
-      const live = townRef.current;
-      const canvas = canvasRef.current;
-      if (live && canvas) {
-        moveCool = Math.max(0, moveCool - dt);
-        stepPlayer();
-        if (replayRef.current === null && speedRef.current > 0 && !hourLock.current) {
-          clock += dt * 1000;
-          const span = 1000 / speedRef.current;
-          let guard = 0;
-          let advanced = false;
-          while (clock >= span && guard++ < 6) {
-            clock -= span;
-            const minds = onlineRef.current && document.visibilityState === "visible";
-            let job: ThinkJob | null = null;
-            try {
-              job = stepMinute(live, minds);
-            } catch {
-              break;
+        const dt = Math.min(0.05, (now - last) / 1000);
+        last = now;
+        const live = townRef.current;
+        const canvas = canvasRef.current;
+        if (live && canvas) {
+          moveCool = Math.max(0, moveCool - dt);
+          stepPlayer();
+          if (
+            replayRef.current === null &&
+            speedRef.current > 0 &&
+            !hourLock.current &&
+            !pendingRef.current
+          ) {
+            clock += dt * 1000;
+            const span = 1000 / speedRef.current;
+            let guard = 0;
+            let advanced = false;
+            while (clock >= span && guard++ < 6) {
+              clock -= span;
+              const minds = onlineRef.current && document.visibilityState === "visible";
+              let job: ThinkJob | null = null;
+              try {
+                job = stepMinute(live, minds);
+              } catch {
+                break;
+              }
+              if (live.minute % 60 === 0) persistTown(live);
+              advanced = true;
+              if (takeJob(job)) break;
             }
-            if (live.minute % 60 === 0) saveTown(live);
-            advanced = true;
-            if (takeJob(job)) break;
+            if (advanced) setTick((n) => n + 1);
           }
-          if (advanced) setTick((n) => n + 1);
+          const parent = canvas.parentElement;
+          const w = parent?.clientWidth || 800;
+          const h = canvas.clientHeight || 600;
+          if (w !== view.w || h !== view.h) {
+            view.w = w;
+            view.h = h;
+          }
+          const snap = speedRef.current === 4 || pendingRef.current;
+          if (replayRef.current === null) syncGlide(live, dt, snap);
+          const positions = positionsFor(live, replayRef.current);
+          const playerPos = positions.player ?? glideOf("player");
+          const cam = cameraFor(playerPos.x, playerPos.y, w, h);
+          const dpr = Math.min(2, window.devicePixelRatio || 1);
+          if (canvas.width !== Math.floor(w * dpr) || canvas.height !== Math.floor(h * dpr)) {
+            canvas.width = Math.floor(w * dpr);
+            canvas.height = Math.floor(h * dpr);
+          }
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            const minute = replayRef.current?.m ?? live.minute;
+            paint(ctx, {
+              viewW: w,
+              viewH: h,
+              town: live,
+              minute,
+              day: replayRef.current?.d ?? live.day,
+              camX: cam.camX,
+              camY: cam.camY,
+              positions,
+              selected: null,
+              names: Object.fromEntries(live.agents.map((a) => [a.id, a.name])) as Record<
+                AgentId,
+                string
+              >,
+            });
+            canvas.dataset.camx = String(cam.camX);
+            canvas.dataset.camy = String(cam.camY);
+          }
         }
-        const parent = canvas.parentElement;
-        const w = parent?.clientWidth || 800;
-        const h = canvas.clientHeight || 600;
-        if (w !== view.w || h !== view.h) {
-          view.w = w;
-          view.h = h;
-        }
-        const snap = speedRef.current === 4 || pendingRef.current;
-        if (replayRef.current === null) syncGlide(live, dt, snap);
-        const positions = positionsFor(live, replayRef.current);
-        const playerPos = positions.player ?? glideOf("player");
-        const cam = cameraFor(playerPos.x, playerPos.y, w, h);
-        const dpr = Math.min(2, window.devicePixelRatio || 1);
-        if (canvas.width !== Math.floor(w * dpr) || canvas.height !== Math.floor(h * dpr)) {
-          canvas.width = Math.floor(w * dpr);
-          canvas.height = Math.floor(h * dpr);
-        }
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-          const minute = replayRef.current?.m ?? live.minute;
-          paint(ctx, {
-            viewW: w,
-            viewH: h,
-            town: live,
-            minute,
-            day: replayRef.current?.d ?? live.day,
-            camX: cam.camX,
-            camY: cam.camY,
-            positions,
-            selected: null,
-            names: Object.fromEntries(live.agents.map((a) => [a.id, a.name])) as Record<AgentId, string>,
-          });
-          canvas.dataset.camx = String(cam.camX);
-          canvas.dataset.camy = String(cam.camY);
-        }
-      }
       } catch (error) {
         if (!loopLogged) {
           loopLogged = true;
@@ -377,12 +514,12 @@ export function TownApp() {
     raf = requestAnimationFrame(loop);
 
     const onLeave = () => {
-      if (townRef.current) saveTown(townRef.current);
+      if (townRef.current) persistTown(townRef.current);
     };
     const onHide = () => {
-      if (document.visibilityState === "hidden" && townRef.current) saveTown(townRef.current);
+      if (document.visibilityState === "hidden" && townRef.current) persistTown(townRef.current);
     };
-    window.addEventListener("beforeunload", onLeave);
+    window.addEventListener("pagehide", onLeave);
     document.addEventListener("visibilitychange", onHide);
 
     const player = () => agentById(townRef.current!, "player");
@@ -398,10 +535,11 @@ export function TownApp() {
     };
     window.__game = {
       advanceMinutes: (n: number) => {
+        if (pendingRef.current) return null;
         speedRef.current = 0;
         const live = townRef.current!;
         advanceTown(live, n);
-        saveTown(live);
+        persistTown(live);
         resetGlide(live);
         setSpeed(0);
         setTick((v) => v + 1);
@@ -412,7 +550,13 @@ export function TownApp() {
           holders: spread.holders.map((a) => a.name),
           notes: spread.notes.map((n) => n.text),
           missed: spread.missed.length,
-          favors: live.favors.map((f) => ({ from: f.from, to: f.to, status: f.status, amount: f.amount, text: f.text })),
+          favors: live.favors.map((f) => ({
+            from: f.from,
+            to: f.to,
+            status: f.status,
+            amount: f.amount,
+            text: f.text,
+          })),
           selves: Object.fromEntries(live.agents.map((a) => [a.id, a.selfSentence])),
           money: Object.fromEntries(live.agents.map((a) => [a.id, a.money])),
         };
@@ -427,7 +571,7 @@ export function TownApp() {
 
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener("beforeunload", onLeave);
+      window.removeEventListener("pagehide", onLeave);
       document.removeEventListener("visibilitychange", onHide);
       delete window.__controlsTest;
       delete window.__game;
@@ -439,7 +583,7 @@ export function TownApp() {
     const town = createTown(name);
     town.paused = true;
     townRef.current = town;
-    saveTown(town);
+    persistTown(town);
     speedRef.current = 0;
     setSpeed(0);
     setHint(true);
@@ -452,7 +596,7 @@ export function TownApp() {
     const live = townRef.current;
     if (!live) return;
     live.paused = next === 0;
-    saveTown(live);
+    persistTown(live);
   }
 
   function nextHour() {
@@ -473,7 +617,7 @@ export function TownApp() {
         if (job) break;
       }
       try {
-        saveTown(live);
+        persistTown(live);
       } catch {
         /* keep the hour */
       }
@@ -482,7 +626,7 @@ export function TownApp() {
       else if (job) {
         try {
           applyResult(live, offlineResult(live, job));
-          saveTown(live);
+          persistTown(live);
         } catch {
           /* the hour still ends */
         }
@@ -503,13 +647,19 @@ export function TownApp() {
     const positions = positionsFor(live, null);
     const playerPos = positions.player ?? { x: 0, y: 0 };
     const cam = cameraFor(playerPos.x, playerPos.y, rect.width, rect.height);
-    const hit = pickAgent(sx, sy, cam.camX, cam.camY, positions);
-    if (hit) {
-      if (!pinned) setPanel(hit);
+    const hit = pickAgents(sx, sy, cam.camX, cam.camY, positions);
+    if (hit.length > 1) {
+      setCrowd(hit);
+      return;
+    }
+    setCrowd(null);
+    const one = hit[0];
+    if (one) {
+      if (!pinned || one === "player") setPanel(one);
       else setPanel("kevin");
-      if (hit === "kevin" && (live.guide ?? 0) < 2) {
+      if (one === "kevin" && (live.guide ?? 0) < 2) {
         live.guide = 2;
-        saveTown(live);
+        persistTown(live);
         setTick((n) => n + 1);
       }
       return;
@@ -518,7 +668,10 @@ export function TownApp() {
       x: (sx + cam.camX) / TILE,
       y: (sy + cam.camY) / TILE,
     };
-    if (onBoard(world.x, world.y) || onBoard(agentById(live, "player").tile.x, agentById(live, "player").tile.y)) {
+    if (
+      onBoard(world.x, world.y) ||
+      onBoard(agentById(live, "player").tile.x, agentById(live, "player").tile.y)
+    ) {
       setBoard(true);
     }
   }
@@ -526,10 +679,16 @@ export function TownApp() {
   async function sendLine() {
     const live = townRef.current;
     const who = pinned ? "kevin" : panel;
-    if (!live || !who || who === "player" || pendingRef.current || replayRef.current !== null) return;
+    if (!live || !who || who === "player" || pendingRef.current || replayRef.current !== null)
+      return;
     const text = draft.trim().slice(0, 400);
     if (!text) return;
-    if (who === "kevin" && /who are you|who is he|who he is|who you are|man under|came from|your story|origin/i.test(text)) {
+    if (
+      who === "kevin" &&
+      /who are you|who is he|who he is|who you are|man under|came from|your story|origin/i.test(
+        text,
+      )
+    ) {
       if ((live.guide ?? 0) < 3) {
         live.guide = 3;
         live.sawHint = true;
@@ -546,16 +705,28 @@ export function TownApp() {
     const minds = onlineRef.current && document.visibilityState === "visible";
     if (!minds) {
       try {
+        const before = playerChatIds(agentById(live, who).memories ?? []);
         applyResult(live, offlineResult(live, job));
-        saveTown(live);
-        setDraft("");
+        persistTown(live);
+        const landed = exchangeLanded(before, playerChatIds(agentById(live, who).memories ?? []));
+        setDraft((current) => nextDraft(current, text, panelRef.current === who, landed));
+        setSendNote(
+          landed
+            ? "They answered from what they already hold."
+            : "That did not land. Your line is still here.",
+        );
+        if (landed && (live.guide ?? 0) < 3) {
+          live.guide = 3;
+          live.sawHint = true;
+          setHint(false);
+        }
       } catch {
-        /* keep the typed line */
+        setSendNote("That did not land. Your line is still here.");
       }
       setTick((n) => n + 1);
       return;
     }
-    setDraft("");
+    setSendNote("Saying it.");
     void runMindRef.current(live, job);
   }
 
@@ -565,13 +736,15 @@ export function TownApp() {
         <form onSubmit={enter}>
           <p className="font-display text-4xl leading-none">THE GAME</p>
           <p className="mt-4 text-muted">
-            A town with five lives already in it. You are the sixth. Not the narrator. Hobbs Cafe is already open.
+            A town with five lives already in it. You are the sixth. Not the narrator. Hobbs Cafe is
+            already open.
           </p>
           <label className="mt-6 block text-sm text-muted" htmlFor="town-name">
             What do they call you?
           </label>
           <input
             id="town-name"
+            name="town-name"
             className="field mt-2"
             maxLength={18}
             autoComplete="off"
@@ -590,13 +763,24 @@ export function TownApp() {
   void tick;
   const player = agentById(town, "player");
   const shown = pinned ? "kevin" : panel;
+  panelRef.current = shown;
+  boardRef.current = board;
   const near = onBoard(player.tile.x, player.tile.y);
   const clockMinute = replay?.m ?? town.minute;
   const clockDay = replay?.d ?? town.day;
-  const yesterday = town.day > 1 && town.scrub.some((frame) => (frame.d ?? town.day) === town.day - 1);
+  const yesterday =
+    town.day > 1 && town.scrub.some((frame) => (frame.d ?? town.day) === town.day - 1);
+  const clockLine =
+    speed === 0
+      ? "The clock is paused. Press 1× when you want the hour to move."
+      : speed === 4
+        ? "The clock is at 4×. Pause if you want to talk first."
+        : "The clock is at 1×.";
+  const guideLine = `${clockLine} WASD or arrows move one tile. On a phone, hold N W E S. Enter speaks to whoever is beside you. ${hobbsWay(player.tile.x, player.tile.y)} You can speak to Kevin, ask about a shift, or ask Baba for bread. Or walk on.`;
+  const yourDebts = (town.favors ?? []).filter((f) => f.from === "player" || f.to === "player");
 
   return (
-    <main className="town">
+    <main className="town" data-talking={shown || board ? "true" : "false"}>
       <header className="hud">
         <h1 className="font-display text-2xl leading-none">THE GAME</h1>
         <p className="tabular-nums">
@@ -604,22 +788,42 @@ export function TownApp() {
           {replay !== null ? " · replay" : ""}
         </p>
         <p className="text-muted">{placeTitle(zoneAt(player.tile.x, player.tile.y))}</p>
-        <p className="text-muted">{player.money} on you · {beatAt(player, town.minute).status}</p>
+        <p className="text-muted">
+          {player.money} on you · {beatAt(player, town.minute).status}
+        </p>
         {checked && (
           <span className="badge" data-off={online ? "false" : "true"}>
             {online ? "mind on" : "offline mind"}
           </span>
         )}
         {thinking && <span className="text-sm text-primary">minds thinking</span>}
-        {hiccup && <span className="text-sm text-primary">A mind missed and spoke from memory.</span>}
+        {hiccup && (
+          <span className="text-sm text-primary">A mind missed and spoke from memory.</span>
+        )}
         <div className="ml-auto flex flex-wrap gap-2">
-          <button className="btn" data-on={speed === 0 ? "true" : "false"} type="button" onClick={() => setRate(0)} aria-label="Pause">
+          <button
+            className="btn"
+            data-on={speed === 0 ? "true" : "false"}
+            type="button"
+            onClick={() => setRate(0)}
+            aria-label="Pause"
+          >
             <Pause className="inline size-4" aria-hidden /> Pause
           </button>
-          <button className="btn" data-on={speed === 1 ? "true" : "false"} type="button" onClick={() => setRate(1)}>
+          <button
+            className="btn"
+            data-on={speed === 1 ? "true" : "false"}
+            type="button"
+            onClick={() => setRate(1)}
+          >
             <Play className="inline size-4" aria-hidden /> 1×
           </button>
-          <button className="btn" data-on={speed === 4 ? "true" : "false"} type="button" onClick={() => setRate(4)}>
+          <button
+            className="btn"
+            data-on={speed === 4 ? "true" : "false"}
+            type="button"
+            onClick={() => setRate(4)}
+          >
             4×
           </button>
           <button className="btn" type="button" onClick={nextHour} disabled={thinking !== ""}>
@@ -627,18 +831,38 @@ export function TownApp() {
           </button>
         </div>
       </header>
-      {checked && !online && (
-        <p className="warn" role="status">
-          The minds are offline. They still speak from the place, the hour, a retrieved memory, and an open thread. They cannot think a new thought until a mind is switched on. Nothing outside this page can be fetched.
+      {saveStatus && !saveStatus.ok && (
+        <p className="warn" role="alert">
+          This town has not saved in this browser. Download a copy before closing the page.{" "}
+          <button
+            className="btn"
+            type="button"
+            onClick={() => {
+              void saveCopy(town).then(setExportNote);
+            }}
+          >
+            Download a copy
+          </button>
         </p>
       )}
-      {hint && (town.guide ?? 0) < 3 && (
+      {checked && !online && !shown && (
         <p className="warn" role="status">
-          {(town.guide ?? 0) < 1
-            ? "The clock is paused. Hobbs is open. Walk there. Press 1×."
-            : (town.guide ?? 0) < 2
-              ? "Click Kevin."
-              : "Ask him who he is."}
+          The minds are offline. They still answer from what they already hold.
+        </p>
+      )}
+      {hint && (town.guide ?? 0) < 3 && !shown && (
+        <p className="warn" role="status">
+          {guideLine}
+        </p>
+      )}
+      {yourDebts.length > 0 && (
+        <p className="warn" role="status">
+          {yourDebts
+            .map(
+              (favor) =>
+                `${favor.from} owes ${favor.to} ${favor.amount || "a favor"} — ${favor.status}. ${favor.text}`,
+            )
+            .join(" ")}
         </p>
       )}
       <div className="relative min-h-0 flex-1">
@@ -648,6 +872,27 @@ export function TownApp() {
           onClick={onCanvasClick}
           aria-label="The town"
         />
+        {crowd && crowd.length > 1 && (
+          <div className="crowd" role="listbox" aria-label="Who is here">
+            {crowd.map((id) => {
+              const person = town.agents.find((agent) => agent.id === id);
+              return (
+                <button
+                  key={id}
+                  className="btn"
+                  type="button"
+                  onClick={() => {
+                    setCrowd(null);
+                    if (!pinned || id === "player") setPanel(id);
+                    else setPanel("kevin");
+                  }}
+                >
+                  {person?.name ?? id}
+                </button>
+              );
+            })}
+          </div>
+        )}
         <div className="dpad" aria-hidden={false}>
           <Pad code="ArrowUp" keys={keysRef} className="u" label="North">
             N
@@ -670,6 +915,9 @@ export function TownApp() {
             draft={draft}
             setDraft={setDraft}
             busy={thinking !== ""}
+            inspect={inspect}
+            sendNote={sendNote}
+            onInspect={setInspect}
             onClose={() => {
               setPinned(false);
               setPanel(null);
@@ -706,6 +954,8 @@ export function TownApp() {
         )}
         <input
           id="scrub"
+          name="scrub"
+          aria-label="Replay minute"
           className="scrub"
           type="range"
           min={0}
@@ -763,14 +1013,24 @@ export function TownApp() {
         >
           {town.notices.length ? `Board · ${town.notices.length}` : "Board"}
         </button>
-        <button className="btn" type="button" onClick={() => download(town)}>
+        <button
+          className="btn"
+          type="button"
+          onClick={() => {
+            void saveCopy(town).then((note) => setExportNote(note));
+          }}
+        >
           <Download className="inline size-4" aria-hidden /> Download town
         </button>
+        {exportNote && <p className="text-sm text-muted">{exportNote}</p>}
         <button className="btn" type="button" onClick={() => fileRef.current?.click()}>
           <Upload className="inline size-4" aria-hidden /> Import
         </button>
         <input
           ref={fileRef}
+          id="town-import"
+          name="town-import"
+          aria-label="Import a town file"
           className="hidden"
           type="file"
           accept="application/json,.json"
@@ -778,7 +1038,7 @@ export function TownApp() {
             const file = event.target.files?.[0];
             event.target.value = "";
             if (!file) return;
-            if (file.size > 1_500_000) {
+            if (file.size > MAX_TOWN_FILE_BYTES) {
               setImportError("That file is too large to be a town.");
               setImportText("");
               return;
@@ -793,12 +1053,7 @@ export function TownApp() {
           }}
         />
       </footer>
-      {board && (
-        <Board
-          town={town}
-          onClose={() => setBoard(false)}
-        />
-      )}
+      {board && <Board town={town} onClose={() => setBoard(false)} />}
       {importText !== null && (
         <div className="gate absolute inset-0 z-10 bg-bg/90">
           <form
@@ -812,7 +1067,14 @@ export function TownApp() {
                 return;
               }
               townRef.current = next;
-              saveTown(next);
+              persistTown(next);
+              keysRef.current.clear();
+              speedRef.current = next.paused ? 0 : 1;
+              setSpeed(speedRef.current);
+              setHint(!next.sawHint);
+              setDraft("");
+              setSendNote("");
+              setInspect(false);
               resetGlide(next);
               setImportText(null);
               setPanel(null);
@@ -824,7 +1086,15 @@ export function TownApp() {
           >
             <h2 className="font-display text-2xl">Replace the live town?</h2>
             <p className="mt-3 text-muted">
-              The people here now will be overwritten in this browser. The file is day {previewDay(importText) ?? "?"}. Debts, notes, and selves in it become the town.
+              The people here now will be overwritten in this browser.{" "}
+              {(() => {
+                const preview = previewDay(importText);
+                if (!preview) return "The day in that file could not be read.";
+                return preview.version != null
+                  ? `The file is a version ${preview.version} town, day ${preview.day}.`
+                  : `The file is day ${preview.day}.`;
+              })()}{" "}
+              Debts, notes, and selves in it become the town.
             </p>
             {importError && <p className="mt-3 text-primary">{importError}</p>}
             <div className="mt-5 flex gap-2">
@@ -864,14 +1134,30 @@ function positionsFor(town: Town, replay: Replay | null) {
   return out;
 }
 
-function download(town: Town) {
-  const blob = new Blob([exportTown(town)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `the-game-day-${town.day}.json`;
-  link.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+async function saveCopy(town: Town) {
+  const text = exportTown(town);
+  const framed = (() => {
+    try {
+      return window.self !== window.top;
+    } catch {
+      return true;
+    }
+  })();
+  if (!framed) {
+    const blob = new Blob([text], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `the-game-day-${town.day}.json`;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    return framed ? "Copied. This preview cannot save a file." : "Copied, and the file was saved.";
+  } catch {
+    return framed ? "This preview cannot save a file or use the clipboard." : "The file was saved.";
+  }
 }
 
 function Pad({
@@ -906,20 +1192,6 @@ function Pad({
   );
 }
 
-function Meter({ score }: { score: number }) {
-  return (
-    <span className="meter" aria-label={`relationship ${score}`}>
-      {[-3, -2, -1, 0, 1, 2, 3].map((n) => (
-        <i
-          key={n}
-          data-on={n > 0 && score >= n ? "true" : "false"}
-          data-neg={n < 0 && score <= n ? "true" : "false"}
-        />
-      ))}
-    </span>
-  );
-}
-
 function Mind({
   town,
   agent,
@@ -927,6 +1199,9 @@ function Mind({
   draft,
   setDraft,
   busy,
+  inspect,
+  sendNote,
+  onInspect,
   onClose,
   onPin,
   onSend,
@@ -937,174 +1212,97 @@ function Mind({
   draft: string;
   setDraft: (value: string) => void;
   busy: boolean;
+  inspect: boolean;
+  sendNote: string;
+  onInspect: (value: boolean) => void;
   onClose: () => void;
   onPin: () => void;
   onSend: () => void;
 }) {
+  const lineRef = useRef<HTMLTextAreaElement | null>(null);
+  useEffect(() => {
+    lineRef.current?.focus();
+  }, [agent.id]);
+  const player = agentById(town, "player");
   const memories = Array.isArray(agent.memories) ? agent.memories : [];
-  const threads = Array.isArray(agent.threads) ? agent.threads : [];
-  const projects = Array.isArray(agent.projects) ? agent.projects : [];
-  const favors = Array.isArray(town.favors) ? town.favors : [];
-  const retrievals = Array.isArray(town.retrievals) ? town.retrievals : [];
-  const beats = Array.isArray(agent.plan?.beats) ? agent.plan.beats : [];
-  const spread = spreadView(town);
-  const hour = Math.floor(town.minute / 60);
-  const reflections = memories.filter((m) => m.type === "reflect" && !m.seed);
-  const chats = memories.filter((m) => m.type === "chat");
-  const mineFavors = favors.filter((f) => f.from === agent.id || f.to === agent.id);
-  const missed = retrievals.filter((r) => r.agentId === agent.id && r.missed).slice(-8);
+  const heard =
+    agent.id === "player"
+      ? memories.filter((m) => m.type === "chat")
+      : memories.filter((m) => m.type === "chat" && m.with === "player");
+  const favors = (town.favors ?? []).filter((f) => {
+    const mine = f.from === "player" || f.to === "player";
+    if (!mine) return false;
+    if (agent.id === "player") return true;
+    return f.from === agent.id || f.to === agent.id;
+  });
   return (
-    <aside className="mind" aria-label={`${agent.name} mind`}>
-      <div className="flex items-start justify-between gap-2">
+    <aside className="mind" aria-label={`Talk with ${agent.name}`}>
+      <div className="mind-bar">
         <div>
           <p className="text-xs uppercase tracking-wide text-muted">{agent.role}</p>
           <h2 className="font-display text-3xl leading-none">{agent.name}</h2>
+          <p className="mt-1 text-sm text-muted">
+            {agent.id === "player" ? `${player.money} on you · ${agent.status}` : agent.status}
+          </p>
         </div>
         <div className="flex gap-2">
           <button className="btn" type="button" data-on={pinned ? "true" : "false"} onClick={onPin}>
             <Pin className="inline size-4" aria-hidden /> {pinned ? "Unpin" : "Pin Kevin"}
           </button>
-          <button className="btn" type="button" onClick={onClose} aria-label="Close mind">
+          <button className="btn" type="button" onClick={onClose} aria-label="Close conversation">
             <X className="size-4" />
           </button>
         </div>
       </div>
-      <p className="mt-3 text-sm text-muted">
-        {agent.money} held · {agent.status}
-      </p>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Who I am</h3>
-        <p className="mt-1">{agent.identity}</p>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Right now</h3>
-        <p className="mt-1 font-display text-xl">{agent.selfSentence}</p>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Private want</h3>
-        <p className="mt-1">{agent.want}</p>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Today</h3>
-        <p className="mt-1">{agent.plan?.summary || "Between places."}</p>
-        <ul className="mt-2 max-h-36 overflow-auto text-sm text-muted">
-          {beats.map((beat) => (
-            <li key={beat.hour} className={beat.hour === hour ? "text-fg" : ""}>
-              {String(beat.hour).padStart(2, "0")}:00 {beat.place} — {beat.status}
-            </li>
-          ))}
-        </ul>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Open threads</h3>
-        <ul className="mt-1 space-y-1">
-          {threads.filter((t) => t.open).map((thread) => (
-            <li key={thread.id}>
-              {thread.hidden ? "Private. " : ""}
-              {thread.seed ? "Seed. " : ""}
-              {thread.text}
-            </li>
-          ))}
-        </ul>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Projects</h3>
-        <ul className="mt-1 space-y-1">
-          {projects.filter((p) => p.status === "open").length === 0 && <li className="text-muted">None open.</li>}
-          {projects
-            .filter((p) => p.status === "open")
-            .map((p) => (
-              <li key={p.id}>
-                {p.kind}: {p.text}
+      <div className="mind-body">
+        <section>
+          <h3 className="text-sm uppercase tracking-wide text-muted">
+            {agent.id === "player" ? "Your journal" : "What you heard"}
+          </h3>
+          <ul className="mt-1 space-y-2 text-sm">
+            {heard.length === 0 && (
+              <li className="text-muted">
+                {agent.id === "player"
+                  ? "You have not spoken yet."
+                  : "You have not spoken with them yet."}
+              </li>
+            )}
+            {heard.slice(-8).map((m) => (
+              <li key={m.id}>
+                Day {m.day} {formatClock(m.minute)}. {m.text}
               </li>
             ))}
-        </ul>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Relationships</h3>
-        <ul className="mt-2 space-y-2">
-          {town.agents
-            .filter((other) => other.id !== agent.id)
-            .map((other) => {
-              const rel = agent.relationships[other.id];
-              return (
-                <li key={other.id} className="flex items-start justify-between gap-3">
-                  <span>
-                    <span className="block">{other.name}</span>
-                    <span className="block text-sm text-muted">{rel?.note}</span>
-                  </span>
-                  <Meter score={rel?.score ?? 0} />
-                </li>
-              );
-            })}
-        </ul>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Debts</h3>
-        <ul className="mt-1 space-y-1 text-sm">
-          {mineFavors.length === 0 && <li className="text-muted">No tab.</li>}
-          {mineFavors.map((favor) => (
-            <li key={favor.id}>
-              {favor.from} → {favor.to}: {favor.text}
-              {favor.amount ? ` (${favor.amount})` : ""} · {favor.status}
-            </li>
-          ))}
-        </ul>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Reflections</h3>
-        <ul className="mt-1 space-y-2 text-sm">
-          {reflections.length === 0 && <li className="text-muted">None yet.</li>}
-          {reflections.slice(-6).map((m) => (
-            <li key={m.id}>{m.text}</li>
-          ))}
-        </ul>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Transcript</h3>
-        <ul className="mt-1 space-y-2 text-sm">
-          {chats.length === 0 && <li className="text-muted">No one has spoken with them yet.</li>}
-          {chats.slice(-8).map((m) => (
-            <li key={m.id}>
-              Day {m.day} {formatClock(m.minute)}. {m.text}
-            </li>
-          ))}
-        </ul>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Did Kevin's question travel?</h3>
-        {spread.holders.length === 0 && spread.notes.length === 0 ? (
-          <div className="mt-1">
-            <p>It has not left him. These retrievals missed it.</p>
-            <Missed rows={town.retrievals.filter((r) => r.missed).slice(-8)} />
-          </div>
-        ) : (
-          <div className="mt-1 space-y-2 text-sm">
-            {spread.holders.map((holder) => {
-              const memory = [...holder.memories].reverse().find((m) => m.seed || /who he is|man under the apron|came from|need help|make some money|who i am/i.test(m.text));
-              return (
-                <p key={holder.id}>
-                  <span className="text-fg">{holder.name}</span> holds: {memory?.text}
-                </p>
-              );
-            })}
-            {spread.notes.map((note) => (
-              <p key={note.id}>
-                Board, day {note.day}: {note.text}
-              </p>
-            ))}
-            {missed.length > 0 && (
-              <details>
-                <summary>Retrievals that missed</summary>
-                <Missed rows={missed} />
-              </details>
+          </ul>
+        </section>
+        <section className="mt-4">
+          <h3 className="text-sm uppercase tracking-wide text-muted">What is still open</h3>
+          <ul className="mt-1 space-y-1 text-sm">
+            {favors.length === 0 && (
+              <li className="text-muted">Nothing written down between you.</li>
             )}
-          </div>
-        )}
-      </section>
+            {favors.map((favor) => (
+              <li key={favor.id}>
+                {favor.status === "owed" ? "Still owed" : favor.status}: {favor.text}
+                {favor.amount ? ` (${favor.amount})` : ""}
+              </li>
+            ))}
+          </ul>
+        </section>
+        <label className="mt-4 flex items-center gap-2 text-sm text-muted" htmlFor="mind-inspect">
+          <input
+            id="mind-inspect"
+            name="inspect"
+            type="checkbox"
+            checked={inspect}
+            onChange={(event) => onInspect(event.target.checked)}
+          />
+          Developer inspector. Not part of the town.
+        </label>
+        {inspect && <Inspector town={town} agent={agent} />}
+      </div>
       {agent.id !== "player" && (
         <form
-          className="mt-5"
+          className="mind-say"
           onSubmit={(event) => {
             event.preventDefault();
             onSend();
@@ -1114,66 +1312,80 @@ function Mind({
             Your line to {agent.name}
           </label>
           <textarea
+            ref={lineRef}
             id="mind-line"
             className="field mt-2 min-h-20 py-2"
             value={draft}
             maxLength={400}
             onChange={(event) => setDraft(event.target.value)}
           />
-          <button className="btn mt-2" data-on="true" type="submit" disabled={busy || !draft.trim()}>
-            Say it
-          </button>
+          <div className="mt-2 flex items-center gap-2">
+            <button className="btn" data-on="true" type="submit" disabled={busy || !draft.trim()}>
+              {busy ? "Saying it" : "Say it"}
+            </button>
+            {sendNote && <p className="text-sm text-muted">{sendNote}</p>}
+          </div>
         </form>
       )}
     </aside>
   );
 }
 
-function Missed({
-  rows,
-}: {
-  rows: { id: string; agentId: string; day: number; minute: number; question: string; top: { text: string; score: number }[]; seedRank: number | null; seedInStream: boolean }[];
-}) {
-  if (!rows.length) return <p className="text-sm text-muted">No retrieval has been scored yet.</p>;
+function Inspector({ town, agent }: { town: Town; agent: Agent }) {
+  const threads = (agent.threads ?? []).filter((t) => t.open);
+  const beats = agent.plan?.beats ?? [];
+  const hour = Math.floor(town.minute / 60);
   return (
-    <ul className="mt-2 space-y-2 text-sm">
-      {rows.map((row) => (
-        <li key={row.id}>
-          <span className="text-fg">
-            {row.agentId} · day {row.day} {formatClock(row.minute)}
-          </span>
-          <span className="block text-muted">
-            {row.seedInStream ? `Seed ranked ${row.seedRank}, outside the top 8.` : "Not in their stream."} Query: {row.question.slice(0, 140)}
-          </span>
-          <span className="block">Got: {row.top[0]?.text ?? "nothing"} ({row.top[0]?.score ?? 0})</span>
-        </li>
-      ))}
-    </ul>
+    <div className="mt-3 space-y-3 border-t border-line pt-3 text-sm">
+      <p>{agent.identity}</p>
+      <p>{agent.selfSentence}</p>
+      <p>Want: {agent.want}</p>
+      <ul>
+        {beats.map((beat) => (
+          <li key={beat.hour} className={beat.hour === hour ? "text-fg" : "text-muted"}>
+            {String(beat.hour).padStart(2, "0")}:00 {beat.place} — {beat.status}
+          </li>
+        ))}
+      </ul>
+      <ul>
+        {threads.map((thread) => (
+          <li key={thread.id}>
+            {thread.hidden ? "Hidden. " : ""}
+            {thread.text}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
 function Board({ town, onClose }: { town: Town; onClose: () => void }) {
   return (
     <aside className="mind" aria-label="Noticeboard">
-      <div className="flex items-center justify-between">
+      <div className="mind-bar">
         <h2 className="font-display text-3xl">Noticeboard</h2>
         <button className="btn" type="button" onClick={onClose} aria-label="Close board">
           <X className="size-4" />
         </button>
       </div>
-      <p className="mt-2 text-muted">By Hobbs Cafe. Notes stay until someone takes them down. No one has to.</p>
-      <ul className="mt-4 space-y-3">
-        {town.notices.length === 0 && <li>The board is empty. The town has not decided to write on it.</li>}
-        {town.notices.map((note) => (
-          <li key={note.id} className="border-b border-line pb-3">
-            <p className="text-xs uppercase tracking-wide text-muted">
-              {note.author} · day {note.day} {formatClock(note.minute)}
-            </p>
-            <p className="mt-1">{note.text}</p>
-          </li>
-        ))}
-      </ul>
+      <div className="mind-body">
+        <p className="text-muted">
+          By Hobbs Cafe. Notes stay until someone takes them down. No one has to.
+        </p>
+        <ul className="mt-4 space-y-3">
+          {town.notices.length === 0 && (
+            <li>The board is empty. The town has not decided to write on it.</li>
+          )}
+          {town.notices.map((note) => (
+            <li key={note.id} className="border-b border-line pb-3">
+              <p className="text-xs uppercase tracking-wide text-muted">
+                {note.author} · day {note.day} {formatClock(note.minute)}
+              </p>
+              <p className="mt-1">{note.text}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
     </aside>
   );
 }
-
