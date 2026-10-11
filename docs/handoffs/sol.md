@@ -5,7 +5,7 @@ Implemented and locally validated on 11 October 2026. The setup branch remains u
 - Repository: `arwyn6969/the-game`; checkout `/workspace/the-game`; branch `codex/sol-foundation`.
 - Base SHA: `b8d6c97ebe5d88b2f97a56e5e5edc82287554ad1`.
 - Validated implementation head SHA: `47e8134749e5e7428a62b97ab553f05500506369`. The following delivery commit adds only this handoff; GitHub's branch head identifies that documentation revision.
-- Draft PR: creation pending; the environment currently denies connections to `api.github.com` with `Forbidden`. Native HTTPS Git access succeeds. This is an environment access failure, not a test failure.
+- Draft PR: [#3 — Make town saves, economy, and retrieval reliable](https://github.com/arwyn6969/the-game/pull/3), targeting `codex/agent-collaboration-setup`. GitHub API access now succeeds; the previous environment access blocker is resolved. Native HTTPS Git read and push also succeeded.
 
 ## Implemented outcomes
 
