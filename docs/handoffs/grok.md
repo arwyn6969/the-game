@@ -1,6 +1,6 @@
 # Grok handoff
 
-Base: `b8d6c97ebe5d88b2f97a56e5e5edc82287554ad1` on `codex/agent-collaboration-setup`. Setup is not merged, so the draft PR targets that branch. This environment can fetch branches, create `codex/grok-player-experience`, and push a commit. It was not used to publish https://thegame.grok.me or to merge to `main`.
+Base: `b8d6c97ebe5d88b2f97a56e5e5edc82287554ad1` on `codex/agent-collaboration-setup`. Head: `d99b04522b3facf7fc178c39971928c1c66ea350` on `codex/grok-player-experience`. Setup is not merged, so the draft PR targets that branch: https://github.com/arwyn6969/the-game/pull/2. This environment can fetch branches, create `codex/grok-player-experience`, and push a commit. It was not used to publish https://thegame.grok.me or to merge to `main`.
 
 ## Changed
 
