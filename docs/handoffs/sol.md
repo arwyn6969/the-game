@@ -4,7 +4,7 @@ Implemented and locally validated on 11 October 2026. The setup branch remains u
 
 - Repository: `arwyn6969/the-game`; checkout `/workspace/the-game`; branch `codex/sol-foundation`.
 - Base SHA: `b8d6c97ebe5d88b2f97a56e5e5edc82287554ad1`.
-- Validated implementation head SHA: `47e8134749e5e7428a62b97ab553f05500506369`. The following delivery commit adds only this handoff; GitHub's branch head identifies that documentation revision.
+- Validated implementation head SHA: `47e8134749e5e7428a62b97ab553f05500506369`. Subsequent delivery commits change only this handoff; GitHub's branch head identifies the documentation revision.
 - Draft PR: [#3 — Make town saves, economy, and retrieval reliable](https://github.com/arwyn6969/the-game/pull/3), targeting `codex/agent-collaboration-setup`. GitHub API access now succeeds; the previous environment access blocker is resolved. Native HTTPS Git read and push also succeeded.
 
 ## Implemented outcomes
@@ -40,7 +40,7 @@ Node `24.19.0`, npm `11.9.0`, committed lockfile; no production database or mode
 | `env -u DATABASE_URL -u XAI_API_KEY npm run build` | Passed; migration explicitly skipped; inherited dependency/bundler warnings remain |
 | `git diff --check` | Passed |
 
-CI repeats install, typecheck, lint, game/full tests, diagnostics and a build on Node 24 with empty database/provider variables and read-only repository permissions. It has not yet run on GitHub.
+CI repeats install, typecheck, lint, game/full tests, diagnostics and a build on Node 24 with empty database/provider variables and read-only repository permissions. GitHub's `verify` job passed on PR #3 at head `7d20d638f7303cf2ff1db938f55c31e5552d5dee`; the following documentation update records that result.
 
 Browser checks used system Chromium through Playwright against `npm run dev` on port 8080, with synthetic QA towns and the runtime provider key unset. At 1280×800 and 390×844, keyboard/touch movement, pause and resume controls, offline conversation entry and tab inspection, download, file import/replacement and reload all passed without page errors. Resident panels were opened through the existing QA helper; selecting residents on the canvas was not tested. The PWA tutorial passed desktop, mobile iOS 18 and iOS 27 cases, keyboard link focus, responsive overflow, asset/manifest requests and reload. Screenshots and browser harnesses are retained under ignored `artifacts/` in this task; synthetic downloaded towns are not committed. These are browser emulation checks, not physical-device or live-provider tests.
 
