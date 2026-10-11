@@ -460,11 +460,66 @@ test("wages respect purse capacity and reset work credit at midnight", () => {
   assert.equal(player.money, before + 5);
 });
 
+test("questions and refusals do not buy bread or pay a tab", () => {
+  const town = createTown("Ada");
+  const before = balances(town);
+  for (const text of [
+    "Do you sell bread?",
+    "I do not want bread.",
+    "What does bread cost?",
+    "I am allergic to apples.",
+    "Can I buy bread?",
+  ]) {
+    const result = say(town, text);
+    assert.equal(result.favor, null, text);
+  }
+  assert.equal(town.favors.length, 0);
+  assert.deepEqual(balances(town), before);
+  say(town, "I'll take the bread on a tab.");
+  assert.equal(town.favors.length, 1);
+  assert.equal(town.favors[0].status, "owed");
+  const owed = balances(town);
+  for (const text of [
+    "Do not pay my tab yet.",
+    "Can I pay tomorrow?",
+    "How do I pay?",
+    "I cannot pay.",
+  ]) {
+    const result = say(town, text);
+    assert.equal(result.favor, null, text);
+    assert.equal(town.favors[0].status, "owed", text);
+  }
+  assert.deepEqual(balances(town), owed);
+});
+
+test("an unreadable save is reported and left in place", () => {
+  storage({
+    getItem() {
+      return "{not a town";
+    },
+    setItem() {
+      throw new Error("must not overwrite");
+    },
+  });
+  const report = save.readTownSave();
+  assert.equal(report.status, "unreadable");
+  assert.equal(report.raw, "{not a town");
+  assert.equal(save.loadTown(), null);
+  storage({
+    getItem() {
+      return null;
+    },
+  });
+  assert.deepEqual(save.readTownSave(), { status: "missing" });
+  storage(undefined);
+  assert.deepEqual(save.readTownSave(), { status: "unavailable" });
+});
+
 test("offline bread offer, inspection and repayment never duplicate a charge", () => {
   const town = createTown("Ada");
   const before = balances(town);
-  say(town, "Can I buy bread?");
-  say(town, "Can I buy bread?");
+  say(town, "I'll take the bread on a tab.");
+  say(town, "I'll take the bread on a tab.");
   assert.equal(town.favors.length, 1);
   assert.deepEqual(balances(town), before, "offering a tab does not debit a purse");
   assert.match(say(town, "What do I owe you?").reply, /2/);

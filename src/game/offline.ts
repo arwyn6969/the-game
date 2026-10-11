@@ -546,6 +546,14 @@ function talkGeneric(town: Town, a: Agent, b: Agent): MindResult {
   };
 }
 
+function declined(text: string): boolean {
+  return /\b(?:do not|don't|dont|cannot|can't|cant|won't|wont|never|without|not)\b/i.test(text);
+}
+
+function inquiring(text: string): boolean {
+  return /[?]|\b(?:do you|does|can i|could i|would you|what|how|why|when|where|is there|how much)\b/i.test(text);
+}
+
 function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
   ensureLists(town);
   const agent = agentById(town, id);
@@ -564,9 +572,20 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
   } else if (!town.notices.length && agent.id === "arwyn") {
     reply = `${reply} If you can switch a mind on, do. Until then I am only this place, this hour, and what I already retrieved.`;
   }
-  const wantsBread = agent.id === "baba" && /\b(bread|apples?|food|eat|buy)\b/i.test(text);
+  const namesFood = /\b(?:bread|apples?)\b/i.test(text);
+  const takesFood =
+    /\bi(?:'ll| will) take\b|\bi(?:'ll| will) buy\b|\bgive me\b|\bon a tab\b/i.test(text);
+  const wantsBread =
+    agent.id === "baba" && namesFood && takesFood && !declined(text) && !inquiring(text);
   const debt = town.favors.find((f) => f.from === "player" && f.to === id && f.status === "owed");
-  const repaying = /\b(repay|pay|settle)\b/i.test(text);
+  const mentionsPay = /\b(?:repay|settle|pay)\b/i.test(text);
+  const aboutTab = /\b(?:tab|debt|bread|you|money)\b/i.test(text);
+  const repaying =
+    mentionsPay &&
+    aboutTab &&
+    !declined(text) &&
+    !inquiring(text) &&
+    !/\b(?:tomorrow|later)\b/i.test(text);
   const inspecting =
     /\b(?:what|how much)\b.*\b(?:owe|tab|debt)\b|\b(?:inspect|check|show)\b.*\b(?:tab|debt)\b|^\s*(?:my )?(?:tab|debt)\s*\??\s*$/i.test(
       text,

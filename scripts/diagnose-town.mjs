@@ -62,7 +62,7 @@ try {
         minute: debt.minute,
       }),
     );
-  say("Can I buy bread?");
+  say("I'll take the bread on a tab.");
   debtor.money = 20;
   say("I want to pay my tab of 2. Here is your money.");
   findings.offlineRepayment = {

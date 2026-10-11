@@ -18,9 +18,9 @@ import {
 } from "@/game/render";
 import {
   exportTown,
-  loadTown,
   MAX_TOWN_FILE_BYTES,
   parseTownFile,
+  readTownSave,
   saveTownWithStatus,
   type SaveResult,
 } from "@/game/save";
@@ -38,11 +38,15 @@ import {
   zoneAt,
 } from "@/game/world";
 import {
+  activityStatus,
   exchangeLanded,
+  followingLatest,
+  inTalkRange,
   interactiveControl,
   nextDraft,
   opensTalk,
   playerChatIds,
+  spokenTurns,
   type FocusLike,
 } from "./talk";
 
@@ -102,8 +106,8 @@ function besideYou(town: Town): AgentId | null {
   let best: { id: AgentId; d: number } | null = null;
   for (const agent of town.agents) {
     if (agent.id === "player") continue;
+    if (!inTalkRange(agent.tile.x, agent.tile.y, player.tile.x, player.tile.y)) continue;
     const d = Math.abs(agent.tile.x - player.tile.x) + Math.abs(agent.tile.y - player.tile.y);
-    if (d > 2) continue;
     if (!best || d < best.d) best = { id: agent.id, d };
   }
   return best?.id ?? null;
@@ -149,10 +153,18 @@ function focusOf(target: EventTarget | null): FocusLike {
 
 export function TownApp() {
   const boot = useRef<Town | null | undefined>(undefined);
+  const bootHold = useRef<string | null | undefined>(undefined);
   if (boot.current === undefined) {
-    const saved = loadTown();
+    const report = readTownSave();
     const qa = new URLSearchParams(location.search).has("qa");
-    boot.current = saved ?? (qa ? createTown("Ada") : null);
+    if (report.status === "ready") boot.current = report.town;
+    else if (report.status === "unreadable") {
+      boot.current = null;
+      bootHold.current = report.raw;
+    } else {
+      boot.current = qa ? createTown("Ada") : null;
+      bootHold.current = null;
+    }
   }
   const townRef = useRef<Town | null>(boot.current);
   const keysRef = useRef(new Set<string>());
@@ -165,8 +177,13 @@ export function TownApp() {
   const runMindRef = useRef<(live: Town, job: ThinkJob) => Promise<void>>(async () => {});
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
-  const [phase, setPhase] = useState<"name" | "play">(townRef.current ? "play" : "name");
+  const [phase, setPhase] = useState<"name" | "play" | "recover">(
+    townRef.current ? "play" : bootHold.current ? "recover" : "name",
+  );
+  const [hold, setHold] = useState<string | null>(bootHold.current ?? null);
   const [name, setName] = useState("");
+  const [recoverNote, setRecoverNote] = useState("");
+  const [farNote, setFarNote] = useState("");
   const [tick, setTick] = useState(0);
   const [online, setOnline] = useState(true);
   const [checked, setChecked] = useState(false);
@@ -580,6 +597,7 @@ export function TownApp() {
 
   function enter(event: React.FormEvent) {
     event.preventDefault();
+    if (hold) return;
     const town = createTown(name);
     town.paused = true;
     townRef.current = town;
@@ -637,6 +655,27 @@ export function TownApp() {
     }
   }
 
+  function approach(id: AgentId) {
+    const live = townRef.current;
+    if (!live) return;
+    const target: AgentId = pinned && id !== "player" ? "kevin" : id;
+    if (target !== "player") {
+      const player = agentById(live, "player");
+      const other = agentById(live, target);
+      if (!inTalkRange(player.tile.x, player.tile.y, other.tile.x, other.tile.y)) {
+        setFarNote(`${other.name} is too far to hear you. Walk closer.`);
+        return;
+      }
+    }
+    setFarNote("");
+    setPanel(target);
+    if (target === "kevin" && (live.guide ?? 0) < 2) {
+      live.guide = 2;
+      persistTown(live);
+      setTick((n) => n + 1);
+    }
+  }
+
   function onCanvasClick(event: React.MouseEvent<HTMLCanvasElement>) {
     const live = townRef.current;
     const canvas = canvasRef.current;
@@ -655,13 +694,7 @@ export function TownApp() {
     setCrowd(null);
     const one = hit[0];
     if (one) {
-      if (!pinned || one === "player") setPanel(one);
-      else setPanel("kevin");
-      if (one === "kevin" && (live.guide ?? 0) < 2) {
-        live.guide = 2;
-        persistTown(live);
-        setTick((n) => n + 1);
-      }
+      approach(one);
       return;
     }
     const world = {
@@ -683,6 +716,12 @@ export function TownApp() {
       return;
     const text = draft.trim().slice(0, 400);
     if (!text) return;
+    const player = agentById(live, "player");
+    const other = agentById(live, who);
+    if (!inTalkRange(player.tile.x, player.tile.y, other.tile.x, other.tile.y)) {
+      setSendNote(`${other.name} is too far to hear you. Walk closer. Your line is still here.`);
+      return;
+    }
     if (
       who === "kevin" &&
       /who are you|who is he|who he is|who you are|man under|came from|your story|origin/i.test(
@@ -728,6 +767,91 @@ export function TownApp() {
     }
     setSendNote("Saying it.");
     void runMindRef.current(live, job);
+  }
+
+  if (phase === "recover" && hold) {
+    return (
+      <main className="gate">
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+          }}
+        >
+          <p className="font-display text-4xl leading-none">THE GAME</p>
+          <p className="mt-4 text-muted">
+            This browser has a town that could not be read. Starting a new one would replace it.
+            Copy it first, or import a backup you trust.
+          </p>
+          <textarea
+            className="field mt-4 max-h-40"
+            readOnly
+            value={hold.length > 200_000 ? `${hold.slice(0, 200_000)}\n…` : hold}
+            aria-label="Unreadable town save"
+            name="damaged-town"
+            id="damaged-town"
+          />
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              className="btn"
+              type="button"
+              onClick={() => {
+                void navigator.clipboard
+                  ?.writeText(hold)
+                  .then(() => setRecoverNote("Copied. Keep it somewhere before you start over."))
+                  .catch(() => setRecoverNote("Copy failed. Select the text above and copy it."));
+              }}
+            >
+              Copy the unreadable save
+            </button>
+            <button className="btn" type="button" onClick={() => fileRef.current?.click()}>
+              Import a backup
+            </button>
+            <button
+              className="btn"
+              type="button"
+              onClick={() => {
+                setHold(null);
+                setPhase("name");
+              }}
+            >
+              I have a copy. Start over.
+            </button>
+          </div>
+          {recoverNote && <p className="mt-3 text-sm text-muted">{recoverNote}</p>}
+          <input
+            ref={fileRef}
+            id="recover-import"
+            name="recover-import"
+            aria-label="Import a town backup"
+            className="hidden"
+            type="file"
+            accept="application/json,.json"
+            onChange={async (event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (!file) return;
+              if (file.size > MAX_TOWN_FILE_BYTES) {
+                setRecoverNote("That file is too large to be a town.");
+                return;
+              }
+              try {
+                const next = parseTownFile(await file.text());
+                if (!next) {
+                  setRecoverNote("That file is not a town this page can live in.");
+                  return;
+                }
+                townRef.current = next;
+                persistTown(next);
+                setHold(null);
+                setPhase("play");
+              } catch {
+                setRecoverNote("That file could not be read.");
+              }
+            }}
+          />
+        </form>
+      </main>
+    );
   }
 
   if (phase === "name" || !townRef.current) {
@@ -776,7 +900,9 @@ export function TownApp() {
       : speed === 4
         ? "The clock is at 4×. Pause if you want to talk first."
         : "The clock is at 1×.";
-  const guideLine = `${clockLine} WASD or arrows move one tile. On a phone, hold N W E S. Enter speaks to whoever is beside you. ${hobbsWay(player.tile.x, player.tile.y)} You can speak to Kevin, ask about a shift, or ask Baba for bread. Or walk on.`;
+  const here = zoneAt(player.tile.x, player.tile.y);
+  const planned = beatAt(player, town.minute);
+  const guideLine = `${clockLine} WASD or arrows move one tile. On a phone, hold N W E S. Enter speaks to whoever is beside you. ${hobbsWay(player.tile.x, player.tile.y)} Ask what something costs before you take it. Or walk on.`;
   const yourDebts = (town.favors ?? []).filter((f) => f.from === "player" || f.to === "player");
 
   return (
@@ -787,10 +913,11 @@ export function TownApp() {
           Day {clockDay} · {formatClock(clockMinute)} · {periodName(clockMinute)}
           {replay !== null ? " · replay" : ""}
         </p>
-        <p className="text-muted">{placeTitle(zoneAt(player.tile.x, player.tile.y))}</p>
+        <p className="text-muted">{placeTitle(here)}</p>
         <p className="text-muted">
-          {player.money} on you · {beatAt(player, town.minute).status}
+          {player.money} on you · {activityStatus(here, planned.place, planned.status)}
         </p>
+        {farNote && <p className="text-sm text-primary">{farNote}</p>}
         {checked && (
           <span className="badge" data-off={online ? "false" : "true"}>
             {online ? "mind on" : "offline mind"}
@@ -883,8 +1010,7 @@ export function TownApp() {
                   type="button"
                   onClick={() => {
                     setCrowd(null);
-                    if (!pinned || id === "player") setPanel(id);
-                    else setPanel("kevin");
+                    approach(id);
                   }}
                 >
                   {person?.name ?? id}
@@ -1220,6 +1346,9 @@ function Mind({
   onSend: () => void;
 }) {
   const lineRef = useRef<HTMLTextAreaElement | null>(null);
+  const logRef = useRef<HTMLDivElement | null>(null);
+  const followRef = useRef(true);
+  const [behind, setBehind] = useState(false);
   useEffect(() => {
     lineRef.current?.focus();
   }, [agent.id]);
@@ -1229,6 +1358,17 @@ function Mind({
     agent.id === "player"
       ? memories.filter((m) => m.type === "chat")
       : memories.filter((m) => m.type === "chat" && m.with === "player");
+  const newest = heard.length ? heard[heard.length - 1]!.id : "";
+  useEffect(() => {
+    const el = logRef.current;
+    if (!el) return;
+    if (!followRef.current) {
+      setBehind(true);
+      return;
+    }
+    el.scrollTop = el.scrollHeight;
+    setBehind(false);
+  }, [newest, sendNote, agent.id]);
   const favors = (town.favors ?? []).filter((f) => {
     const mine = f.from === "player" || f.to === "player";
     if (!mine) return false;
@@ -1254,7 +1394,16 @@ function Mind({
           </button>
         </div>
       </div>
-      <div className="mind-body">
+      <div
+        className="mind-body"
+        ref={logRef}
+        onScroll={(event) => {
+          const el = event.currentTarget;
+          const follow = followingLatest(el.scrollTop, el.scrollHeight, el.clientHeight);
+          followRef.current = follow;
+          setBehind(!follow);
+        }}
+      >
         <section>
           <h3 className="text-sm uppercase tracking-wide text-muted">
             {agent.id === "player" ? "Your journal" : "What you heard"}
@@ -1267,12 +1416,42 @@ function Mind({
                   : "You have not spoken with them yet."}
               </li>
             )}
-            {heard.slice(-8).map((m) => (
-              <li key={m.id}>
-                Day {m.day} {formatClock(m.minute)}. {m.text}
-              </li>
-            ))}
+            {heard.slice(-8).map((m) => {
+              const turns = spokenTurns(m.text);
+              return (
+                <li key={m.id}>
+                  <p className="text-muted">
+                    Day {m.day} {formatClock(m.minute)}
+                  </p>
+                  {turns.length === 0 ? (
+                    <p>{m.text}</p>
+                  ) : (
+                    turns.map((turn, index) => (
+                      <p key={`${m.id}-${index}`}>
+                        <span className="text-muted">{turn.who}. </span>
+                        {turn.line}
+                      </p>
+                    ))
+                  )}
+                </li>
+              );
+            })}
           </ul>
+          {behind && (
+            <button
+              className="btn mind-jump"
+              type="button"
+              onClick={() => {
+                const el = logRef.current;
+                if (!el) return;
+                followRef.current = true;
+                el.scrollTop = el.scrollHeight;
+                setBehind(false);
+              }}
+            >
+              Newest
+            </button>
+          )}
         </section>
         <section className="mt-4">
           <h3 className="text-sm uppercase tracking-wide text-muted">What is still open</h3>
