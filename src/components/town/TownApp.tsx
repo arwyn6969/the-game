@@ -29,6 +29,7 @@ import { advanceTown, frameAt, stepMinute } from "@/game/sim";
 import { formatClock, periodName } from "@/game/text";
 import { createTown } from "@/game/town";
 import { auditWorld, ANCHORS, cell, nearestWalkable, placeTitle, TILE, walkable, zoneAt } from "@/game/world";
+import { exchangeLanded, interactiveControl, nextDraft, opensTalk, playerChatIds, type FocusLike } from "./talk";
 
 declare global {
   interface Window {
@@ -115,10 +116,13 @@ function axis(keys: Set<string>) {
   return { x, y };
 }
 
-function typingTarget(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) return false;
-  const tag = target.tagName;
-  return tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable;
+function focusOf(target: EventTarget | null): FocusLike {
+  if (!(target instanceof Element)) return null;
+  return {
+    tagName: target.tagName,
+    role: target.getAttribute("role"),
+    closest: (selector) => target.closest(selector),
+  };
 }
 
 export function TownApp() {
@@ -222,6 +226,8 @@ export function TownApp() {
     if (mounted.current) setThinking(job.kind);
     let timed: number | undefined;
     let applied = false;
+    let landed = false;
+    const mark = () => (job.kind === "player" ? playerChatIds(agentById(live, job.agentId).memories ?? []) : []);
     try {
       prepareRetrievals(live, job);
       const res = await new Promise<Awaited<ReturnType<typeof thinkTown>>>((resolve, reject) => {
@@ -233,8 +239,10 @@ export function TownApp() {
       if (res.text.length > 20_000) throw new Error("huge");
       const parsed = parseMind(job, res.text);
       try {
+        const before = mark();
         if (parsed) applyResult(live, parsed);
         else applyResult(live, offlineResult(live, job));
+        if (job.kind === "player") landed = exchangeLanded(before, mark());
         applied = true;
         if (!parsed && mounted.current) setHiccup(true);
       } catch {
@@ -243,7 +251,9 @@ export function TownApp() {
     } catch {
       if (townRef.current === live && !applied) {
         try {
+          const before = mark();
           applyResult(live, offlineResult(live, job));
+          if (job.kind === "player") landed = exchangeLanded(before, mark());
         } catch {
           /* The clock must resume even if the fallback cannot land. */
         }
@@ -257,21 +267,16 @@ export function TownApp() {
         setThinking("");
         setTick((n) => n + 1);
         if (job.kind === "player") {
-          const who = agentById(live, job.agentId);
-          const heard = (who.memories ?? []).some(
-            (m) => m.type === "chat" && m.with === "player" && m.text.includes(job.text.slice(0, 24)),
-          );
-          if (heard) {
-            setDraft("");
-            setSendNote("They heard you.");
-            if ((live.guide ?? 0) < 3) {
-              live.guide = 3;
-              live.sawHint = true;
-              setHint(false);
-              saveTown(live);
-            }
-          } else {
-            setSendNote("That did not land. Your line is still here.");
+          const same = townRef.current === live && panelRef.current === job.agentId;
+          setDraft((current) => nextDraft(current, job.text, same, landed));
+          if (townRef.current === live) {
+            setSendNote(landed ? "They heard you." : "That did not land. Your line is still here.");
+          }
+          if (landed && (live.guide ?? 0) < 3) {
+            live.guide = 3;
+            live.sawHint = true;
+            setHint(false);
+            saveTown(live);
           }
         }
       }
@@ -288,8 +293,8 @@ export function TownApp() {
         if (boardRef.current) setBoard(false);
         return;
       }
-      if (typingTarget(event.target)) return;
-      if ((event.code === "Enter" || event.code === "KeyE") && !panelRef.current && !boardRef.current) {
+      if (interactiveControl(focusOf(event.target))) return;
+      if (opensTalk(event.code, false, Boolean(panelRef.current || boardRef.current))) {
         const live = townRef.current;
         if (!live || replayRef.current) return;
         const nearId = besideYou(live);
@@ -632,22 +637,16 @@ export function TownApp() {
     const minds = onlineRef.current && document.visibilityState === "visible";
     if (!minds) {
       try {
+        const before = playerChatIds(agentById(live, who).memories ?? []);
         applyResult(live, offlineResult(live, job));
         saveTown(live);
-        const whoAgent = agentById(live, who);
-        const heard = (whoAgent.memories ?? []).some(
-          (m) => m.type === "chat" && m.with === "player" && m.text.includes(text.slice(0, 24)),
-        );
-        if (heard) {
-          setDraft("");
-          setSendNote("They answered from what they already hold.");
-          if ((live.guide ?? 0) < 3) {
-            live.guide = 3;
-            live.sawHint = true;
-            setHint(false);
-          }
-        } else {
-          setSendNote("That did not land. Your line is still here.");
+        const landed = exchangeLanded(before, playerChatIds(agentById(live, who).memories ?? []));
+        setDraft((current) => nextDraft(current, text, panelRef.current === who, landed));
+        setSendNote(landed ? "They answered from what they already hold." : "That did not land. Your line is still here.");
+        if (landed && (live.guide ?? 0) < 3) {
+          live.guide = 3;
+          live.sawHint = true;
+          setHint(false);
         }
       } catch {
         setSendNote("That did not land. Your line is still here.");
@@ -733,12 +732,12 @@ export function TownApp() {
           </button>
         </div>
       </header>
-      {checked && !online && (
+      {checked && !online && !shown && (
         <p className="warn" role="status">
-          The minds are offline. They still speak from the place, the hour, a retrieved memory, and an open thread. They cannot think a new thought until a mind is switched on. Nothing outside this page can be fetched.
+          The minds are offline. They still answer from what they already hold.
         </p>
       )}
-      {hint && (town.guide ?? 0) < 3 && (
+      {hint && (town.guide ?? 0) < 3 && !shown && (
         <p className="warn" role="status">
           {guideLine}
         </p>

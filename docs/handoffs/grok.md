@@ -1,28 +1,23 @@
 # Grok handoff
 
-Base: `b8d6c97ebe5d88b2f97a56e5e5edc82287554ad1` on `codex/agent-collaboration-setup`. Head: `d99b04522b3facf7fc178c39971928c1c66ea350` on `codex/grok-player-experience`. Setup is not merged, so the draft PR targets that branch: https://github.com/arwyn6969/the-game/pull/2. This environment can fetch branches, create `codex/grok-player-experience`, and push a commit. It was not used to publish https://thegame.grok.me or to merge to `main`.
+Base: `b8d6c97ebe5d88b2f97a56e5e5edc82287554ad1` on `codex/agent-collaboration-setup`. Draft PR: https://github.com/arwyn6969/the-game/pull/2, still draft. `main` was not updated and https://thegame.grok.me was not published.
 
 ## Changed
 
-- `src/components/town/TownApp.tsx` — opening line names the clock speed, keys, the phone pad, and the direction of Hobbs. It does not mention Kevin's question. Enter or E speaks to someone beside you. Escape closes. The panel keeps close and the composer in view. A failed line stays in the box. Import confirm reads `{ version, town }` and shows the day. Debts shown are the ones the town already recorded. A developer inspector is local UI state only.
-- `src/styles.css` — talk panel is a column with a fixed bar and composer. On a narrow screen it is a sheet. Reduced motion drops transitions.
-- `src/game/render.ts` — private sentences and secret marks are not drawn. The first day shows a small Hobbs direction mark. Canvas bob and water motion stop when reduced motion is requested.
-- `docs/design/first-day.md` — the screen rules.
+- `src/components/town/talk.ts` — a send counts as heard when a new player chat id appears, not when the typed text is found inside a memory. The composer is cleared only when it still holds that sent line in the same conversation and town. Enter and E open talk only when focus is not on a button, link, or field.
+- `src/components/town/talk.test.ts` — the newline line, a delayed second draft, and Enter on a button.
+- `src/components/town/TownApp.tsx` — uses those rules. Opening and offline help hide while a conversation is open. The offline line is one sentence.
+- `src/styles.css`, `src/game/render.ts`, `docs/design/first-day.md` — unchanged in this pass.
 
 ## Checks
 
-- `tsc --noEmit` passed on this UI.
-- `node scripts/town-day.test.mjs` passed (`town-day ok`).
-- `eslint` on `TownApp.tsx` and `render.ts` reported no errors. `styles.css` is ignored by the existing eslint config.
-- Browser, desktop 1280×800 and phone-sized 390×844: a new town shows the paused clock, WASD, and "Hobbs is west" with no private want. Clicking Kevin opens a conversation without "Private want", threads, or retrieval ranks. Escape closes it. On the phone-sized view the close bar and composer were both inside the viewport (`sayVisible: true`).
-- Not tested: a physical phone keyboard. The composer padding uses `visualViewport`, but no real device was available.
-- `npm run test:town` exists on the setup branch, not in the older preview package script list. The underlying `scripts/town-day.test.mjs` was run instead.
-- Full `npm test` and `npm run lint` were not re-run. `docs/BASELINE.md` already records their inherited failures. This UI does not claim those are fixed.
+- `npx tsc --noEmit` passed.
+- `node --experimental-strip-types --test src/components/town/talk.test.ts` — 4 passed, 0 failed. That file is not in `package.json` `test` because the script list is outside this lane. Run it with the command above.
+- Browser: beside Kevin, with the 1× button focused, Enter did not open a conversation and the clock left pause. With focus on the page, E opened Kevin. The opening line was gone while the conversation was open. At 390×844 the transcript area was 326px tall and the composer ended at y=730 inside an 844px screen. Desktop and phone screenshots were taken with the conversation open.
+- Not tested: a physical phone keyboard.
+- Earlier `node scripts/town-day.test.mjs` passed on the previous commit. It was not re-run; this pass does not change the simulation.
+- Full `npm test` and `npm run lint` were not re-run. Inherited failures in `docs/BASELINE.md` are unchanged. This does not fix them.
 
 ## Not fixed here
 
-Sol still owns long-play import limits, silent save failure, debt settlement, wages, offline repayment, and the memory packet. The screen only displays debts and lines the existing rules already wrote. No wage, favour, or relationship was invented in the UI.
-
-## For Sol
-
-No new engine export was required. If a later pass wants the screen to say a save failed, an additive status from `saveTown` can be wired then. The 1.5 million character import ceiling is still in `parseTownFile`; the confirm dialog only reads the wrapper.
+Sol still owns long-play import limits, silent save failure, debt settlement, wages, offline repayment, and the memory packet. A reply is detected from a new chat id after `applyResult`, not by re-reading the saved sentence.
