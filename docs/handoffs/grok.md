@@ -13,7 +13,7 @@ Base: `b8d6c97ebe5d88b2f97a56e5e5edc82287554ad1` on `codex/agent-collaboration-s
 
 - `npx tsc --noEmit` passed.
 - `node --experimental-strip-types --test src/components/town/talk.test.ts` — 4 passed, 0 failed. That file is not in `package.json` `test` because the script list is outside this lane. Run it with the command above.
-- Browser: beside Kevin, with the 1× button focused, Enter did not open a conversation and the clock left pause. With focus on the page, E opened Kevin. The opening line was gone while the conversation was open. At 390×844 the transcript area was 326px tall and the composer ended at y=730 inside an 844px screen. Desktop and phone screenshots were taken with the conversation open.
+- Browser: beside Kevin, with the 1× button focused, Enter did not open a conversation and the clock left pause. With focus on the page, E opened Kevin. The opening line was gone while the conversation was open. At 390×844 the transcript area was 326px tall and the composer ended at y=730 inside an 844px screen. Screenshots: [desktop](day1-talk.png), [phone](day1-mobile.png).
 - Not tested: a physical phone keyboard.
 - Earlier `node scripts/town-day.test.mjs` passed on the previous commit. It was not re-run; this pass does not change the simulation.
 - Full `npm test` and `npm run lint` were not re-run. Inherited failures in `docs/BASELINE.md` are unchanged. This does not fix them.
