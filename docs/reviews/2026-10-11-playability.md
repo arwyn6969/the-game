@@ -23,7 +23,7 @@ The hosted site could not be played directly in this environment: Chromium rejec
 | --- | --- | --- |
 | Town and cast | Five distinct residents, a 56×42 map, named places, day/night shading and recognizable routines. | Most scenery has no player action. |
 | Movement and time | Keyboard and touch walking work; pause, 1×, 4× and hour advancement exist. Nearby Enter opens conversation. | Pointer clicks on terrain do not walk there. Waiting for a mind stops movement as well as time. |
-| Persistence | Normal reload retains money, debts and conversations. Current source supports older v1 imports and portable exports. Save-write failure has a warning and backup action. | Data belongs to this browser/origin. Save-load failure has no recovery flow. |
+| Persistence | Normal reload retains money, debts and conversations. Current source supports older v1 imports and portable exports. Save-write failure has a warning and backup action. | Data belongs to this browser and origin. Two tabs can overwrite it. Account save is a later step, below, and is not part of this milestone. |
 | Economy rules | Debt ownership, full payment, repeated settlement and balance limits are guarded. Northern's agreed cafe shift earns wages through actual attendance. | The input parser can choose the wrong transaction; the player cannot obtain a shift offline. |
 | NPC continuity | NPCs move, meet, remember, open projects, spread Kevin's question and revise some plans. | Much of that activity is invisible to the player; offline days rely heavily on repeated templates. |
 | Conversation foundation | Typed lines become saved exchanges; the composer and close control fit the reviewed phone viewport. Private inspector content is opt-in. | Latest replies can be offscreen; fallback responses often repeat history rather than address the question. |
@@ -179,7 +179,19 @@ Address F10, the remaining F8 control inconsistencies, phone guidance and public
 
 Deliverable: the actual website runs the demonstrated loop; model delays do not make controls appear broken; the town's changing relationships and public activity are legible.
 
-Avoid broadening this milestone into a new framework, a larger world, multiplayer or a model-provider replacement. The existing town has enough setting for the next playable day.
+Avoid broadening this milestone into a new framework, a larger world, multiplayer or a model-provider replacement. The existing town has enough setting for the next playable day. Account save is recorded next and waits until this day is trustworthy.
+
+## Later: the town follows the person
+
+Not part of the first playable day, and not a reason to delay it. Do this after the loop above keeps its promises.
+
+The town is stored only in this browser, under `localStorage` key `the-game-town-v1`. Another device, browser, or person starts a new town. Sign-in already exists in the app and is not used by the save. Two tabs in one browser share that key, and the last write wins.
+
+**Change:** store the town for the signed-in person, and keep the browser copy as the offline cache. On sign-in, load that person's town. If the browser copy and the account copy disagree, ask which to keep. Do not replace either silently. Two tabs for the same person must not clobber each other. Export and import stay the backup when the account write fails. Do not put players in one shared town, and do not turn on the unused peer-to-peer code.
+
+This is separate from F11. F11 identifies a caller so one person cannot spend everyone's mind allowance. Account save stores the town. One user id can serve both, but the town must remain playable with no key and no account, as exit check 9 requires.
+
+**Acceptance:** the same signed-in person sees their money, debts, and conversations in a second browser. A signed-out person, or a different person, does not. A failed account write leaves the browser copy unchanged and says it was not stored. An older v1 export still imports.
 
 ## Exit checks for the next milestone
 
