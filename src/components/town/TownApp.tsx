@@ -28,7 +28,7 @@ import { exportTown, loadTown, parseTownFile, saveTown } from "@/game/save";
 import { advanceTown, frameAt, stepMinute } from "@/game/sim";
 import { formatClock, periodName } from "@/game/text";
 import { createTown } from "@/game/town";
-import { auditWorld, cell, nearestWalkable, placeTitle, TILE, walkable, zoneAt } from "@/game/world";
+import { auditWorld, ANCHORS, cell, nearestWalkable, placeTitle, TILE, walkable, zoneAt } from "@/game/world";
 
 declare global {
   interface Window {
@@ -51,13 +51,39 @@ declare global {
 
 type Replay = { d: number; m: number };
 
-function previewDay(text: string): number | null {
+function previewDay(text: string): { day: number; version: number | null } | null {
   try {
-    const value = JSON.parse(text) as { day?: unknown };
-    return typeof value.day === "number" && Number.isFinite(value.day) ? value.day : null;
+    const value = JSON.parse(text) as { day?: unknown; version?: unknown; town?: { day?: unknown } };
+    const raw = value && typeof value === "object" && value.town && typeof value.town === "object" ? value.town.day : value.day;
+    if (typeof raw !== "number" || !Number.isFinite(raw)) return null;
+    return { day: raw, version: typeof value.version === "number" ? value.version : null };
   } catch {
     return null;
   }
+}
+
+function hobbsWay(x: number, y: number): string {
+  const dx = ANCHORS.cafe.x - x;
+  const dy = ANCHORS.cafe.y - y;
+  if (Math.abs(dx) + Math.abs(dy) <= 3) return "Hobbs is here.";
+  const parts: string[] = [];
+  if (dy < -1) parts.push("north");
+  if (dy > 1) parts.push("south");
+  if (dx > 1) parts.push("east");
+  if (dx < -1) parts.push("west");
+  return `Hobbs is ${parts.join(" and ")}.`;
+}
+
+function besideYou(town: Town): AgentId | null {
+  const player = agentById(town, "player");
+  let best: { id: AgentId; d: number } | null = null;
+  for (const agent of town.agents) {
+    if (agent.id === "player") continue;
+    const d = Math.abs(agent.tile.x - player.tile.x) + Math.abs(agent.tile.y - player.tile.y);
+    if (d > 2) continue;
+    if (!best || d < best.d) best = { id: agent.id, d };
+  }
+  return best?.id ?? null;
 }
 
 const GAME_KEYS = new Set([
@@ -129,6 +155,10 @@ export function TownApp() {
   const [importError, setImportError] = useState("");
   const [draft, setDraft] = useState("");
   const [hint, setHint] = useState(townRef.current ? !townRef.current.sawHint : true);
+  const [inspect, setInspect] = useState(false);
+  const [sendNote, setSendNote] = useState("");
+  const panelRef = useRef<AgentId | null>(null);
+  const boardRef = useRef(false);
 
   useEffect(() => {
     onlineRef.current = online;
@@ -161,6 +191,22 @@ export function TownApp() {
     mounted.current = true;
     return () => {
       mounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const apply = () => {
+      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      document.documentElement.style.setProperty("--vv-bottom", `${inset}px`);
+    };
+    apply();
+    vv.addEventListener("resize", apply);
+    vv.addEventListener("scroll", apply);
+    return () => {
+      vv.removeEventListener("resize", apply);
+      vv.removeEventListener("scroll", apply);
     };
   }, []);
 
@@ -210,13 +256,53 @@ export function TownApp() {
       if (mounted.current) {
         setThinking("");
         setTick((n) => n + 1);
+        if (job.kind === "player") {
+          const who = agentById(live, job.agentId);
+          const heard = (who.memories ?? []).some(
+            (m) => m.type === "chat" && m.with === "player" && m.text.includes(job.text.slice(0, 24)),
+          );
+          if (heard) {
+            setDraft("");
+            setSendNote("They heard you.");
+            if ((live.guide ?? 0) < 3) {
+              live.guide = 3;
+              live.sawHint = true;
+              setHint(false);
+              saveTown(live);
+            }
+          } else {
+            setSendNote("That did not land. Your line is still here.");
+          }
+        }
       }
     }
   };
 
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
+      if (event.code === "Escape") {
+        if (panelRef.current) {
+          setPinned(false);
+          setPanel(null);
+        }
+        if (boardRef.current) setBoard(false);
+        return;
+      }
       if (typingTarget(event.target)) return;
+      if ((event.code === "Enter" || event.code === "KeyE") && !panelRef.current && !boardRef.current) {
+        const live = townRef.current;
+        if (!live || replayRef.current) return;
+        const nearId = besideYou(live);
+        if (!nearId) return;
+        event.preventDefault();
+        setPanel(nearId);
+        if (nearId === "kevin" && (live.guide ?? 0) < 2) {
+          live.guide = 2;
+          saveTown(live);
+          setTick((n) => n + 1);
+        }
+        return;
+      }
       if (!GAME_KEYS.has(event.code)) return;
       event.preventDefault();
       keysRef.current.add(event.code);
@@ -548,14 +634,28 @@ export function TownApp() {
       try {
         applyResult(live, offlineResult(live, job));
         saveTown(live);
-        setDraft("");
+        const whoAgent = agentById(live, who);
+        const heard = (whoAgent.memories ?? []).some(
+          (m) => m.type === "chat" && m.with === "player" && m.text.includes(text.slice(0, 24)),
+        );
+        if (heard) {
+          setDraft("");
+          setSendNote("They answered from what they already hold.");
+          if ((live.guide ?? 0) < 3) {
+            live.guide = 3;
+            live.sawHint = true;
+            setHint(false);
+          }
+        } else {
+          setSendNote("That did not land. Your line is still here.");
+        }
       } catch {
-        /* keep the typed line */
+        setSendNote("That did not land. Your line is still here.");
       }
       setTick((n) => n + 1);
       return;
     }
-    setDraft("");
+    setSendNote("Saying it.");
     void runMindRef.current(live, job);
   }
 
@@ -590,13 +690,19 @@ export function TownApp() {
   void tick;
   const player = agentById(town, "player");
   const shown = pinned ? "kevin" : panel;
+  panelRef.current = shown;
+  boardRef.current = board;
   const near = onBoard(player.tile.x, player.tile.y);
   const clockMinute = replay?.m ?? town.minute;
   const clockDay = replay?.d ?? town.day;
   const yesterday = town.day > 1 && town.scrub.some((frame) => (frame.d ?? town.day) === town.day - 1);
+  const clockLine =
+    speed === 0 ? "The clock is paused. Press 1× when you want the hour to move." : speed === 4 ? "The clock is at 4×. Pause if you want to talk first." : "The clock is at 1×.";
+  const guideLine = `${clockLine} WASD or arrows move one tile. On a phone, hold N W E S. Enter speaks to whoever is beside you. ${hobbsWay(player.tile.x, player.tile.y)} You can speak to Kevin, ask about a shift, or ask Baba for bread. Or walk on.`;
+  const yourDebts = (town.favors ?? []).filter((f) => f.from === "player" || f.to === "player");
 
   return (
-    <main className="town">
+      <main className="town" data-talking={shown || board ? "true" : "false"}>
       <header className="hud">
         <h1 className="font-display text-2xl leading-none">THE GAME</h1>
         <p className="tabular-nums">
@@ -634,11 +740,14 @@ export function TownApp() {
       )}
       {hint && (town.guide ?? 0) < 3 && (
         <p className="warn" role="status">
-          {(town.guide ?? 0) < 1
-            ? "The clock is paused. Hobbs is open. Walk there. Press 1×."
-            : (town.guide ?? 0) < 2
-              ? "Click Kevin."
-              : "Ask him who he is."}
+          {guideLine}
+        </p>
+      )}
+      {yourDebts.length > 0 && (
+        <p className="warn" role="status">
+          {yourDebts
+            .map((favor) => `${favor.from} owes ${favor.to} ${favor.amount || "a favor"} — ${favor.status}. ${favor.text}`)
+            .join(" ")}
         </p>
       )}
       <div className="relative min-h-0 flex-1">
@@ -670,6 +779,9 @@ export function TownApp() {
             draft={draft}
             setDraft={setDraft}
             busy={thinking !== ""}
+            inspect={inspect}
+            sendNote={sendNote}
+            onInspect={setInspect}
             onClose={() => {
               setPinned(false);
               setPanel(null);
@@ -824,7 +936,15 @@ export function TownApp() {
           >
             <h2 className="font-display text-2xl">Replace the live town?</h2>
             <p className="mt-3 text-muted">
-              The people here now will be overwritten in this browser. The file is day {previewDay(importText) ?? "?"}. Debts, notes, and selves in it become the town.
+              The people here now will be overwritten in this browser.{" "}
+              {(() => {
+                const preview = previewDay(importText);
+                if (!preview) return "The day in that file could not be read.";
+                return preview.version != null
+                  ? `The file is a version ${preview.version} town, day ${preview.day}.`
+                  : `The file is day ${preview.day}.`;
+              })()}{" "}
+              Debts, notes, and selves in it become the town.
             </p>
             {importError && <p className="mt-3 text-primary">{importError}</p>}
             <div className="mt-5 flex gap-2">
@@ -906,20 +1026,6 @@ function Pad({
   );
 }
 
-function Meter({ score }: { score: number }) {
-  return (
-    <span className="meter" aria-label={`relationship ${score}`}>
-      {[-3, -2, -1, 0, 1, 2, 3].map((n) => (
-        <i
-          key={n}
-          data-on={n > 0 && score >= n ? "true" : "false"}
-          data-neg={n < 0 && score <= n ? "true" : "false"}
-        />
-      ))}
-    </span>
-  );
-}
-
 function Mind({
   town,
   agent,
@@ -927,6 +1033,9 @@ function Mind({
   draft,
   setDraft,
   busy,
+  inspect,
+  sendNote,
+  onInspect,
   onClose,
   onPin,
   onSend,
@@ -937,174 +1046,79 @@ function Mind({
   draft: string;
   setDraft: (value: string) => void;
   busy: boolean;
+  inspect: boolean;
+  sendNote: string;
+  onInspect: (value: boolean) => void;
   onClose: () => void;
   onPin: () => void;
   onSend: () => void;
 }) {
+  const lineRef = useRef<HTMLTextAreaElement | null>(null);
+  useEffect(() => {
+    lineRef.current?.focus();
+  }, [agent.id]);
+  const player = agentById(town, "player");
   const memories = Array.isArray(agent.memories) ? agent.memories : [];
-  const threads = Array.isArray(agent.threads) ? agent.threads : [];
-  const projects = Array.isArray(agent.projects) ? agent.projects : [];
-  const favors = Array.isArray(town.favors) ? town.favors : [];
-  const retrievals = Array.isArray(town.retrievals) ? town.retrievals : [];
-  const beats = Array.isArray(agent.plan?.beats) ? agent.plan.beats : [];
-  const spread = spreadView(town);
-  const hour = Math.floor(town.minute / 60);
-  const reflections = memories.filter((m) => m.type === "reflect" && !m.seed);
-  const chats = memories.filter((m) => m.type === "chat");
-  const mineFavors = favors.filter((f) => f.from === agent.id || f.to === agent.id);
-  const missed = retrievals.filter((r) => r.agentId === agent.id && r.missed).slice(-8);
+  const heard =
+    agent.id === "player"
+      ? memories.filter((m) => m.type === "chat")
+      : memories.filter((m) => m.type === "chat" && m.with === "player");
+  const favors = (town.favors ?? []).filter((f) => {
+    const mine = f.from === "player" || f.to === "player";
+    if (!mine) return false;
+    if (agent.id === "player") return true;
+    return f.from === agent.id || f.to === agent.id;
+  });
   return (
-    <aside className="mind" aria-label={`${agent.name} mind`}>
-      <div className="flex items-start justify-between gap-2">
+    <aside className="mind" aria-label={`Talk with ${agent.name}`}>
+      <div className="mind-bar">
         <div>
           <p className="text-xs uppercase tracking-wide text-muted">{agent.role}</p>
           <h2 className="font-display text-3xl leading-none">{agent.name}</h2>
+          <p className="mt-1 text-sm text-muted">{agent.id === "player" ? `${player.money} on you · ${agent.status}` : agent.status}</p>
         </div>
         <div className="flex gap-2">
           <button className="btn" type="button" data-on={pinned ? "true" : "false"} onClick={onPin}>
             <Pin className="inline size-4" aria-hidden /> {pinned ? "Unpin" : "Pin Kevin"}
           </button>
-          <button className="btn" type="button" onClick={onClose} aria-label="Close mind">
+          <button className="btn" type="button" onClick={onClose} aria-label="Close conversation">
             <X className="size-4" />
           </button>
         </div>
       </div>
-      <p className="mt-3 text-sm text-muted">
-        {agent.money} held · {agent.status}
-      </p>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Who I am</h3>
-        <p className="mt-1">{agent.identity}</p>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Right now</h3>
-        <p className="mt-1 font-display text-xl">{agent.selfSentence}</p>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Private want</h3>
-        <p className="mt-1">{agent.want}</p>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Today</h3>
-        <p className="mt-1">{agent.plan?.summary || "Between places."}</p>
-        <ul className="mt-2 max-h-36 overflow-auto text-sm text-muted">
-          {beats.map((beat) => (
-            <li key={beat.hour} className={beat.hour === hour ? "text-fg" : ""}>
-              {String(beat.hour).padStart(2, "0")}:00 {beat.place} — {beat.status}
-            </li>
-          ))}
-        </ul>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Open threads</h3>
-        <ul className="mt-1 space-y-1">
-          {threads.filter((t) => t.open).map((thread) => (
-            <li key={thread.id}>
-              {thread.hidden ? "Private. " : ""}
-              {thread.seed ? "Seed. " : ""}
-              {thread.text}
-            </li>
-          ))}
-        </ul>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Projects</h3>
-        <ul className="mt-1 space-y-1">
-          {projects.filter((p) => p.status === "open").length === 0 && <li className="text-muted">None open.</li>}
-          {projects
-            .filter((p) => p.status === "open")
-            .map((p) => (
-              <li key={p.id}>
-                {p.kind}: {p.text}
+      <div className="mind-body">
+        <section>
+          <h3 className="text-sm uppercase tracking-wide text-muted">{agent.id === "player" ? "Your journal" : "What you heard"}</h3>
+          <ul className="mt-1 space-y-2 text-sm">
+            {heard.length === 0 && <li className="text-muted">{agent.id === "player" ? "You have not spoken yet." : "You have not spoken with them yet."}</li>}
+            {heard.slice(-8).map((m) => (
+              <li key={m.id}>
+                Day {m.day} {formatClock(m.minute)}. {m.text}
               </li>
             ))}
-        </ul>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Relationships</h3>
-        <ul className="mt-2 space-y-2">
-          {town.agents
-            .filter((other) => other.id !== agent.id)
-            .map((other) => {
-              const rel = agent.relationships[other.id];
-              return (
-                <li key={other.id} className="flex items-start justify-between gap-3">
-                  <span>
-                    <span className="block">{other.name}</span>
-                    <span className="block text-sm text-muted">{rel?.note}</span>
-                  </span>
-                  <Meter score={rel?.score ?? 0} />
-                </li>
-              );
-            })}
-        </ul>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Debts</h3>
-        <ul className="mt-1 space-y-1 text-sm">
-          {mineFavors.length === 0 && <li className="text-muted">No tab.</li>}
-          {mineFavors.map((favor) => (
-            <li key={favor.id}>
-              {favor.from} → {favor.to}: {favor.text}
-              {favor.amount ? ` (${favor.amount})` : ""} · {favor.status}
-            </li>
-          ))}
-        </ul>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Reflections</h3>
-        <ul className="mt-1 space-y-2 text-sm">
-          {reflections.length === 0 && <li className="text-muted">None yet.</li>}
-          {reflections.slice(-6).map((m) => (
-            <li key={m.id}>{m.text}</li>
-          ))}
-        </ul>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Transcript</h3>
-        <ul className="mt-1 space-y-2 text-sm">
-          {chats.length === 0 && <li className="text-muted">No one has spoken with them yet.</li>}
-          {chats.slice(-8).map((m) => (
-            <li key={m.id}>
-              Day {m.day} {formatClock(m.minute)}. {m.text}
-            </li>
-          ))}
-        </ul>
-      </section>
-      <section className="mt-4">
-        <h3 className="text-sm uppercase tracking-wide text-muted">Did Kevin's question travel?</h3>
-        {spread.holders.length === 0 && spread.notes.length === 0 ? (
-          <div className="mt-1">
-            <p>It has not left him. These retrievals missed it.</p>
-            <Missed rows={town.retrievals.filter((r) => r.missed).slice(-8)} />
-          </div>
-        ) : (
-          <div className="mt-1 space-y-2 text-sm">
-            {spread.holders.map((holder) => {
-              const memory = [...holder.memories].reverse().find((m) => m.seed || /who he is|man under the apron|came from|need help|make some money|who i am/i.test(m.text));
-              return (
-                <p key={holder.id}>
-                  <span className="text-fg">{holder.name}</span> holds: {memory?.text}
-                </p>
-              );
-            })}
-            {spread.notes.map((note) => (
-              <p key={note.id}>
-                Board, day {note.day}: {note.text}
-              </p>
+          </ul>
+        </section>
+        <section className="mt-4">
+          <h3 className="text-sm uppercase tracking-wide text-muted">What is still open</h3>
+          <ul className="mt-1 space-y-1 text-sm">
+            {favors.length === 0 && <li className="text-muted">Nothing written down between you.</li>}
+            {favors.map((favor) => (
+              <li key={favor.id}>
+                {favor.status === "owed" ? "Still owed" : favor.status}: {favor.text}
+                {favor.amount ? ` (${favor.amount})` : ""}
+              </li>
             ))}
-            {missed.length > 0 && (
-              <details>
-                <summary>Retrievals that missed</summary>
-                <Missed rows={missed} />
-              </details>
-            )}
-          </div>
-        )}
-      </section>
+          </ul>
+        </section>
+        <label className="mt-4 flex items-center gap-2 text-sm text-muted">
+          <input type="checkbox" checked={inspect} onChange={(event) => onInspect(event.target.checked)} />
+          Developer inspector. Not part of the town.
+        </label>
+        {inspect && <Inspector town={town} agent={agent} />}
+      </div>
       {agent.id !== "player" && (
         <form
-          className="mt-5"
+          className="mind-say"
           onSubmit={(event) => {
             event.preventDefault();
             onSend();
@@ -1114,65 +1128,76 @@ function Mind({
             Your line to {agent.name}
           </label>
           <textarea
+            ref={lineRef}
             id="mind-line"
             className="field mt-2 min-h-20 py-2"
             value={draft}
             maxLength={400}
             onChange={(event) => setDraft(event.target.value)}
           />
-          <button className="btn mt-2" data-on="true" type="submit" disabled={busy || !draft.trim()}>
-            Say it
-          </button>
+          <div className="mt-2 flex items-center gap-2">
+            <button className="btn" data-on="true" type="submit" disabled={busy || !draft.trim()}>
+              {busy ? "Saying it" : "Say it"}
+            </button>
+            {sendNote && <p className="text-sm text-muted">{sendNote}</p>}
+          </div>
         </form>
       )}
     </aside>
   );
 }
 
-function Missed({
-  rows,
-}: {
-  rows: { id: string; agentId: string; day: number; minute: number; question: string; top: { text: string; score: number }[]; seedRank: number | null; seedInStream: boolean }[];
-}) {
-  if (!rows.length) return <p className="text-sm text-muted">No retrieval has been scored yet.</p>;
+function Inspector({ town, agent }: { town: Town; agent: Agent }) {
+  const threads = (agent.threads ?? []).filter((t) => t.open);
+  const beats = agent.plan?.beats ?? [];
+  const hour = Math.floor(town.minute / 60);
   return (
-    <ul className="mt-2 space-y-2 text-sm">
-      {rows.map((row) => (
-        <li key={row.id}>
-          <span className="text-fg">
-            {row.agentId} · day {row.day} {formatClock(row.minute)}
-          </span>
-          <span className="block text-muted">
-            {row.seedInStream ? `Seed ranked ${row.seedRank}, outside the top 8.` : "Not in their stream."} Query: {row.question.slice(0, 140)}
-          </span>
-          <span className="block">Got: {row.top[0]?.text ?? "nothing"} ({row.top[0]?.score ?? 0})</span>
-        </li>
-      ))}
-    </ul>
+    <div className="mt-3 space-y-3 border-t border-line pt-3 text-sm">
+      <p>{agent.identity}</p>
+      <p>{agent.selfSentence}</p>
+      <p>Want: {agent.want}</p>
+      <ul>
+        {beats.map((beat) => (
+          <li key={beat.hour} className={beat.hour === hour ? "text-fg" : "text-muted"}>
+            {String(beat.hour).padStart(2, "0")}:00 {beat.place} — {beat.status}
+          </li>
+        ))}
+      </ul>
+      <ul>
+        {threads.map((thread) => (
+          <li key={thread.id}>
+            {thread.hidden ? "Hidden. " : ""}
+            {thread.text}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
 function Board({ town, onClose }: { town: Town; onClose: () => void }) {
   return (
     <aside className="mind" aria-label="Noticeboard">
-      <div className="flex items-center justify-between">
+      <div className="mind-bar">
         <h2 className="font-display text-3xl">Noticeboard</h2>
         <button className="btn" type="button" onClick={onClose} aria-label="Close board">
           <X className="size-4" />
         </button>
       </div>
-      <p className="mt-2 text-muted">By Hobbs Cafe. Notes stay until someone takes them down. No one has to.</p>
-      <ul className="mt-4 space-y-3">
-        {town.notices.length === 0 && <li>The board is empty. The town has not decided to write on it.</li>}
-        {town.notices.map((note) => (
-          <li key={note.id} className="border-b border-line pb-3">
-            <p className="text-xs uppercase tracking-wide text-muted">
-              {note.author} · day {note.day} {formatClock(note.minute)}
-            </p>
-            <p className="mt-1">{note.text}</p>
-          </li>
-        ))}
-      </ul>
+      <div className="mind-body">
+        <p className="text-muted">By Hobbs Cafe. Notes stay until someone takes them down. No one has to.</p>
+        <ul className="mt-4 space-y-3">
+          {town.notices.length === 0 && <li>The board is empty. The town has not decided to write on it.</li>}
+          {town.notices.map((note) => (
+            <li key={note.id} className="border-b border-line pb-3">
+              <p className="text-xs uppercase tracking-wide text-muted">
+                {note.author} · day {note.day} {formatClock(note.minute)}
+              </p>
+              <p className="mt-1">{note.text}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
     </aside>
   );
 }
