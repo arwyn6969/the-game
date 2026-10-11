@@ -902,7 +902,7 @@ export function TownApp() {
         : "The clock is at 1×.";
   const here = zoneAt(player.tile.x, player.tile.y);
   const planned = beatAt(player, town.minute);
-  const guideLine = `${clockLine} WASD or arrows move one tile. On a phone, hold N W E S. Enter speaks to whoever is beside you. ${hobbsWay(player.tile.x, player.tile.y)} Ask what something costs before you take it. Or walk on.`;
+  const guideLine = `${clockLine} WASD or arrows move one tile. On a phone, hold N W E S. Enter speaks to whoever is beside you. ${hobbsWay(player.tile.x, player.tile.y)} Ask Kevin for a shift if you want the cafe floor. Ask what something costs before you take it. Or walk on.`;
   const yourDebts = (town.favors ?? []).filter((f) => f.from === "player" || f.to === "player");
 
   return (
@@ -1456,9 +1456,14 @@ function Mind({
         <section className="mt-4">
           <h3 className="text-sm uppercase tracking-wide text-muted">What is still open</h3>
           <ul className="mt-1 space-y-1 text-sm">
-            {favors.length === 0 && (
+            {favors.length === 0 && (player.projects ?? []).every((p) => p.status !== "open") && (
               <li className="text-muted">Nothing written down between you.</li>
             )}
+            {(player.projects ?? [])
+              .filter((project) => project.status === "open")
+              .map((project) => (
+                <li key={project.id}>Commitment: {project.text}</li>
+              ))}
             {favors.map((favor) => (
               <li key={favor.id}>
                 {favor.status === "owed" ? "Still owed" : favor.status}: {favor.text}

@@ -515,6 +515,74 @@ test("an unreadable save is reported and left in place", () => {
   assert.deepEqual(save.readTownSave(), { status: "unavailable" });
 });
 
+test("a player can accept Kevin's shift by asking, then be paid for the hours", () => {
+  const town = createTown("Ada");
+  const player = agent(town, "player");
+  const before = player.money;
+  for (const text of [
+    "Can I work a shift at Hobbs?",
+    "I want a job. How do I earn money?",
+    "I will not take the shift.",
+  ]) {
+    const result = say(town, text, "kevin");
+    assert.equal(result.favor, null, text);
+  }
+  assert.equal(player.projects.filter((p) => p.status === "open").length, 0);
+  const offer = say(town, "I accept the cafe shift.", "kevin");
+  assert.match(offer.reply, /Sixteen hundred/);
+  assert.ok(player.projects.some((p) => p.kind === "shift" && p.status === "open" && p.place === "cafe"));
+  assert.ok(player.plan.beats.slice(16, 19).every((b) => b.place === "cafe" && b.spot === "out"));
+  assert.equal(player.money, before, "accepting does not pay");
+  town.minute = 16 * 60;
+  player.tile = { ...ANCHORS.cafe };
+  minutes(town, 179);
+  assert.equal(player.money, before, "two hours and fifty-nine minutes is not a wage");
+  minutes(town, 1);
+  assert.equal(player.money, before + 5);
+  assert.equal(town.tills.cafe, 17);
+  const kept = save.parseTownFile(save.exportTown(town));
+  assert.equal(agent(kept, "player").money, before + 5);
+  assert.ok(agent(kept, "player").projects.some((p) => p.kind === "shift" && p.status === "open"));
+  const ack = say(town, "Hello.", "kevin");
+  assert.match(ack.reply, /paid you 5/);
+});
+
+test("standing at the cafe, or leaving the shift, does not invent a wage", () => {
+  const asked = createTown("Ada");
+  say(asked, "Can I work a shift at Hobbs?", "kevin");
+  agent(asked, "player").tile = { ...ANCHORS.cafe };
+  asked.minute = 16 * 60;
+  const askedMoney = agent(asked, "player").money;
+  minutes(asked, 180);
+  assert.equal(agent(asked, "player").money, askedMoney);
+  assert.equal(agent(asked, "player").shiftHours, 0);
+
+  const town = createTown("Ada");
+  say(town, "I accept the cafe shift.", "kevin");
+  say(town, "I quit the shift.", "kevin");
+  const player = agent(town, "player");
+  assert.ok(player.projects.every((p) => p.status !== "open"));
+  assert.notEqual(player.plan.beats[16].place, "cafe");
+  player.tile = { ...ANCHORS.cafe };
+  town.minute = 16 * 60;
+  const money = player.money;
+  minutes(town, 180);
+  assert.equal(player.money, money);
+});
+
+test("an empty till explains the unpaid shift instead of paying it", () => {
+  const town = createTown("Ada");
+  say(town, "I accept the cafe shift.", "kevin");
+  const player = agent(town, "player");
+  town.tills.cafe = 0;
+  player.tile = { ...ANCHORS.cafe };
+  town.minute = 16 * 60;
+  const before = player.money;
+  minutes(town, 180);
+  assert.equal(player.money, before);
+  assert.equal(player.memories.filter((m) => m.text.includes("cannot pay the full")).length, 1);
+});
+
 test("offline bread offer, inspection and repayment never duplicate a charge", () => {
   const town = createTown("Ada");
   const before = balances(town);

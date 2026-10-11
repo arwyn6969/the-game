@@ -14,7 +14,7 @@ import type {
 } from "./types";
 import { AGENT_IDS } from "./types";
 import { makeMemory, pushMemory } from "./memory";
-import { beatAt, blocksToBeats, planFromBlocks } from "./plan";
+import { beatAt, blocksToBeats, isPlace, planFromBlocks } from "./plan";
 import { clip, mentionsSeed, purse } from "./text";
 import { formatClock } from "./text";
 import { placeTitle, zoneAt } from "./world";
@@ -237,6 +237,25 @@ function applyFavor(town: Town, edit: FavorEdit | null | undefined, allowed?: Ag
   pushMemory(to, makeMemory(town, town.day, town.minute, "favor", line, 7, { protected: true }));
 }
 
+function paintHours(agent: Agent, blocks: Block[]) {
+  if (!agent.plan) return;
+  for (const block of blocks) {
+    if (!block || !isPlace(String(block.place ?? "")) || typeof block.status !== "string") continue;
+    const from = Math.floor(block.from);
+    const to = Math.floor(block.to);
+    if (!Number.isFinite(from) || !Number.isFinite(to) || to <= from) continue;
+    for (let hour = Math.max(0, from); hour < Math.min(24, to); hour++) {
+      if (!agent.plan.beats[hour]) continue;
+      agent.plan.beats[hour] = {
+        hour,
+        place: block.place,
+        status: block.status.replace(/\s+/g, " ").trim().slice(0, 110),
+        spot: block.spot === "home" ? "home" : "out",
+      };
+    }
+  }
+}
+
 function applyBlocks(agent: Agent, blocks: Block[] | undefined, fromHour: number) {
   if (!blocks?.length || !agent.plan) return;
   const next = blocksToBeats(blocks);
@@ -364,6 +383,10 @@ export function applyResult(town: Town, result: MindResult) {
   if (result.notice?.text && pair.includes(result.notice.author))
     safely(() => pinNotice(town, result.notice!.author, result.notice!.text));
   if (result.project && pair.includes(result.project.owner)) safely(() => applyProject(town, result.project!));
+  for (const re of result.replan ?? []) {
+    const who = maybeAgent(town, re.id);
+    if (who && (who.id === "player" || who.id === agent.id)) safely(() => paintHours(who, re.blocks));
+  }
   } catch {
     /* A partial hour is kept. The clock still moves. */
   }
