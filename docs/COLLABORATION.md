@@ -2,6 +2,8 @@
 
 Prepared 11 October 2026 for `arwyn6969/the-game`. Live reference: https://thegame.grok.me.
 
+The first completed lane diffs have now been reviewed and combined in `codex/first-day-integration`. See [the release record](RELEASE.md) for current checks and publication status. The setup and lane prompts below describe the initial division of work; start future iterations from the reviewed integrated `main` once its release PR has merged.
+
 ## Goal
 
 Deliver a polished first day in the existing town. A player should find Hobbs, talk naturally to Kevin without seeing his secrets, make a meaningful choice, and see a trustworthy consequence. Keep the endless-town premise and current cast. World expansion, multiplayer, a new AI provider, and hosting migration are later decisions.

@@ -211,6 +211,7 @@
 
 .dpad {
   display: none;
+  pointer-events: none;
   position: absolute;
   z-index: 4;
   left: 0.6rem;
@@ -221,6 +222,7 @@
 }
 
 .dpad button {
+  pointer-events: auto;
   min-height: 52px;
   min-width: 52px;
   border-radius: var(--radius-md);

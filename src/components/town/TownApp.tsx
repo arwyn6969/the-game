@@ -1,13 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  Download,
-  Pause,
-  Pin,
-  Play,
-  SkipForward,
-  Upload,
-  X,
-} from "lucide-react";
+import { Download, Pause, Pin, Play, SkipForward, Upload, X } from "lucide-react";
 import type { Agent, AgentId, Face, ThinkJob, Town } from "@/game/types";
 import { applyResult, spreadView } from "@/game/effects";
 import { agentById } from "@/game/memory";
@@ -24,12 +16,35 @@ import {
   resetGlide,
   syncGlide,
 } from "@/game/render";
-import { exportTown, loadTown, parseTownFile, saveTown } from "@/game/save";
+import {
+  exportTown,
+  loadTown,
+  MAX_TOWN_FILE_BYTES,
+  parseTownFile,
+  saveTownWithStatus,
+  type SaveResult,
+} from "@/game/save";
 import { advanceTown, frameAt, stepMinute } from "@/game/sim";
 import { formatClock, periodName } from "@/game/text";
 import { createTown } from "@/game/town";
-import { auditWorld, ANCHORS, cell, nearestWalkable, placeTitle, TILE, walkable, zoneAt } from "@/game/world";
-import { exchangeLanded, interactiveControl, nextDraft, opensTalk, playerChatIds, type FocusLike } from "./talk";
+import {
+  auditWorld,
+  ANCHORS,
+  cell,
+  nearestWalkable,
+  placeTitle,
+  TILE,
+  walkable,
+  zoneAt,
+} from "@/game/world";
+import {
+  exchangeLanded,
+  interactiveControl,
+  nextDraft,
+  opensTalk,
+  playerChatIds,
+  type FocusLike,
+} from "./talk";
 
 declare global {
   interface Window {
@@ -54,8 +69,15 @@ type Replay = { d: number; m: number };
 
 function previewDay(text: string): { day: number; version: number | null } | null {
   try {
-    const value = JSON.parse(text) as { day?: unknown; version?: unknown; town?: { day?: unknown } };
-    const raw = value && typeof value === "object" && value.town && typeof value.town === "object" ? value.town.day : value.day;
+    const value = JSON.parse(text) as {
+      day?: unknown;
+      version?: unknown;
+      town?: { day?: unknown };
+    };
+    const raw =
+      value && typeof value === "object" && value.town && typeof value.town === "object"
+        ? value.town.day
+        : value.day;
     if (typeof raw !== "number" || !Number.isFinite(raw)) return null;
     return { day: raw, version: typeof value.version === "number" ? value.version : null };
   } catch {
@@ -163,8 +185,14 @@ export function TownApp() {
   const [sendNote, setSendNote] = useState("");
   const [crowd, setCrowd] = useState<AgentId[] | null>(null);
   const [exportNote, setExportNote] = useState("");
+  const [saveStatus, setSaveStatus] = useState<SaveResult | null>(null);
   const panelRef = useRef<AgentId | null>(null);
   const boardRef = useRef(false);
+
+  function persistTown(live: Town) {
+    const result = saveTownWithStatus(live);
+    if (mounted.current) setSaveStatus(result);
+  }
 
   useEffect(() => {
     onlineRef.current = online;
@@ -229,7 +257,8 @@ export function TownApp() {
     let timed: number | undefined;
     let applied = false;
     let landed = false;
-    const mark = () => (job.kind === "player" ? playerChatIds(agentById(live, job.agentId).memories ?? []) : []);
+    const mark = () =>
+      job.kind === "player" ? playerChatIds(agentById(live, job.agentId).memories ?? []) : [];
     try {
       prepareRetrievals(live, job);
       const res = await new Promise<Awaited<ReturnType<typeof thinkTown>>>((resolve, reject) => {
@@ -264,7 +293,7 @@ export function TownApp() {
     } finally {
       if (timed) window.clearTimeout(timed);
       pendingRef.current = false;
-      if (townRef.current === live) saveTown(live);
+      if (townRef.current === live) persistTown(live);
       if (mounted.current) {
         setThinking("");
         setTick((n) => n + 1);
@@ -274,11 +303,11 @@ export function TownApp() {
           if (townRef.current === live) {
             setSendNote(landed ? "They heard you." : "That did not land. Your line is still here.");
           }
-          if (landed && (live.guide ?? 0) < 3) {
+          if (landed && townRef.current === live && (live.guide ?? 0) < 3) {
             live.guide = 3;
             live.sawHint = true;
             setHint(false);
-            saveTown(live);
+            persistTown(live);
           }
         }
       }
@@ -306,7 +335,7 @@ export function TownApp() {
         setPanel(nearId);
         if (nearId === "kevin" && (live.guide ?? 0) < 2) {
           live.guide = 2;
-          saveTown(live);
+          persistTown(live);
           setTick((n) => n + 1);
         }
         return;
@@ -361,7 +390,7 @@ export function TownApp() {
 
     const stepPlayer = () => {
       const live = townRef.current;
-      if (!live || replayRef.current !== null) return;
+      if (!live || replayRef.current !== null || pendingRef.current) return;
       const { x, y } = axis(keysRef.current);
       if (!x && !y) {
         moveCool = 0;
@@ -372,10 +401,16 @@ export function TownApp() {
       }
       if (moveCool > 0) return;
       const player = agentById(live, "player");
-      if (!walkable(player.tile.x, player.tile.y)) player.tile = nearestWalkable(player.tile.x, player.tile.y);
+      if (!walkable(player.tile.x, player.tile.y))
+        player.tile = nearestWalkable(player.tile.x, player.tile.y);
       const nx = player.tile.x + x;
       const ny = player.tile.y + y;
-      if (!walkable(nx, ny) || live.agents.some((agent) => agent.id !== "player" && agent.tile.x === nx && agent.tile.y === ny)) {
+      if (
+        !walkable(nx, ny) ||
+        live.agents.some(
+          (agent) => agent.id !== "player" && agent.tile.x === nx && agent.tile.y === ny,
+        )
+      ) {
         moveCool = 0.16;
         return;
       }
@@ -384,7 +419,7 @@ export function TownApp() {
       player.status = `walking ${placeTitle(zoneAt(nx, ny))}`;
       if ((live.guide ?? 0) < 1 && zoneAt(nx, ny) === "cafe") {
         live.guide = 1;
-        saveTown(live);
+        persistTown(live);
         setTick((n) => n + 1);
       }
       moveCool = 0.16;
@@ -396,70 +431,78 @@ export function TownApp() {
 
     const loop = (now: number) => {
       try {
-      const dt = Math.min(0.05, (now - last) / 1000);
-      last = now;
-      const live = townRef.current;
-      const canvas = canvasRef.current;
-      if (live && canvas) {
-        moveCool = Math.max(0, moveCool - dt);
-        stepPlayer();
-        if (replayRef.current === null && speedRef.current > 0 && !hourLock.current) {
-          clock += dt * 1000;
-          const span = 1000 / speedRef.current;
-          let guard = 0;
-          let advanced = false;
-          while (clock >= span && guard++ < 6) {
-            clock -= span;
-            const minds = onlineRef.current && document.visibilityState === "visible";
-            let job: ThinkJob | null = null;
-            try {
-              job = stepMinute(live, minds);
-            } catch {
-              break;
+        const dt = Math.min(0.05, (now - last) / 1000);
+        last = now;
+        const live = townRef.current;
+        const canvas = canvasRef.current;
+        if (live && canvas) {
+          moveCool = Math.max(0, moveCool - dt);
+          stepPlayer();
+          if (
+            replayRef.current === null &&
+            speedRef.current > 0 &&
+            !hourLock.current &&
+            !pendingRef.current
+          ) {
+            clock += dt * 1000;
+            const span = 1000 / speedRef.current;
+            let guard = 0;
+            let advanced = false;
+            while (clock >= span && guard++ < 6) {
+              clock -= span;
+              const minds = onlineRef.current && document.visibilityState === "visible";
+              let job: ThinkJob | null = null;
+              try {
+                job = stepMinute(live, minds);
+              } catch {
+                break;
+              }
+              if (live.minute % 60 === 0) persistTown(live);
+              advanced = true;
+              if (takeJob(job)) break;
             }
-            if (live.minute % 60 === 0) saveTown(live);
-            advanced = true;
-            if (takeJob(job)) break;
+            if (advanced) setTick((n) => n + 1);
           }
-          if (advanced) setTick((n) => n + 1);
+          const parent = canvas.parentElement;
+          const w = parent?.clientWidth || 800;
+          const h = canvas.clientHeight || 600;
+          if (w !== view.w || h !== view.h) {
+            view.w = w;
+            view.h = h;
+          }
+          const snap = speedRef.current === 4 || pendingRef.current;
+          if (replayRef.current === null) syncGlide(live, dt, snap);
+          const positions = positionsFor(live, replayRef.current);
+          const playerPos = positions.player ?? glideOf("player");
+          const cam = cameraFor(playerPos.x, playerPos.y, w, h);
+          const dpr = Math.min(2, window.devicePixelRatio || 1);
+          if (canvas.width !== Math.floor(w * dpr) || canvas.height !== Math.floor(h * dpr)) {
+            canvas.width = Math.floor(w * dpr);
+            canvas.height = Math.floor(h * dpr);
+          }
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            const minute = replayRef.current?.m ?? live.minute;
+            paint(ctx, {
+              viewW: w,
+              viewH: h,
+              town: live,
+              minute,
+              day: replayRef.current?.d ?? live.day,
+              camX: cam.camX,
+              camY: cam.camY,
+              positions,
+              selected: null,
+              names: Object.fromEntries(live.agents.map((a) => [a.id, a.name])) as Record<
+                AgentId,
+                string
+              >,
+            });
+            canvas.dataset.camx = String(cam.camX);
+            canvas.dataset.camy = String(cam.camY);
+          }
         }
-        const parent = canvas.parentElement;
-        const w = parent?.clientWidth || 800;
-        const h = canvas.clientHeight || 600;
-        if (w !== view.w || h !== view.h) {
-          view.w = w;
-          view.h = h;
-        }
-        const snap = speedRef.current === 4 || pendingRef.current;
-        if (replayRef.current === null) syncGlide(live, dt, snap);
-        const positions = positionsFor(live, replayRef.current);
-        const playerPos = positions.player ?? glideOf("player");
-        const cam = cameraFor(playerPos.x, playerPos.y, w, h);
-        const dpr = Math.min(2, window.devicePixelRatio || 1);
-        if (canvas.width !== Math.floor(w * dpr) || canvas.height !== Math.floor(h * dpr)) {
-          canvas.width = Math.floor(w * dpr);
-          canvas.height = Math.floor(h * dpr);
-        }
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-          const minute = replayRef.current?.m ?? live.minute;
-          paint(ctx, {
-            viewW: w,
-            viewH: h,
-            town: live,
-            minute,
-            day: replayRef.current?.d ?? live.day,
-            camX: cam.camX,
-            camY: cam.camY,
-            positions,
-            selected: null,
-            names: Object.fromEntries(live.agents.map((a) => [a.id, a.name])) as Record<AgentId, string>,
-          });
-          canvas.dataset.camx = String(cam.camX);
-          canvas.dataset.camy = String(cam.camY);
-        }
-      }
       } catch (error) {
         if (!loopLogged) {
           loopLogged = true;
@@ -471,10 +514,10 @@ export function TownApp() {
     raf = requestAnimationFrame(loop);
 
     const onLeave = () => {
-      if (townRef.current) saveTown(townRef.current);
+      if (townRef.current) persistTown(townRef.current);
     };
     const onHide = () => {
-      if (document.visibilityState === "hidden" && townRef.current) saveTown(townRef.current);
+      if (document.visibilityState === "hidden" && townRef.current) persistTown(townRef.current);
     };
     window.addEventListener("pagehide", onLeave);
     document.addEventListener("visibilitychange", onHide);
@@ -492,10 +535,11 @@ export function TownApp() {
     };
     window.__game = {
       advanceMinutes: (n: number) => {
+        if (pendingRef.current) return null;
         speedRef.current = 0;
         const live = townRef.current!;
         advanceTown(live, n);
-        saveTown(live);
+        persistTown(live);
         resetGlide(live);
         setSpeed(0);
         setTick((v) => v + 1);
@@ -506,7 +550,13 @@ export function TownApp() {
           holders: spread.holders.map((a) => a.name),
           notes: spread.notes.map((n) => n.text),
           missed: spread.missed.length,
-          favors: live.favors.map((f) => ({ from: f.from, to: f.to, status: f.status, amount: f.amount, text: f.text })),
+          favors: live.favors.map((f) => ({
+            from: f.from,
+            to: f.to,
+            status: f.status,
+            amount: f.amount,
+            text: f.text,
+          })),
           selves: Object.fromEntries(live.agents.map((a) => [a.id, a.selfSentence])),
           money: Object.fromEntries(live.agents.map((a) => [a.id, a.money])),
         };
@@ -533,7 +583,7 @@ export function TownApp() {
     const town = createTown(name);
     town.paused = true;
     townRef.current = town;
-    saveTown(town);
+    persistTown(town);
     speedRef.current = 0;
     setSpeed(0);
     setHint(true);
@@ -546,7 +596,7 @@ export function TownApp() {
     const live = townRef.current;
     if (!live) return;
     live.paused = next === 0;
-    saveTown(live);
+    persistTown(live);
   }
 
   function nextHour() {
@@ -567,7 +617,7 @@ export function TownApp() {
         if (job) break;
       }
       try {
-        saveTown(live);
+        persistTown(live);
       } catch {
         /* keep the hour */
       }
@@ -576,7 +626,7 @@ export function TownApp() {
       else if (job) {
         try {
           applyResult(live, offlineResult(live, job));
-          saveTown(live);
+          persistTown(live);
         } catch {
           /* the hour still ends */
         }
@@ -609,7 +659,7 @@ export function TownApp() {
       else setPanel("kevin");
       if (one === "kevin" && (live.guide ?? 0) < 2) {
         live.guide = 2;
-        saveTown(live);
+        persistTown(live);
         setTick((n) => n + 1);
       }
       return;
@@ -618,7 +668,10 @@ export function TownApp() {
       x: (sx + cam.camX) / TILE,
       y: (sy + cam.camY) / TILE,
     };
-    if (onBoard(world.x, world.y) || onBoard(agentById(live, "player").tile.x, agentById(live, "player").tile.y)) {
+    if (
+      onBoard(world.x, world.y) ||
+      onBoard(agentById(live, "player").tile.x, agentById(live, "player").tile.y)
+    ) {
       setBoard(true);
     }
   }
@@ -626,10 +679,16 @@ export function TownApp() {
   async function sendLine() {
     const live = townRef.current;
     const who = pinned ? "kevin" : panel;
-    if (!live || !who || who === "player" || pendingRef.current || replayRef.current !== null) return;
+    if (!live || !who || who === "player" || pendingRef.current || replayRef.current !== null)
+      return;
     const text = draft.trim().slice(0, 400);
     if (!text) return;
-    if (who === "kevin" && /who are you|who is he|who he is|who you are|man under|came from|your story|origin/i.test(text)) {
+    if (
+      who === "kevin" &&
+      /who are you|who is he|who he is|who you are|man under|came from|your story|origin/i.test(
+        text,
+      )
+    ) {
       if ((live.guide ?? 0) < 3) {
         live.guide = 3;
         live.sawHint = true;
@@ -648,10 +707,14 @@ export function TownApp() {
       try {
         const before = playerChatIds(agentById(live, who).memories ?? []);
         applyResult(live, offlineResult(live, job));
-        saveTown(live);
+        persistTown(live);
         const landed = exchangeLanded(before, playerChatIds(agentById(live, who).memories ?? []));
         setDraft((current) => nextDraft(current, text, panelRef.current === who, landed));
-        setSendNote(landed ? "They answered from what they already hold." : "That did not land. Your line is still here.");
+        setSendNote(
+          landed
+            ? "They answered from what they already hold."
+            : "That did not land. Your line is still here.",
+        );
         if (landed && (live.guide ?? 0) < 3) {
           live.guide = 3;
           live.sawHint = true;
@@ -673,7 +736,8 @@ export function TownApp() {
         <form onSubmit={enter}>
           <p className="font-display text-4xl leading-none">THE GAME</p>
           <p className="mt-4 text-muted">
-            A town with five lives already in it. You are the sixth. Not the narrator. Hobbs Cafe is already open.
+            A town with five lives already in it. You are the sixth. Not the narrator. Hobbs Cafe is
+            already open.
           </p>
           <label className="mt-6 block text-sm text-muted" htmlFor="town-name">
             What do they call you?
@@ -704,14 +768,19 @@ export function TownApp() {
   const near = onBoard(player.tile.x, player.tile.y);
   const clockMinute = replay?.m ?? town.minute;
   const clockDay = replay?.d ?? town.day;
-  const yesterday = town.day > 1 && town.scrub.some((frame) => (frame.d ?? town.day) === town.day - 1);
+  const yesterday =
+    town.day > 1 && town.scrub.some((frame) => (frame.d ?? town.day) === town.day - 1);
   const clockLine =
-    speed === 0 ? "The clock is paused. Press 1× when you want the hour to move." : speed === 4 ? "The clock is at 4×. Pause if you want to talk first." : "The clock is at 1×.";
+    speed === 0
+      ? "The clock is paused. Press 1× when you want the hour to move."
+      : speed === 4
+        ? "The clock is at 4×. Pause if you want to talk first."
+        : "The clock is at 1×.";
   const guideLine = `${clockLine} WASD or arrows move one tile. On a phone, hold N W E S. Enter speaks to whoever is beside you. ${hobbsWay(player.tile.x, player.tile.y)} You can speak to Kevin, ask about a shift, or ask Baba for bread. Or walk on.`;
   const yourDebts = (town.favors ?? []).filter((f) => f.from === "player" || f.to === "player");
 
   return (
-      <main className="town" data-talking={shown || board ? "true" : "false"}>
+    <main className="town" data-talking={shown || board ? "true" : "false"}>
       <header className="hud">
         <h1 className="font-display text-2xl leading-none">THE GAME</h1>
         <p className="tabular-nums">
@@ -719,22 +788,42 @@ export function TownApp() {
           {replay !== null ? " · replay" : ""}
         </p>
         <p className="text-muted">{placeTitle(zoneAt(player.tile.x, player.tile.y))}</p>
-        <p className="text-muted">{player.money} on you · {beatAt(player, town.minute).status}</p>
+        <p className="text-muted">
+          {player.money} on you · {beatAt(player, town.minute).status}
+        </p>
         {checked && (
           <span className="badge" data-off={online ? "false" : "true"}>
             {online ? "mind on" : "offline mind"}
           </span>
         )}
         {thinking && <span className="text-sm text-primary">minds thinking</span>}
-        {hiccup && <span className="text-sm text-primary">A mind missed and spoke from memory.</span>}
+        {hiccup && (
+          <span className="text-sm text-primary">A mind missed and spoke from memory.</span>
+        )}
         <div className="ml-auto flex flex-wrap gap-2">
-          <button className="btn" data-on={speed === 0 ? "true" : "false"} type="button" onClick={() => setRate(0)} aria-label="Pause">
+          <button
+            className="btn"
+            data-on={speed === 0 ? "true" : "false"}
+            type="button"
+            onClick={() => setRate(0)}
+            aria-label="Pause"
+          >
             <Pause className="inline size-4" aria-hidden /> Pause
           </button>
-          <button className="btn" data-on={speed === 1 ? "true" : "false"} type="button" onClick={() => setRate(1)}>
+          <button
+            className="btn"
+            data-on={speed === 1 ? "true" : "false"}
+            type="button"
+            onClick={() => setRate(1)}
+          >
             <Play className="inline size-4" aria-hidden /> 1×
           </button>
-          <button className="btn" data-on={speed === 4 ? "true" : "false"} type="button" onClick={() => setRate(4)}>
+          <button
+            className="btn"
+            data-on={speed === 4 ? "true" : "false"}
+            type="button"
+            onClick={() => setRate(4)}
+          >
             4×
           </button>
           <button className="btn" type="button" onClick={nextHour} disabled={thinking !== ""}>
@@ -742,6 +831,20 @@ export function TownApp() {
           </button>
         </div>
       </header>
+      {saveStatus && !saveStatus.ok && (
+        <p className="warn" role="alert">
+          This town has not saved in this browser. Download a copy before closing the page.{" "}
+          <button
+            className="btn"
+            type="button"
+            onClick={() => {
+              void saveCopy(town).then(setExportNote);
+            }}
+          >
+            Download a copy
+          </button>
+        </p>
+      )}
       {checked && !online && !shown && (
         <p className="warn" role="status">
           The minds are offline. They still answer from what they already hold.
@@ -755,7 +858,10 @@ export function TownApp() {
       {yourDebts.length > 0 && (
         <p className="warn" role="status">
           {yourDebts
-            .map((favor) => `${favor.from} owes ${favor.to} ${favor.amount || "a favor"} — ${favor.status}. ${favor.text}`)
+            .map(
+              (favor) =>
+                `${favor.from} owes ${favor.to} ${favor.amount || "a favor"} — ${favor.status}. ${favor.text}`,
+            )
             .join(" ")}
         </p>
       )}
@@ -932,7 +1038,7 @@ export function TownApp() {
             const file = event.target.files?.[0];
             event.target.value = "";
             if (!file) return;
-            if (file.size > 1_500_000) {
+            if (file.size > MAX_TOWN_FILE_BYTES) {
               setImportError("That file is too large to be a town.");
               setImportText("");
               return;
@@ -947,12 +1053,7 @@ export function TownApp() {
           }}
         />
       </footer>
-      {board && (
-        <Board
-          town={town}
-          onClose={() => setBoard(false)}
-        />
-      )}
+      {board && <Board town={town} onClose={() => setBoard(false)} />}
       {importText !== null && (
         <div className="gate absolute inset-0 z-10 bg-bg/90">
           <form
@@ -966,7 +1067,14 @@ export function TownApp() {
                 return;
               }
               townRef.current = next;
-              saveTown(next);
+              persistTown(next);
+              keysRef.current.clear();
+              speedRef.current = next.paused ? 0 : 1;
+              setSpeed(speedRef.current);
+              setHint(!next.sawHint);
+              setDraft("");
+              setSendNote("");
+              setInspect(false);
               resetGlide(next);
               setImportText(null);
               setPanel(null);
@@ -1026,7 +1134,7 @@ function positionsFor(town: Town, replay: Replay | null) {
   return out;
 }
 
-function saveCopy(town: Town) {
+async function saveCopy(town: Town) {
   const text = exportTown(town);
   const framed = (() => {
     try {
@@ -1044,10 +1152,12 @@ function saveCopy(town: Town) {
     link.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  return navigator.clipboard
-    .writeText(text)
-    .then(() => (framed ? "Copied. This preview cannot save a file." : "Copied, and the file was saved."))
-    .catch(() => (framed ? "This preview cannot save a file or use the clipboard." : "The file was saved."));
+  try {
+    await navigator.clipboard.writeText(text);
+    return framed ? "Copied. This preview cannot save a file." : "Copied, and the file was saved.";
+  } catch {
+    return framed ? "This preview cannot save a file or use the clipboard." : "The file was saved.";
+  }
 }
 
 function Pad({
@@ -1131,7 +1241,9 @@ function Mind({
         <div>
           <p className="text-xs uppercase tracking-wide text-muted">{agent.role}</p>
           <h2 className="font-display text-3xl leading-none">{agent.name}</h2>
-          <p className="mt-1 text-sm text-muted">{agent.id === "player" ? `${player.money} on you · ${agent.status}` : agent.status}</p>
+          <p className="mt-1 text-sm text-muted">
+            {agent.id === "player" ? `${player.money} on you · ${agent.status}` : agent.status}
+          </p>
         </div>
         <div className="flex gap-2">
           <button className="btn" type="button" data-on={pinned ? "true" : "false"} onClick={onPin}>
@@ -1144,9 +1256,17 @@ function Mind({
       </div>
       <div className="mind-body">
         <section>
-          <h3 className="text-sm uppercase tracking-wide text-muted">{agent.id === "player" ? "Your journal" : "What you heard"}</h3>
+          <h3 className="text-sm uppercase tracking-wide text-muted">
+            {agent.id === "player" ? "Your journal" : "What you heard"}
+          </h3>
           <ul className="mt-1 space-y-2 text-sm">
-            {heard.length === 0 && <li className="text-muted">{agent.id === "player" ? "You have not spoken yet." : "You have not spoken with them yet."}</li>}
+            {heard.length === 0 && (
+              <li className="text-muted">
+                {agent.id === "player"
+                  ? "You have not spoken yet."
+                  : "You have not spoken with them yet."}
+              </li>
+            )}
             {heard.slice(-8).map((m) => (
               <li key={m.id}>
                 Day {m.day} {formatClock(m.minute)}. {m.text}
@@ -1157,7 +1277,9 @@ function Mind({
         <section className="mt-4">
           <h3 className="text-sm uppercase tracking-wide text-muted">What is still open</h3>
           <ul className="mt-1 space-y-1 text-sm">
-            {favors.length === 0 && <li className="text-muted">Nothing written down between you.</li>}
+            {favors.length === 0 && (
+              <li className="text-muted">Nothing written down between you.</li>
+            )}
             {favors.map((favor) => (
               <li key={favor.id}>
                 {favor.status === "owed" ? "Still owed" : favor.status}: {favor.text}
@@ -1167,7 +1289,13 @@ function Mind({
           </ul>
         </section>
         <label className="mt-4 flex items-center gap-2 text-sm text-muted" htmlFor="mind-inspect">
-          <input id="mind-inspect" name="inspect" type="checkbox" checked={inspect} onChange={(event) => onInspect(event.target.checked)} />
+          <input
+            id="mind-inspect"
+            name="inspect"
+            type="checkbox"
+            checked={inspect}
+            onChange={(event) => onInspect(event.target.checked)}
+          />
           Developer inspector. Not part of the town.
         </label>
         {inspect && <Inspector town={town} agent={agent} />}
@@ -1241,9 +1369,13 @@ function Board({ town, onClose }: { town: Town; onClose: () => void }) {
         </button>
       </div>
       <div className="mind-body">
-        <p className="text-muted">By Hobbs Cafe. Notes stay until someone takes them down. No one has to.</p>
+        <p className="text-muted">
+          By Hobbs Cafe. Notes stay until someone takes them down. No one has to.
+        </p>
         <ul className="mt-4 space-y-3">
-          {town.notices.length === 0 && <li>The board is empty. The town has not decided to write on it.</li>}
+          {town.notices.length === 0 && (
+            <li>The board is empty. The town has not decided to write on it.</li>
+          )}
           {town.notices.map((note) => (
             <li key={note.id} className="border-b border-line pb-3">
               <p className="text-xs uppercase tracking-wide text-muted">
@@ -1257,4 +1389,3 @@ function Board({ town, onClose }: { town: Town; onClose: () => void }) {
     </aside>
   );
 }
-

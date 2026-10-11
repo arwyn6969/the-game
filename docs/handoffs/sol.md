@@ -1,5 +1,7 @@
 # Sol handoff
 
+The later integration pass combines this branch with the completed player-experience branch, wires save feedback/import limits, and verifies the shared game. Current release evidence and publishing limitations are recorded in [docs/RELEASE.md](../RELEASE.md); the independent-lane record below remains historical evidence.
+
 Implemented and locally validated on 11 October 2026. The setup branch remains unmerged, so the implementation targets `codex/agent-collaboration-setup`.
 
 - Repository: `arwyn6969/the-game`; checkout `/workspace/the-game`; branch `codex/sol-foundation`.
