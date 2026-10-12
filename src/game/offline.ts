@@ -153,7 +153,7 @@ function weeklyLine(agent: Agent, known: boolean): string {
   if (agent.id === "arwyn") {
     return known
       ? "Right now I am a person holding someone else's origin question as if it were a document."
-      : "Right now I am still the one who reads a life before she interrupts it.";
+      : "Right now I am still the one who reads a life before I interrupt it.";
   }
   if (agent.id === "northern") {
     return known
@@ -339,7 +339,7 @@ function talkArwyn(town: Town, a: Agent, b: Agent): MindResult {
         owner: "kevin",
         about: "arwyn",
         delta: 1,
-        note: "She listened when I said I do not know who I am, and she did not turn it into a place.",
+        note: "He listened when I said I do not know who I am, and he did not turn it into a place.",
       },
       {
         owner: "arwyn",
@@ -525,7 +525,7 @@ function talkTab(town: Town): MindResult {
         owner: "northern",
         about: "baba",
         delta: 1,
-        note: "She let me eat on a tab of 2 and did not pretend it was kindness without a number.",
+        note: "He let me eat on a tab of 2 and did not pretend it was kindness without a number.",
       },
     ],
     favor: {
