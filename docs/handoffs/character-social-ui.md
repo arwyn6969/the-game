@@ -1,6 +1,6 @@
 # Character social UI handoff
 
-12 October 2026. Branch `codex/character-social-ui`. This is an implementation for review, not a production publication.
+12 October 2026. Original implementation branch `codex/character-social-ui`, merged in [PR #23](https://github.com/arwyn6969/the-game/pull/23). The UI is now published at https://thegame.grok.me; see [the release record](../RELEASE.md) for current source, hosted verification and limits. The implementation checks below record the original feature handoff.
 
 ## Baseline and dependency
 
@@ -31,4 +31,4 @@ Reproduction: `docs/design/character-social-checks.mjs`. Screenshots, synthetic 
 
 ## Limits
 
-No live/paid AI call, production migration, merge, hosted publication or physical-device keyboard check was performed. Social history retains 128 applied events; older available transcripts can be read without reconstructed score changes. Numeric skills, health, hunger and mood systems remain unimplemented, as planned. Auth, provider routing, hosting and explicit transaction rules are preserved.
+The original implementation validation did not include a live/paid AI call, production migration, merge, hosted publication or physical-device keyboard check. Merge and hosted publication are now complete as recorded above. Social history retains 128 applied events; older available transcripts can be read without reconstructed score changes. Numeric skills, health, hunger and mood systems remain unimplemented, as planned. Auth, provider routing, hosting and explicit transaction rules are preserved.
