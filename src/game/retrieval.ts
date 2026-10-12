@@ -2,30 +2,40 @@ import type { Agent, ThinkJob, Town } from "./types";
 import { absMinute, logRetrieval, scoreMemories } from "./memory";
 import { clip, mentionsSeed, plain } from "./text";
 import { placeTitle, zoneAt } from "./world";
+import { memorySource, sharedMemories } from "./conversation";
 
 // Both prompt construction and its diagnostic use this resident's own memory stream.
 export function promptMemories(town: Town, agent: Agent, job: ThinkJob) {
+  const other =
+    job.kind === "talk"
+      ? town.agents.find((resident) => resident.id === (job.a === agent.id ? job.b : job.a))
+      : undefined;
+  const stream = other ? sharedMemories(agent, other) : (agent.memories ?? []);
   const question =
     job.kind === "player"
       ? plain(job.text, 400)
       : job.kind === "talk"
         ? `${job.a} ${job.b}`
         : job.kind;
-  const query = `${question} ${placeTitle(zoneAt(agent.tile.x, agent.tile.y))} ${(
-    agent.threads ?? []
+  const query = `${question} ${placeTitle(zoneAt(agent.tile.x, agent.tile.y))} ${(other
+    ? []
+    : (agent.threads ?? [])
   )
     .filter((t) => t.open)
     .map((t) => t.text)
-    .join(" ")} ${agent.want ?? ""}`;
-  const ranked = scoreMemories(agent.memories ?? [], query, absMinute(town.day, town.minute));
+    .join(" ")} ${other ? "" : (agent.want ?? "")}`;
+  const ranked = scoreMemories(stream, query, absMinute(town.day, town.minute));
   const selected = ranked.slice(0, 4);
-  const keptMemory = (agent.memories ?? []).find(
-    (m) => m.seed || (m.protected && m.type === "favor"),
-  );
+  const keptMemory = !other && stream.find((m) => m.seed || (m.protected && m.type === "favor"));
   const kept = keptMemory && ranked.find((s) => s.memory.id === keptMemory.id);
   if (kept && !selected.some((s) => s.memory.id === kept.memory.id)) selected.unshift(kept);
   const memories = selected.map((s) => ({
-    text: clip(s.memory.text, 110),
+    id: s.memory.id,
+    day: s.memory.day,
+    minute: s.memory.minute,
+    with: s.memory.with,
+    source: memorySource(s.memory),
+    text: clip(s.memory.text, 420),
     type: s.memory.type,
     importance: s.memory.importance,
   }));
@@ -43,7 +53,7 @@ export function promptMemories(town: Town, agent: Agent, job: ThinkJob) {
     previous.question !== query.slice(0, 240) ||
     JSON.stringify(previous.top) !== JSON.stringify(top)
   ) {
-    const log = logRetrieval(town, agent, query);
+    const log = logRetrieval(town, { ...agent, memories: stream }, query);
     log.top = top;
     log.seedInStream = ranked.some((s) => s.memory.seed || mentionsSeed(s.memory.text));
     const seedIndex = selected.findIndex((s) => s.memory.seed || mentionsSeed(s.memory.text));

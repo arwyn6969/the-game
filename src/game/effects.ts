@@ -18,6 +18,7 @@ import { beatAt, blocksToBeats, isPlace, planFromBlocks } from "./plan";
 import { clip, mentionsSeed, purse } from "./text";
 import { formatClock } from "./text";
 import { placeTitle, zoneAt } from "./world";
+import { groundPlayerReply, groundSharedLine } from "./conversation";
 
 const KINDS = new Set<ProjectKind>([
   "shift",
@@ -283,7 +284,11 @@ function safely(fn: () => void) {
   }
 }
 
-export function applyResult(town: Town, result: MindResult) {
+export function applyResult(
+  town: Town,
+  result: MindResult,
+  source: "statement" | "event" = "statement",
+) {
   if (!Number.isFinite(town.minute)) town.minute = 0;
   if (!Number.isFinite(town.day) || town.day < 1) town.day = 1;
   if (!Number.isFinite(town.nextId)) town.nextId = 1;
@@ -318,9 +323,38 @@ export function applyResult(town: Town, result: MindResult) {
       const b = maybeAgent(town, result.b);
       if (!a || !b || a.id === b.id || a.id === "player" || b.id === "player") return;
       const pair: AgentId[] = [a.id, b.id];
-      const lines = (result.lines ?? [])
+      let lines = (result.lines ?? [])
         .filter((l) => l?.text && (l.speaker === a.id || l.speaker === b.id))
         .slice(0, 4);
+      const previousFavors = new Map((town.favors ?? []).map((favor) => [favor.id, favor.status]));
+      safely(() => applyFavor(town, result.favor, pair));
+      if (result.mind === "grok") {
+        lines = lines.map((line) => ({ ...line, text: groundSharedLine(town, a, b, line.text) }));
+        if (result.favor) {
+          const changed = town.favors.filter(
+            (favor) =>
+              pair.includes(favor.from) &&
+              pair.includes(favor.to) &&
+              previousFavors.get(favor.id) !== favor.status,
+          );
+          const receipt = changed.length
+            ? changed
+                .map(
+                  (favor) =>
+                    `${maybeAgent(town, favor.from)?.name} → ${maybeAgent(town, favor.to)?.name}: ${favor.text}, ${favor.amount}, ${favor.status}.`,
+                )
+                .join(" ")
+            : "That proposed change was not completed. Our existing agreement is unchanged.";
+          lines = [{ speaker: lines.at(-1)?.speaker ?? a.id, text: receipt }];
+        }
+        if (result.project?.action === "done")
+          lines = [
+            {
+              speaker: lines.at(-1)?.speaker ?? a.id,
+              text: "I have no verified completion to report. The project's recorded state has not changed.",
+            },
+          ];
+      }
       const place = placeTitle(zoneAt(a.tile.x, a.tile.y));
       const script = lines
         .map((l) => `${maybeAgent(town, l.speaker)?.name ?? l.speaker}: ${clip(l.text, 220)}`)
@@ -334,6 +368,8 @@ export function applyResult(town: Town, result: MindResult) {
             with: agent.id === a.id ? b.id : a.id,
             mind: result.mind,
             protected: revealed,
+            source: "statement",
+            turns: lines.map(({ speaker, text }) => ({ speaker, text: clip(text, 700) })),
           }),
         );
         const own = [...lines].reverse().find((l) => l.speaker === agent.id);
@@ -345,12 +381,15 @@ export function applyResult(town: Town, result: MindResult) {
         if (rel.owner !== a.id && rel.owner !== b.id) continue;
         safely(() => adjustRelation(town, rel.owner, rel.about, rel.delta, rel.note));
       }
-      safely(() => applyFavor(town, result.favor, pair));
       if (result.thread && pair.includes(result.thread.owner))
         safely(() => applyThread(town, result.thread!));
       if (result.notice?.text && pair.includes(result.notice.author))
         safely(() => pinNotice(town, result.notice!.author, result.notice!.text));
-      if (result.project && pair.includes(result.project.owner))
+      if (
+        result.project &&
+        pair.includes(result.project.owner) &&
+        !(result.mind === "grok" && result.project.action === "done")
+      )
         safely(() => applyProject(town, result.project!));
       const hour = Math.floor(town.minute / 60);
       for (const re of result.replan ?? []) {
@@ -368,9 +407,14 @@ export function applyResult(town: Town, result: MindResult) {
       result.project?.owner === "player" ||
       result.thread?.owner === "player" ||
       result.replan?.some((re) => re.id === "player");
+    const unsupportedCompletion = result.mind === "grok" && result.project?.action === "done";
     const reply = proposedCommitment
       ? "Nothing was bought, paid, accepted or cancelled by this conversation. Read the quoted actions and choose explicitly if you want a change."
-      : result.reply;
+      : unsupportedCompletion
+        ? "I have no verified completion to report. The project's recorded state has not changed."
+        : result.mind === "grok"
+          ? groundPlayerReply(town, agent, result.reply)
+          : result.reply;
     const place = placeTitle(zoneAt(agent.tile.x, agent.tile.y));
     const exchange = `In ${place} at ${formatClock(town.minute)}, ${player.name} said: "${clip(result.playerText, 180)}" ${agent.name} answered: "${clip(reply, 320)}"`;
     pushMemory(
@@ -379,6 +423,11 @@ export function applyResult(town: Town, result: MindResult) {
         with: "player",
         mind: result.mind,
         protected: mentionsSeed(exchange),
+        source,
+        turns: [
+          { speaker: "player", text: clip(result.playerText, 400) },
+          { speaker: agent.id, text: clip(reply, 700) },
+        ],
       }),
     );
     pushMemory(
@@ -387,6 +436,11 @@ export function applyResult(town: Town, result: MindResult) {
         with: agent.id,
         mind: result.mind,
         protected: mentionsSeed(exchange),
+        source,
+        turns: [
+          { speaker: "player", text: clip(result.playerText, 400) },
+          { speaker: agent.id, text: clip(reply, 700) },
+        ],
       }),
     );
     sayBubble(agent, reply, until);
@@ -397,7 +451,8 @@ export function applyResult(town: Town, result: MindResult) {
     if (result.thread?.owner === agent.id) safely(() => applyThread(town, result.thread!));
     if (result.notice?.text && result.notice.author === agent.id)
       safely(() => pinNotice(town, result.notice!.author, result.notice!.text));
-    if (result.project?.owner === agent.id) safely(() => applyProject(town, result.project!));
+    if (result.project?.owner === agent.id && !unsupportedCompletion)
+      safely(() => applyProject(town, result.project!));
     for (const re of result.replan ?? []) {
       const who = maybeAgent(town, re.id);
       if (who?.id === agent.id) safely(() => paintHours(who, re.blocks));
@@ -714,16 +769,20 @@ export function applyPlayerAction(
     reply =
       "Cafe shift cancelled. No wage was paid by cancelling; money already earned stays yours.";
   }
-  applyResult(town, {
-    kind: "player",
-    mind: "offline",
-    agentId: target,
-    playerText: action.label,
-    reply,
-    delta: 0,
-    note: "",
-    favor: null,
-  });
+  applyResult(
+    town,
+    {
+      kind: "player",
+      mind: "offline",
+      agentId: target,
+      playerText: action.label,
+      reply,
+      delta: 0,
+      note: "",
+      favor: null,
+    },
+    "event",
+  );
   return { ok: true, reply };
 }
 
@@ -750,7 +809,8 @@ function applyPlanDraft(town: Town, draft: PlanDraft, mind: "grok" | "offline", 
       mind,
     }),
   );
-  if (draft.project) applyProject(town, { ...draft.project, owner: agent.id });
+  if (draft.project && !(mind === "grok" && draft.project.action === "done"))
+    applyProject(town, { ...draft.project, owner: agent.id });
   if (draft.thread) safely(() => applyThread(town, { ...draft.thread!, owner: agent.id }));
   agent.status = beatAt(agent, town.minute).status;
   if (agent.id === "kevin" && mentionsSeed(agent.status))
