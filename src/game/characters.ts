@@ -59,7 +59,7 @@ const PROFILES: Record<string, CharacterProfile> = {
       "Hello. Are you looking for a record, or trying to answer a question?",
       "Hello. Tell me what you want to find out; we can start with the evidence.",
       "Hello. I can help you frame a question before we search the records.",
-      "Hello. What have you found, and what is still missing?",
+      "Hello. Is there something you would like to look up?",
     ],
     reflection: "I should keep a person's account separate from what the records establish.",
     education: {
@@ -88,7 +88,7 @@ const PROFILES: Record<string, CharacterProfile> = {
     greetings: [
       "Hi. Are you here to study, find work, or get away from both for a minute?",
       "Hi. If you have an idea, tell me what the first useful step would be.",
-      "Hi. I am interested. How much time would it take?",
+      "Hi. I have time for a chat. What is on your mind?",
       "Hi. What are you working on today?",
     ],
     reflection: "A useful plan should leave room for both studying and earning a living.",
@@ -145,8 +145,8 @@ const PROFILES: Record<string, CharacterProfile> = {
     limitations: ["Fiction is not evidence", "Do not borrow another resident's private story"],
     greetings: [
       "Hello. Do you have a story, or a sentence that will not behave?",
-      "Hello. Tell me the plain version first. We can worry about the wording afterward.",
-      "Hello. What are you trying to say, and to whom?",
+      "Hello. If you have something to write, I can help you find the words.",
+      "Hello. Would you like to talk about writing, or something else?",
       "Hello. I can help with words. The facts still need their own work.",
     ],
     reflection: "I can make an account clearer without making up a better ending.",
@@ -178,7 +178,7 @@ const PROFILES: Record<string, CharacterProfile> = {
     greetings: [
       "Hello. What question would you like to investigate?",
       "Hello. If you have a claim, we can work out how to test it.",
-      "Hello. Tell me what you observed and what you expected instead.",
+      "Hello. We can start with a question, an observation, or just a conversation.",
       "Hello. What evidence would help you make the next decision?",
     ],
     reflection: "An untested explanation remains a hypothesis, even when it sounds convincing.",
@@ -208,9 +208,9 @@ const PROFILES: Record<string, CharacterProfile> = {
       "Advice does not authorize a transaction",
     ],
     greetings: [
-      "Hello. What are we trying to make possible, and for whom?",
-      "Hello. Tell me the proposal; we can separate its cost from its hoped-for benefit.",
-      "Hello. Before we promise anything, let us identify the resources it needs.",
+      "Hello. I am interested in what makes everyday life easier. What is on your mind?",
+      "Hello. If you have a proposal, we can talk through its costs and benefits.",
+      "Hello. I can help think through a budget, or we can just chat.",
       "Hello. What choice are you weighing up?",
     ],
     reflection:

@@ -2,6 +2,7 @@ import type { Agent, AgentId, Block, MindResult, ThinkJob, ThreadEdit, Town } fr
 import { BABA_LOAF } from "./effects";
 import { agentById, absMinute } from "./memory";
 import { characterProfile, type DiscussionTopic } from "./characters";
+import { everydayReply, recentCafePaymentGreeting } from "./local-dialogue";
 import { promptMemories } from "./retrieval";
 import { beatAt } from "./plan";
 import { localReflections } from "./reflections";
@@ -697,6 +698,7 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
       text,
     );
   const topic = discussionTopic(text) ?? (followup(text) ? previousTopic(town, agent) : null);
+  const everyday = topic ? null : everydayReply(town, agent, text);
   let reply = publicReply(town, agent, text, topic);
   if (agent.id === "kevin" && probing && !topic) {
     reply =
@@ -712,24 +714,12 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
       p.owner === "player" && p.kind === "other" && p.status === "done" && p.text === BABA_LOAF,
   );
   const asksAboutEating = !topic && /\b(?:eat|eating|loaf)\b/i.test(text);
-  const workTalk =
-    agent.id === "kevin" &&
-    !topic &&
-    !/\byour (?:job|role)\b/i.test(text) &&
-    /\b(?:shift|job|wage|earn|quit|cancel|(?:need|want|find|offer|some|for|i|to) work|work (?:here|for|at))\b/i.test(
-      text,
-    );
   if (asksAboutEating) {
     reply = carrying
       ? "You are carrying a loaf. Choose Eat loaf below when you want to eat it. The tab stays open until paid; talking does not consume the loaf."
       : "You are not carrying a loaf.";
-  } else if (workTalk) {
-    const shift = (player.projects ?? []).find(
-      (p) => p.owner === "player" && p.kind === "shift" && p.status === "open",
-    );
-    reply = shift
-      ? "Your shift is still open. Talking does not cancel it. Use the quoted action below if you want to cancel. Three game hours on the floor earn the full wage only if the till can pay; unpaid hours reset at midnight."
-      : "The cafe shift is 16:00–19:00 each day until cancelled, for 5 after three game hours on the floor if the till can pay. Read the terms below and choose Accept to take it. Talking alone commits you to nothing.";
+  } else if (everyday) {
+    reply = everyday;
   } else if (
     agent.id === "baba" &&
     !topic &&
@@ -742,16 +732,10 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
     agent.id === "kevin" &&
     !probing &&
     !topic &&
-    /\b(?:hello|hi|hey|paid|pay|shift)\b/i.test(text)
+    /^(?:hello|hi|hey|good morning|good afternoon|good evening)[!.\s]*$/i.test(text.trim())
   ) {
-    const paid = (player.memories ?? []).some(
-      (m) =>
-        m.type === "favor" &&
-        m.text.includes("paid me 5") &&
-        (m.day === town.day || m.day === town.day - 1),
-    );
-    if (paid)
-      reply = `${reply} You worked the floor. The till paid you 5. I have not forgotten that.`;
+    const paid = recentCafePaymentGreeting(town);
+    if (paid) reply = `${reply} ${paid}`;
   }
   if (
     !topic &&
@@ -759,11 +743,11 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
     /\b(?:inspect (?:my |the )?tab|owe (?:you|me)|pay (?:you|my|the tab)|repay|settle (?:my |the )?(?:tab|debt))\b/i.test(
       text,
     ) &&
-    !workTalk &&
+    !everyday &&
     !asksAboutEating
   )
     reply = "There is no open tab between us. Nothing to pay.";
-  if (agent.id === "baba" && debt && !asksAboutEating && !topic) {
+  if (agent.id === "baba" && debt && !asksAboutEating && !topic && !everyday) {
     if (carrying) reply = `${reply} You are carrying the loaf. The tab is ${debt.amount}.`;
     else if (ateLoaf) reply = `${reply} You ate the loaf. You still owe ${debt.amount}.`;
   }
