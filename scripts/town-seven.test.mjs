@@ -48,7 +48,7 @@ test("new towns have seven distinct residents plus the player", () => {
     assert.ok(resident.memories.some((m) => /arrived/.test(m.text)));
   }
   assert.match(agent(town, "data").identity, /test/);
-  assert.match(agent(town, "amelia").identity, /budget/);
+  assert.match(agent(town, "amelia").identity, /economist/);
 });
 
 test("a genuine v1 town migrates once without replacing the original residents", () => {
@@ -81,7 +81,7 @@ test("a genuine v1 town migrates once without replacing the original residents",
   for (const key of ["playerName", "day", "minute", "paused", "notices", "favors", "tills"]) {
     assert.deepEqual(migrated[key], old[key], key);
   }
-  const once = copy(migrated);
+  const once = structuredClone(migrated);
   addSpecialists(migrated);
   assert.deepEqual(migrated, once, "arrival is idempotent");
   const restored = save.parseTownFile(save.exportTown(migrated));
