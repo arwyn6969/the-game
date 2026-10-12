@@ -1,6 +1,6 @@
 # Town graphics
 
-12 October 2026. Graphics branch: `codex/town-graphics`, based on released `main` at `65d93a9`. This is a graphics review candidate; publishing is a separate release step.
+12 October 2026. Graphics branch: `codex/town-graphics`, based on released `main` at `65d93a9`. Merged in [PR #15](https://github.com/arwyn6969/the-game/pull/15) and published to https://thegame.grok.me. The [release record](../RELEASE.md) has source, CI and hosted verification evidence.
 
 The purple/lime arcade interface now surrounds a town with warmer, more distinct materials. Hobbs has oak planks, a woven rug, an espresso machine, brass fittings, pastries and steaming cups. The library has slate floors, individual book spines, an open reading book and window light. The grocery has bread, produce, jars and a checkout. Dorms and homes have framed beds, folded bedding and rugs. The park has stepped tree canopies, slatted benches, shoreline details and lily pads.
 
@@ -61,4 +61,4 @@ node docs/design/graphics-checks.mjs
 - Portable browser and renderer checks passed.
 - `git diff --check` passed.
 
-The first browser attempts hit Vite's outdated dependency-cache 504 while the initial cache and test loaders were running. A separate dependency installation and warm preview passed. Hosted deployment, physical-device keyboards and real-provider conversation were not exercised by this graphics pass.
+The first browser attempts hit Vite's outdated dependency-cache 504 while the initial cache and test loaders were running. A separate dependency installation and warm preview passed. Hosted publication and desktop/phone layout checks are recorded in the release record. Physical-device keyboards and real-provider conversation quality were not exercised by this graphics pass.
