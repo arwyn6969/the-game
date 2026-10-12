@@ -1,50 +1,49 @@
-# First-day release
+# Trust repair release — 12 October 2026
 
-The combined release includes the reliability branch `df95ee6da39c9ad0519c8742a880ec48381e5edd` and the player-experience branch `46e7e369929e8fc0234ff73393b48bb0660d6e2e`. Both were reviewed and merged into `codex/first-day-integration`; its PR targets `main` so one reviewed version becomes the source for the next iteration.
+The tested game was published to the existing https://thegame.grok.me project through Grok's **Re-Publish** control at approximately **12:11 UTC on 12 October 2026**. Grok reported **Published / Live**, and live browser checks confirmed the new assets and explicit shift controls. The user chose to publish this release first and build the fair library/community project afterward.
+
+## Source and review
+
+- Release source: `4e7786c30431e6701c8477d6ddb0b5ffa8ba8ca1` on `main`.
+- [PR #8](https://github.com/arwyn6969/the-game/pull/8) merged the consent, conversation and recovery follow-up into [PR #7](https://github.com/arwyn6969/the-game/pull/7). The updated PR #7 passed CI before merging to `main`.
+- Both merge results preserve the exact tested tree from `cd05ec331c2d8d2138fd0b838ef03fb90e855219`: `74f57bb2bec3f4042b1160c82d0b08c1f25c5dac`. That tree includes PR #7's usable-loaf update `96f25e63bd916665809ced93fee7ac2593ec92b8`.
+- [Main CI passed](https://github.com/arwyn6969/the-game/actions/runs/38246523222). Grok fetched the release commit and verified its tree before copying the source, preserving existing `public/__grok` assets, `scripts/install-page.html`, startup and workspace instructions. The platform build, typecheck and 64 town tests passed.
+- Detailed implementation, review and local browser evidence: [trust follow-up handoff](handoffs/trust-followup.md). Its statements about no merge/publication describe the handoff's earlier state.
 
 ## What players receive
 
-- Clear directions to Hobbs, keyboard and touch movement, and a conversation panel with reachable controls. Private character notes require the optional developer inspector.
-- Residents avoid occupied tiles, and a crowded click offers a choice of residents. Empty space between the phone movement buttons allows taps through to the town.
-- Correct debt ownership, full and repeat-safe settlement, wages earned from actual attendance, and conservative offline dialogue. A question retrieves the relevant personal memory.
-- Version-1 saves and older imports remain compatible. Portable exports omit replay frames; the UI and parser share an 8 MiB byte limit. Failed browser saves show a warning and a backup button.
-- Time and movement hold while a mind request is pending. A delayed reply preserves a newer unsent draft and cannot change a town imported during the request.
+- Explicit **Choices** show terms before bread acceptance, eating, repayment or shift changes. Free text and model output cannot create those player transactions or commitments. Used, stale or invalid quotes fail without applying the action.
+- Bread acceptance records the loaf and tab together. Eating consumes the loaf while leaving its debt owed. Existing saved loaves remain usable.
+- A recurring cafe shift quotes 16:00–19:00 and requires the full three game hours. Pay depends on available till funds; there is no partial wage or unpaid credit carried past midnight. Lunch cannot earn this shift's pay, and legacy shifts keep their planned hours.
+- Replies stay reachable, with **Newest reply** for returning from older messages. Drafts survive actions; settled tabs no longer fill the conversation header. Keyboard and phone controls remain available.
+- Unreadable saves offer complete raw download/copy, an explicitly incomplete preview and honest clipboard fallback. Blocked storage can be retried. Recovery and ordinary imports preserve the replacement town's pause and identity consistently.
 
-The runtime model, provider, auth, PWA routes, preview contract and existing host are preserved. Offline play needs no API key.
+Version-1 saves, the 8 MiB import limit and earlier first-day improvements remain supported. Runtime provider, auth, PWA, preview contract, host and production configuration are unchanged. Offline play needs no API key.
 
-## Validation on 11 October 2026
+## Completed validation
 
-- Node 24.19.0; clean `npm ci` installed the locked 428 packages.
-- Typecheck passed. Lint passed with one inherited unused-disable warning in `src/lib/auth/use-current-user.ts`.
-- `npm test`: 240 script tests and 55 app/auth tests passed; none skipped. The player-lane conversation and collision tests now run in this command and in `npm run test:town` (42 passed).
-- Thirty-day offline diagnostics: all measured exports imported successfully; day 5 used 194,455 UTF-8 bytes and day 30 used 836,737. Northern received 29 legitimate wages by day 30. These observations supplement the asserted regression tests.
-- A production build passed with `DATABASE_URL` and `XAI_API_KEY` unset; database migrations were skipped.
-- Chromium browser checks at 1280×800 and 390×844 passed naming, direction help, keyboard/touch movement, pause, keyboard and actual canvas conversation entry, hidden private fields, bread repayment, download, a 4,900,879-byte older wrapped save, import, reload, quota warning and emergency backup. The phone composer and close button also stayed visible at 390×540.
-- Browser tests using a mocked delayed server response passed the clock/movement hold, unsent-draft preservation and importing a different town while a request was pending. No real provider requests were made.
-- PWA install pages, their assets and reload passed desktop and both iOS instruction variants.
+Node 24 checks on the tested tree passed: typecheck; lint with one existing auth-file unused-disable warning; 64 town tests; and 317 total script/app/auth tests, none skipped. Thirty-day diagnostics found no world-audit issues, and all measured exports imported successfully. The day-30 export was 819,492 UTF-8 bytes, with 29 legitimate Northern wages.
 
-Local browser evidence and synthetic fixtures are ignored under `artifacts/`. A physical phone keyboard and real AI dialogue were not tested. The provider gateway's shared in-process budget, retry policy and availability-by-key check remain limitations for a later online-service pass.
+The production build passed with `DATABASE_URL` and `XAI_API_KEY` unset. CI likewise blanks both values. Build invokes the migration script, but this source has no root SQL migrations, so it also returns before connecting to a database when a URL is present. Nested opt-in auth SQL is not applied.
 
-## Publication and rollback
+Local browser checks at 1280×800 and 390×844 used the actual game, UI and save code with an offline mind stub. They covered explicit loaf acceptance/eating/payment, shifts, long conversation scrolling, preserved drafts, movement, pause, import and reload. Recovery preserved a 480,063-byte damaged payload exactly despite denied clipboard access; storage retry recovered an existing town. The handoff records the fixtures and hash. Earlier first-day validation also covered a 4,900,879-byte wrapped v1 save and PWA install pages; those historical checks are not fresh hosted evidence.
 
-GitHub merges and Grok Build publication are separate operations. This cloud workspace has GitHub access and a verified build, but no Grok Build publishing session or configured Vercel project credentials. Do not claim this release is live until the existing project has actually published it and the hosted result is verified.
+## Hosted verification and limits
 
-Read-only requests to the hosted site succeeded. Its public JavaScript already contains some conversation improvements, but still rejects imports at 1.5 million bytes/characters and lacks this release's save-failure warning. Its exact source SHA is unknown. A Chromium check of the hosted site was blocked by certificate trust in this container; TLS verification was kept enabled.
+After publication, the live page reloaded `/assets/index-BRHZJgAE.js` and `/assets/routes-DqiKlare.js`, replacing the previously observed `index-BYyPuu8a.js` and `routes-Bvog04vK.js`. This corroborates the publication and the builder's source report; no immutable deployment identifier was supplied.
 
-Before updating the hosted project, export its current source as the exact rollback copy and download any browser town you want to back up. Keep these personal saves out of Git. GitHub's previous main commit is `ee5ff6575300bbe8a3ff6509ffb1bc2fcd1e85e3`; it is a source rollback reference, not proof of the current hosted revision. Reverting a release should use a new revert commit or the saved hosted export, without rewriting shared history.
+The test browser had no existing town and showed the naming gate. A synthetic **ReleaseCheck** town verified naming, the initial paused 07:00 state, keyboard movement to Kevin, visible **Choices** and terms, shift acceptance with money unchanged at 4, and preservation of an unsent draft. At 390×844 the composer remained reachable; holding the phone's East control for 500 ms moved the canvas camera's x position from 173 to 301 while the clock stayed at 07:00. Reload preserved the name, location, paused clock and agreement; explicit cancellation left money at 4. Ignored screenshots are under `artifacts/trust-review/`: `published-status-20261012.png` and `live-mobile-shift-20261012.png`.
 
-Use the current integrated `main` source, not an old lane's whole-project export. If the builder supports GitHub import, select `arwyn6969/the-game` and confirm its exact commit. Otherwise apply the current-source archive through its supported import workflow. Preserve hosting, server secrets and database configuration. After publishing, verify the existing https://thegame.grok.me address, old-save import, normal conversation, reload and the backup warning using a separate test browser. Record the deployed commit when the publisher supplies it.
+Chrome's **Allow file URLs** permission blocked hosted file-import automation. Hosted old-save import and recovery were **not verified**; their local tests remain passed. Hosted loaf/eating/payment, full shift payout, auth/PWA flows and physical phone keyboards were not exercised in this smoke test. The live badge showed **MIND ON**; checks used deterministic actions and made no dialogue request. This does not establish real provider response quality or availability.
 
-## Ready-to-paste instruction for the existing Grok Build project
+This Chrome profile logged a React hydration warning on both the earlier and released bundles, alongside wallet-extension errors. No functional failure was observed in these checks; the cause of that warning was not established.
 
-```text
-Publish the reviewed first-day release for THE GAME at the existing thegame.grok.me address. Use the current main branch of https://github.com/arwyn6969/the-game and read docs/RELEASE.md. Confirm the source commit before editing. This source combines the player interface and the simulation/save fixes; an older lane export is incomplete.
+## Rollback evidence
 
-First export the currently hosted project for rollback. Import or apply the current integrated source through your supported workflow. Preserve the existing host, auth, PWA, database configuration, runtime Grok provider and server secrets. Offline play works without an API key; do not make adding a key a prerequisite or change providers.
+Before source replacement, Grok created the private builder snapshot `/workspace/artifacts/source-before-4e7786c.tar.gz`, SHA-256 `d1eb6292334090acf4bcd0d3ba76398abd2c854f03f58f3b41b22a133accfe6b`. It is a pre-change **builder source** backup, not a confirmed exact copy of the previous hosted deployment. A local download was not completed, and no previous deployment identifier was available. Recovery from that archive still depends on its availability in the builder.
 
-Run the repository checks and a production build without pointing local validation at a live database. Verify desktop and phone movement/conversation, a version-1 save above the old 1.5 MB limit, reload and failed-save backup feedback. Publish this verified version to the existing project and report the actual live URL and source commit. If this project cannot fetch or import the source, report the specific supported import step; do not publish stale source or claim a publish occurred.
-```
+Previous GitHub main `88f5039ab5743c3b6370a64b2e6d88a7de128da0` is a separate source reference. If a rollback becomes necessary, verify the intended source before republishing through the existing project; use a new revert commit for GitHub changes rather than rewriting history. No pre-existing live browser save required backup in the test profile. Private archives and town saves remain outside Git.
 
-## Next iteration
+## Remaining product work
 
-After verifying the hosted release, use first-day play feedback to improve the next concrete interaction. The leading candidate is a clear offline path to agree a player shift and see attendance/wage progress. Real AI-service fault and budget tests follow when a server-side key is available; they do not block offline play.
+The funded library/community project and Astra direction in [PR #5](https://github.com/arwyn6969/the-game/pull/5) follow this publication. Funding, reserved wages, work receipts and shared outcomes remain unimplemented. Free-form AI prose can still make unsupported claims, and private-seed filtering covers routine offline greetings rather than every online disclosure. Real provider dialogue and physical phone keyboards were not tested in the local validation pass.
