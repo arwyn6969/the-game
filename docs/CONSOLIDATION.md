@@ -1,8 +1,8 @@
 # Product consolidation — 12 October 2026
 
-The consolidation is merged into main through [PR #19](https://github.com/arwyn6969/the-game/pull/19), merge commit `8d15a722b61c09a7dca198ccf49ea8dd0b3f8125`, at 20:14 BST on 12 October 2026 (19:14 UTC). Later the same day, [PR #22](https://github.com/arwyn6969/the-game/pull/22) restored the Vercel build output at `88dfcaeac9f44e7c9a5e2a0132b1e1478d86433f`, and [PR #24](https://github.com/arwyn6969/the-game/pull/24) removed the Pin Kevin shortcut. Current main is `15bd20835dc5a6ff4a5e0fbd1d1b2feaef07e587`. The seven-resident town was already on https://thegame.grok.me before that button removal. Publishing `15bd208` is still a separate action; a GitHub merge is not a live release.
+The consolidation is merged into main through [PR #19](https://github.com/arwyn6969/the-game/pull/19), merge commit `8d15a722b61c09a7dca198ccf49ea8dd0b3f8125`. [PR #23](https://github.com/arwyn6969/the-game/pull/23) then added visible conversations and character cards at `8a35f3c877297b7a588aa8d38d6590e486f917cd`. Publishing that commit is still a separate action; a GitHub merge is not a live release.
 
-The merge preserves the exact tested tree, `363f3de46f3c40e4981331de494e84354d8139e4`. [Main CI passed](https://github.com/arwyn6969/the-game/actions/runs/38296308695). The five incorporated PRs were automatically marked merged. [PR #16](https://github.com/arwyn6969/the-game/pull/16) remains the inactive funded-accounts draft. [PR #23](https://github.com/arwyn6969/the-game/pull/23) is a separate draft for visible conversations and relationships. Neither is part of this runtime.
+The merge preserves the exact tested tree, `363f3de46f3c40e4981331de494e84354d8139e4`. [Main CI passed](https://github.com/arwyn6969/the-game/actions/runs/38296308695). The five incorporated PRs were automatically marked merged. [PR #16](https://github.com/arwyn6969/the-game/pull/16) remains the inactive funded-accounts draft. [PR #23](https://github.com/arwyn6969/the-game/pull/23) is merged and is part of current main.
 
 ## What the candidate contains
 
@@ -98,6 +98,6 @@ codex/trust-repair-followup
 
 Use the isolated `product/` checkout on main. Existing checkouts were not moved or deleted. In particular, `character-social-ui/` has a pre-existing unresolved merge, staged assets and ongoing uncommitted social/UI work; its linked `intelligence-ui/` repository must remain in place. The three coherence checkouts point to that repository too. The older review export is not a standalone Git checkout.
 
-The next product step is one result that is still visible tomorrow. Do not merge PR #16 until its six-actor ledger is reconciled with eight actors and a fresh total of 90. Do not merge PR #23 without reviewing the pin shortcut it adds back; main removed that shortcut in PR #24. Retire or archive old local checkouts only after their owning work is finished and uncommitted/private files are preserved.
+The next product step is one result that is still visible tomorrow. Do not merge PR #16 until its six-actor ledger is reconciled with eight actors and a fresh total of 90. Pin on current main keeps one resident at the front of the strip. It does not redirect messages. Retire or archive old local checkouts only after their owning work is finished and uncommitted/private files are preserved.
 
 The user explicitly authorized the main merge and branch cleanup on 12 October 2026. Both are complete. Hosted publication remains a separate release action under [AGENTS.md](../AGENTS.md).
