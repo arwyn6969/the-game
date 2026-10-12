@@ -5,6 +5,8 @@ export const AGENT_IDS = [
   "baba",
   "sub",
   "player",
+  "data",
+  "amelia",
 ] as const;
 
 export type AgentId = (typeof AGENT_IDS)[number];
@@ -15,6 +17,8 @@ export const NPC_IDS = [
   "northern",
   "baba",
   "sub",
+  "data",
+  "amelia",
 ] as const satisfies readonly AgentId[];
 
 export type NpcId = (typeof NPC_IDS)[number];
@@ -39,14 +43,7 @@ export type Face = "n" | "s" | "e" | "w";
 
 export type Spot = "home" | "out";
 
-export type ProjectKind =
-  | "shift"
-  | "rumor"
-  | "collab"
-  | "debt"
-  | "notes"
-  | "notice"
-  | "other";
+export type ProjectKind = "shift" | "rumor" | "collab" | "debt" | "notes" | "notice" | "other";
 
 export type Memory = {
   id: string;
@@ -60,6 +57,8 @@ export type Memory = {
   seed?: boolean;
   with?: AgentId;
   mind?: "grok" | "offline";
+  source?: "event" | "statement" | "reflection";
+  turns?: { speaker: AgentId; text: string }[];
 };
 
 export type Thread = {
@@ -160,10 +159,10 @@ export type Agent = {
   bubble?: { text: string; until: number };
 };
 
-export type ScrubFrame = { d?: number; m: number; p: number[] };
+export type ScrubFrame = { d?: number; m: number; p: number[]; ids?: AgentId[] };
 
 export type Town = {
-  version: 1;
+  version: 2;
   day: number;
   minute: number;
   playerName: string;
@@ -184,7 +183,7 @@ export type Town = {
 export type ThinkKind = "plan" | "reflect" | "talk" | "player";
 
 export type ThinkJob =
-  | { kind: "plan"; day: number; minute: number; weekly: boolean }
+  | { kind: "plan"; day: number; minute: number; weekly: boolean; agents?: AgentId[] }
   | { kind: "reflect"; day: number; minute: number; agents: AgentId[]; weekly: boolean }
   | { kind: "talk"; day: number; minute: number; a: AgentId; b: AgentId }
   | { kind: "player"; day: number; minute: number; agentId: AgentId; text: string };

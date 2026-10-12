@@ -1,5 +1,8 @@
 import type { Agent, AgentId, Memory, MemoryType, RetrievalLog, Town } from "./types";
 import { mentionsSeed } from "./text";
+import { memorySource } from "./conversation";
+import type { RecordedMemory } from "./conversation";
+import { memoryInterestScore } from "./interests";
 
 const STOP = new Set(
   "that this with from they have were been your about into just what when where will them then than some there their would could should because while after before other which also does did not only more over very into been being from your ours".split(
@@ -27,9 +30,12 @@ export function makeMemory(
   type: MemoryType,
   text: string,
   importance: number,
-  extra?: Partial<Memory>,
-): Memory {
-  const clipped = String(text ?? "").replace(/\s+/g, " ").trim().slice(0, 420);
+  extra?: Partial<RecordedMemory>,
+): RecordedMemory {
+  const clipped = String(text ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 420);
   if (!Number.isFinite(town.nextId)) town.nextId = 1;
   const rank = Number.isFinite(importance) ? importance : 5;
   return {
@@ -40,6 +46,12 @@ export function makeMemory(
     text: clipped,
     importance: Math.max(1, Math.min(10, Math.round(rank))),
     keywords: keywords(clipped),
+    source:
+      type === "chat"
+        ? "statement"
+        : type === "reflect" || type === "plan"
+          ? "reflection"
+          : "event",
     ...extra,
   };
 }
@@ -52,11 +64,7 @@ export type Scored = {
   relevance: number;
 };
 
-export function scoreMemories(
-  memories: Memory[],
-  query: string,
-  nowAbs: number,
-): Scored[] {
+export function scoreMemories(memories: Memory[], query: string, nowAbs: number): Scored[] {
   const qk = keywords(query);
   const qset = new Set(qk);
   return memories
@@ -78,28 +86,43 @@ export function scoreMemories(
     .sort((a, b) => b.score - a.score || b.memory.importance - a.memory.importance);
 }
 
-export function retrieve(
-  memories: Memory[],
-  query: string,
-  nowAbs: number,
-  k = 8,
-): Scored[] {
+export function retrieve(memories: Memory[], query: string, nowAbs: number, k = 8): Scored[] {
   return scoreMemories(memories, query, nowAbs).slice(0, k);
 }
 
-export function logRetrieval(
-  town: Town,
-  agent: Agent,
-  question: string,
-): RetrievalLog {
+export function scoreResidentMemories(
+  agent: Pick<Agent, "id" | "memories">,
+  query: string,
+  nowAbs: number,
+): (Scored & { roleRelevance: number })[] {
+  return scoreMemories(agent.memories ?? [], query, nowAbs)
+    .map((hit) => {
+      const roleRelevance = memoryInterestScore(agent.id, hit.memory.text);
+      return { ...hit, roleRelevance, score: hit.score + roleRelevance };
+    })
+    .sort((a, b) => b.score - a.score || b.memory.importance - a.memory.importance);
+}
+
+export function retrieveResident(
+  agent: Pick<Agent, "id" | "memories">,
+  query: string,
+  nowAbs: number,
+  k = 8,
+) {
+  return scoreResidentMemories(agent, query, nowAbs).slice(0, k);
+}
+
+export function logRetrieval(town: Town, agent: Agent, question: string): RetrievalLog {
   const now = absMinute(town.day, town.minute);
-  const ranked = scoreMemories(agent.memories, question, now);
+  const ranked = scoreResidentMemories(agent, question, now);
   const top = ranked.slice(0, 8);
   const seedIndex = ranked.findIndex((s) => s.memory.seed || mentionsSeed(s.memory.text));
   const seedInStream = seedIndex >= 0;
   const seedRank = seedInStream ? seedIndex + 1 : null;
   const inTop = seedRank !== null && seedRank <= 8;
-  const askingAboutKevin = /\bkevin\b|cafe owner|who he is|man under the apron|where he came/i.test(question);
+  const askingAboutKevin = /\bkevin\b|cafe owner|who he is|man under the apron|where he came/i.test(
+    question,
+  );
   const missed = seedInStream ? !inTop : askingAboutKevin;
   const log: RetrievalLog = {
     id: `r${town.nextId++}`,
@@ -127,7 +150,7 @@ function foldId(kind: string, oldest: Memory[], extra: number) {
 
 function foldText(prefix: string, oldest: Memory[]) {
   const summary = oldest
-    .map((m) => m.text.replace(/\.$/, ""))
+    .map((m) => `[${memorySource(m)}, day ${m.day}] ${m.text.replace(/\.$/, "")}`)
     .join("; ")
     .slice(0, 380);
   const carried = oldest.some((m) => m.seed || mentionsSeed(m.text));
@@ -137,7 +160,9 @@ function foldText(prefix: string, oldest: Memory[]) {
   };
 }
 function compressPlans(agent: Agent) {
-  const plans = agent.memories.filter((m) => m.type === "plan" && !m.protected && !m.seed && !mentionsSeed(m.text));
+  const plans = agent.memories.filter(
+    (m) => m.type === "plan" && !m.protected && !m.seed && !mentionsSeed(m.text),
+  );
   if (plans.length <= 6) return;
   const oldest = plans.slice(0, plans.length - 4);
   const folded = foldText("Older days, folded so the plan is not lost:", oldest);
@@ -185,7 +210,10 @@ export function compressDialogue(agent: Agent) {
       minute: oldest[oldest.length - 1]?.minute ?? 0,
       type: "reflect",
       text: folded.text,
-      importance: Math.max(5, ...oldest.map((m) => (Number.isFinite(m.importance) ? m.importance : 5))),
+      importance: Math.max(
+        5,
+        ...oldest.map((m) => (Number.isFinite(m.importance) ? m.importance : 5)),
+      ),
       keywords: keywords(folded.text),
       protected: true,
       seed: folded.seed,
@@ -198,15 +226,13 @@ export function compressDialogue(agent: Agent) {
 }
 
 export function compressObservations(agent: Agent) {
-  const isObs = (m: Memory) => m.type === "observe" && !m.protected && !m.seed && !mentionsSeed(m.text);
+  const isObs = (m: Memory) =>
+    m.type === "observe" && !m.protected && !m.seed && !mentionsSeed(m.text);
   let guard = 0;
   while (agent.memories.filter(isObs).length > 48 && guard++ < 6) {
     const oldest = agent.memories
       .filter(isObs)
-      .sort(
-        (a, b) =>
-          absMinute(a.day, a.minute) - absMinute(b.day, b.minute),
-      )
+      .sort((a, b) => absMinute(a.day, a.minute) - absMinute(b.day, b.minute))
       .slice(0, 8);
     if (oldest.length < 8 && agent.memories.filter(isObs).length <= 48) break;
     const folded = foldText("Looking back, the ordinary minutes fold together:", oldest);
@@ -216,7 +242,10 @@ export function compressObservations(agent: Agent) {
       minute: oldest[oldest.length - 1]?.minute ?? 0,
       type: "reflect",
       text: folded.text,
-      importance: Math.max(5, ...oldest.map((m) => (Number.isFinite(m.importance) ? m.importance : 5))),
+      importance: Math.max(
+        5,
+        ...oldest.map((m) => (Number.isFinite(m.importance) ? m.importance : 5)),
+      ),
       keywords: keywords(folded.text),
       protected: true,
       seed: folded.seed,

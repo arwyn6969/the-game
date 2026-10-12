@@ -3,31 +3,16 @@ import { NPC_IDS } from "./types";
 import { applyResult, PLAYER_CAFE_SHIFT } from "./effects";
 import { absMinute, agentById, makeMemory, pushMemory } from "./memory";
 import { offlineResult } from "./offline";
-import { beatAt, goalFor } from "./plan";
-import { findPath } from "./path";
+import { beatAt } from "./plan";
+import { moveResidents } from "./navigation";
 import { formatClock, mentionsSeed, purse } from "./text";
-import { canConverse, nearestWalkable, placeTitle, walkable, zoneAt } from "./world";
+import { canConverse, placeTitle, walkable, zoneAt } from "./world";
 
-const STEP = 3;
 const MEET = 4;
 const GAP = 20 * 60;
 
 export function pairKey(a: AgentId, b: AgentId): string {
   return a < b ? `${a}|${b}` : `${b}|${a}`;
-}
-
-function occupied(town: Town, x: number, y: number, except: AgentId): boolean {
-  return town.agents.some((a) => a.id !== except && a.tile?.x === x && a.tile?.y === y);
-}
-
-function blockedTiles(town: Town, except: AgentId): Set<string> {
-  const taken = new Set<string>();
-  for (const agent of town.agents) {
-    if (agent.id === except || !Number.isFinite(agent.tile?.x) || !Number.isFinite(agent.tile?.y))
-      continue;
-    taken.add(`${agent.tile.x},${agent.tile.y}`);
-  }
-  return taken;
 }
 
 function nudgeApart(town: Town) {
@@ -81,49 +66,6 @@ function together(a: Agent, b: Agent): boolean {
   const dist = Math.abs(a.tile.x - b.tile.x) + Math.abs(a.tile.y - b.tile.y);
   const limit = za === "plaza" || za === "park" || za === "noticeboard" ? 5 : 14;
   return dist <= limit;
-}
-
-function moveNpc(town: Town, agent: Agent, hourStart: boolean) {
-  if (!Array.isArray(agent.path)) agent.path = [];
-  if (!walkable(agent.tile.x, agent.tile.y)) {
-    agent.tile = nearestWalkable(agent.tile.x, agent.tile.y);
-    agent.path = [];
-  }
-  const beat = beatAt(agent, town.minute);
-  agent.status =
-    agent.id === "kevin" && mentionsSeed(beat.status)
-      ? "on the floor, not saying much"
-      : beat.status;
-  const goal = goalFor(agent, beat);
-  const at = agent.tile.x === goal.x && agent.tile.y === goal.y;
-  const blocked = blockedTiles(town, agent.id);
-  if (hourStart || agent.path.length === 0) {
-    agent.path = at ? [] : findPath(agent.tile, goal, blocked);
-  }
-  let steps = STEP;
-  while (steps-- > 0 && agent.path.length) {
-    const next = agent.path[0]!;
-    const beside = Math.abs(next.x - agent.tile.x) + Math.abs(next.y - agent.tile.y) === 1;
-    if (!beside || !walkable(next.x, next.y)) {
-      agent.path = findPath(agent.tile, goal, blocked);
-      break;
-    }
-    if (occupied(town, next.x, next.y, agent.id)) {
-      agent.path =
-        next.x === goal.x && next.y === goal.y
-          ? []
-          : findPath(agent.tile, goal, blockedTiles(town, agent.id));
-      break;
-    }
-    const dx = next.x - agent.tile.x;
-    const dy = next.y - agent.tile.y;
-    if (dx > 0) agent.face = "e";
-    else if (dx < 0) agent.face = "w";
-    else if (dy > 0) agent.face = "s";
-    else if (dy < 0) agent.face = "n";
-    agent.tile = { x: next.x, y: next.y };
-    agent.path.shift();
-  }
 }
 
 function observe(town: Town) {
@@ -291,21 +233,17 @@ function pickPair(town: Town): [AgentId, AgentId] | null {
   return best?.pair ?? null;
 }
 
-function askForMind(town: Town) {
+function morningObservation(town: Town) {
   const agent = town.agents.find((a) => a.id === "arwyn");
   if (!agent) return;
   const place = placeTitle(zoneAt(agent.tile.x, agent.tile.y));
-  const threads = Array.isArray(agent.threads) ? agent.threads : [];
-  const thread =
-    threads.find((t) => t.open && !t.hidden && !mentionsSeed(t.text))?.text ??
-    "the work in front of me";
-  const text = `In the ${place} at ${formatClock(town.minute)}, I am still only what I retrieved and this open thread: ${thread}. If you can switch a mind on, I am asking.`;
+  const text = `At ${formatClock(town.minute)}, I was in the ${place}. I wanted to compare the library records before drawing conclusions.`;
   pushMemory(
     agent,
     makeMemory(town, town.day, town.minute, "observe", text, 5, { mind: "offline" }),
   );
   agent.bubble = {
-    text: "If you can switch a mind on, I am still speaking from memory.",
+    text: "A date, a name, and a source. Let's start with what we can check.",
     until: absMinute(town.day, town.minute) + 45,
   };
   town.askedMindDay = town.day;
@@ -314,9 +252,12 @@ function askForMind(town: Town) {
 function recordScrub(town: Town) {
   if (!Array.isArray(town.scrub)) town.scrub = [];
   const p = town.agents.flatMap((a) => [a.tile?.x ?? 0, a.tile?.y ?? 0]);
+  const ids = town.agents.map((a) => a.id);
   const last = town.scrub[town.scrub.length - 1];
-  if (last && (last.d ?? town.day) === town.day && last.m === town.minute) last.p = p;
-  else town.scrub.push({ d: town.day, m: town.minute, p });
+  if (last && (last.d ?? town.day) === town.day && last.m === town.minute) {
+    last.p = p;
+    last.ids = ids;
+  } else town.scrub.push({ d: town.day, m: town.minute, p, ids });
   if (town.scrub.length > 10080) town.scrub.splice(0, town.scrub.length - 10080);
 }
 
@@ -342,26 +283,36 @@ export function stepMinute(town: Town, online: boolean): ThinkJob | null {
   let job: ThinkJob | null = null;
   if (hourStart) {
     for (const agent of npcs(town)) agent.callUsed = false;
-    observe(town);
-    if (town.minute === 5 * 60) {
-      for (const agent of npcs(town)) agent.callUsed = true;
-      job = { kind: "plan", day: town.day, minute: town.minute, weekly: town.day % 7 === 0 };
-    } else if (town.minute % 240 === 0) {
-      const agents = npcs(town)
+    if (town.minute % 240 === 0) {
+      const residents = npcs(town);
+      const offset = (Math.floor(town.minute / 240) * 2 + town.day) % residents.length;
+      const agents = [...residents.slice(offset), ...residents.slice(0, offset)]
         .filter((a) => {
           if (!Number.isFinite(a.newMemories)) a.newMemories = 0;
           return a.newMemories >= 6;
         })
+        .slice(0, 2)
         .map((a) => a.id);
       if (agents.length) {
         for (const id of agents) agentById(town, id).callUsed = true;
         job = { kind: "reflect", day: town.day, minute: town.minute, agents, weekly: false };
       }
     }
-    if (!online && town.askedMindDay !== town.day && town.minute === 8 * 60) askForMind(town);
+    if (!online && town.askedMindDay !== town.day && town.minute === 8 * 60)
+      morningObservation(town);
+  }
+  // Completed plans are the receipt. If a save interrupts a request, the next
+  // minute retries the still-stale residents instead of skipping their batch.
+  const residents = npcs(town);
+  const needsPlan = residents.filter((a) => a.plan.day < town.day).slice(0, 2);
+  if (town.minute >= 5 * 60 && needsPlan.length) {
+    const agents = needsPlan.map((a) => a.id);
+    for (const id of agents) agentById(town, id).callUsed = true;
+    job = { kind: "plan", day: town.day, minute: town.minute, weekly: town.day % 7 === 0, agents };
   }
   nudgeApart(town);
-  for (const agent of npcs(town)) moveNpc(town, agent, hourStart);
+  moveResidents(town, hourStart);
+  if (hourStart) observe(town);
   updateColocation(town);
   if (!job) {
     const pair = pickPair(town);
@@ -387,7 +338,13 @@ export function frameAt(town: Town, minute: number, day = town.day): number[] | 
   let found: number[] | null = null;
   for (const frame of town.scrub ?? []) {
     const frameDay = frame.d ?? town.day;
-    if (frameDay < day || (frameDay === day && frame.m <= minute)) found = frame.p;
+    if (frameDay < day || (frameDay === day && frame.m <= minute)) {
+      const roster = frame.ids ?? town.agents.map((a) => a.id);
+      found = town.agents.flatMap((agent) => {
+        const index = roster.indexOf(agent.id);
+        return index < 0 ? [NaN, NaN] : [frame.p[index * 2]!, frame.p[index * 2 + 1]!];
+      });
+    }
     if (frameDay > day || (frameDay === day && frame.m > minute)) break;
   }
   return found;

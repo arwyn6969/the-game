@@ -1,16 +1,18 @@
 import type { Agent, AgentId, Block, MindResult, ThinkJob, ThreadEdit, Town } from "./types";
-import { NPC_IDS } from "./types";
-import { BABA_LOAF, openThreadText } from "./effects";
-import { absMinute, agentById, retrieve } from "./memory";
+import { BABA_LOAF } from "./effects";
+import { agentById, absMinute } from "./memory";
+import { characterProfile, type DiscussionTopic } from "./characters";
+import { everydayReply, recentCafePaymentGreeting } from "./local-dialogue";
 import { promptMemories } from "./retrieval";
 import { beatAt } from "./plan";
-import { clip, formatClock, mentionsSeed, periodName } from "./text";
+import { localReflections } from "./reflections";
+import { clip, formatClock, mentionsSeed } from "./text";
 import { placeTitle, placeTitleOf, zoneAt } from "./world";
 
 export function prepareRetrievals(town: Town, job: ThinkJob) {
   const ids: AgentId[] =
     job.kind === "plan"
-      ? [...NPC_IDS]
+      ? planIds(town, job)
       : job.kind === "reflect"
         ? job.agents
         : job.kind === "talk"
@@ -22,16 +24,10 @@ export function prepareRetrievals(town: Town, job: ThinkJob) {
   }
 }
 
-function quote(town: Town, agent: Agent, query: string, spoken = false): string {
-  const memories = spoken
-    ? agent.memories.filter((m) => !m.seed && !mentionsSeed(m.text))
-    : agent.memories;
-  const hit = retrieve(memories, query, absMinute(town.day, town.minute), 1)[0];
-  const fallback =
-    spoken && mentionsSeed(agent.selfSentence)
-      ? "There is a day to get through."
-      : agent.selfSentence;
-  return clip(hit?.memory.text ?? fallback, 100);
+function planIds(town: Town, job: Extract<ThinkJob, { kind: "plan" }>): AgentId[] {
+  const requested = (job as typeof job & { agents?: AgentId[] }).agents;
+  const residents = town.agents.filter((agent) => agent.id !== "player").map((agent) => agent.id);
+  return requested ? residents.filter((id) => requested.includes(id)) : residents;
 }
 
 function blocksFromPlan(agent: Agent): Block[] {
@@ -73,14 +69,14 @@ function ensureLists(town: Town) {
 export function offlineResult(town: Town, job: ThinkJob): MindResult {
   ensureLists(town);
   prepareRetrievals(town, job);
-  if (job.kind === "plan") return offlinePlan(town, job.weekly);
+  if (job.kind === "plan") return offlinePlan(town, job.weekly, planIds(town, job));
   if (job.kind === "reflect") return offlineReflect(town, job.agents, job.weekly);
   if (job.kind === "talk") return offlineTalk(town, job.a, job.b);
   return offlinePlayer(town, job.agentId, job.text);
 }
 
-function offlinePlan(town: Town, weekly: boolean): MindResult {
-  const plans = NPC_IDS.map((id) => {
+function offlinePlan(town: Town, weekly: boolean, ids: AgentId[]): MindResult {
+  const plans = ids.map((id) => {
     const agent = agentById(town, id);
     const blocks = blocksFromPlan(agent);
     let summary = agent.plan.summary;
@@ -163,9 +159,12 @@ function weeklyLine(agent: Agent, known: boolean): string {
   if (agent.id === "baba") {
     return "Right now I am the ledger, and I have not agreed to become the story.";
   }
-  return known
-    ? "Right now I am a writer who already bent someone's confession and has not decided to unbend it."
-    : "Right now I am still sanding other people's days until they fit a page.";
+  if (agent.id === "sub") {
+    return known
+      ? "Right now I am a writer who already bent someone's confession and has not decided to unbend it."
+      : "Right now I am still sanding other people's days until they fit a page.";
+  }
+  return characterProfile(agent.id).reflection;
 }
 
 function offlineReflect(town: Town, ids: AgentId[], weekly: boolean): MindResult {
@@ -174,16 +173,9 @@ function offlineReflect(town: Town, ids: AgentId[], weekly: boolean): MindResult
     mind: "offline",
     agents: ids.map((id) => {
       const agent = agentById(town, id);
-      const recent = [...agent.memories].reverse().find((m) => m.type !== "plan");
-      const mem = clip(recent?.text ?? agent.selfSentence, 110);
-      const thread = openThreadText(agent);
-      const place = placeTitle(zoneAt(agent.tile.x, agent.tile.y));
       return {
         id,
-        reflections: [
-          `At ${formatClock(town.minute)} in the ${place}, I keep returning to this: "${mem}". It is no longer only something that happened.`,
-          `The open thread is still mine: ${thread}. I have not decided it is done.`,
-        ],
+        reflections: localReflections(town, agent),
         selfSentence: weekly ? weeklyLine(agent, holds(agent)) : undefined,
       };
     }),
@@ -275,34 +267,18 @@ function talkIntroduced(town: Town, a: Agent, b: Agent): MindResult {
 }
 
 function compose(town: Town, speaker: Agent, other: Agent): string {
-  const place = placeTitle(zoneAt(speaker.tile.x, speaker.tile.y));
-  const clock = formatClock(town.minute);
-  const publicThread = (speaker.threads ?? []).find(
-    (t) => t.open && !t.hidden && !t.seed && !mentionsSeed(t.text),
-  )?.text;
-  const thread = publicThread ?? "The day's ordinary work is still here.";
-  const mem = quote(town, speaker, `${other.name} ${place} ${thread}`, true);
   const owed = (town.favors ?? []).find(
     (f) =>
       f.status === "owed" &&
       ((f.from === speaker.id && f.to === other.id) ||
         (f.from === other.id && f.to === speaker.id)),
   );
-  const last = [...(speaker.memories ?? [])]
-    .reverse()
-    .find(
-      (m) => m.type === "chat" && m.text.includes(other.name) && !m.seed && !mentionsSeed(m.text),
-    );
-  const beats = [
-    `${place}, ${clock}. I keep turning over "${mem}".`,
-    `The open thread is still: ${thread}.`,
-    owed ? `The tab is still open: ${clip(owed.text, 80)}. I am not pretending it was paid.` : "",
-    last ? `Last time, what stayed was: ${clip(last.text, 80)}.` : "",
-    `${periodName(town.minute)} can keep the rest. I am not closing anything.`,
-  ].filter(Boolean);
-  const index = Math.abs(town.day * 3 + Math.floor(town.minute / 60)) % beats.length;
-  const next = beats[(index + 1) % beats.length];
-  return next && next !== beats[index] ? `${beats[index]} ${next}` : beats[index]!;
+  if (owed)
+    return owed.from === speaker.id
+      ? `I still owe you ${owed.amount} for ${clip(owed.text, 90)}. I have not paid it yet.`
+      : `Your tab with me is still ${owed.amount}: ${clip(owed.text, 90)}.`;
+  const lines = characterProfile(speaker.id).greetings;
+  return lines[Math.abs(town.day + Math.floor(town.minute / 60)) % lines.length]!;
 }
 
 function cite(town: Town, speaker: Agent, other: Agent): string {
@@ -548,21 +524,6 @@ function talkGeneric(town: Town, a: Agent, b: Agent): MindResult {
       f.status === "owed" &&
       ((f.from === a.id && f.to === b.id) || (f.from === b.id && f.to === a.id)),
   );
-  const till = town.tills?.cafe === 0 ? "Hobbs" : town.tills?.grocery === 0 ? "the grocery" : "";
-  const held = holds(a) || holds(b);
-  const player = town.agents.find((a) => a.id === "player");
-  const lastToYou = player
-    ? [...a.memories].reverse().find((m) => m.type === "chat" && m.text.includes(player.name))
-    : undefined;
-  const follow = owed
-    ? `The tab is still open: ${owed.text}. I am not pretending it was paid.`
-    : lastToYou
-      ? `Last time with ${player?.name}, what stayed was: ${clip(lastToYou.text, 90)}.`
-      : till
-        ? `The till at ${till} is empty. A shift there will not pay until tomorrow.`
-        : held
-          ? "What Kevin asked is still who he is, not a place. I am not pinning it again."
-          : `${periodName(town.minute)} can keep the rest. I am not closing anything.`;
   return {
     kind: "talk",
     mind: "offline",
@@ -570,8 +531,7 @@ function talkGeneric(town: Town, a: Agent, b: Agent): MindResult {
     b: b.id,
     lines: [
       { speaker: a.id, text: compose(town, a, b) },
-      { speaker: b.id, text: compose(town, b, a) },
-      { speaker: a.id, text: `We are still in the ${place}. ${follow}` },
+      { speaker: b.id, text: owed ? compose(town, b, a) : characterProfile(b.id).publicInfo },
     ],
     relationships: [
       {
@@ -596,23 +556,153 @@ function talkGeneric(town: Town, a: Agent, b: Agent): MindResult {
   };
 }
 
+function discussionTopic(text: string): DiscussionTopic | null {
+  if (
+    /\b(?:energy|electricity|solar|renewables?|wind power|power grid|batter(?:y|ies)|fuel|decarboni[sz]\w*)\b/i.test(
+      text,
+    )
+  )
+    return "energy";
+  if (
+    /\b(?:education|educat\w*|school\w*|teach\w*|learn\w*|lesson\w*|curriculum|tuition|literacy|studying)\b/i.test(
+      text,
+    )
+  )
+    return "education";
+  return null;
+}
+
+function followup(text: string): boolean {
+  return /^(?:(?:and|but|so)\s+)?(?:why(?: is that)?|how(?: so| would (?:that|it) work)?|tell me more|go on|what (?:do you mean|next|about (?:that|the cost|costs?|funding|access|a test))|how (?:much|would we (?:test|fund|start))|can you (?:explain|give (?:me )?an example)|where (?:do we|should we|to) start)[?!.\s]*$/i.test(
+    text.trim(),
+  );
+}
+
+function previousTopic(town: Town, agent: Agent): DiscussionTopic | null {
+  // Only the latest exchange with this player supplies the subject of "why?".
+  // An older unrelated conversation must not silently become today's subject.
+  const previous = [...agent.memories]
+    .reverse()
+    .find((memory) => memory.type === "chat" && memory.with === "player");
+  if (!previous || previous.seed || mentionsSeed(previous.text)) return null;
+  const age = absMinute(town.day, town.minute) - absMinute(previous.day, previous.minute);
+  if (age < 0 || age > 180) return null;
+  const turns = (previous as typeof previous & { turns?: { speaker: AgentId; text: string }[] })
+    .turns;
+  if (Array.isArray(turns)) {
+    const question = [...turns]
+      .reverse()
+      .find((turn) => turn.speaker === "player" && typeof turn.text === "string");
+    const topic = question ? discussionTopic(question.text) : null;
+    if (topic) return topic;
+    // A second follow-up may rely on the resident's immediately preceding answer.
+    if (question && !followup(question.text)) return null;
+    const answer = [...turns]
+      .reverse()
+      .find((turn) => turn.speaker === agent.id && typeof turn.text === "string");
+    if (!answer) return null;
+    const inferred = discussionTopic(answer.text);
+    if (inferred) return inferred;
+    const profile = characterProfile(agent.id);
+    return (
+      (["education", "energy"] as const).find(
+        (topic) => answer.text === profile[topic].answer || answer.text === profile[topic].followup,
+      ) ?? null
+    );
+  }
+  // A legacy exchange has no reliable speaker attribution. It can suggest a topic,
+  // but is never presented as a verified fact or quoted as the player's exact words.
+  return discussionTopic(previous.text);
+}
+
+function publicReply(
+  town: Town,
+  agent: Agent,
+  text: string,
+  topic: DiscussionTopic | null,
+): string {
+  const profile = characterProfile(agent.id);
+  if (topic) {
+    if (
+      /\b(?:latest|current|today's|live|right now|202\d)\b/i.test(text) &&
+      /\b(?:price|cost|research|news|statistic|figure|data)\w*\b/i.test(text)
+    ) {
+      return `I do not have a current external source for those ${topic} figures. ${profile[topic].followup}`;
+    }
+    return followup(text) ? profile[topic].followup : profile[topic].answer;
+  }
+  if (/\b(?:what time|time is it|what day|which day)\b/i.test(text))
+    return `It is ${formatClock(town.minute)} on day ${town.day}.`;
+  if (/\b(?:where|find|directions|which way)\b/i.test(text)) {
+    if (/\b(?:cafe|hobbs|kevin)\b/i.test(text))
+      return "Hobbs Cafe is west of the plaza. Kevin runs it; I cannot promise where he is at this moment.";
+    if (/\b(?:library|arwyn|data|amelia)\b/i.test(text))
+      return "The library is east of the plaza. Arwyn works with its records; try there for research, though I cannot promise who is there now.";
+    if (/\b(?:grocery|shop|baba)\b/i.test(text))
+      return "The grocery is southwest of the plaza, across the main street. Baba works there.";
+    if (/\b(?:dorms?|college|northern)\b/i.test(text))
+      return "The college dorms are in the northwest of town. Northern is a student there.";
+    if (/\b(?:park|sub)\b/i.test(text))
+      return "The park is south of the plaza. Sub sometimes writes there; that is a place to try, not a live location.";
+    if (/\b(?:noticeboard|board)\b/i.test(text))
+      return "The noticeboard stands in the plaza just east of the cafe entrance.";
+    if (/\b(?:we|here|am i|are you)\b/i.test(text))
+      return `I am in ${placeTitle(zoneAt(agent.tile.x, agent.tile.y))}.`;
+  }
+  if (
+    /\b(?:who are you|your (?:name|role|job)|what do you do|tell me about yourself)\b/i.test(text)
+  )
+    return profile.publicInfo;
+  if (
+    /\b(?:who is kevin|kevin's (?:story|secret|past)|who he is|where he came|man under|kevin.*origin)\b/i.test(
+      text,
+    )
+  )
+    return "Kevin runs Hobbs. His personal story is his to tell; you can ask him if he wants to talk about it.";
+  if (/\b(?:what can i do|how (?:do i|to) (?:play|start)|help me get started)\b/i.test(text))
+    return "Visit Hobbs, talk to residents, or explore the library and noticeboard. If you want bread or a shift, read the offered terms and choose an action; a conversation by itself does not commit you.";
+  if (
+    /\b(?:ai|artificial intelligence|machine learning|technology|blockchain|bitcoin)\b/i.test(text)
+  ) {
+    if (String(agent.id) === "data")
+      return "I would define the task and a test before choosing a technology. For an AI system, compare its answers with known examples, record failures and check whether it knows when to say it is uncertain.";
+    if (String(agent.id) === "amelia")
+      return "I would ask what the technology costs, whose problem it solves and who benefits. Calling something decentralized or intelligent does not establish its value.";
+    if (agent.id === "kevin")
+      return "Start with the problem the technology should solve, then test a small version. I cannot access an external network or verify an online service from here.";
+    return "That is outside my expertise. Data may help with a testable technical question; I would want evidence before trusting a claim.";
+  }
+  if (/\b(?:economics?|budget|funding|incentives?|inflation)\b/i.test(text)) {
+    if (String(agent.id) === "amelia")
+      return "Start by listing the available funds, the cost of each promised task and who receives the benefit. Reserve the money before offering paid work; an expected contribution is not money already available.";
+    return "A budget needs actual funding before anyone promises a wage. Amelia can help examine the costs and incentives; I cannot approve spending through a conversation.";
+  }
+  if (/\b(?:hi|hello|hey|good morning|good afternoon|good evening)\b/i.test(text))
+    return compose(town, agent, agentById(town, "player"));
+  if (/\b(?:thank you|thanks|cheers)\b/i.test(text))
+    return "You are welcome. Let me know if there is another part you want to discuss.";
+  if (/\b(?:how are you|how's (?:it|your day))\b/i.test(text)) return profile.reflection;
+  if (/\b(?:shut up|hate you|idiot|stupid)\b/i.test(text))
+    return "We can disagree. Tell me the question you want answered, and I will try to be useful.";
+  if (followup(text))
+    return "Which part do you mean? Name the idea or question and I can be more specific.";
+  return `I do not have a clear answer to that. I can help with ${profile.specialties.slice(0, 2).join(" and ")}; what part would you like to explore?`;
+}
+
 function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
   ensureLists(town);
   const agent = agentById(town, id);
   const player = agentById(town, "player");
   const probing =
-    /who are you|who is he|who he is|who you are|man under|where (?:did|do) you come|came from|your story|origin|need(?:s)? help with who/i.test(
+    /who are you|who you are|man under|where (?:did|do) you come|your (?:story|past|origins?)|who is kevin|kevin's (?:story|past|origins?)/i.test(
       text,
     );
-  let reply = compose(town, agent, player);
-  if (agent.id === "kevin" && probing) {
-    reply = `${reply} You asked, so I will not dodge it. I want to find out who I am. Where I came from is that same question — not a town, the man under the apron. I need to know where I am going, and how to make some money. I will need friends and help.`;
-  } else if (agent.id === "kevin") {
-    reply = `${reply} I am not putting the private part on the counter. Not for a stranger's first question. Stay, if you mean to.`;
-  } else if (probing && holds(agent)) {
-    reply = `${reply} Since you asked: Kevin needs help. He does not know who he is. Where he came from was never a place, and he has to make some money. That much traveled.`;
-  } else if (!town.notices.length && agent.id === "arwyn") {
-    reply = `${reply} If you can switch a mind on, do. Until then I am only this place, this hour, and what I already retrieved.`;
+  const topic = discussionTopic(text) ?? (followup(text) ? previousTopic(town, agent) : null);
+  const everyday = topic ? null : everydayReply(town, agent, text);
+  let reply = publicReply(town, agent, text, topic);
+  if (agent.id === "kevin" && probing && !topic) {
+    reply =
+      "I run Hobbs, but I still want to find out who I am — the man under the apron, not a place I came from. I am willing to talk about it, if you mean to listen.";
   }
   const debt = town.favors.find((f) => f.from === "player" && f.to === id && f.status === "owed");
   const carrying = (player.projects ?? []).find(
@@ -623,40 +713,41 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
     (p) =>
       p.owner === "player" && p.kind === "other" && p.status === "done" && p.text === BABA_LOAF,
   );
-  const asksAboutEating = /\b(?:eat|eating|loaf)\b/i.test(text);
-  const workTalk =
-    agent.id === "kevin" && /\b(?:shift|job|wage|earn|work|quit|cancel)\b/i.test(text);
+  const asksAboutEating = !topic && /\b(?:eat|eating|loaf)\b/i.test(text);
   if (asksAboutEating) {
     reply = carrying
       ? "You are carrying a loaf. Choose Eat loaf below when you want to eat it. The tab stays open until paid; talking does not consume the loaf."
       : "You are not carrying a loaf.";
-  } else if (workTalk) {
-    const shift = (player.projects ?? []).find(
-      (p) => p.owner === "player" && p.kind === "shift" && p.status === "open",
-    );
-    reply = shift
-      ? "Your shift is still open. Talking does not cancel it. Use the quoted action below if you want to cancel. Three game hours on the floor earn the full wage only if the till can pay; unpaid hours reset at midnight."
-      : "The cafe shift is 16:00–19:00 each day until cancelled, for 5 after three game hours on the floor if the till can pay. Read the terms below and choose Accept to take it. Talking alone commits you to nothing.";
+  } else if (everyday) {
+    reply = everyday;
   } else if (
     agent.id === "baba" &&
+    !topic &&
     /\b(?:bread|apples?|food|tab|debt|pay|repay|settle|owe)\b/i.test(text)
   ) {
     reply = debt
       ? `Your tab is still ${debt.amount}: ${debt.text} Talking does not pay it. Use the quoted payment action when you choose.`
       : "Bread is 2 on a tab, with one loaf to eat. Read the terms below and choose Accept if you want it. Asking or refusing does not buy anything.";
-  } else if (agent.id === "kevin" && !probing) {
-    const paid = (player.memories ?? []).some(
-      (m) =>
-        m.type === "favor" &&
-        m.text.includes("paid me 5") &&
-        (m.day === town.day || m.day === town.day - 1),
-    );
-    if (paid)
-      reply = `${reply} You worked the floor. The till paid you 5. I have not forgotten that.`;
+  } else if (
+    agent.id === "kevin" &&
+    !probing &&
+    !topic &&
+    /^(?:hello|hi|hey|good morning|good afternoon|good evening)[!.\s]*$/i.test(text.trim())
+  ) {
+    const paid = recentCafePaymentGreeting(town);
+    if (paid) reply = `${reply} ${paid}`;
   }
-  if (!debt && /\b(?:inspect|owe|pay|repay|settle)\b/i.test(text) && !workTalk && !asksAboutEating)
+  if (
+    !topic &&
+    !debt &&
+    /\b(?:inspect (?:my |the )?tab|owe (?:you|me)|pay (?:you|my|the tab)|repay|settle (?:my |the )?(?:tab|debt))\b/i.test(
+      text,
+    ) &&
+    !everyday &&
+    !asksAboutEating
+  )
     reply = "There is no open tab between us. Nothing to pay.";
-  if (agent.id === "baba" && debt && !asksAboutEating) {
+  if (agent.id === "baba" && debt && !asksAboutEating && !topic && !everyday) {
     if (carrying) reply = `${reply} You are carrying the loaf. The tab is ${debt.amount}.`;
     else if (ateLoaf) reply = `${reply} You ate the loaf. You still owe ${debt.amount}.`;
   }

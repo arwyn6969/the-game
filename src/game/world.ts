@@ -5,28 +5,10 @@ export const MAP_H = 42;
 export const TILE = 32;
 
 export type Ground =
-  | "grass"
-  | "path"
-  | "plaza"
-  | "wood"
-  | "stone"
-  | "tile"
-  | "water"
-  | "wall"
-  | "door"
-  | "floor";
+  "grass" | "path" | "plaza" | "wood" | "stone" | "tile" | "water" | "wall" | "door" | "floor";
 
 export type Decor =
-  | "tree"
-  | "counter"
-  | "shelf"
-  | "bed"
-  | "bench"
-  | "board"
-  | "table"
-  | "plant"
-  | "lamp"
-  | "stool";
+  "tree" | "counter" | "shelf" | "bed" | "bench" | "board" | "table" | "plant" | "lamp" | "stool";
 
 export type Cell = {
   ground: Ground;
@@ -78,14 +60,7 @@ function fill(
   }
 }
 
-function building(
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  zone: string,
-  floor: Ground,
-) {
+function building(x: number, y: number, w: number, h: number, zone: string, floor: Ground) {
   for (let iy = y; iy < y + h; iy++) {
     for (let ix = x; ix < x + w; ix++) {
       const edge = ix === x || iy === y || ix === x + w - 1 || iy === y + h - 1;
@@ -286,6 +261,8 @@ export const HOMES = {
   baba: { x: 42, y: 35 },
   sub: { x: 48, y: 36 },
   player: { x: 52, y: 36 },
+  data: { x: 12, y: 6 },
+  amelia: { x: 14, y: 9 },
 } as const;
 
 export function zoneAt(x: number, y: number): string {
@@ -414,7 +391,8 @@ export function auditWorld(): string[] {
     ["library-door-out", { x: 33, y: 20 }],
   ];
   for (const [name, p] of points) {
-    if (!walkable(p.x, p.y)) errors.push(`${name} blocked at ${p.x},${p.y} zone ${zoneAt(p.x, p.y)}`);
+    if (!walkable(p.x, p.y))
+      errors.push(`${name} blocked at ${p.x},${p.y} zone ${zoneAt(p.x, p.y)}`);
   }
   const start = { x: 26, y: 22 };
   const seen = new Uint8Array(MAP_W * MAP_H);

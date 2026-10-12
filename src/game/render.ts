@@ -14,10 +14,17 @@ import {
 } from "../components/town/WorldArt";
 import type { Scenery } from "../components/town/WorldArt";
 
-const PALETTE: Record<
-  AgentId,
-  { skin: string; hair: string; shirt: string; pants: string; shoe: string; extra: string }
-> = {
+type Appearance = {
+  skin: string;
+  hair: string;
+  shirt: string;
+  pants: string;
+  shoe: string;
+  extra: string;
+  accessory?: "tablet" | "scarf";
+};
+
+const PALETTE: Record<AgentId, Appearance> = {
   kevin: {
     skin: "#c68642",
     hair: "#241c14",
@@ -57,6 +64,24 @@ const PALETTE: Record<
     pants: "#262237",
     shoe: "#161121",
     extra: "#f3eaff",
+  },
+  data: {
+    skin: "#dbc9a4",
+    hair: "#202336",
+    shirt: "#69d8dc",
+    pants: "#233446",
+    shoe: "#141629",
+    extra: "#ddfbff",
+    accessory: "tablet",
+  },
+  amelia: {
+    skin: "#ad754e",
+    hair: "#382235",
+    shirt: "#eaa769",
+    pants: "#513b54",
+    shoe: "#251329",
+    extra: "#f4e2aa",
+    accessory: "scarf",
   },
   player: {
     skin: "#d9a066",
@@ -228,6 +253,13 @@ function drawPerson(
     rect(g, "#755362", 4, -22, 7, 11);
     rect(g, p.extra, 5, -22, 5, 3);
     rect(g, "#c3ae91", 7, -17, 2, 2);
+  }
+  if (p.accessory === "tablet") {
+    rect(g, p.pants, side ? 4 : 2, -22, 7, 10);
+    if (!back) rect(g, p.extra, side ? 5 : 3, -21, 5, 6);
+  } else if (p.accessory === "scarf") {
+    rect(g, p.extra, bx, -27, bodyW, 3);
+    rect(g, p.extra, side ? 3 : 2, -24, 3, 9);
   }
   if (id === "player") {
     rect(g, p.extra, bx + 2, -27, bodyW - 4, 2);

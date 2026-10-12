@@ -3,7 +3,11 @@ dist
 .output
 .env
 .env.*
+config/mind-pool.local.json
 .vercel
 .grok
 screenshots
 artifacts
+
+config/mind-pool.local.json
+config/mind-pool.*.local.json
