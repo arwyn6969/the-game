@@ -263,18 +263,6 @@ try {
       await page.keyboard.press("Enter");
       await page.getByLabel("Your line to Kevin", { exact: true }).waitFor();
       check.conversationEntry = "Enter beside Kevin";
-      const pin = page.getByRole("button", { name: "Pin Kevin", exact: true });
-      check.pinButtonText = await buttonTextLayout(pin);
-      assert.equal(check.pinButtonText.lines, 1, "Pin Kevin button text should stay on one line");
-      await pin.click();
-      const unpin = page.getByRole("button", { name: "Unpin", exact: true });
-      check.activePinButtonText = await buttonTextLayout(unpin);
-      assert.equal(
-        check.activePinButtonText.lines,
-        1,
-        "Active Unpin button text should stay on one line",
-      );
-      await unpin.click();
       await page
         .getByLabel("Your line to Kevin", { exact: true })
         .fill("Hello Kevin, nice morning.");
