@@ -104,6 +104,34 @@ test("reported completion stays an attributed, unverified statement and is not r
   assert.equal(town.favors.length, 0);
 });
 
+test("a delayed review preserves the original date of relative-time statements", () => {
+  const town = createTown("Test Resident");
+  town.minute = 15 * 60 + 30;
+  tell(town, "I plan to meet you tomorrow at the library to compare the records.");
+  town.day = 2;
+  town.minute = 8 * 60;
+  const [row] = reflect(town);
+  assert.match(row, /^On day 1, 15:30, Test Resident told me:/);
+  assert.match(row, /tomorrow at the library/);
+  const loaded = parseTownFile(exportTown(town));
+  assert.ok(
+    resident(loaded).memories.some((memory) => memory.type === "reflect" && memory.text === row),
+  );
+});
+
+test("a repeated claim deduplicates across dates even when the day gains a digit", () => {
+  const town = createTown("Test Resident");
+  town.day = 9;
+  const claim = "I observed a possible problem with the water supply. ".repeat(12);
+  tell(town, claim);
+  assert.equal(reflect(town).length, 1);
+  town.day = 10;
+  town.minute++;
+  tell(town, claim);
+  assert.deepEqual(reflect(town), []);
+  assert.equal(town.favors.length, 0);
+});
+
 test("greetings, questions, own answers, legacy prose and profile maxims do not create learning", () => {
   const town = createTown("Test Resident");
   tell(town, "Hello. I am happy to see you around the town today.");

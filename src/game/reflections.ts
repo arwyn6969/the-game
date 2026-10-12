@@ -4,6 +4,13 @@ import { memorySource } from "./conversation";
 import { clip, formatClock } from "./text";
 
 const normalized = (text: string) => text.replace(/\s+/g, " ").trim().toLowerCase();
+const reflectionKey = (text: string) =>
+  normalized(
+    text.replace(
+      /^On day [+-]?\d+(?:\.\d+)?(?:e[+-]?\d+)?, \d{2}:\d{2}, (?=.{1,48} told me: “)/i,
+      "",
+    ),
+  );
 const stamp = (memory: Memory) => (memory.day - 1) * 1440 + memory.minute;
 
 function isCheckpoint(memory: Memory): boolean {
@@ -26,7 +33,9 @@ function meaningfulStatement(text: string, speaker: Agent): boolean {
 export function localReflections(town: Town, agent: Agent): string[] {
   const memories = agent.memories ?? [];
   const seen = new Set(
-    memories.filter((memory) => memory.type === "reflect").map((memory) => normalized(memory.text)),
+    memories
+      .filter((memory) => memory.type === "reflect")
+      .map((memory) => reflectionKey(memory.text)),
   );
   let checkpointTime = -Infinity;
   let checkpointIndex = -1;
@@ -40,7 +49,7 @@ export function localReflections(town: Town, agent: Agent): string[] {
   const receipts: string[] = [];
   const statements: string[] = [];
   const add = (list: string[], text: string) => {
-    const key = normalized(text);
+    const key = reflectionKey(text);
     if (seen.has(key)) return;
     seen.add(key);
     list.push(text);
@@ -70,9 +79,16 @@ export function localReflections(town: Town, agent: Agent): string[] {
     if (!speaker) continue;
     for (const turn of [...(memory.turns ?? [])].reverse()) {
       if (turn.speaker !== speaker.id || !meaningfulStatement(turn.text, speaker)) continue;
+      const date = `On day ${memory.day}, ${formatClock(memory.minute)}, `;
       const prefix = `${clip(speaker.name, 48)} told me: “`;
       const suffix = "” This is their account, not independently verified.";
-      add(statements, prefix + clip(turn.text, 320 - prefix.length - suffix.length) + suffix);
+      // Reserve a stable timestamp budget so crossing day 9→10 does not change
+      // the quoted excerpt and defeat deduplication of a repeated long claim.
+      const quote = clip(
+        turn.text,
+        320 - Math.max(48, date.length) - prefix.length - suffix.length,
+      );
+      add(statements, date + prefix + quote + suffix);
     }
   }
   return [...receipts, ...statements].slice(0, 2);
