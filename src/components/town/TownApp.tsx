@@ -1,5 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { Download, Pause, Pin, Play, SkipForward, Upload, X } from "lucide-react";
+import {
+  ArrowRight,
+  Download,
+  MapPin,
+  Pause,
+  Pin,
+  Play,
+  Save,
+  SkipForward,
+  Sparkles,
+  Upload,
+  X,
+} from "lucide-react";
+import { ArcadeMark, PixelUniverse } from "./ArcadeArt";
 import type { Agent, AgentId, Face, ThinkJob, Town } from "@/game/types";
 import {
   applyPlayerAction,
@@ -981,29 +994,64 @@ export function TownApp() {
 
   if (phase === "name" || !townRef.current) {
     return (
-      <main className="gate">
-        <form onSubmit={enter}>
-          <p className="font-display text-4xl leading-none">THE GAME</p>
-          <p className="mt-4 text-muted">
-            A town with five lives already in it. You are the sixth. Not the narrator. Hobbs Cafe is
-            already open.
-          </p>
-          <label className="mt-6 block text-sm text-muted" htmlFor="town-name">
-            What do they call you?
-          </label>
-          <input
-            id="town-name"
-            name="town-name"
-            className="field mt-2"
-            maxLength={18}
-            autoComplete="off"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-          />
-          <button className="btn mt-4" data-on="true" type="submit" disabled={!name.trim()}>
-            Walk in
-          </button>
-        </form>
+      <main className="gate gate-home">
+        <div className="gate-nav">
+          <div className="brand">
+            <ArcadeMark className="brand-icon" />
+            <span className="brand-name">THE GAME</span>
+          </div>
+          <span className="badge">A persistent pixel town</span>
+        </div>
+        <div className="gate-layout">
+          <div className="gate-hero">
+            <div className="gate-kicker">
+              <Sparkles className="size-4" /> Small town. Big universe.
+            </div>
+            <h1>
+              THE <span>GAME</span>
+            </h1>
+            <p>
+              Five lives are already unfolding here. You’re the sixth. Meet your neighbors, make a
+              little trouble, see what tomorrow brings.
+            </p>
+            <PixelUniverse />
+          </div>
+          <form onSubmit={enter}>
+            <div className="cartridge-label">
+              <span>New resident</span>
+              <span>Player 06</span>
+            </div>
+            <h2>
+              Your next little
+              <br />
+              adventure starts here.
+            </h2>
+            <p>Hobbs Cafe is already open. There’s a place in town with your name on it.</p>
+            <label className="mt-6 block text-sm text-muted" htmlFor="town-name">
+              What do they call you?
+            </label>
+            <input
+              id="town-name"
+              name="town-name"
+              className="field mt-2"
+              placeholder="Your name, space traveler"
+              maxLength={18}
+              autoComplete="off"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+            />
+            <button className="btn" data-on="true" type="submit" disabled={!name.trim()}>
+              Walk in <ArrowRight className="size-4" aria-hidden />
+            </button>
+            <p className="gate-save-note">
+              <Save className="size-3" aria-hidden /> Your town saves in this browser.
+            </p>
+          </form>
+        </div>
+        <div className="gate-bottom">
+          <span>Talk. Wander. Make tomorrow different.</span>
+          <span>No final level. Just life.</span>
+        </div>
       </main>
     );
   }
@@ -1035,26 +1083,24 @@ export function TownApp() {
   return (
     <main className="town" data-talking={shown || board ? "true" : "false"}>
       <header className="hud">
-        <h1 className="font-display text-2xl leading-none">THE GAME</h1>
-        <p className="tabular-nums">
-          Day {clockDay} · {formatClock(clockMinute)} · {periodName(clockMinute)}
-          {replay !== null ? " · replay" : ""}
+        <div className="brand">
+          <ArcadeMark className="brand-icon" />
+          <div>
+            <h1>THE GAME</h1>
+            <p className="brand-caption">YOUR LITTLE UNIVERSE</p>
+          </div>
+        </div>
+        <div className="hud-clock">
+          <span className="day-chip">Day {String(clockDay).padStart(2, "0")}</span>
+          <span>{formatClock(clockMinute)}</span>
+          <span className="hud-period text-muted">{periodName(clockMinute)}</span>
+          {replay !== null && <span className="text-purple">Replay</span>}
+        </div>
+        <p className="hud-wallet">
+          <span className="pixel-coin" aria-hidden />
+          {player.money} on you
         </p>
-        <p className="text-muted">{placeTitle(here)}</p>
-        <p className="text-muted">
-          {player.money} on you · {activityStatus(here, planned.place, planned.status)}
-        </p>
-        {farNote && <p className="text-sm text-primary">{farNote}</p>}
-        {checked && (
-          <span className="badge" data-off={online ? "false" : "true"}>
-            {online ? "mind on" : "offline mind"}
-          </span>
-        )}
-        {thinking && <span className="text-sm text-primary">minds thinking</span>}
-        {hiccup && (
-          <span className="text-sm text-primary">A mind missed and spoke from memory.</span>
-        )}
-        <div className="ml-auto flex flex-wrap gap-2">
+        <div className="transport" role="group" aria-label="Town clock controls">
           <button
             className="btn"
             data-on={speed === 0 ? "true" : "false"}
@@ -1085,6 +1131,33 @@ export function TownApp() {
           </button>
         </div>
       </header>
+      <div className="status-strip">
+        <p className="status-place">
+          <MapPin className="size-3" aria-hidden />
+          {placeTitle(here)}
+        </p>
+        <p className="status-activity">{activityStatus(here, planned.place, planned.status)}</p>
+        {farNote && (
+          <p className="status-message" role="status">
+            {farNote}
+          </p>
+        )}
+        {checked && (
+          <span className="badge" data-off={online ? "false" : "true"}>
+            {online ? "mind on" : "offline mind"}
+          </span>
+        )}
+        {thinking && <span className="status-message">minds thinking</span>}
+        {hiccup && <span className="status-message">A mind missed and spoke from memory.</span>}
+        <div className="status-controls">
+          <span>
+            <kbd>WASD / ↑↓←→</kbd> move
+          </span>
+          <span>
+            <kbd>ENTER</kbd> talk
+          </span>
+        </div>
+      </div>
       {saveStatus && !saveStatus.ok && (
         <p className="warn" role="alert">
           This town has not saved in this browser. Download a copy before closing the page.{" "}
@@ -1100,14 +1173,27 @@ export function TownApp() {
         </p>
       )}
       {checked && !online && !shown && (
-        <p className="warn" role="status">
+        <p className="warn offline-note" role="status">
           The minds are offline. They still answer from what they already hold.
         </p>
       )}
       {hint && (town.guide ?? 0) < 3 && !shown && (
-        <p className="warn" role="status">
-          {guideLine}
-        </p>
+        <div className="welcome-tip">
+          <Sparkles className="welcome-icon size-5" aria-hidden />
+          <div>
+            <strong>Next stop: Hobbs Cafe.</strong>
+            <p>
+              Say hello to Kevin, or see where the day takes you.{" "}
+              {speed === 0
+                ? "Press 1× to start the clock."
+                : hobbsWay(player.tile.x, player.tile.y)}
+            </p>
+          </div>
+          <details>
+            <summary>How to play</summary>
+            <p>{guideLine}</p>
+          </details>
+        </div>
       )}
       {yourOpenDebts.length > 0 && !shown && (
         <p className="warn" role="status">
@@ -1118,13 +1204,24 @@ export function TownApp() {
           </button>
         </p>
       )}
-      <div className="relative min-h-0 flex-1">
+      <div className="world-frame">
         <canvas
           ref={canvasRef}
           className="town-canvas h-full"
           onClick={onCanvasClick}
           aria-label="The town"
         />
+        <div className="world-label" aria-hidden>
+          <i />
+          {replay
+            ? "A moment from the town"
+            : speed === 0
+              ? "Town time · paused"
+              : "A day in the town"}
+        </div>
+        <div className="world-caption" aria-hidden>
+          6 residents · endless possibilities
+        </div>
         {crowd && crowd.length > 1 && (
           <div className="crowd" role="listbox" aria-label="Who is here">
             {crowd.map((id) => {
@@ -1184,7 +1281,7 @@ export function TownApp() {
         )}
       </div>
       <footer className="foot">
-        <label className="text-sm text-muted" htmlFor="scrub">
+        <label className="foot-label" htmlFor="scrub">
           {replay && replay.d < town.day ? "Yesterday" : "Today"}
         </label>
         {yesterday && (
@@ -1305,6 +1402,9 @@ export function TownApp() {
             }
           }}
         />
+        <span className="foot-note">
+          {saveStatus?.ok ? "Saved in this browser" : "Your town lives in this browser"}
+        </span>
       </footer>
       {board && <Board town={town} onClose={() => setBoard(false)} />}
       {importText !== null && (

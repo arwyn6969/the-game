@@ -4,13 +4,18 @@ import { compressDialogue, compressObservations, keywords } from "./memory";
 import { SEED_TEXT } from "./town";
 import { mentionsSeed, plain, purse } from "./text";
 import { nearestWalkable } from "./world";
+import { auditEconomy } from "./economy";
 
 const KEY = "the-game-town-v1";
 export const MAX_TOWN_FILE_BYTES = 8 * 1024 * 1024;
 
 export type SaveResult =
   | { ok: true; bytes: number; replayOmitted: boolean }
-  | { ok: false; reason: "unavailable" | "serialization" | "quota" | "storage" };
+  | {
+      ok: false;
+      reason: "unavailable" | "serialization" | "quota" | "storage";
+      explanation?: string;
+    };
 
 let lastSaveResult: SaveResult | null = null;
 
@@ -42,8 +47,65 @@ const OLD_NOTICE =
   "Pinned from the cafe: Kevin is asking, quietly, who he is and where he came from, and for help earning a living. — Arwyn";
 const NEW_NOTICE =
   "Pinned from the cafe: Kevin is asking, quietly, who he is — not a place he came from, the man under the apron — and for help earning a living. — Arwyn";
-const OLD_SELF = "Right now I am someone who has said, at least once, that he does not know where he came from.";
-const NEW_SELF = "Right now I am someone who has said, at least once, that he does not know who he is.";
+const OLD_SELF =
+  "Right now I am someone who has said, at least once, that he does not know where he came from.";
+const NEW_SELF =
+  "Right now I am someone who has said, at least once, that he does not know who he is.";
+
+const RESIDENT_LINES: [string, string][] = [
+  [
+    "Arwyn lives in the back room of the library, among boxes nobody has catalogued since the college shrank. She is a researcher by temperament more than by paycheck: margins, dates, the way a person tells a story twice and changes one fact. She dresses like the stacks, grey-green and unfussy, and she listens longer than is comfortable. Origins are her private weather. She believes a town is a set of documents that learned to walk.",
+    "Arwyn lives in the back room of the library, among boxes nobody has catalogued since the college shrank. He is a researcher by temperament more than by paycheck: margins, dates, the way a person tells a story twice and changes one fact. He dresses like the stacks, grey-green and unfussy, and he listens longer than is comfortable. Origins are his private weather. He believes a town is a set of documents that learned to walk.",
+  ],
+  [
+    "Baba runs the counter at the grocery and keeps the produce honest. She is practical to the bone: weights, change, who promised to pay on Thursday. She does not romanticize the town and does not swindle it either. A mental tab of debts, favors, and forgiven sums is her real ledger. She speaks in short sentences and expects the same. People underestimate how much she has already noticed.",
+    "Baba runs the counter at the grocery and keeps the produce honest. He is practical to the bone: weights, change, who promised to pay on Thursday. He does not romanticize the town and does not swindle it either. A mental tab of debts, favors, and forgiven sums is his real ledger. He speaks in short sentences and expects the same. People underestimate how much he has already noticed.",
+  ],
+  [
+    "Sub writes beside the park path, usually on a bench that faces the pond. Other people's days are the raw material: a quarrel, a generous pour, a student counting coins. Sub turns them into stories and sometimes gets them wrong — a glance becomes a romance, a debt becomes a curse, a question becomes a confession with better lighting. Sub is not trying to lie. The page wants a shape, and the truth is rarely shaped.",
+    "Sub writes beside the park path, usually on a bench that faces the pond. Other people's days are the raw material: a quarrel, a generous pour, a student counting coins. He turns them into stories and sometimes gets them wrong — a glance becomes a romance, a debt becomes a curse, a question becomes a confession with better lighting. He is not trying to lie. The page wants a shape, and the truth is rarely shaped.",
+  ],
+  ["at the cafe, listening more than she drinks", "at the cafe, listening more than he drinks"],
+  ["home on the row, the tab already in her head", "home on the row, the tab already in his head"],
+  [
+    "Right now I am still the one who reads a life before she interrupts it.",
+    "Right now I am still the one who reads a life before I interrupt it.",
+  ],
+  [
+    "She listened when I said I do not know who I am, and she did not turn it into a place.",
+    "He listened when I said I do not know who I am, and he did not turn it into a place.",
+  ],
+  [
+    "She let me eat on a tab of 2 and did not pretend it was kindness without a number.",
+    "He let me eat on a tab of 2 and did not pretend it was kindness without a number.",
+  ],
+];
+
+function maleLine(text: string): string {
+  for (const [from, to] of RESIDENT_LINES) if (text === from) return to;
+  return text;
+}
+
+function reframeResidents(town: Town) {
+  for (const agent of town.agents) {
+    if (typeof agent.identity === "string") agent.identity = maleLine(agent.identity);
+    if (typeof agent.status === "string") agent.status = maleLine(agent.status);
+    if (typeof agent.selfSentence === "string") agent.selfSentence = maleLine(agent.selfSentence);
+    for (const beat of agent.plan?.beats ?? []) {
+      if (beat && typeof beat.status === "string") beat.status = maleLine(beat.status);
+    }
+    for (const rel of Object.values(agent.relationships ?? {})) {
+      if (rel && typeof rel.note === "string") rel.note = maleLine(rel.note);
+    }
+    for (const memory of agent.memories ?? []) {
+      if (!memory || typeof memory.text !== "string") continue;
+      const next = maleLine(memory.text);
+      if (next === memory.text) continue;
+      memory.text = next;
+      memory.keywords = keywords(next);
+    }
+  }
+}
 
 function reframeSeed(town: Town) {
   const kevin = town.agents.find((a) => a.id === "kevin");
@@ -111,10 +173,15 @@ function cleanMemory(memory: Memory, fallbackDay: number): Memory | null {
     type,
     text: memory.text.replace(/\s+/g, " ").trim().slice(0, 420),
     day: Number.isFinite(memory.day) ? memory.day : fallbackDay,
-    minute: Number.isFinite(memory.minute) ? Math.max(0, Math.min(1439, Math.floor(memory.minute))) : 0,
-    importance: Number.isFinite(memory.importance) ? Math.max(1, Math.min(10, Math.round(memory.importance))) : 5,
+    minute: Number.isFinite(memory.minute)
+      ? Math.max(0, Math.min(1439, Math.floor(memory.minute)))
+      : 0,
+    importance: Number.isFinite(memory.importance)
+      ? Math.max(1, Math.min(10, Math.round(memory.importance)))
+      : 5,
     keywords:
-      Array.isArray(memory.keywords) && memory.keywords.some((w) => typeof w === "string" && w.length > 2)
+      Array.isArray(memory.keywords) &&
+      memory.keywords.some((w) => typeof w === "string" && w.length > 2)
         ? memory.keywords.filter((w) => typeof w === "string").slice(0, 24)
         : keywords(memory.text),
     protected: Boolean(memory.protected || memory.seed || mentionsSeed(memory.text)),
@@ -125,6 +192,10 @@ function cleanMemory(memory: Memory, fallbackDay: number): Memory | null {
 export function validateTown(value: unknown): value is Town {
   if (!value || typeof value !== "object") return false;
   const town = value as Town;
+  // Check books before legacy repairs: clamping cash or renaming a financial ID
+  // could otherwise conceal corruption or a write by an older runtime.
+  const hasEconomy = Object.hasOwn(town, "economy");
+  if (hasEconomy && economyProblem(town)) return false;
   if (town.version !== 1) return false;
   if (!Array.isArray(town.agents) || town.agents.length !== AGENT_IDS.length) return false;
   const ids = new Set(town.agents.map((a) => a?.id));
@@ -139,17 +210,24 @@ export function validateTown(value: unknown): value is Town {
   if (!kevin) return false;
   repairSeed(kevin);
   reframeSeed(town);
+  reframeResidents(town);
   if (!Array.isArray(town.notices)) town.notices = [];
   if (!Array.isArray(town.favors)) town.favors = [];
   if (!Array.isArray(town.scrub)) town.scrub = [];
   if (!town.tills || typeof town.tills !== "object") town.tills = { cafe: 0, grocery: 0 };
-  town.tills.cafe = purse(town.tills.cafe, 999);
-  town.tills.grocery = purse(town.tills.grocery, 999);
+  if (!hasEconomy) {
+    town.tills.cafe = purse(town.tills.cafe, 999);
+    town.tills.grocery = purse(town.tills.grocery, 999);
+  }
   town.colocation = town.colocation && typeof town.colocation === "object" ? town.colocation : {};
   town.retrievals = Array.isArray(town.retrievals) ? town.retrievals : [];
   town.paused = Boolean(town.paused);
   town.sawHint = Boolean(town.sawHint);
-  town.guide = town.sawHint ? 3 : Number.isFinite(town.guide) ? Math.max(0, Math.min(3, Math.floor(town.guide))) : 0;
+  town.guide = town.sawHint
+    ? 3
+    : Number.isFinite(town.guide)
+      ? Math.max(0, Math.min(3, Math.floor(town.guide)))
+      : 0;
   town.askedMindDay = Number.isFinite(town.askedMindDay) ? town.askedMindDay : 0;
   let maxId = 1;
   const bump = (id: unknown) => {
@@ -161,17 +239,22 @@ export function validateTown(value: unknown): value is Town {
     agent.tile = nearestWalkable(Number(agent.tile?.x), Number(agent.tile?.y));
     agent.home = nearestWalkable(Number(agent.home?.x), Number(agent.home?.y));
     if (!FACES.has(agent.face)) agent.face = "s";
-    agent.money = purse(agent.money);
-    agent.name = typeof agent.name === "string" && agent.name.trim() ? plain(agent.name, 18) : agent.id;
+    if (!hasEconomy) agent.money = purse(agent.money);
+    agent.name =
+      typeof agent.name === "string" && agent.name.trim() ? plain(agent.name, 18) : agent.id;
     if (agent.id === "player") agent.name = town.playerName;
     agent.identity = typeof agent.identity === "string" ? agent.identity.slice(0, 800) : "";
-    agent.selfSentence = typeof agent.selfSentence === "string" ? agent.selfSentence.slice(0, 220) : "";
+    agent.selfSentence =
+      typeof agent.selfSentence === "string" ? agent.selfSentence.slice(0, 220) : "";
     agent.want = typeof agent.want === "string" ? agent.want.slice(0, 280) : "";
     agent.status = typeof agent.status === "string" ? agent.status.slice(0, 140) : "between places";
     agent.role = typeof agent.role === "string" ? agent.role.slice(0, 40) : "Resident";
     agent.path = [];
-    agent.projects = Array.isArray(agent.projects) ? agent.projects.filter((p) => p && typeof p.text === "string") : [];
-    agent.relationships = agent.relationships && typeof agent.relationships === "object" ? agent.relationships : {};
+    agent.projects = Array.isArray(agent.projects)
+      ? agent.projects.filter((p) => p && typeof p.text === "string")
+      : [];
+    agent.relationships =
+      agent.relationships && typeof agent.relationships === "object" ? agent.relationships : {};
     for (const key of Object.keys(agent.relationships)) {
       if (!isAgentId(key)) {
         delete agent.relationships[key as AgentId];
@@ -187,7 +270,9 @@ export function validateTown(value: unknown): value is Town {
       rel.note = typeof rel.note === "string" ? rel.note.slice(0, 180) : "";
     }
     agent.lastTalk = agent.lastTalk && typeof agent.lastTalk === "object" ? agent.lastTalk : {};
-    agent.threads = Array.isArray(agent.threads) ? agent.threads.filter((t) => t && typeof t.text === "string") : [];
+    agent.threads = Array.isArray(agent.threads)
+      ? agent.threads.filter((t) => t && typeof t.text === "string")
+      : [];
     agent.memories = (Array.isArray(agent.memories) ? agent.memories : [])
       .map((m) => cleanMemory(m, town.day))
       .filter((m): m is Memory => Boolean(m));
@@ -208,27 +293,48 @@ export function validateTown(value: unknown): value is Town {
     for (const thread of agent.threads) bump(thread.id);
     for (const project of agent.projects) bump(project.id);
   }
-  town.notices = town.notices.filter((n) => n && isAgentId(n.author) && typeof n.text === "string" && n.text.trim());
+  town.notices = town.notices.filter(
+    (n) => n && isAgentId(n.author) && typeof n.text === "string" && n.text.trim(),
+  );
   if (town.notices.length > 48) {
     const keepSeed = town.notices.filter((n) => mentionsSeed(n.text));
-    const rest = town.notices.filter((n) => !mentionsSeed(n.text)).slice(-Math.max(0, 48 - keepSeed.length));
+    const rest = town.notices
+      .filter((n) => !mentionsSeed(n.text))
+      .slice(-Math.max(0, 48 - keepSeed.length));
     town.notices = [...rest, ...keepSeed].slice(-48);
   }
   town.favors = town.favors.filter(
-    (f) => f && isAgentId(f.from) && isAgentId(f.to) && f.from !== f.to && FAVOR_STATUS.has(f.status) && typeof f.text === "string",
+    (f) =>
+      f &&
+      isAgentId(f.from) &&
+      isAgentId(f.to) &&
+      f.from !== f.to &&
+      FAVOR_STATUS.has(f.status) &&
+      typeof f.text === "string",
   );
   for (const favor of town.favors) {
-    favor.amount = purse(favor.amount, 30);
+    if (!hasEconomy) favor.amount = purse(favor.amount, 30);
     bump(favor.id);
   }
-  town.scrub = town.scrub.filter((frame) => frame && Number.isFinite(frame.m) && Array.isArray(frame.p));
+  town.scrub = town.scrub.filter(
+    (frame) => frame && Number.isFinite(frame.m) && Array.isArray(frame.p),
+  );
   if (town.scrub.length > 10080) town.scrub.splice(0, town.scrub.length - 10080);
   town.retrievals = town.retrievals
     .filter((r) => r && isAgentId(r.agentId) && typeof r.question === "string")
     .slice(-36);
   for (const row of town.retrievals) bump(row.id);
   for (const note of town.notices) bump(note.id);
-  const seen = new Set<string>();
+  const financialIds = hasEconomy
+    ? [...town.favors.map((f) => f.id), ...town.agents.flatMap((a) => a.projects.map((p) => p.id))]
+    : [];
+  if (
+    hasEconomy &&
+    (financialIds.some((id) => typeof id !== "string" || !id) ||
+      new Set(financialIds).size !== financialIds.length)
+  )
+    return false;
+  const seen = new Set<string>(financialIds);
   const unique = (id: string | undefined, prefix: string) => {
     if (!id || seen.has(id)) {
       const next = `${prefix}${maxId++}`;
@@ -238,15 +344,69 @@ export function validateTown(value: unknown): value is Town {
     seen.add(id);
     return id;
   };
-  for (const favor of town.favors) favor.id = unique(favor.id, "f");
+  if (!hasEconomy) for (const favor of town.favors) favor.id = unique(favor.id, "f");
   for (const note of town.notices) note.id = unique(note.id, "n");
   for (const agent of town.agents) {
     for (const thread of agent.threads ?? []) thread.id = unique(thread.id, "th");
-    for (const project of agent.projects ?? []) project.id = unique(project.id, "p");
+    if (!hasEconomy)
+      for (const project of agent.projects ?? []) project.id = unique(project.id, "p");
     for (const memory of agent.memories ?? []) memory.id = unique(memory.id, "m");
   }
   town.nextId = Math.max(maxId, Number.isFinite(town.nextId) ? Math.floor(town.nextId) : 1);
-  return true;
+  return !hasEconomy || !economyProblem(town);
+}
+
+/** Never repairs financial data. A failed audit needs the original save for recovery. */
+function economyProblem(town: Town): string | null {
+  try {
+    const errors = auditEconomy(town);
+    if (errors.length)
+      return `The saved accounts cannot be reconciled: ${errors.join("; ")}. Keep the original backup for recovery.`;
+    if (town.agents.some((a) => !Number.isFinite(a.shiftHours) || a.shiftHours < 0 || typeof a.paidToday !== "boolean")) {
+      return "A saved work or payment record is invalid. Keep the original progress and payment flag for recovery.";
+    }
+    const favors = town.favors;
+    if (
+      !Array.isArray(favors) ||
+      favors.some(
+        (f) =>
+          !f ||
+          !isAgentId(f.from) ||
+          !isAgentId(f.to) ||
+          f.from === f.to ||
+          !FAVOR_STATUS.has(f.status) ||
+          typeof f.text !== "string" ||
+          !Number.isSafeInteger(f.amount) ||
+          f.amount < 0,
+      )
+    ) {
+      return "A saved debt is invalid. Keep the original backup; its creditor and amount have not been changed.";
+    }
+    if (
+      town.agents.some(
+        (a) =>
+          !Array.isArray(a.projects) ||
+          a.projects.some(
+            (p) => !p || typeof p.id !== "string" || !p.id || typeof p.text !== "string",
+          ),
+      )
+    ) {
+      return "A saved work or item record is invalid. Keep the original backup for recovery.";
+    }
+    const financialIds = [
+      ...favors.map((f) => f.id),
+      ...town.agents.flatMap((a) => a.projects.map((p) => p.id)),
+    ];
+    if (
+      financialIds.some((id) => typeof id !== "string" || !id) ||
+      new Set(financialIds).size !== financialIds.length
+    ) {
+      return "Saved debt or work IDs are missing or duplicated. Keep the original records for recovery.";
+    }
+    return null;
+  } catch {
+    return "The saved account extension is malformed. Keep the original backup for recovery.";
+  }
 }
 
 function serialize(town: Town, omitReplay = false): string {
@@ -270,7 +430,7 @@ export function loadTown(): Town | null {
 export type LoadReport =
   | { status: "missing" }
   | { status: "ready"; town: Town }
-  | { status: "unreadable"; raw: string }
+  | { status: "unreadable"; raw: string; reason?: string }
   | { status: "unavailable" };
 
 /** Distinguishes an empty browser from a save that must not be overwritten. */
@@ -291,7 +451,12 @@ export function readTownSave(): LoadReport {
   if (!raw) return { status: "missing" };
   try {
     const data = JSON.parse(raw) as { version?: number; town?: unknown };
-    if (!validateTown(data.town)) return { status: "unreadable", raw };
+    const reason =
+      data.town && typeof data.town === "object" && Object.hasOwn(data.town, "economy")
+        ? economyProblem(data.town as Town)
+        : null;
+    if (reason || !validateTown(data.town))
+      return { status: "unreadable", raw, ...(reason ? { reason } : {}) };
     return { status: "ready", town: data.town };
   } catch {
     return { status: "unreadable", raw };
@@ -300,6 +465,8 @@ export function readTownSave(): LoadReport {
 
 export function saveTownWithStatus(town: Town): SaveResult {
   const done = (result: SaveResult) => (lastSaveResult = result);
+  const explanation = Object.hasOwn(town, "economy") ? economyProblem(town) : null;
+  if (explanation) return done({ ok: false, reason: "serialization", explanation });
   const box = store();
   if (!box) return done({ ok: false, reason: "unavailable" });
   let raw: string;
@@ -341,14 +508,45 @@ export function exportTown(town: Town): string {
   return serialize(town, true);
 }
 
-export function parseTownFile(text: string): Town | null {
+export type TownFileReport =
+  { status: "ready"; town: Town } | { status: "unreadable"; raw: string; reason: string };
+
+/** Detailed additive import contract; callers can retain every byte of a failed import. */
+export function readTownFile(text: string): TownFileReport {
   try {
-    if (text.length > MAX_TOWN_FILE_BYTES || new TextEncoder().encode(text).byteLength > MAX_TOWN_FILE_BYTES) return null;
+    if (
+      text.length > MAX_TOWN_FILE_BYTES ||
+      new TextEncoder().encode(text).byteLength > MAX_TOWN_FILE_BYTES
+    )
+      return {
+        status: "unreadable",
+        raw: text,
+        reason: "The town file exceeds the 8 MiB import limit.",
+      };
     const data = JSON.parse(text) as { version?: number; town?: unknown };
     const town = data && typeof data === "object" && "town" in data ? data.town : data;
-    if (!validateTown(town)) return null;
-    return town;
+    const reason =
+      town && typeof town === "object" && Object.hasOwn(town, "economy")
+        ? economyProblem(town as Town)
+        : null;
+    if (reason || !validateTown(town))
+      return {
+        status: "unreadable",
+        raw: text,
+        reason: reason ?? "This file is not a valid version-1 town.",
+      };
+    return { status: "ready", town };
   } catch {
-    return null;
+    return {
+      status: "unreadable",
+      raw: text,
+      reason:
+        "This file cannot be read as a version-1 town. Keep the original backup for recovery.",
+    };
   }
+}
+
+export function parseTownFile(text: string): Town | null {
+  const report = readTownFile(text);
+  return report.status === "ready" ? report.town : null;
 }

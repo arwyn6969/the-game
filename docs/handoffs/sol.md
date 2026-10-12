@@ -1,84 +1,87 @@
-# Sol handoff
+# Sol handoff — S1 funded accounts and work contracts
 
-The later integration pass combines this branch with the completed player-experience branch, wires save feedback/import limits, and verifies the shared game. Current release evidence and publishing limitations are recorded in [docs/RELEASE.md](../RELEASE.md); the independent-lane record below remains historical evidence.
+Updated 12 October 2026. **S1 is implemented, awaiting review, integration and release.** The next packet is **S2 only — the three-record library project plus complete economy/UI activation**. No S2–S5 gameplay, merge to main or publication was performed.
 
-Implemented and locally validated on 11 October 2026. The setup branch remains unmerged, so the implementation targets `codex/agent-collaboration-setup`.
+## Source and isolation
 
-- Repository: `arwyn6969/the-game`; checkout `/workspace/the-game`; branch `codex/sol-foundation`.
-- Base SHA: `b8d6c97ebe5d88b2f97a56e5e5edc82287554ad1`.
-- Validated implementation head SHA: `47e8134749e5e7428a62b97ab553f05500506369`. Subsequent delivery commits change only this handoff; GitHub's branch head identifies the documentation revision.
-- Draft PR: [#3 — Make town saves, economy, and retrieval reliable](https://github.com/arwyn6969/the-game/pull/3), targeting `codex/agent-collaboration-setup`. GitHub API access now succeeds; the previous environment access blocker is resolved. Native HTTPS Git read and push also succeeded.
+- Repository: `https://github.com/arwyn6969/the-game.git`.
+- Checkout: `/Users/arwynhughes/Documents/ChatGPT/THE GAME/funded-accounts`.
+- Branch: `codex/funded-project-accounts`.
+- PR base: `codex/playability-review`, planning head `a8e9098c4d0be76e96138fc0db7f34b662661d01`; PR #5 was still open at the final source recheck.
+- Current main incorporated: `65d93a905f256abdcdddc21d7612e7d4b8b07d53`.
+- Own integration base: `0a2b51d0ddc56866810d8072fb2bf54a16eae05d`. It contains both planning and current main; the sole README conflict retained the current explicit-choice description.
+- Implementation head: `8e151503bfb0017c6c3d15630610189149ff5457`. Subsequent documentation commits record these results; the PR exposes its final head. Compare S1 code against the integration base to exclude already-merged main changes.
+- PR #11 merged before this checkout was created. Its visual files and the newer resident changes are preserved through the main merge. No other checkout or lane was reset, edited or force-pushed.
+- The historical reviewed main `900015b` and last documented published runtime `4e7786c` were not used to replace newer work. Hosted runtime source was not reverified in this engine packet.
 
-## Implemented outcomes
+## Changed behavior and stopping point
 
-1. The 17 inherited template failures now pass. PWA unit fixtures use an empty temporary workspace rather than inheriting THE GAME's share metadata; a separate integration assertion preserves the real title, game type and share card. App-env fixtures exercise auth-off configuration separately from the auth-on default and explicit overrides. Public brand-tool documentation replaces references to absent private skill files while retaining marker, expiry, background-task and atomic-write assertions. Required install-page CSS and the existing favicon rendered as a 180px PNG are committed; textual install instructions replace missing decorative images. Authentication, PWA routes and preview contracts remain enabled.
-2. Portable saves omit paths and replay frames from a copy, retaining memories, identity, debts, notices and names. Import accepts raw or wrapped v1 files up to 8 MiB measured in UTF-8. Quota handling retries only without replay and never prunes live or saved meaningful history. Failures are observable through additive APIs; original void callers still work.
-3. Settlement binds the referenced owed favor to its actual debtor and creditor for payment, forgiveness and breaking. Payments use the stored amount, require valid balances and sufficient funds, conserve money at the 999-coin cap, complete zero-money favors, and are idempotent once settled.
-4. Work credit is actual attended minutes divided by 60 in the existing `shiftHours` field. A planned out-of-home interval at the workplace plus a permanent job or an open shift project is required. Three hours earns 5 at the cafe or 4 at the grocery, once per day. Approved afternoon shifts can extend beyond ordinary shop hours. Empty/partial tills and full purses defer the complete wage without marking it paid; credit and paid status reset at midnight. Existing v1 integer work counters continue to load without a schema migration.
-5. Offline bread requests open one tab, inspection reports it, and explicit payment settles it once when funds and purse capacity permit. Repayment/inspection take precedence over bread keywords. Unknown and hostile text has zero trust delta. A vague introduction no longer invents a Northern/Kevin commitment.
-6. Online selection includes the current player question and uses only the queried resident's memory stream. One shared selector builds both prompt memories and diagnostics, including forced protected memories, identical clipped text, order and packet seed position. Different questions in one minute produce distinct diagnostics.
+The optional `Town.economy` version-1 extension records immutable opening snapshots, project custody, append-only transactions, holds and releases, issued quotes, command receipts, funded work, payroll approvals and future project/event state. `agent:<id>` addresses the actual resident purse; `till:cafe` and `till:grocery` address existing tills. There is no second mutable copy of their cash.
 
-## Changed files
+Commands clone the whole town, validate authority/actor/terms/revision/expiry/current eligibility, apply all effects on the draft and commit only after reconciliation. Stable command IDs replay their original receipts; different terms or actors with the same ID fail. Trusted contexts cannot be reused outside a command. Player commands cannot debit somebody else without recorded payer approval. Models cannot authorize spending, commitments or evidence. Failed commands leave money, items, holds, work and receipts unchanged. Old openings, transfers, receipts, approvals and evidence cannot be rewritten by a command; an authorized correction appends a reversal. Earned fees cannot be clawed back through the reversal helper.
 
-- Engine: `src/game/save.ts`, `effects.ts`, `sim.ts`, `offline.ts`, `prompt.ts`, new `retrieval.ts`, and `text.ts`.
-- Tests/diagnostics: `scripts/town-day.test.mjs`, new `town-regressions.test.mjs`, `diagnose-town.mjs`, `brand-check.test.mjs`, `check-auth-invariant.test.mjs`, `grok-pwa-plugin.test.mjs`, `with-app-env.test.mjs`, and `write-atomic.test.mjs`.
-- Tooling/platform: `package.json`, `.github/workflows/verify.yml`, `scripts/install-page.html`, `public/__grok/icon-180.png`, `public/__grok/install/styles.css`, `docs/BRAND_ASSETS.md`, and this handoff.
-- Narrow lint repair: `src/lib/app-data/client.server.ts` documents the existing malformed-token hash fallback in its empty catch; no authentication logic changed. `text.ts` preserves control-character sanitization without the prohibited regex.
+A bounded project check has an issuer-approved offer, a full 2-coin hold, trusted observations and a worker report. Completing the required evidence and report earns the fee for success, failure or uncertainty. Cancellation and closure recognize already-completed reports before releasing anything. Incomplete check units receive no fee; their evidence remains recorded. Interruption suspends progress with the hold intact. A full recipient purse preserves the earned payable and reserved cash until settlement succeeds.
 
-No Grok-owned game UI, renderer, styles or game assets were edited. No completed Grok diff was integrated. The frozen `Town` schema and all existing exported engine signatures are preserved. The separate legacy Python checkout `/workspace/THE_GAME` remains unchanged.
+Payroll classification preserves dated aggregate hours, the payment flag, projects, old terms and the plan as labelled evidence. Already-paid work creates no new pay. Valid sole-employer completed unpaid work becomes a protected full-wage payable when funds exist. Valid active unworked agreements reserve the disclosed full wage. Partial/mixed/uncertain records remain unresolved and visible; unresolved or underfunded prior claims block donor funding. Recognition and replacement need a recorded employer approval plus the worker’s acceptance, cannot invent minutes, and never prorate coins. A protected unworked agreement can be replaced atomically without reserving its wage twice. The new café adapter tracks its own employer-bound 180 eligible minutes for 5; cancellation of accrued attendance suspends progress and retains the full hold.
 
-## Validation
+Two distinct donor approvals fund project custody with 4 café + 4 grocery coins after payroll protection. Closure settles earned work first, cancels only incomplete units and refunds all remaining unencumbered custody equally. An unpaid liability blocks closure. Money movement, work performed and the reported result remain separate records.
 
-Node `24.19.0`, npm `11.9.0`, committed lockfile; no production database or model credentials used. A repeated clean installation and final checks passed after the implementation stabilized.
+**Ordinary play does not call the new initialization boundary or work helpers.** It retains the released wage/debt/time behavior and current player terms. S2 must switch every old mutation path and matching UI together. The standalone funded day hook preserves cash, progress, liabilities and legacy evidence; it is a bookkeeping boundary, not a replacement for movement, schedules or ordinary time simulation.
 
-| Command | Actual result |
-| --- | --- |
-| `npm ci --no-audit --no-fund --cache /workspace/.cache/npm` | Passed, 428 packages; lockfile unchanged |
-| `npm run typecheck` | Passed |
-| `npm run lint` | Passed, zero errors; one inherited unused-disable warning at `src/lib/auth/use-current-user.ts:59` |
-| `npm run test:town` | 34 passed: existing town-day module plus 33 targeted regressions; zero failures/skips |
-| `npm test` | 232 script tests and 55 app/auth tests passed; zero failures/skips |
-| `npm run diagnose:town` | Scenarios completed; their repaired behaviors are separately asserted by the regression suite |
-| `env -u DATABASE_URL -u XAI_API_KEY npm run build` | Passed; migration explicitly skipped; inherited dependency/bundler warnings remain |
-| `git diff --check` | Passed |
+## Invariant evidence
 
-CI repeats install, typecheck, lint, game/full tests, diagnostics and a build on Node 24 with empty database/provider variables and read-only repository permissions. GitHub's `verify` job passed on PR #3 at head `7d20d638f7303cf2ff1db938f55c31e5552d5dee`; the following documentation update records that result.
+The 36 new outcome tests prove:
 
-Browser checks used system Chromium through Playwright against `npm run dev` on port 8080, with synthetic QA towns and the runtime provider key unset. At 1280×800 and 390×844, keyboard/touch movement, pause and resume controls, offline conversation entry and tab inspection, download, file import/replacement and reload all passed without page errors. Resident panels were opened through the existing QA helper; selecting residents on the canvas was not tested. The PWA tutorial passed desktop, mobile iOS 18 and iOS 27 cases, keyboard link focus, responsive overflow, asset/manifest requests and reload. Screenshots and browser harnesses are retained under ignored `artifacts/` in this task; synthetic downloaded towns are not committed. These are browser emulation checks, not physical-device or live-provider tests.
+- Fresh opening money is 77; migration, holds, 4+4 funding, fees and refunds conserve it. Imports retain their own unequal valid totals, including above legacy till/purse caps.
+- Accounts reconcile individually and in total; unrecorded balanced transfers and old-runtime midnight edits fail the audit. Holds cannot compete for the same available funds or consume prior payroll.
+- A café till with 4 and an unresolved 5-coin wage cannot donate. Both contributions fail atomically if either donor is ineligible or short of funds.
+- Duplicate, stale, altered, expired, disabled, wrong-person, model-authorized and insufficient-fund requests fail or replay safely. Forced failures after an initial debit roll back the complete town. Forged contexts, unapproved source spending and history rewrites fail.
+- Legacy Baba tabs pay Baba’s personal purse exactly. An authorized reversal appends history, restores that same creditor’s debt and cannot reverse twice or claw back earned wages.
+- Completed successful, failed and uncertain checks earn their fee once. Incomplete evidence/report cannot earn it. Cancellation/closure cannot erase a completed fee.
+- Full-purse payables survive interruption/cancellation, day changes, memory compression, reload and later settlement. Closure never refunds earned liabilities.
+- Legacy paid, partial, completed unpaid, mixed-employer and protected unworked cases remain distinct. Recognition does not invent progress; replacement preserves the old records and avoids duplicate reservations. The café contract pays only after 180 physically attended, planned employer-bound minutes.
+- Repeated initialization/import is idempotent. Completing a valid core-only snapshot adds payroll protection without a second opening. Invalid legacy work/payment fields and malformed/contradictory extensions fail without changing the input; failed imports retain every original byte. Bad saves cannot overwrite a recoverable stored town.
 
-## Save compatibility evidence and additive APIs
+## Migration, compatibility and recovery
 
-Regression assertions compare complete normalized day-5/day-30 towns against imported exports; only replay and disposable paths differ. Older raw and pretty wrapped v1 files also round trip, including retained replay. An older fixture missing optional arrays/counters repairs them while retaining its name, identity, meaningful memory, notice and debt. Boundary tests accept exactly 8 MiB, reject one extra byte, and reject multi-byte text that is below the character count but above the byte limit. Storage-failure tests compare the entire live town before and after both failed writes and a replay-only retry.
+`initializeFundedEconomy(town)` is the single explicit funded boundary. It validates original balances/work/payment fields, works on a clone, records migration openings without income and classifies/protects payroll. A present valid core-only snapshot gets payroll classification atomically; a complete extension is validated without being rebuilt. `importFundedTown(text)` provides opt-in raw/wrapped-v1 import with complete raw recovery data. Neither is connected to ordinary play in S1.
 
-The day-30 diagnostic export is about 637 KB in UTF-8, below the current UI's 1.5 MB file gate; it imports successfully. Northern earns 29 cafe wages by day 30 in ordinary deterministic play. The planted violin fact appears first in the actual prompt and diagnostic. The historical baseline snapshot remains unchanged.
+Existing save/action signatures remain available. `readTownFile(text)` is an additive detailed import result; `parseTownFile` keeps returning a town or null. Present books are checked before legacy normalization can clamp money or rename debt/work IDs, and checked again afterward. `readTownSave` preserves the raw stored text on failure with an account explanation; `saveTownWithStatus` rejects inconsistent books with a serialization failure and explanation. Export still permits a raw recovery backup. Names, memories, debts, creditors, projects, pause and valid recorded work survive valid migration; only existing disposable path/replay and non-financial normalization rules apply.
 
-`src/game/save.ts` exports:
+An older runtime that retains books but changes cash is detected by per-account reconstruction and hold history. A runtime that strips the extension altogether destroys evidence that S1 cannot recover. No downgrade round trip or reconstruction of lost earnings/obligations is promised. Keep the funded backup; do not present a stripped file as a verified ledger continuation.
 
-```ts
-saveTown(town: Town): void; // existing contract, still non-throwing
-saveTownWithStatus(town: Town): SaveResult;
-getLastSaveResult(): SaveResult | null;
-MAX_TOWN_FILE_BYTES; // 8 * 1024 * 1024
-// SaveResult:
-// { ok: true, bytes: number, replayOmitted: boolean }
-// | { ok: false, reason: "unavailable" | "serialization" | "quota" | "storage" }
-```
+## Commands and actual results
 
-`promptMemories(town, agent, job)` in `src/game/retrieval.ts` is additive. `prepareRetrievals` and `buildPrompt` retain their signatures and record the shared prospective prompt packet once when unchanged. `logRetrieval` retains its original standalone ranking contract; logs prepared for a prompt instead describe the selected packet. No default player UI needs technical retrieval data.
+Bundled Node **24.19.0**, npm **10.9.2**, committed lockfile; `npm ci` installed 425 packages and reported zero vulnerabilities. No database/provider credentials or paid requests were used.
 
-## Integration requests for Grok
+| Command                                            | Result                                                                                                                              |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run typecheck`                                | Passed                                                                                                                              |
+| `npm run lint`                                     | Passed; one inherited unused-disable warning in `src/lib/auth/use-current-user.ts:59`; no new warnings                              |
+| `npm run test:town`                                | **101 passed**, zero failures/skips: 65 existing town tests + 36 S1 tests                                                           |
+| `npm test`                                         | **354 passed**, zero failures/skips: 299 script tests + 55 app/auth tests                                                           |
+| `npm run diagnose:town`                            | Exit 0; no world-audit issues; six longevity snapshots imported their exports; day-30 export 819,477 UTF-8 bytes, 29 Northern wages |
+| `env -u DATABASE_URL -u XAI_API_KEY npm run build` | Passed; database migration explicitly skipped; existing dependency/bundler warnings retained                                        |
+| `git diff --check`                                 | Passed                                                                                                                              |
 
-- Show persistent unsaved feedback after `saveTownWithStatus` fails, or read `getLastSaveResult()` after existing void saves. Keep the live town playable and offer download. Acceptance: injected quota failure leaves every memory/debt unchanged and visibly reports unsaved state; successful recovery clears the failure. This UI wiring remains outstanding in Grok's lane.
-- Replace `TownApp.tsx`'s literal `file.size > 1_500_000` with `MAX_TOWN_FILE_BYTES` so older large replay-bearing v1 files can reach the compatible parser. Acceptance: an older 1.6–3.6 MB v1 file loads, while files over the shared UTF-8 limit are rejected. The current import preview also reads a raw top-level day, so wrapped saves show `?`; unwrap for that preview if changing it.
-- A player earns a shift only after an explicit shift project plus matching plan interval and attendance; visiting a counter or changing a status string does not qualify. Keep the promised wage and actual attendance visible through in-world feedback.
-- Keep resident-private wants, hidden threads and technical diagnostics out of default player panels. Existing UI exposure belongs to Grok's pending work; backend prompt retrieval does not pool private knowledge across residents.
+The released 317/64 baseline counts are historical: newer main includes the additional resident regression. Diagnostic observations concern the still-unactivated legacy runtime and do not establish fairness. Raw local command output is under `/private/tmp/s1-final-{town,full,build}.log` and `/private/tmp/s1-diagnose.log`; these machine-local logs are not committed or durable release artifacts.
 
-## Mind gateway review and remaining limits
+## Additive S2 query/action contract
 
-`src/lib/mind.functions.ts` retains the existing Grok provider and hosting. Its process-local rolling limit is 12 logical calls per minute shared across all players; it neither identifies a player nor coordinates quotas across instances. One active player can exhaust another's budget, while multiple instances can multiply the limit. Provider retry calls are not separately counted.
+- `accountSummary(town, account)` returns a cloned opening/balance/available/holds/transactions projection. `availableFunds` and `accountBalance` address actual balances.
+- `projectFundingSummary(town, id)` returns custody balance, available budget, holds, paid expenditure, earned payables, donor approvals and blockers. `payrollFundingReasons` explains ineligible donors.
+- `fundedWorkSummary(town, worker)` returns cloned offers, terms, agreements, progress, evidence, holds, completion receipts, payables, legacy claims, employer approvals and funding reasons. Filter to the relevant worker; expose public project totals without revealing unrelated private records.
+- Use `createEconomyQuote` for issuer-supplied terms and an eligibility key; `assertQuoteEligibility` checks freshly computed eligibility in the trusted adapter. Commands also support an expected revision. Do not read authorization from model prose.
+- Work entry points are `createWorkOffer`, `acceptWorkOffer`, `recordWorkEvidence`, `submitWorkReport`, `completeWorkUnit`, `suspendWorkAgreement`, `cancelWorkAgreement` and `settleWorkPayable`. Only trusted interactions can record evidence or complete a unit; report outcome does not determine whether honest completed work is paid.
+- Payroll uses `approvePayrollAgreement`, `recogniseLegacyClaim`, `createFundedCafeAgreement` and `recordCafeAttendance`. `protectPayroll` classifies/reserves before grants. Funding uses `approveLibraryContribution`, `fundLibraryProject` and `closeFundedProject`.
+- Commands return `{ok:true,replayed,value,receipt}` or `{ok:false,code,reason}`. Receipts contain stable IDs, actor/authority, time, revision and effected transaction/hold/release IDs. Build player memories and journal entries from these receipts; translate engine reasons into ordinary player copy.
 
-A non-401/403/429 HTTP failure triggers a second request without JSON mode, including server failures, with no idempotency key or backoff. Each request allows 25 seconds, so the pair can outlive the UI's 45-second timeout; the UI does not cancel underlying provider work. Availability reports only key presence, not provider health. No paid calls, live quota test or retry fault injection was performed.
+The [complete mutation adapter audit](../implementation/s1-economy-integration.md) identifies every existing purse/till mutation and the exact activation handoff. It covers seeds, import normalization, personal debt settlement, item/shift actions, wages, missing-till repairs and midnight reset/top-ups/caps.
 
-`TownApp.tsx` checks that a result belongs to the same town object, which protects imports that replace it, but has no clock/job epoch check for that object's changing memories, position and schedule. The clock can continue during pending mind work. A delayed plan/transaction proposal can therefore apply to changed state; offline fallback and an uncancelled timed-out server request can overlap. Integration should use a request generation and explicit relevance rules for job day/minute, plus cancellation where possible. These risks are documented for a separate gateway/orchestration pass; this milestone validates monetary proposals centrally and does not claim to resolve per-player budget or stale-result handling.
+## Remaining limitations and exact next packet
 
-No release, merge, production migration, hosting change or Grok publication was performed.
+S1 is a helper foundation. The current live economy still has unexplained midnight funding/caps and old shift-erasure terms; the ledger must not be enabled under those paths. The café adapter is bounded; there is no new general grocery attendance system, recurring-job scheduler, automatic partial settlement or fractional wage scale. Grocery/other ambiguous progress remains preserved pending explicitly funded recognition and the assigned integration; no lost historic wage is invented. Authored task-oracle IDs and Northern’s independent-worker rule belong to S2, not generic S1 evidence strings.
+
+There was no new browser journey, physical phone test, real-provider call, hosted import/recovery test, deployment verification or player retention/fairness study. S1 does not provide cross-device storage, library UI, shared meals, extra residents, broader banking, provider changes or visual redesign.
+
+**Next: S2 — Three records, one funded project.** Name one integration owner, recheck planning/main/visual heads, and retarget this implementation PR after PR #5 merges. Activate the full ledger/wage/debt/midnight adapters and matching player terms together, then build the specified offline ordinary-control project discovery, observations/reports, common index, routed independent lookup, funded correction and closure journeys. Test desktop 1280×800 and phone 390×844, imports/recovery and reload on that integrated candidate. S3–S5 and publication require their own assignments.
