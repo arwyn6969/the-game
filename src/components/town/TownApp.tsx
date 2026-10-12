@@ -1322,6 +1322,7 @@ export function TownApp() {
             busy={thinking !== "" || replay !== null}
             inspect={inspect}
             sendNote={sendNote}
+            localDialogue={checked && localReplies}
             onInspect={setInspect}
             onClose={() => {
               setPinned(false);
@@ -1606,6 +1607,7 @@ function Mind({
   busy,
   inspect,
   sendNote,
+  localDialogue,
   onInspect,
   onClose,
   onPin,
@@ -1620,6 +1622,7 @@ function Mind({
   busy: boolean;
   inspect: boolean;
   sendNote: string;
+  localDialogue: boolean;
   onInspect: (value: boolean) => void;
   onClose: () => void;
   onPin: () => void;
@@ -1827,6 +1830,11 @@ function Mind({
                 ))}
               </ul>
             </details>
+          )}
+          {localDialogue && (
+            <p className="mb-2 text-xs text-muted" role="note">
+              Local dialogue is active. Open-ended conversation needs a live AI connection.
+            </p>
           )}
           <label className="text-sm text-muted" htmlFor="mind-line">
             Your line to {agent.name}
