@@ -1,3 +1,38 @@
+# Graphics release — 12 October 2026
+
+The town graphics are live at https://thegame.grok.me. The user authorized the release and sending the import/publication instruction to the existing Grok Build chat. Codex used that project's **Re-Publish** control, observed **Published / Live**, and independently reloaded the public site to verify the new artwork and asset versions. The existing hosting project and access setting were preserved.
+
+## Source and validation
+
+- [PR #15](https://github.com/arwyn6969/the-game/pull/15) merged to `main` as `6de583c6373d0fc0395132ea742ec0745787c799`.
+- Release tree: `8e32159bc05ea59d952e139a0aaf09bccef08a5c`, identical to the tested graphics branch at `70ff38f1db170631ee8c0ad073158de321f9c36e`.
+- [PR CI](https://github.com/arwyn6969/the-game/actions/runs/38266203155) and [merged-main CI](https://github.com/arwyn6969/the-game/actions/runs/38267369548) passed.
+- Local Node 24.19.0 checks passed: clean locked install, typecheck, lint with one inherited warning, 65 town regressions, 263 script tests plus 55 app/auth tests, diagnostics, production build and the portable desktop/phone graphics checks. See [the graphics record](design/town-graphics.md).
+- Grok reported importing that exact SHA/tree, preserving its new neon `public/og.jpg` and `public/x-banner.jpg`, install assets/page, startup, private workspace configuration and existing auth/PWA/preview contracts. Those platform/share-image differences mean the complete builder directory is not asserted to be byte-identical to the Git tree.
+- Grok reported passing typecheck, lint (one existing warning), 65 town tests, production build and desktop/phone save, interaction and renderer checks. Validation used no database URL and made no model call. Source preservation archives stayed outside Git.
+
+## Hosted evidence
+
+The public DOM after publication references:
+
+- `/assets/styles-DBNjT0WP.css`
+- `/assets/index-s7xxS05I.js`
+- `/assets/routes-BqltyZ2C.js`
+
+These match Grok's validated build report. The builder had reported the earlier public route as `routes-F9dsbGkd.js`. Independent screenshots show the neon interface, warm café planks/rug, detailed furniture/residents, readable name labels and new square art. Hosted layouts at **1280×800** and **390×844** had no horizontal overflow; phone movement controls stayed visible. Viewport overrides were reset afterward.
+
+An existing browser town reloaded with the same identity, day/time, wallet, cast, favours and notices, with Pause selected. Before/after downloads retained all original memory texts. An already-queued background mind job completed during this window, adding chats and moving residents; the snapshots are therefore not claimed to be byte-identical. Seed/protected flags were repaired by the existing save validator. No live dialogue was submitted for this smoke check.
+
+Private town backups and screenshots are under ignored `artifacts/graphics-release/`; they are not committed. `published-status.png`, `live-desktop.png` and `live-mobile.png` record the publication and hosted layouts. The public game remains open and paused in the in-app browser. Hosted old-save import/recovery, full gameplay transactions, physical phone keyboards and provider response quality were not independently exercised in this release smoke check.
+
+## Recovery
+
+The previous GitHub main was `65d93a905f256abdcdddc21d7612e7d4b8b07d53`. The builder file view showed `source-before-6de583c.tar.gz` and a preservation manifest after the import. They are private builder-source recovery artifacts, not an immutable identifier for the former deployment. No immutable deployment ID was supplied; publication is corroborated by the UI status, new public assets and visible artwork. Use a new revert commit and the existing project's publishing workflow if recovery is required, preserving browser towns and platform assets.
+
+The earlier trust-repair release record below is historical; its source and bundle identifiers describe that release.
+
+---
+
 # Trust repair release — 12 October 2026
 
 The tested game was published to the existing https://thegame.grok.me project through Grok's **Re-Publish** control at approximately **12:11 UTC on 12 October 2026**. Grok reported **Published / Live**, and live browser checks confirmed the new assets and explicit shift controls. The user chose to publish this release first and build the fair library/community project afterward.

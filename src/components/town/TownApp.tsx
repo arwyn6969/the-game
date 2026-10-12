@@ -605,6 +605,7 @@ export function TownApp() {
               camX: cam.camX,
               camY: cam.camY,
               positions,
+              replay: replayRef.current !== null,
               selected: null,
               names: Object.fromEntries(live.agents.map((a) => [a.id, a.name])) as Record<
                 AgentId,
