@@ -10,8 +10,11 @@ import { placeTitle, zoneAt } from "./world";
 function packet(town: Town, agent: Agent, job: ThinkJob) {
   const threads = Array.isArray(agent.threads) ? agent.threads : [];
   const memories = promptMemories(town, agent, job);
-  const owed = (town.favors ?? []).find((f) => f.status === "owed" && (f.from === agent.id || f.to === agent.id));
-  const relationships = agent.relationships && typeof agent.relationships === "object" ? agent.relationships : {};
+  const owed = (town.favors ?? []).find(
+    (f) => f.status === "owed" && (f.from === agent.id || f.to === agent.id),
+  );
+  const relationships =
+    agent.relationships && typeof agent.relationships === "object" ? agent.relationships : {};
   return {
     id: agent.id,
     name: agent.name,
@@ -53,8 +56,7 @@ function packet(town: Town, agent: Agent, job: ThinkJob) {
 
 export function buildPrompt(town: Town, job: ThinkJob): string {
   const clock = `Day ${town.day}, ${formatClock(town.minute)}, ${periodName(town.minute)}.`;
-  const places =
-    "cafe, library, dorms, park, townhouses, grocery, noticeboard, plaza, street";
+  const places = "cafe, library, dorms, park, townhouses, grocery, noticeboard, plaza, street";
   if (job.kind === "plan") {
     const people = NPC_IDS.map((id) => packet(town, agentById(town, id), job));
     return `${clock} Write the dawn plan for every resident except the player. Places must be one of: ${places}. Spot is "home" or "out". Cover 0–24 with blocks, no gaps. Status lines are what a neighbor would see — Kevin does not announce who he is in a status, and where he came from is that question, not a place. He may revise his private want. ${
@@ -82,6 +84,7 @@ B: ${JSON.stringify(b)}`;
   const body = packet(town, agent, job);
   const said = plain(job.text, 400);
   return `${clock} The player, ${plain(town.playerName, 18)}, says to ${agent.name}: "${said}". Reply in character, one or two sentences. You may use a retrieved memory and an open thread (${openThreadText(agent)}). You may ask them for time, money, an introduction, or — if you are stuck repeating yourself — for a mind to be switched on. You cannot obtain anything outside this town. You may start or drop one project of your own. JSON: {"reply":"","delta":0,"note":"","favor":null,"thread":null,"notice":null,"project":null}
+Speech cannot buy, pay, accept or cancel work, or edit the player's projects, threads or schedule. Those require the player's separate quoted action button. Keep favor null and never claim an action completed because of text alone.
 Resident: ${JSON.stringify(body)}
 Current beat: ${beatAt(agent, town.minute).status}`;
 }
@@ -109,7 +112,17 @@ function asAgent(value: unknown): import("./types").AgentId | null {
 function asPlace(value: unknown): import("./types").PlaceId | undefined {
   if (typeof value !== "string") return undefined;
   const place = value.trim().toLowerCase();
-  return ["cafe", "library", "dorms", "park", "townhouses", "grocery", "noticeboard", "plaza", "street"].includes(place)
+  return [
+    "cafe",
+    "library",
+    "dorms",
+    "park",
+    "townhouses",
+    "grocery",
+    "noticeboard",
+    "plaza",
+    "street",
+  ].includes(place)
     ? (place as import("./types").PlaceId)
     : undefined;
 }
@@ -140,8 +153,10 @@ export function parseMind(job: ThinkJob, text: string): MindResult | null {
             return {
               from: Number(block.from ?? 0),
               to: Number(block.to ?? 0),
-              place: String(block.place ?? "street").trim().toLowerCase(),
-              spot: block.spot === "home" ? "home" as const : "out" as const,
+              place: String(block.place ?? "street")
+                .trim()
+                .toLowerCase(),
+              spot: block.spot === "home" ? ("home" as const) : ("out" as const),
               status: String(block.status ?? "around the town"),
             };
           }),
@@ -153,7 +168,12 @@ export function parseMind(job: ThinkJob, text: string): MindResult | null {
       })
       .filter((p) => p && NPC_IDS.includes(p.id as (typeof NPC_IDS)[number]));
     if (!mapped.length) return null;
-    return { kind: "plan", mind: "grok", weekly: job.weekly, plans: mapped as MindResult & { kind: "plan" } extends { plans: infer P } ? P : never };
+    return {
+      kind: "plan",
+      mind: "grok",
+      weekly: job.weekly,
+      plans: mapped as MindResult & { kind: "plan" } extends { plans: infer P } ? P : never,
+    };
   }
   if (job.kind === "reflect") {
     const agents = Array.isArray(data.agents) ? data.agents : [];

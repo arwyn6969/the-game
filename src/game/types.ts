@@ -274,4 +274,5 @@ export type MindResult =
       thread?: ThreadEdit | null;
       notice?: { author: AgentId; text: string } | null;
       project?: ProjectEdit | null;
+      replan?: { id: AgentId; blocks: Block[] }[];
     };
