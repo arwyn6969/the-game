@@ -1199,3 +1199,27 @@ test("another resident's private seed is never retrieved without a witnessed cop
   const witnessed = packetFor(town, "baba", question);
   assert.ok(witnessed.memories.some((m) => m.text.includes("Kevin told me")));
 });
+
+test("Kevin, Arwyn, Northern, Baba and Sub are written as men, including an older save", () => {
+  const town = createTown("Ada");
+  for (const person of town.agents) {
+    if (person.id === "player") continue;
+    assert.doesNotMatch(`${person.identity} ${person.status}`, /\b(she|her|hers)\b/i);
+  }
+  const raw = JSON.parse(save.exportTown(town));
+  const arwyn = raw.town.agents.find((a) => a.id === "arwyn");
+  arwyn.identity =
+    "Arwyn lives in the back room of the library, among boxes nobody has catalogued since the college shrank. She is a researcher by temperament more than by paycheck: margins, dates, the way a person tells a story twice and changes one fact. She dresses like the stacks, grey-green and unfussy, and she listens longer than is comfortable. Origins are her private weather. She believes a town is a set of documents that learned to walk.";
+  arwyn.selfSentence = "Right now I am still the one who reads a life before she interrupts it.";
+  arwyn.plan.beats.find((b) => b.place === "cafe").status = "at the cafe, listening more than she drinks";
+  arwyn.relationships.kevin = {
+    score: 1,
+    note: "She listened when I said I do not know who I am, and she did not turn it into a place.",
+  };
+  const kept = save.parseTownFile(JSON.stringify(raw));
+  const repaired = agent(kept, "arwyn");
+  assert.match(repaired.identity, /He is a researcher/);
+  assert.match(repaired.selfSentence, /before I interrupt it/);
+  assert.match(repaired.plan.beats.find((b) => b.place === "cafe").status, /he drinks/);
+  assert.match(repaired.relationships.kevin.note, /^He listened/);
+});
