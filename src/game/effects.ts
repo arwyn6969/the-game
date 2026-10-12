@@ -20,6 +20,7 @@ import { clip, mentionsSeed, purse } from "./text";
 import { formatClock } from "./text";
 import { placeTitle, zoneAt } from "./world";
 import { groundPlayerReply, groundSharedLine } from "./conversation";
+import { captureSocial, recordSocial } from "./social";
 
 const KINDS = new Set<ProjectKind>([
   "shift",
@@ -293,6 +294,7 @@ export function applyResult(
   if (!Number.isFinite(town.minute)) town.minute = 0;
   if (!Number.isFinite(town.day) || town.day < 1) town.day = 1;
   if (!Number.isFinite(town.nextId)) town.nextId = 1;
+  const socialBefore = captureSocial(town);
   try {
     const until = (town.day - 1) * 1440 + town.minute + 20;
     if (result.kind === "plan") {
@@ -460,6 +462,8 @@ export function applyResult(
     }
   } catch {
     /* A partial hour is kept. The clock still moves. */
+  } finally {
+    safely(() => recordSocial(town, result, socialBefore));
   }
 }
 

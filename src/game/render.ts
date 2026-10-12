@@ -1,7 +1,7 @@
 import type { AgentId, Town } from "./types";
 import { AGENT_IDS } from "./types";
 import { absMinute } from "./memory";
-import { periodName } from "./text";
+import { mentionsSeed, periodName } from "./text";
 import { ANCHORS, MAP_H, MAP_W, TILE, zoneAt } from "./world";
 import {
   floorArt,
@@ -328,6 +328,16 @@ function drawPerson(
   g.restore();
 }
 
+/** Card portraits retain the current town sprite's appearance and silhouette. */
+export function paintPortrait(ctx: CanvasRenderingContext2D, id: AgentId) {
+  ctx.clearRect(0, 0, 72, 88);
+  ctx.imageSmoothingEnabled = false;
+  ctx.save();
+  ctx.scale(1.7, 1.7);
+  drawPerson(ctx, id, 21, 46, "s", 0, 0, null);
+  ctx.restore();
+}
+
 export type PaintOpts = {
   viewW: number;
   viewH: number;
@@ -493,7 +503,8 @@ function drawLabels(g: CanvasRenderingContext2D, opts: PaintOpts) {
       !showingNow ||
       !agent?.bubble ||
       typeof agent.bubble.text !== "string" ||
-      agent.bubble.until < now
+      agent.bubble.until < now ||
+      mentionsSeed(agent.bubble.text)
     )
       continue;
     const text = agent.bubble.text;

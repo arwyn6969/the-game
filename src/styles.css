@@ -1079,3 +1079,459 @@ textarea.field {
     transition: none !important;
   }
 }
+
+/* Resident cards and the town's social life. */
+.town [hidden] {
+  display: none !important;
+}
+.social-toolbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 1.5rem;
+  background: #180d27;
+  border-bottom: 1px solid var(--color-line);
+}
+.resident-strip {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: 0.35rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding: 0.15rem 0;
+}
+.resident-chip {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  padding: 0.15rem 0.6rem 0.15rem 0.2rem;
+  background: #25163b;
+  border: 1px solid #513868;
+  color: var(--color-fg);
+  font-size: 0.75rem;
+}
+.resident-chip[aria-pressed="true"] {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: #33214b;
+}
+.resident-chip .resident-portrait {
+  width: 27px;
+  height: 33px;
+}
+.resident-portrait {
+  width: 58px;
+  height: 71px;
+  flex: none;
+  image-rendering: pixelated;
+  background: #352148;
+}
+.town-life-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  min-height: 44px;
+  font-size: 0.75rem;
+  flex: none;
+}
+.town-life-toggle span {
+  font-size: 0.65rem;
+  color: var(--color-muted);
+}
+.return-to-player {
+  font-size: 0.7rem;
+  max-width: 12rem;
+}
+.character-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.character-heading > div {
+  min-width: 0;
+}
+.character-heading .text-xs {
+  font-size: 0.65rem;
+}
+.character-heading h2 {
+  margin-top: 0.2rem;
+}
+.character-tabs {
+  display: flex;
+  flex: none;
+  padding: 0 0.75rem;
+  background: #25163b;
+  border-bottom: 1px solid var(--color-line);
+}
+.character-tabs button {
+  flex: 1;
+  min-height: 44px;
+  padding: 0.5rem 0.2rem;
+  border-bottom: 2px solid transparent;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+}
+.character-tabs button[aria-selected="true"] {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.character-overview h3,
+.social-exchange h3 {
+  margin: 1rem 0 0.55rem;
+  color: var(--color-purple);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.character-overview h3:first-child {
+  margin-top: 0.2rem;
+}
+.character-overview p,
+.character-overview li {
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+.character-overview ul {
+  margin: 0.5rem 0;
+  padding-left: 1rem;
+}
+.character-activity {
+  margin-bottom: 1.2rem;
+}
+.expertise-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.expertise-tags span {
+  padding: 0.35rem 0.6rem;
+  background: #342149;
+  font-size: 0.75rem;
+  border-radius: 3px;
+}
+.character-note {
+  color: var(--color-muted);
+  font-size: 0.75rem !important;
+  line-height: 1.6;
+  margin: 0.6rem 0;
+}
+.rapport {
+  display: grid;
+  grid-template-columns: 8rem 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+.rapport-dial {
+  width: 8rem;
+  height: 5rem;
+}
+.rapport-dial path {
+  fill: none;
+  stroke: #513967;
+  stroke-width: 10;
+}
+.rapport-dial .rapport-current {
+  stroke: var(--color-primary);
+}
+.character-overview-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+.character-overview-actions .btn {
+  font-size: 0.75rem;
+}
+.character-reflections {
+  margin-top: 1rem;
+  border-top: 1px solid var(--color-line);
+  padding-top: 0.8rem;
+  font-size: 0.8rem;
+}
+.character-reflections summary {
+  min-height: 44px;
+}
+.character-reflections article {
+  border-left: 2px solid var(--color-purple);
+  padding: 0.5rem 0.75rem;
+  margin-top: 0.7rem;
+}
+.character-reflections small {
+  color: var(--color-muted);
+}
+.contribution-list {
+  list-style: none;
+  padding: 0 !important;
+}
+.contribution-list li {
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--color-line);
+}
+.contribution-list .badge {
+  margin-right: 0.5rem;
+}
+.social-panel {
+  width: min(30rem, 100%);
+}
+.watch-town-control {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 44px;
+  flex: none;
+  padding: 0.6rem 1rem;
+  font-size: 0.8rem;
+}
+.watch-town-control input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+}
+.social-scope {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  padding: 0 1rem 0.75rem;
+  border-bottom: 1px solid var(--color-line);
+}
+.social-conversations {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding-bottom: 0.4rem;
+}
+.social-conversation {
+  flex: none;
+  width: 13rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid transparent;
+  background: #25163b;
+  min-height: 70px;
+}
+.social-conversation[aria-pressed="true"] {
+  background: #352148;
+  border-color: var(--color-purple);
+}
+.social-conversation strong {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-primary);
+}
+.social-conversation small {
+  font-size: 0.7rem;
+  color: var(--color-muted);
+}
+.social-conversation span {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  max-height: 2.25rem;
+  overflow: hidden;
+}
+.social-line {
+  border-left: 2px solid var(--color-purple);
+  padding: 0.65rem 0.75rem;
+  margin: 0.6rem 0;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+.social-line strong {
+  display: block;
+  color: var(--color-primary);
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+.social-follow-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+.social-follow-actions > div {
+  display: flex;
+  gap: 0.25rem;
+}
+.social-follow-actions .btn {
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.social-effects {
+  border-top: 1px solid var(--color-line);
+  margin-top: 1rem;
+  padding-top: 0.2rem;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+.social-effects article {
+  margin: 0.6rem 0;
+}
+.social-effects article > p:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.social-score {
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.social-effects .watch-town-control {
+  padding-left: 0;
+}
+.social-reflection {
+  border-left: 2px dashed var(--color-purple);
+  padding: 0.5rem 0.75rem;
+}
+.social-reflection small {
+  color: var(--color-muted);
+}
+.social-empty {
+  color: var(--color-muted);
+  padding: 1rem 0.2rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+.social-empty h3 {
+  color: var(--color-fg);
+  margin: 0.6rem 0;
+}
+.conversation-caption {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  width: min(32rem, calc(100% - 2rem));
+  max-height: 15rem;
+  display: flex;
+  flex-direction: column;
+  z-index: 3;
+  background: #21132fef;
+  border: 1px solid var(--color-purple);
+  padding: 0.7rem 0.85rem;
+  box-shadow: 4px 4px 0 #10091c99;
+}
+.caption-pair {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  text-align: left;
+  color: var(--color-primary);
+  font-size: 0.8rem;
+  min-height: 30px;
+}
+.caption-pair small {
+  color: var(--color-muted);
+  font-size: 0.7rem;
+}
+.conversation-caption > p {
+  min-height: 0;
+  overflow-y: auto;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  padding: 0.3rem 0 0.6rem;
+}
+.conversation-caption > p strong {
+  display: block;
+  color: var(--color-purple);
+  font-weight: 500;
+}
+.caption-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  flex: none;
+}
+.caption-controls .btn {
+  font-size: 0.7rem;
+  padding: 0.4rem 0.5rem;
+  min-height: 36px;
+}
+@media (max-width: 860px), (pointer: coarse) {
+  .mind {
+    position: fixed;
+    top: var(--character-panel-top, 180px);
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: calc(0.5rem + env(safe-area-inset-bottom));
+    width: auto;
+    height: auto;
+    max-height: none;
+    border: 1px solid var(--color-purple);
+    z-index: 20;
+  }
+  .social-panel {
+    width: auto;
+    height: auto;
+  }
+  .dpad {
+    left: auto;
+    right: 0.75rem;
+  }
+  .conversation-caption {
+    width: calc(100% - 11rem);
+    max-height: 13rem;
+    left: 0.5rem;
+    bottom: 0.5rem;
+    padding: 0.5rem;
+  }
+  .caption-controls .btn {
+    min-height: 44px;
+  }
+}
+@media (max-width: 680px) {
+  .social-toolbar {
+    padding: 0.25rem 0.75rem;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+  .resident-chip {
+    font-size: 0.7rem;
+  }
+  .town-life-toggle {
+    padding: 0.3rem 0.5rem;
+  }
+  .return-to-player {
+    max-width: none;
+    width: 100%;
+    min-height: 32px;
+  }
+  .character-heading {
+    gap: 0.5rem;
+  }
+  .character-heading .resident-portrait {
+    width: 38px;
+    height: 46px;
+  }
+  .character-heading .text-xs {
+    font-size: 0.6rem;
+  }
+  .character-heading .text-sm {
+    font-size: 0.7rem;
+  }
+  .character-tabs {
+    padding: 0 0.5rem;
+  }
+  .character-tabs button {
+    font-size: 0.7rem;
+  }
+  .watch-town-control {
+    padding: 0.4rem 0.75rem;
+  }
+  .social-scope {
+    padding: 0 0.75rem 0.5rem;
+  }
+}
