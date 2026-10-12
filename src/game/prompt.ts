@@ -279,18 +279,20 @@ export function parseMind(job: ThinkJob, text: string): MindResult | null {
         return {
           id: id as MindResult & { kind: "plan" } extends { plans: { id: infer I }[] } ? I : never,
           summary: String(row.summary ?? ""),
-          blocks: blocks.map((b) => {
-            const block = asRecord(b) ?? {};
-            return {
-              from: Number(block.from ?? 0),
-              to: Number(block.to ?? 0),
-              place: String(block.place ?? "street")
-                .trim()
-                .toLowerCase(),
-              spot: block.spot === "home" ? ("home" as const) : ("out" as const),
-              status: String(block.status ?? "around the town"),
-            };
-          }),
+          blocks: blocks
+            .map((b) => {
+              const block = asRecord(b) ?? {};
+              const place = asPlace(block.place);
+              if (!place) return null;
+              return {
+                from: Number(block.from ?? 0),
+                to: Number(block.to ?? 0),
+                place,
+                spot: block.spot === "home" ? ("home" as const) : ("out" as const),
+                status: String(block.status ?? "around the town"),
+              };
+            })
+            .filter((block) => block !== null),
           want: typeof row.want === "string" ? row.want : undefined,
           selfSentence: typeof row.selfSentence === "string" ? row.selfSentence : undefined,
           project: parseProject(row.project),
