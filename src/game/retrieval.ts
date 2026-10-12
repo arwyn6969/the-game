@@ -1,5 +1,5 @@
 import type { Agent, ThinkJob, Town } from "./types";
-import { absMinute, logRetrieval, scoreMemories } from "./memory";
+import { absMinute, logRetrieval, scoreResidentMemories } from "./memory";
 import { clip, mentionsSeed, plain } from "./text";
 import { placeTitle, zoneAt } from "./world";
 import { memorySource, sharedMemories } from "./conversation";
@@ -24,7 +24,9 @@ export function promptMemories(town: Town, agent: Agent, job: ThinkJob) {
     .filter((t) => t.open)
     .map((t) => t.text)
     .join(" ")} ${other ? "" : (agent.want ?? "")}`;
-  const ranked = scoreMemories(stream, query, absMinute(town.day, town.minute));
+  const ranked = scoreResidentMemories(
+    { id: agent.id, memories: stream }, query, absMinute(town.day, town.minute),
+  );
   const selected = ranked.slice(0, 4);
   const keptMemory = !other && stream.find((m) => m.seed || (m.protected && m.type === "favor"));
   const kept = keptMemory && ranked.find((s) => s.memory.id === keptMemory.id);

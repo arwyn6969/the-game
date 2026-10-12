@@ -2,6 +2,7 @@ import type { Agent, AgentId, Memory, MemoryType, RetrievalLog, Town } from "./t
 import { mentionsSeed } from "./text";
 import { memorySource } from "./conversation";
 import type { RecordedMemory } from "./conversation";
+import { memoryInterestScore } from "./interests";
 
 const STOP = new Set(
   "that this with from they have were been your about into just what when where will them then than some there their would could should because while after before other which also does did not only more over very into been being from your ours".split(
@@ -89,9 +90,35 @@ export function retrieve(memories: Memory[], query: string, nowAbs: number, k = 
   return scoreMemories(memories, query, nowAbs).slice(0, k);
 }
 
-export function logRetrieval(town: Town, agent: Agent, question: string): RetrievalLog {
+export function scoreResidentMemories(
+  agent: Pick<Agent, "id" | "memories">,
+  query: string,
+  nowAbs: number,
+): (Scored & { roleRelevance: number })[] {
+  return scoreMemories(agent.memories ?? [], query, nowAbs)
+    .map((hit) => {
+      const roleRelevance = memoryInterestScore(agent.id, hit.memory.text);
+      return { ...hit, roleRelevance, score: hit.score + roleRelevance };
+    })
+    .sort((a, b) => b.score - a.score || b.memory.importance - a.memory.importance);
+}
+
+export function retrieveResident(
+  agent: Pick<Agent, "id" | "memories">,
+  query: string,
+  nowAbs: number,
+  k = 8,
+) {
+  return scoreResidentMemories(agent, query, nowAbs).slice(0, k);
+}
+
+export function logRetrieval(
+  town: Town,
+  agent: Agent,
+  question: string,
+): RetrievalLog {
   const now = absMinute(town.day, town.minute);
-  const ranked = scoreMemories(agent.memories, question, now);
+  const ranked = scoreResidentMemories(agent, question, now);
   const top = ranked.slice(0, 8);
   const seedIndex = ranked.findIndex((s) => s.memory.seed || mentionsSeed(s.memory.text));
   const seedInStream = seedIndex >= 0;
