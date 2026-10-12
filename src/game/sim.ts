@@ -291,21 +291,17 @@ function pickPair(town: Town): [AgentId, AgentId] | null {
   return best?.pair ?? null;
 }
 
-function askForMind(town: Town) {
+function morningObservation(town: Town) {
   const agent = town.agents.find((a) => a.id === "arwyn");
   if (!agent) return;
   const place = placeTitle(zoneAt(agent.tile.x, agent.tile.y));
-  const threads = Array.isArray(agent.threads) ? agent.threads : [];
-  const thread =
-    threads.find((t) => t.open && !t.hidden && !mentionsSeed(t.text))?.text ??
-    "the work in front of me";
-  const text = `In the ${place} at ${formatClock(town.minute)}, I am still only what I retrieved and this open thread: ${thread}. If you can switch a mind on, I am asking.`;
+  const text = `At ${formatClock(town.minute)}, I was in the ${place}. I wanted to compare the library records before drawing conclusions.`;
   pushMemory(
     agent,
     makeMemory(town, town.day, town.minute, "observe", text, 5, { mind: "offline" }),
   );
   agent.bubble = {
-    text: "If you can switch a mind on, I am still speaking from memory.",
+    text: "A date, a name, and a source. Let's start with what we can check.",
     until: absMinute(town.day, town.minute) + 45,
   };
   town.askedMindDay = town.day;
@@ -314,9 +310,12 @@ function askForMind(town: Town) {
 function recordScrub(town: Town) {
   if (!Array.isArray(town.scrub)) town.scrub = [];
   const p = town.agents.flatMap((a) => [a.tile?.x ?? 0, a.tile?.y ?? 0]);
+  const ids = town.agents.map((a) => a.id);
   const last = town.scrub[town.scrub.length - 1];
-  if (last && (last.d ?? town.day) === town.day && last.m === town.minute) last.p = p;
-  else town.scrub.push({ d: town.day, m: town.minute, p });
+  if (last && (last.d ?? town.day) === town.day && last.m === town.minute) {
+    last.p = p;
+    last.ids = ids;
+  } else town.scrub.push({ d: town.day, m: town.minute, p, ids });
   if (town.scrub.length > 10080) town.scrub.splice(0, town.scrub.length - 10080);
 }
 
@@ -343,22 +342,32 @@ export function stepMinute(town: Town, online: boolean): ThinkJob | null {
   if (hourStart) {
     for (const agent of npcs(town)) agent.callUsed = false;
     observe(town);
-    if (town.minute === 5 * 60) {
-      for (const agent of npcs(town)) agent.callUsed = true;
-      job = { kind: "plan", day: town.day, minute: town.minute, weekly: town.day % 7 === 0 };
-    } else if (town.minute % 240 === 0) {
-      const agents = npcs(town)
+    if (town.minute % 240 === 0) {
+      const residents = npcs(town);
+      const offset = (Math.floor(town.minute / 240) * 2 + town.day) % residents.length;
+      const agents = [...residents.slice(offset), ...residents.slice(0, offset)]
         .filter((a) => {
           if (!Number.isFinite(a.newMemories)) a.newMemories = 0;
           return a.newMemories >= 6;
         })
+        .slice(0, 2)
         .map((a) => a.id);
       if (agents.length) {
         for (const id of agents) agentById(town, id).callUsed = true;
         job = { kind: "reflect", day: town.day, minute: town.minute, agents, weekly: false };
       }
     }
-    if (!online && town.askedMindDay !== town.day && town.minute === 8 * 60) askForMind(town);
+    if (!online && town.askedMindDay !== town.day && town.minute === 8 * 60)
+      morningObservation(town);
+  }
+  // Each dawn request contains at most two residents. No persistent queue is
+  // needed: save/reload resumes at the same deterministic minute and batch.
+  const dawnBatch = town.minute - 5 * 60;
+  const residents = npcs(town);
+  if (dawnBatch >= 0 && dawnBatch < Math.ceil(residents.length / 2)) {
+    const agents = residents.slice(dawnBatch * 2, dawnBatch * 2 + 2).map((a) => a.id);
+    for (const id of agents) agentById(town, id).callUsed = true;
+    job = { kind: "plan", day: town.day, minute: town.minute, weekly: town.day % 7 === 0, agents };
   }
   nudgeApart(town);
   for (const agent of npcs(town)) moveNpc(town, agent, hourStart);
@@ -387,7 +396,13 @@ export function frameAt(town: Town, minute: number, day = town.day): number[] | 
   let found: number[] | null = null;
   for (const frame of town.scrub ?? []) {
     const frameDay = frame.d ?? town.day;
-    if (frameDay < day || (frameDay === day && frame.m <= minute)) found = frame.p;
+    if (frameDay < day || (frameDay === day && frame.m <= minute)) {
+      const roster = frame.ids ?? town.agents.map((a) => a.id);
+      found = town.agents.flatMap((agent) => {
+        const index = roster.indexOf(agent.id);
+        return index < 0 ? [NaN, NaN] : [frame.p[index * 2]!, frame.p[index * 2 + 1]!];
+      });
+    }
     if (frameDay > day || (frameDay === day && frame.m > minute)) break;
   }
   return found;

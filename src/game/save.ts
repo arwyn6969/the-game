@@ -1,11 +1,13 @@
 import type { Agent, AgentId, Face, Memory, MemoryType, Town } from "./types";
 import { AGENT_IDS } from "./types";
 import { compressDialogue, compressObservations, keywords } from "./memory";
-import { SEED_TEXT } from "./town";
+import { addSpecialists, SEED_TEXT } from "./town";
 import { mentionsSeed, plain, purse } from "./text";
 import { nearestWalkable } from "./world";
 
-const KEY = "the-game-town-v1";
+export const TOWN_STORAGE_KEY = "the-game-town-v2";
+export const LEGACY_TOWN_STORAGE_KEY = "the-game-town-v1";
+const LEGACY_IDS = ["kevin", "arwyn", "northern", "baba", "sub", "player"] as const;
 export const MAX_TOWN_FILE_BYTES = 8 * 1024 * 1024;
 
 export type SaveResult =
@@ -42,8 +44,10 @@ const OLD_NOTICE =
   "Pinned from the cafe: Kevin is asking, quietly, who he is and where he came from, and for help earning a living. — Arwyn";
 const NEW_NOTICE =
   "Pinned from the cafe: Kevin is asking, quietly, who he is — not a place he came from, the man under the apron — and for help earning a living. — Arwyn";
-const OLD_SELF = "Right now I am someone who has said, at least once, that he does not know where he came from.";
-const NEW_SELF = "Right now I am someone who has said, at least once, that he does not know who he is.";
+const OLD_SELF =
+  "Right now I am someone who has said, at least once, that he does not know where he came from.";
+const NEW_SELF =
+  "Right now I am someone who has said, at least once, that he does not know who he is.";
 
 function reframeSeed(town: Town) {
   const kevin = town.agents.find((a) => a.id === "kevin");
@@ -111,24 +115,44 @@ function cleanMemory(memory: Memory, fallbackDay: number): Memory | null {
     type,
     text: memory.text.replace(/\s+/g, " ").trim().slice(0, 420),
     day: Number.isFinite(memory.day) ? memory.day : fallbackDay,
-    minute: Number.isFinite(memory.minute) ? Math.max(0, Math.min(1439, Math.floor(memory.minute))) : 0,
-    importance: Number.isFinite(memory.importance) ? Math.max(1, Math.min(10, Math.round(memory.importance))) : 5,
+    minute: Number.isFinite(memory.minute)
+      ? Math.max(0, Math.min(1439, Math.floor(memory.minute)))
+      : 0,
+    importance: Number.isFinite(memory.importance)
+      ? Math.max(1, Math.min(10, Math.round(memory.importance)))
+      : 5,
     keywords:
-      Array.isArray(memory.keywords) && memory.keywords.some((w) => typeof w === "string" && w.length > 2)
+      Array.isArray(memory.keywords) &&
+      memory.keywords.some((w) => typeof w === "string" && w.length > 2)
         ? memory.keywords.filter((w) => typeof w === "string").slice(0, 24)
         : keywords(memory.text),
     protected: Boolean(memory.protected || memory.seed || mentionsSeed(memory.text)),
     seed: Boolean(memory.seed),
+    source: ["event", "statement", "reflection"].includes(memory.source ?? "")
+      ? memory.source
+      : undefined,
+    turns: Array.isArray(memory.turns)
+      ? memory.turns
+          .filter(
+            (turn) =>
+              turn && isAgentId(turn.speaker) && typeof turn.text === "string" && turn.text.trim(),
+          )
+          .slice(-6)
+          .map((turn) => ({ speaker: turn.speaker, text: plain(turn.text, 500) }))
+      : undefined,
   };
 }
 
 export function validateTown(value: unknown): value is Town {
   if (!value || typeof value !== "object") return false;
   const town = value as Town;
-  if (town.version !== 1) return false;
-  if (!Array.isArray(town.agents) || town.agents.length !== AGENT_IDS.length) return false;
+  const version = (value as { version?: unknown }).version;
+  if (version !== 1 && version !== 2) return false;
+  const expectedIds = version === 1 ? LEGACY_IDS : AGENT_IDS;
+  if (!Array.isArray(town.agents) || town.agents.length !== expectedIds.length) return false;
   const ids = new Set(town.agents.map((a) => a?.id));
-  if (AGENT_IDS.some((id) => !ids.has(id))) return false;
+  if (expectedIds.some((id) => !ids.has(id))) return false;
+  const originalRoster = town.agents.map((a) => a.id);
   if (typeof town.day !== "number" || !Number.isFinite(town.day) || town.day < 1) return false;
   if (typeof town.minute !== "number" || !Number.isFinite(town.minute)) return false;
   town.day = Math.floor(town.day);
@@ -149,7 +173,11 @@ export function validateTown(value: unknown): value is Town {
   town.retrievals = Array.isArray(town.retrievals) ? town.retrievals : [];
   town.paused = Boolean(town.paused);
   town.sawHint = Boolean(town.sawHint);
-  town.guide = town.sawHint ? 3 : Number.isFinite(town.guide) ? Math.max(0, Math.min(3, Math.floor(town.guide))) : 0;
+  town.guide = town.sawHint
+    ? 3
+    : Number.isFinite(town.guide)
+      ? Math.max(0, Math.min(3, Math.floor(town.guide)))
+      : 0;
   town.askedMindDay = Number.isFinite(town.askedMindDay) ? town.askedMindDay : 0;
   let maxId = 1;
   const bump = (id: unknown) => {
@@ -162,16 +190,21 @@ export function validateTown(value: unknown): value is Town {
     agent.home = nearestWalkable(Number(agent.home?.x), Number(agent.home?.y));
     if (!FACES.has(agent.face)) agent.face = "s";
     agent.money = purse(agent.money);
-    agent.name = typeof agent.name === "string" && agent.name.trim() ? plain(agent.name, 18) : agent.id;
+    agent.name =
+      typeof agent.name === "string" && agent.name.trim() ? plain(agent.name, 18) : agent.id;
     if (agent.id === "player") agent.name = town.playerName;
     agent.identity = typeof agent.identity === "string" ? agent.identity.slice(0, 800) : "";
-    agent.selfSentence = typeof agent.selfSentence === "string" ? agent.selfSentence.slice(0, 220) : "";
+    agent.selfSentence =
+      typeof agent.selfSentence === "string" ? agent.selfSentence.slice(0, 220) : "";
     agent.want = typeof agent.want === "string" ? agent.want.slice(0, 280) : "";
     agent.status = typeof agent.status === "string" ? agent.status.slice(0, 140) : "between places";
     agent.role = typeof agent.role === "string" ? agent.role.slice(0, 40) : "Resident";
     agent.path = [];
-    agent.projects = Array.isArray(agent.projects) ? agent.projects.filter((p) => p && typeof p.text === "string") : [];
-    agent.relationships = agent.relationships && typeof agent.relationships === "object" ? agent.relationships : {};
+    agent.projects = Array.isArray(agent.projects)
+      ? agent.projects.filter((p) => p && typeof p.text === "string")
+      : [];
+    agent.relationships =
+      agent.relationships && typeof agent.relationships === "object" ? agent.relationships : {};
     for (const key of Object.keys(agent.relationships)) {
       if (!isAgentId(key)) {
         delete agent.relationships[key as AgentId];
@@ -187,7 +220,9 @@ export function validateTown(value: unknown): value is Town {
       rel.note = typeof rel.note === "string" ? rel.note.slice(0, 180) : "";
     }
     agent.lastTalk = agent.lastTalk && typeof agent.lastTalk === "object" ? agent.lastTalk : {};
-    agent.threads = Array.isArray(agent.threads) ? agent.threads.filter((t) => t && typeof t.text === "string") : [];
+    agent.threads = Array.isArray(agent.threads)
+      ? agent.threads.filter((t) => t && typeof t.text === "string")
+      : [];
     agent.memories = (Array.isArray(agent.memories) ? agent.memories : [])
       .map((m) => cleanMemory(m, town.day))
       .filter((m): m is Memory => Boolean(m));
@@ -208,20 +243,48 @@ export function validateTown(value: unknown): value is Town {
     for (const thread of agent.threads) bump(thread.id);
     for (const project of agent.projects) bump(project.id);
   }
-  town.notices = town.notices.filter((n) => n && isAgentId(n.author) && typeof n.text === "string" && n.text.trim());
+  town.notices = town.notices.filter(
+    (n) => n && isAgentId(n.author) && typeof n.text === "string" && n.text.trim(),
+  );
   if (town.notices.length > 48) {
     const keepSeed = town.notices.filter((n) => mentionsSeed(n.text));
-    const rest = town.notices.filter((n) => !mentionsSeed(n.text)).slice(-Math.max(0, 48 - keepSeed.length));
+    const rest = town.notices
+      .filter((n) => !mentionsSeed(n.text))
+      .slice(-Math.max(0, 48 - keepSeed.length));
     town.notices = [...rest, ...keepSeed].slice(-48);
   }
   town.favors = town.favors.filter(
-    (f) => f && isAgentId(f.from) && isAgentId(f.to) && f.from !== f.to && FAVOR_STATUS.has(f.status) && typeof f.text === "string",
+    (f) =>
+      f &&
+      isAgentId(f.from) &&
+      isAgentId(f.to) &&
+      f.from !== f.to &&
+      FAVOR_STATUS.has(f.status) &&
+      typeof f.text === "string",
   );
   for (const favor of town.favors) {
     favor.amount = purse(favor.amount, 30);
     bump(favor.id);
   }
-  town.scrub = town.scrub.filter((frame) => frame && Number.isFinite(frame.m) && Array.isArray(frame.p));
+  town.scrub = town.scrub.filter(
+    (frame) => frame && Number.isFinite(frame.m) && Array.isArray(frame.p),
+  );
+  town.scrub = town.scrub.filter((frame) => {
+    const roster = frame.ids ?? originalRoster;
+    if (
+      !Array.isArray(roster) ||
+      roster.some((id) => !isAgentId(id)) ||
+      new Set(roster).size !== roster.length
+    )
+      return false;
+    if (
+      frame.p.length !== roster.length * 2 ||
+      frame.p.some((position) => !Number.isFinite(position))
+    )
+      return false;
+    frame.ids = [...roster];
+    return true;
+  });
   if (town.scrub.length > 10080) town.scrub.splice(0, town.scrub.length - 10080);
   town.retrievals = town.retrievals
     .filter((r) => r && isAgentId(r.agentId) && typeof r.question === "string")
@@ -246,6 +309,10 @@ export function validateTown(value: unknown): value is Town {
     for (const memory of agent.memories ?? []) memory.id = unique(memory.id, "m");
   }
   town.nextId = Math.max(maxId, Number.isFinite(town.nextId) ? Math.floor(town.nextId) : 1);
+  if (version === 1) {
+    town.version = 2;
+    addSpecialists(town);
+  }
   return true;
 }
 
@@ -253,7 +320,7 @@ function serialize(town: Town, omitReplay = false): string {
   const clone = JSON.parse(JSON.stringify(town)) as Town;
   for (const agent of clone.agents) agent.path = [];
   if (omitReplay) clone.scrub = [];
-  return JSON.stringify({ version: 1, town: clone });
+  return JSON.stringify({ version: 2, town: clone });
 }
 
 function isQuota(error: unknown): boolean {
@@ -284,15 +351,17 @@ export function readTownSave(): LoadReport {
   if (!box) return { status: "unavailable" };
   let raw: string | null;
   try {
-    raw = box.getItem(KEY);
+    // Never overwrite or silently fall back from a damaged newer save.
+    // The original v1 bytes remain available under their original key.
+    raw = box.getItem(TOWN_STORAGE_KEY) ?? box.getItem(LEGACY_TOWN_STORAGE_KEY);
   } catch {
     return { status: "unavailable" };
   }
   if (!raw) return { status: "missing" };
   try {
-    const data = JSON.parse(raw) as { version?: number; town?: unknown };
-    if (!validateTown(data.town)) return { status: "unreadable", raw };
-    return { status: "ready", town: data.town };
+    const town = parseTownFile(raw);
+    if (!town) return { status: "unreadable", raw };
+    return { status: "ready", town };
   } catch {
     return { status: "unreadable", raw };
   }
@@ -309,7 +378,7 @@ export function saveTownWithStatus(town: Town): SaveResult {
     return done({ ok: false, reason: "serialization" });
   }
   try {
-    box.setItem(KEY, raw);
+    box.setItem(TOWN_STORAGE_KEY, raw);
     return done({
       ok: true,
       bytes: new TextEncoder().encode(raw).byteLength,
@@ -321,7 +390,7 @@ export function saveTownWithStatus(town: Town): SaveResult {
     // Replay is disposable. Memories, identity and debts remain in both the save and the live town.
     try {
       raw = serialize(town, true);
-      box.setItem(KEY, raw);
+      box.setItem(TOWN_STORAGE_KEY, raw);
       return done({
         ok: true,
         bytes: new TextEncoder().encode(raw).byteLength,
@@ -343,8 +412,20 @@ export function exportTown(town: Town): string {
 
 export function parseTownFile(text: string): Town | null {
   try {
-    if (text.length > MAX_TOWN_FILE_BYTES || new TextEncoder().encode(text).byteLength > MAX_TOWN_FILE_BYTES) return null;
+    if (
+      text.length > MAX_TOWN_FILE_BYTES ||
+      new TextEncoder().encode(text).byteLength > MAX_TOWN_FILE_BYTES
+    )
+      return null;
     const data = JSON.parse(text) as { version?: number; town?: unknown };
+    if (
+      data &&
+      typeof data === "object" &&
+      "town" in data &&
+      ((data.version !== 1 && data.version !== 2) ||
+        (data.town as { version?: unknown } | null)?.version !== data.version)
+    )
+      return null;
     const town = data && typeof data === "object" && "town" in data ? data.town : data;
     if (!validateTown(town)) return null;
     return town;
