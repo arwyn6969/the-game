@@ -2,6 +2,8 @@
 
 Prepared 12 October 2026. This is a development handoff; it does not describe a published release.
 
+The subsequent [everyday-coherence pass](everyday-coherence.md) extends this build with ordinary conversation handling, doorway yielding, truthful arrival statuses and less repetitive reflections. Its validation counts supersede the earlier numbers below.
+
 ## Source and scope
 
 Branch: `codex/seven-resident-coherence`, based on current main `65d93a905f256abdcdddc21d7612e7d4b8b07d53`. It preserves the neon UI and the latest authored identities for the original five residents. Independent implementation lanes were integrated and reviewed in this checkout.
