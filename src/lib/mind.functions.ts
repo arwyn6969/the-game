@@ -18,7 +18,8 @@ function textOf(content: unknown): string {
     return content
       .map((part) => {
         if (typeof part === "string") return part;
-        if (part && typeof part === "object" && "text" in part) return String((part as { text: unknown }).text ?? "");
+        if (part && typeof part === "object" && "text" in part)
+          return String((part as { text: unknown }).text ?? "");
         return "";
       })
       .join("");
@@ -49,6 +50,16 @@ async function complete(apiKey: string, user: string, tokens: number, jsonMode: 
 }
 
 export const mindAvailability = createServerFn({ method: "GET" }).handler(async () => {
+  if (
+    process.env.MIND_PROVIDER_MODE &&
+    !["legacy", "pool"].includes(process.env.MIND_PROVIDER_MODE)
+  ) {
+    return { online: false };
+  }
+  if (process.env.MIND_PROVIDER_MODE === "pool") {
+    const { poolAvailable } = await import("./mind-pool/server");
+    return { online: await poolAvailable() };
+  }
   return { online: Boolean(process.env.XAI_API_KEY) };
 });
 
@@ -65,6 +76,16 @@ export const thinkTown = createServerFn({ method: "POST" })
     return { kind, user };
   })
   .handler(async ({ data }) => {
+    if (
+      process.env.MIND_PROVIDER_MODE &&
+      !["legacy", "pool"].includes(process.env.MIND_PROVIDER_MODE)
+    ) {
+      return { ok: false as const, error: "offline" };
+    }
+    if (process.env.MIND_PROVIDER_MODE === "pool") {
+      const { thinkWithPool } = await import("./mind-pool/server");
+      return thinkWithPool(data.kind as import("./mind-pool/types").MindKind, data.user, SYSTEM);
+    }
     const apiKey = process.env.XAI_API_KEY;
     if (!apiKey) return { ok: false as const, error: "offline" };
     if (!allowCall()) return { ok: false as const, error: "slow" };

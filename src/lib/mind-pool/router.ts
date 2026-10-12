@@ -1,0 +1,138 @@
+import { candidatesFor } from "./config.ts";
+import {
+  decodeCompletion,
+  readJsonBounded,
+  requestBody,
+  retryAfterMs,
+  validMindJson,
+} from "./transport.ts";
+import type { Completion, MindKind, PoolConfig, PoolResult, QuotaStore } from "./types.ts";
+
+export async function routeMind(input: {
+  kind: MindKind;
+  system: string;
+  user: string;
+  config: PoolConfig;
+  store: QuotaStore;
+  env: Record<string, string | undefined>;
+  fetcher?: typeof fetch;
+  now?: () => number;
+}): Promise<PoolResult> {
+  const { kind, system, user, config, store, env } = input;
+  const fetcher = input.fetcher ?? fetch;
+  const now = input.now ?? Date.now;
+  const candidates = candidatesFor(config, kind, env);
+  if (!candidates.length) return { ok: false, error: "offline" };
+  // Bytes + max output is intentionally conservative and includes every retry.
+  // Report actual usage separately; never refund a possibly executed attempt.
+  const inputBytes = new TextEncoder().encode(system + user).byteLength + 256;
+  const deadline = now() + config.deadlineMs;
+  let attempts = 0;
+  try {
+    for (const candidate of candidates) {
+      const tokens = candidate.route.maxTokens;
+      const reservedTokens = inputBytes + tokens;
+      let formatRetry = false;
+      while (attempts < config.maxAttempts && now() < deadline) {
+        const timeout = Math.min(config.timeoutMs, deadline - now());
+        const lease = await store.reserve(candidate, kind, reservedTokens, timeout + 10_000);
+        if (!lease) break;
+        const remaining = Math.min(timeout, deadline - now());
+        if (remaining <= 0) {
+          await store.finish(candidate, lease, {
+            outcome: "unreachable",
+            status: null,
+            latencyMs: 0,
+            actualTokens: null,
+          });
+          break;
+        }
+        attempts += 1;
+        const started = now();
+        const jsonMode = candidate.provider.jsonMode && lease.jsonMode && !formatRetry;
+        let completion: Completion = {
+          outcome: "unreachable",
+          status: null,
+          latencyMs: 0,
+          actualTokens: null,
+          modelCooldownMs: 30_000,
+        };
+        let text: string | undefined;
+        let retryFormat = false;
+        try {
+          const key = env[candidate.provider.apiKeyEnv]?.trim();
+          const headers: Record<string, string> = { "Content-Type": "application/json" };
+          if (key) headers.Authorization = `Bearer ${key}`;
+          const response = await fetcher(
+            `${candidate.provider.baseUrl.replace(/\/$/, "")}/${candidate.provider.protocol === "cohere" ? "chat" : "chat/completions"}`,
+            {
+              method: "POST",
+              headers,
+              redirect: "error",
+              body: JSON.stringify(requestBody(candidate, system, user, tokens, jsonMode)),
+              signal: AbortSignal.timeout(Math.max(1, Math.floor(remaining))),
+            },
+          );
+          completion.status = response.status;
+          if (response.ok) {
+            const decoded = decodeCompletion(
+              await readJsonBounded(response),
+              candidate.provider.protocol,
+            );
+            completion.actualTokens = decoded.actualTokens;
+            if (!decoded.truncated && validMindJson(kind, decoded.text)) {
+              text = decoded.text;
+              completion = { ...completion, outcome: "ok", modelCooldownMs: 0 };
+            } else {
+              completion.outcome = "invalid";
+            }
+          } else if (response.status === 429) {
+            completion = {
+              ...completion,
+              outcome: "rate_limit",
+              accountCooldownMs: retryAfterMs(response.headers.get("retry-after"), now()),
+              modelCooldownMs: 0,
+            };
+            await response.body?.cancel();
+          } else if ([401, 403, 402].includes(response.status)) {
+            completion = {
+              ...completion,
+              outcome: "auth",
+              disableAccount: true,
+              modelCooldownMs: 0,
+            };
+            await response.body?.cancel();
+          } else if ([400, 404, 422].includes(response.status)) {
+            // Only retry without response_format when the error explicitly
+            // identifies it; don't double-call for unrelated bad requests.
+            let body: unknown;
+            try {
+              body = await readJsonBounded(response);
+            } catch {
+              body = null;
+            }
+            const errorText = JSON.stringify(body);
+            retryFormat = jsonMode && /response_format|json_object|json mode/i.test(errorText);
+            completion = retryFormat
+              ? { ...completion, outcome: "format", disableJsonMode: true, modelCooldownMs: 0 }
+              : { ...completion, outcome: "config", disableModel: true, modelCooldownMs: 0 };
+          } else {
+            await response.body?.cancel();
+          }
+        } catch {
+          // Do not store provider bodies/errors: they can echo prompts or keys.
+        }
+        completion.latencyMs = Math.max(0, now() - started);
+        await store.finish(candidate, lease, completion);
+        if (text) return { ok: true, text };
+        if (!retryFormat || formatRetry) break;
+        formatRetry = true;
+      }
+      if (attempts >= config.maxAttempts || now() >= deadline) break;
+    }
+    return { ok: false, error: attempts ? "unreachable" : "slow" };
+  } catch {
+    // A failed ledger must never trigger unmetered calls or paid fallback.
+    return { ok: false, error: "unreachable" };
+  }
+}
