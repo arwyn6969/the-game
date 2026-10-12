@@ -8,12 +8,54 @@ const PALETTE: Record<
   AgentId,
   { skin: string; hair: string; shirt: string; pants: string; shoe: string; extra: string }
 > = {
-  kevin: { skin: "#c68642", hair: "#241c14", shirt: "#f4efe4", pants: "#3d4452", shoe: "#221c16", extra: "#e08a3c" },
-  arwyn: { skin: "#e0b088", hair: "#1b1e22", shirt: "#6e8b74", pants: "#2c3330", shoe: "#1a1612", extra: "#d5e0d8" },
-  northern: { skin: "#8d5524", hair: "#140e0a", shirt: "#c4473a", pants: "#243044", shoe: "#16120e", extra: "#e6c15a" },
-  baba: { skin: "#a56b3c", hair: "#6e655c", shirt: "#f3ecdf", pants: "#4a3b32", shoe: "#241c16", extra: "#7d9a6a" },
-  sub: { skin: "#f0c7a0", hair: "#8a3e2a", shirt: "#2c3a52", pants: "#1c2430", shoe: "#14181f", extra: "#f3ead7" },
-  player: { skin: "#d9a066", hair: "#3a2a4a", shirt: "#6b4c7a", pants: "#2a2433", shoe: "#1a1612", extra: "#e7c27a" },
+  kevin: {
+    skin: "#c68642",
+    hair: "#241c14",
+    shirt: "#f4efff",
+    pants: "#393149",
+    shoe: "#1b1028",
+    extra: "#f98aaf",
+  },
+  arwyn: {
+    skin: "#e0b088",
+    hair: "#1b1e22",
+    shirt: "#91c96a",
+    pants: "#29392e",
+    shoe: "#171522",
+    extra: "#e5ffe3",
+  },
+  northern: {
+    skin: "#8d5524",
+    hair: "#140e0a",
+    shirt: "#dc4c83",
+    pants: "#302943",
+    shoe: "#171022",
+    extra: "#d4ff76",
+  },
+  baba: {
+    skin: "#a56b3c",
+    hair: "#6e655c",
+    shirt: "#f1e8ff",
+    pants: "#493b52",
+    shoe: "#22142a",
+    extra: "#a6c884",
+  },
+  sub: {
+    skin: "#f0c7a0",
+    hair: "#8a3e2a",
+    shirt: "#5669a8",
+    pants: "#262237",
+    shoe: "#161121",
+    extra: "#f3eaff",
+  },
+  player: {
+    skin: "#d9a066",
+    hair: "#3a2a4a",
+    shirt: "#b16af2",
+    pants: "#332247",
+    shoe: "#191025",
+    extra: "#c8ff6a",
+  },
 };
 
 type Glide = { x: number; y: number };
@@ -56,13 +98,31 @@ export function glideOf(id: AgentId): Glide {
 }
 
 let baked: HTMLCanvasElement | null = null;
+let bakedHasPixelFont = false;
 
 function hash(x: number, y: number) {
   return ((x * 374761393) ^ (y * 668265263)) >>> 0;
 }
 
+function drawSpace(g: CanvasRenderingContext2D, viewW: number, viewH: number) {
+  g.fillStyle = "#130b22";
+  g.fillRect(0, 0, viewW, viewH);
+  g.fillStyle = "rgba(157, 91, 226, 0.08)";
+  for (let x = 0; x < viewW; x += 64) g.fillRect(x, 0, 1, viewH);
+  for (let y = 0; y < viewH; y += 64) g.fillRect(0, y, viewW, 1);
+  for (let y = 0; y < viewH; y += 48) {
+    for (let x = 0; x < viewW; x += 48) {
+      const n = hash(x, y);
+      if (n % 3) continue;
+      g.fillStyle = n % 5 ? "#8e6cb7" : "#c8ff6a";
+      g.fillRect(x + (n % 37), y + ((n >>> 8) % 37), 2, 2);
+    }
+  }
+}
+
 function bake() {
-  if (baked) return baked;
+  const hasPixelFont = document.fonts?.check("10px Silkscreen") ?? false;
+  if (baked && bakedHasPixelFont === hasPixelFont) return baked;
   const c = document.createElement("canvas");
   c.width = MAP_W * TILE;
   c.height = MAP_H * TILE;
@@ -76,93 +136,127 @@ function bake() {
       const px = x * TILE;
       const py = y * TILE;
       const n = hash(x, y);
-      let color = "#6e8f55";
-      if (cell.ground === "grass") color = n % 3 === 0 ? "#64904c" : n % 3 === 1 ? "#73985a" : "#5d8646";
-      else if (cell.ground === "path") color = "#cbb892";
-      else if (cell.ground === "plaza") color = "#e4dccb";
-      else if (cell.ground === "wood") color = n % 5 === 0 ? "#a8753e" : "#b5834a";
-      else if (cell.ground === "stone") color = "#c5c9c2";
-      else if (cell.ground === "tile") color = "#e7dcc4";
-      else if (cell.ground === "floor") color = "#d4c8ad";
-      else if (cell.ground === "water") color = "#3c7090";
-      else if (cell.ground === "wall") color = "#6d5344";
-      else if (cell.ground === "door") color = "#8d5a32";
+      let color = "#32204a";
+      if (cell.ground === "grass")
+        color = n % 3 === 0 ? "#32204a" : n % 3 === 1 ? "#392351" : "#2b1c40";
+      else if (cell.ground === "path") color = "#645083";
+      else if (cell.ground === "plaza") color = n % 5 === 0 ? "#50386c" : "#4e346b";
+      else if (cell.ground === "wood") color = n % 5 === 0 ? "#5d386f" : "#674179";
+      else if (cell.ground === "stone") color = "#504568";
+      else if (cell.ground === "tile") color = "#695082";
+      else if (cell.ground === "floor") color = "#705789";
+      else if (cell.ground === "water") color = "#292f68";
+      else if (cell.ground === "wall") color = "#533071";
+      else if (cell.ground === "door") color = "#80529a";
       g.fillStyle = color;
       g.fillRect(px, py, TILE, TILE);
+      if (cell.ground === "grass" && n % 4 === 0) {
+        g.fillStyle = "#62447b";
+        g.fillRect(px + 6, py + 21, 2, 4);
+        g.fillRect(px + 9, py + 23, 2, 2);
+        if (n % 7 === 0) {
+          g.fillStyle = "#a2c975";
+          g.fillRect(px + 23, py + 8, 2, 2);
+        }
+      }
+      if (cell.ground === "path" && n % 5 === 0) {
+        g.fillStyle = "#927ba9";
+        g.fillRect(px + 6, py + 10, 3, 2);
+        g.fillRect(px + 21, py + 22, 2, 2);
+      }
+      if (cell.ground === "plaza" && !cell.decor) {
+        if (n % 7 === 0) {
+          g.fillStyle = "#79519a";
+          g.fillRect(px + 6, py + 9, 4, 2);
+          g.fillRect(px + 22, py + 22, 2, 2);
+        }
+        if (n % 41 === 0) {
+          g.fillStyle = "#a5ce77";
+          g.fillRect(px + 21, py + 8, 2, 2);
+          g.fillRect(px + 19, py + 10, 2, 2);
+        }
+      }
       if (cell.ground === "wall") {
-        g.fillStyle = "#4e3b32";
+        g.fillStyle = "#291537";
         g.fillRect(px, py + TILE - 6, TILE, 6);
-        g.fillStyle = "#8a6b58";
+        g.fillStyle = "#9b5dc1";
         g.fillRect(px + 2, py + 4, TILE - 4, 4);
         if ((x * 3 + y) % 5 === 0) {
-          g.fillStyle = "#1b242c";
+          g.fillStyle = "#1b1732";
           g.fillRect(px + 10, py + 10, 12, 10);
+          g.fillStyle = "#889e6d";
+          g.fillRect(px + 11, py + 11, 10, 2);
         }
       }
       if (cell.ground === "door") {
-        g.fillStyle = "#5c3a22";
+        g.fillStyle = "#352043";
         g.fillRect(px + 8, py + 6, 16, 22);
-        g.fillStyle = "#e6c15a";
+        g.fillStyle = "#c8ff6a";
         g.fillRect(px + 20, py + 16, 3, 3);
       }
       if (cell.ground === "plaza" || cell.ground === "stone" || cell.ground === "tile") {
-        g.fillStyle = "rgba(60, 48, 32, 0.08)";
+        g.fillStyle = "rgba(30, 13, 49, 0.22)";
         g.fillRect(px, py, TILE, 1);
         g.fillRect(px, py, 1, TILE);
       }
       if (cell.ground === "wood" || cell.ground === "floor") {
-        g.fillStyle = "rgba(80, 48, 24, 0.18)";
+        g.fillStyle = "rgba(29, 12, 44, 0.28)";
         g.fillRect(px, py + 10, TILE, 2);
         g.fillRect(px, py + 22, TILE, 2);
       }
       if (cell.decor === "tree") {
-        g.fillStyle = "#6a4a30";
+        g.fillStyle = "#66436e";
         g.fillRect(px + 13, py + 16, 6, 14);
-        g.fillStyle = n % 2 ? "#2f6b3a" : "#387848";
+        g.fillStyle = n % 2 ? "#548651" : "#639b59";
         g.beginPath();
         g.arc(px + 16, py + 14, 12, 0, Math.PI * 2);
         g.fill();
+        g.fillStyle = "#94bc69";
+        g.fillRect(px + 10, py + 7, 5, 3);
+        g.fillRect(px + 17, py + 10, 3, 3);
       } else if (cell.decor === "counter" || cell.decor === "shelf") {
-        g.fillStyle = cell.decor === "shelf" ? "#6d5844" : "#efe6d4";
+        g.fillStyle = cell.decor === "shelf" ? "#624071" : "#c9b5e7";
         g.fillRect(px + 2, py + 6, TILE - 4, TILE - 10);
-        g.fillStyle = "#3a2a22";
+        g.fillStyle = "#362044";
         g.fillRect(px + 4, py + 10, TILE - 8, 3);
+        g.fillStyle = cell.decor === "shelf" ? "#cc83e0" : "#c8ff6a";
+        g.fillRect(px + 4, py + 7, TILE - 8, 2);
       } else if (cell.decor === "bed") {
-        g.fillStyle = "#f3ead7";
+        g.fillStyle = "#f0e6ff";
         g.fillRect(px + 4, py + 6, TILE - 8, TILE - 10);
-        g.fillStyle = "#c45c4a";
+        g.fillStyle = "#db71bb";
         g.fillRect(px + 4, py + 6, TILE - 8, 8);
       } else if (cell.decor === "table") {
-        g.fillStyle = "#8a5a32";
+        g.fillStyle = "#94659e";
         g.fillRect(px + 6, py + 8, 20, 16);
       } else if (cell.decor === "bench") {
-        g.fillStyle = "#6b4a32";
+        g.fillStyle = "#8b609c";
         g.fillRect(px + 4, py + 12, 24, 8);
       } else if (cell.decor === "board") {
-        g.fillStyle = "#5c3a22";
+        g.fillStyle = "#352043";
         g.fillRect(px + 12, py + 16, 4, 14);
-        g.fillStyle = "#efe6d4";
+        g.fillStyle = "#e9dcff";
         g.fillRect(px + 4, py + 4, 24, 18);
-        g.fillStyle = "#c45c4a";
+        g.fillStyle = "#db71bb";
         g.fillRect(px + 7, py + 8, 14, 2);
-        g.fillStyle = "#3a3128";
+        g.fillStyle = "#412852";
         g.fillRect(px + 7, py + 12, 10, 2);
       } else if (cell.decor === "plant") {
-        g.fillStyle = "#3f6b45";
+        g.fillStyle = "#8dc26b";
         g.beginPath();
         g.arc(px + 16, py + 14, 8, 0, Math.PI * 2);
         g.fill();
-        g.fillStyle = "#8a5a32";
+        g.fillStyle = "#94659e";
         g.fillRect(px + 12, py + 20, 8, 6);
       } else if (cell.decor === "lamp") {
-        g.fillStyle = "#3a3128";
+        g.fillStyle = "#412852";
         g.fillRect(px + 14, py + 10, 4, 16);
-        g.fillStyle = "#e6c15a";
+        g.fillStyle = "#c8ff6a";
         g.beginPath();
         g.arc(px + 16, py + 8, 5, 0, Math.PI * 2);
         g.fill();
       } else if (cell.decor === "stool") {
-        g.fillStyle = "#6b4a32";
+        g.fillStyle = "#8b609c";
         g.fillRect(px + 10, py + 12, 12, 8);
       }
     }
@@ -175,16 +269,18 @@ function bake() {
     [21, 32, "PARK"],
     [41, 31, "ROW"],
   ];
-  g.font = "700 10px Outfit, sans-serif";
+  g.font = "400 10px Silkscreen, monospace";
   g.textAlign = "left";
   for (const [x, y, text] of signs) {
-    g.fillStyle = "rgba(28,23,18,0.78)";
+    g.fillStyle = "rgba(20, 10, 35, 0.92)";
     const w = g.measureText(text).width + 8;
     g.fillRect(x * TILE + 2, y * TILE + 8, w, 14);
-    g.fillStyle = "#f3ead7";
+    g.fillStyle = "#c8ff6a";
+    g.fillRect(x * TILE + 2, y * TILE + 8, 2, 14);
     g.fillText(text, x * TILE + 6, y * TILE + 19);
   }
   baked = c;
+  bakedHasPixelFont = hasPixelFont;
   return c;
 }
 
@@ -202,7 +298,7 @@ function drawPerson(
   g.save();
   g.translate(x, y + bob);
   if (face === "w") g.scale(-1, 1);
-  g.fillStyle = "rgba(28,23,18,0.28)";
+  g.fillStyle = "rgba(14, 7, 24, 0.5)";
   g.beginPath();
   g.ellipse(0, 2, 8 + wide, 3.5, 0, 0, Math.PI * 2);
   g.fill();
@@ -275,13 +371,15 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
   const base = bake();
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, viewW, viewH);
+  drawSpace(ctx, viewW, viewH);
   ctx.save();
   ctx.translate(-camX, -camY);
   ctx.drawImage(base, 0, 0);
   const period = periodName(minute);
-  const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reduced =
+    typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   const t = reduced ? 0 : performance.now() / 500;
-  ctx.fillStyle = "rgba(186, 214, 232, 0.35)";
+  ctx.fillStyle = "rgba(170, 145, 245, 0.55)";
   for (let y = 0; y < MAP_H; y++) {
     for (let x = 0; x < MAP_W; x++) {
       const c = cell(x, y);
@@ -292,7 +390,7 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
     }
   }
   if (period === "Night" || period === "Dusk") {
-    ctx.fillStyle = period === "Night" ? "rgba(230, 193, 90, 0.9)" : "rgba(230, 193, 90, 0.45)";
+    ctx.fillStyle = period === "Night" ? "rgba(200, 255, 106, 0.9)" : "rgba(200, 255, 106, 0.6)";
     for (let y = 0; y < MAP_H; y++) {
       for (let x = 0; x < MAP_W; x++) {
         const c = cell(x, y);
@@ -307,12 +405,12 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
     }
   }
   if ((town.notices ?? []).length) {
-    ctx.fillStyle = "#f3ead7";
+    ctx.fillStyle = "#f0e6ff";
     ctx.fillRect(22 * TILE + 8, 16 * TILE + 6, 14, 16);
-    ctx.fillStyle = "#c4473a";
+    ctx.fillStyle = "#ff77cb";
     ctx.fillRect(22 * TILE + 10, 16 * TILE + 9, 10, 2);
   }
-  ctx.fillStyle = "#8a5a32";
+  ctx.fillStyle = "#94659e";
   ctx.fillRect(8 * TILE + 4, 18 * TILE + 18, TILE * 3, 6);
   const order = [...AGENT_IDS].sort((a, b) => (positions[a]?.y ?? 0) - (positions[b]?.y ?? 0));
   const bob = reduced ? 0 : Math.sin(performance.now() / 160) * 1.2;
@@ -323,28 +421,35 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
     const px = pos.x * TILE + TILE / 2;
     const py = pos.y * TILE + TILE / 2 + 8;
     if (id === selected) {
-      ctx.strokeStyle = "#e08a3c";
+      ctx.strokeStyle = "#c8ff6a";
       ctx.lineWidth = 2;
       ctx.strokeRect(pos.x * TILE + 2, pos.y * TILE + 2, TILE - 4, TILE - 4);
     }
     drawPerson(ctx, id, px, py, pos.face, id === "player" ? 0 : bob);
     const label = names[id] || id;
-    ctx.font = "600 11px Outfit, sans-serif";
+    ctx.font = "600 11px Space Grotesk, sans-serif";
     ctx.textAlign = "center";
     const w = ctx.measureText(label).width + 8;
-    ctx.fillStyle = "rgba(28,23,18,0.82)";
+    ctx.fillStyle = "rgba(20, 10, 35, 0.94)";
     ctx.fillRect(px - w / 2, py - 52, w, 14);
-    ctx.fillStyle = id === "player" ? "#e7c27a" : "#f3ead7";
+    ctx.fillStyle = id === "player" ? "#c8ff6a" : "#f0e6ff";
     ctx.fillText(label, px, py - 41);
     const agent = town.agents.find((a) => a.id === id);
     const now = absMinute(opts.day, minute);
-    if (showingNow && agent?.bubble && typeof agent.bubble.text === "string" && agent.bubble.until >= now) {
+    if (
+      showingNow &&
+      agent?.bubble &&
+      typeof agent.bubble.text === "string" &&
+      agent.bubble.until >= now
+    ) {
       const text = agent.bubble.text.slice(0, 78);
-      ctx.font = "500 11px Outfit, sans-serif";
+      ctx.font = "500 11px Space Grotesk, sans-serif";
       const bw = Math.min(180, ctx.measureText(text).width + 12);
-      ctx.fillStyle = "rgba(243,234,215,0.95)";
+      ctx.fillStyle = "rgba(37, 18, 58, 0.97)";
       ctx.fillRect(px - bw / 2, py - 74, bw, 28);
-      ctx.fillStyle = "#1c1712";
+      ctx.fillStyle = "#c981ed";
+      ctx.fillRect(px - bw / 2, py - 74, bw, 1);
+      ctx.fillStyle = "#f0e6ff";
       ctx.fillText(text.length > 42 ? `${text.slice(0, 40)}…` : text, px, py - 56);
     }
   }
@@ -361,7 +466,7 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(ang);
-      ctx.fillStyle = "rgba(224, 138, 60, 0.9)";
+      ctx.fillStyle = "rgba(200, 255, 106, 0.94)";
       ctx.fillRect(0, -3, 16, 6);
       ctx.beginPath();
       ctx.moveTo(16, -8);
@@ -369,14 +474,20 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
       ctx.lineTo(16, 8);
       ctx.fill();
       ctx.restore();
-      ctx.font = "600 11px Outfit, sans-serif";
-      ctx.fillStyle = "#f3ead7";
+      ctx.font = "600 11px Space Grotesk, sans-serif";
+      ctx.fillStyle = "#f0e6ff";
       ctx.textAlign = "center";
       ctx.fillText("Hobbs", cx, cy - 14);
     }
   }
   const shade =
-    period === "Night" ? "rgba(18, 28, 58, 0.42)" : period === "Dusk" ? "rgba(120, 58, 28, 0.18)" : period === "Dawn" ? "rgba(214, 140, 90, 0.16)" : "rgba(0,0,0,0)";
+    period === "Night"
+      ? "rgba(15, 8, 37, 0.26)"
+      : period === "Dusk"
+        ? "rgba(79, 20, 111, 0.16)"
+        : period === "Dawn"
+          ? "rgba(167, 81, 184, 0.1)"
+          : "rgba(0,0,0,0)";
   if (period !== "Day") {
     ctx.fillStyle = shade;
     ctx.fillRect(0, 0, viewW, viewH);
