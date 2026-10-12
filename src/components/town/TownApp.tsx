@@ -4,7 +4,6 @@ import {
   Download,
   MapPin,
   Pause,
-  Pin,
   Play,
   Save,
   SkipForward,
@@ -221,7 +220,6 @@ export function TownApp() {
   const [speed, setSpeed] = useState<0 | 1 | 4>(speedRef.current);
   const [replay, setReplay] = useState<Replay | null>(null);
   const [panel, setPanel] = useState<AgentId | null>(null);
-  const [pinned, setPinned] = useState(false);
   const [board, setBoard] = useState(false);
   const [thinking, setThinking] = useState("");
   const [hiccup, setHiccup] = useState(false);
@@ -258,7 +256,6 @@ export function TownApp() {
     setRecoverNote("");
     panelRef.current = null;
     setPanel(null);
-    setPinned(false);
     boardRef.current = false;
     setBoard(false);
     setCrowd(null);
@@ -429,10 +426,7 @@ export function TownApp() {
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
       if (event.code === "Escape") {
-        if (panelRef.current) {
-          setPinned(false);
-          setPanel(null);
-        }
+        if (panelRef.current) setPanel(null);
         setCrowd(null);
         if (boardRef.current) setBoard(false);
         return;
@@ -754,18 +748,17 @@ export function TownApp() {
   function approach(id: AgentId) {
     const live = townRef.current;
     if (!live) return;
-    const target: AgentId = pinned && id !== "player" ? "kevin" : id;
-    if (target !== "player") {
+    if (id !== "player") {
       const player = agentById(live, "player");
-      const other = agentById(live, target);
+      const other = agentById(live, id);
       if (!inTalkRange(player.tile.x, player.tile.y, other.tile.x, other.tile.y)) {
         setFarNote(`${other.name} is too far to hear you. Walk closer.`);
         return;
       }
     }
     setFarNote("");
-    setPanel(target);
-    if (target === "kevin" && (live.guide ?? 0) < 2) {
+    setPanel(id);
+    if (id === "kevin" && (live.guide ?? 0) < 2) {
       live.guide = 2;
       persistTown(live);
       setTick((n) => n + 1);
@@ -807,7 +800,7 @@ export function TownApp() {
 
   async function sendLine() {
     const live = townRef.current;
-    const who = pinned ? "kevin" : panel;
+    const who = panel;
     if (!live || !who || who === "player" || pendingRef.current || replayRef.current !== null)
       return;
     const text = draft.trim().slice(0, 400);
@@ -1083,7 +1076,7 @@ export function TownApp() {
   const town = townRef.current;
   void tick;
   const player = agentById(town, "player");
-  const shown = pinned ? "kevin" : panel;
+  const shown = panel;
   panelRef.current = shown;
   boardRef.current = board;
   const near = onBoard(player.tile.x, player.tile.y);
@@ -1317,7 +1310,6 @@ export function TownApp() {
           <Mind
             town={town}
             agent={agentById(town, shown)}
-            pinned={pinned}
             draft={draft}
             setDraft={setDraft}
             busy={thinking !== "" || replay !== null}
@@ -1325,14 +1317,7 @@ export function TownApp() {
             sendNote={sendNote}
             localDialogue={checked && localReplies}
             onInspect={setInspect}
-            onClose={() => {
-              setPinned(false);
-              setPanel(null);
-            }}
-            onPin={() => {
-              setPinned((v) => !v);
-              setPanel("kevin");
-            }}
+            onClose={() => setPanel(null)}
             onSend={() => void sendLine()}
             onAction={(id) => chooseAction(town, shown, id)}
           />
@@ -1602,7 +1587,6 @@ function Pad({
 function Mind({
   town,
   agent,
-  pinned,
   draft,
   setDraft,
   busy,
@@ -1611,13 +1595,11 @@ function Mind({
   localDialogue,
   onInspect,
   onClose,
-  onPin,
   onSend,
   onAction,
 }: {
   town: Town;
   agent: Agent;
-  pinned: boolean;
   draft: string;
   setDraft: (value: string) => void;
   busy: boolean;
@@ -1626,7 +1608,6 @@ function Mind({
   localDialogue: boolean;
   onInspect: (value: boolean) => void;
   onClose: () => void;
-  onPin: () => void;
   onSend: () => void;
   onAction: (id: string) => void;
 }) {
@@ -1674,9 +1655,6 @@ function Mind({
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="btn" type="button" data-on={pinned ? "true" : "false"} onClick={onPin}>
-            <Pin className="inline size-4" aria-hidden /> {pinned ? "Unpin" : "Pin Kevin"}
-          </button>
           <button className="btn" type="button" onClick={onClose} aria-label="Close conversation">
             <X className="size-4" />
           </button>
