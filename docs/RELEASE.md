@@ -1,3 +1,40 @@
+# Character social UI release — 12 October 2026
+
+The character cards and town conversation view are live at https://thegame.grok.me. The user asked Codex to finish PR #23 and get it live. PR #23 was already merged; Codex republished the existing Grok project at approximately **21:12 UTC** and observed **Published / Live**, then independently reloaded the public site. The existing host, access setting, provider configuration and platform assets were preserved.
+
+## Source and checks
+
+- [PR #23](https://github.com/arwyn6969/the-game/pull/23) merged as `8a35f3c877297b7a588aa8d38d6590e486f917cd`. Its [CI passed](https://github.com/arwyn6969/the-game/actions/runs/38306356336).
+- The builder reported its current preview as main `bebee6e6a4e66a755797c10138f43cde5999658c`, Git tree `98088b36bcc38eeb644f1808f8b7c55968819c99`. This includes the subsequent shortcut cleanup and remembered-deeds changes in PRs #24–27. [Main CI passed](https://github.com/arwyn6969/the-game/actions/runs/38307500398): typecheck, lint, town tests, full tests, diagnostics and production build with database/model credentials blank.
+- Codex reran the current full suite on Node 24.19.0: **381 script + 55 app/auth tests = 436 passed**, no failures or skips. The original feature's broader local browser validation is recorded in [its handoff](handoffs/character-social-ui.md).
+- Before publication, a fresh preview town verified name entry, all eight portrait controls and the Overview, Strengths and Progress tabs. No model request or production database migration was made in these release checks.
+
+The builder's complete directory was not compared byte for byte with Git. Existing platform/share-image differences remain. No immutable deployment identifier was supplied.
+
+## Independent hosted evidence
+
+After publication, the public DOM and an independent HTTP read both referenced:
+
+- `/assets/styles-CLWjHggc.css`
+- `/assets/index-aLD7_fZq.js`
+- `/assets/routes-Caou6kDT.js`
+
+The prior public JavaScript was `index-DfOxM9UA.js` / `routes-tO5YEMX5.js`. The new route contains the character social controls and the latest closed-bread-tab follow-up, which was absent from the prior route. This corroborates publication of the current candidate rather than only a successful button click.
+
+Hosted checks at **1280×800** and **390×844** verified character overview cards, the rapport dial, conversation history, the Town life transcript, explicit watch mode, camera following and Return to me. The phone card retained access to the portrait strip and time controls; neither layout had horizontal overflow. Temporary viewport overrides were reset afterward.
+
+The existing browser town was exported before publication and after reload/inspection. Identity, all actor locations and balances, every original memory text, agreements and social history were retained. Day 1, 07:00 and Pause were retained. Export bytes differ only because save loading added explicit `seed: false` to the existing Data and Amelia memories; no memory text was changed or added. Private exports and screenshots remain ignored under `artifacts/social-release/`.
+
+This Chrome profile still reports the previously documented React hydration warning alongside wallet-extension errors. No functional failure was observed. This is not a claim of an error-free browser session. Hosted file import/recovery, new NPC exchanges with score/plan changes, real provider replies, full wage/bread transactions and physical-device keyboards were not exercised in this release smoke check; the relevant local regressions remain passed.
+
+## Recovery
+
+The prior public bundle identifiers and the local before/after town exports are recorded in the ignored release artifacts. The GitHub runtime source before this publication was already merged; no Git history was rewritten. To recover an earlier application version, verify the intended Git source and use a new revert commit and this same project's publication control, preserving platform assets and browser towns. There is no verified immutable deployment ID for one-click rollback.
+
+The records below describe earlier releases.
+
+---
+
 # Graphics release — 12 October 2026
 
 The town graphics are live at https://thegame.grok.me. The user authorized the release and sending the import/publication instruction to the existing Grok Build chat. Codex used that project's **Re-Publish** control, observed **Published / Live**, and independently reloaded the public site to verify the new artwork and asset versions. The existing hosting project and access setting were preserved.
