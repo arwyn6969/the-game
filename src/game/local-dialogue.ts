@@ -1,6 +1,6 @@
 import type { Agent, Memory, Town } from "./types";
 import { memorySource } from "./conversation";
-import { PLAYER_CAFE_SHIFT, playerActions } from "./effects";
+import { BABA_LOAF, PLAYER_CAFE_SHIFT, playerActions } from "./effects";
 import { absMinute, agentById } from "./memory";
 import { formatClock, mentionsSeed } from "./text";
 import { placeTitle } from "./world";
@@ -280,4 +280,35 @@ export function recentCafePaymentGreeting(town: Town): string | null {
   return receipt && receipt.day >= town.day - 1
     ? `Hobbs Cafe paid you 5 on day ${receipt.day} at ${formatClock(receipt.minute)} for your shift.`
     : null;
+}
+
+/** An open bread tab stays mentionable. A closed one is mentioned only while it is recent. */
+export function recentBreadGreeting(town: Town): string | null {
+  const player = agentById(town, "player");
+  const debt = (town.favors ?? []).find(
+    (favor) =>
+      favor.from === "player" &&
+      favor.to === "baba" &&
+      favor.status === "owed" &&
+      /bread/i.test(favor.text),
+  );
+  const carrying = (player.projects ?? []).some(
+    (project) =>
+      project.owner === "player" && project.status === "open" && project.text === BABA_LOAF,
+  );
+  if (debt) return null;
+  const notes: string[] = [];
+  if (carrying) notes.push("You are carrying the loaf.");
+  const paid = [...(agentById(town, "baba").memories ?? [])]
+    .reverse()
+    .find(
+      (memory) =>
+        memory.type === "favor" &&
+        /bread/i.test(memory.text) &&
+        / is paid\./i.test(memory.text) &&
+        memory.day >= town.day - 1 &&
+        absMinute(memory.day, memory.minute) <= absMinute(town.day, town.minute),
+    );
+  if (paid) notes.push("You paid the bread tab. That one is closed.");
+  return notes.join(" ") || null;
 }
