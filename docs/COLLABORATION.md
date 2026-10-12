@@ -1,5 +1,15 @@
 # Working with Sol and Grok
 
+## Current entry point — 12 October 2026
+
+The first-day and trust-repair work is merged and published. Start new work from the [roadmap](ROADMAP.md), [community-project packets](implementation/community-project.md), [Sol brief](prompts/SOL-6.1.md) and [release record](RELEASE.md). The setup-branch instructions below are historical; do not restart the old foundation assignment.
+
+For the next packet, fetch and identify current main, then include this reviewed planning pack if it is still on PR #5. Sol owns S1 engine/account/save work. PR #11 currently owns an unmerged visual redesign of TownApp, render, styles and root assets. Avoid concurrent edits; define an additive UI contract, and assign one integration owner after the visual baseline is stable. Do not silently merge that draft or replace its whole-project source. If only one implementation agent is active, that agent can perform the later explicitly assigned UI integration on its own branch. No chat is synchronised or messaged merely because this document names it.
+
+Each handoff records packet, base/head, behavior, tests, save migration, open limitations and the next packet. User-authorised scope governs implementation; these briefs do not themselves authorise a new publication or production configuration change.
+
+## Original first-day workflow (historical)
+
 Prepared 11 October 2026 for `arwyn6969/the-game`. Live reference: https://thegame.grok.me.
 
 The first completed lane diffs have now been reviewed and combined in `codex/first-day-integration`. See [the release record](RELEASE.md) for current checks and publication status. The setup and lane prompts below describe the initial division of work; start future iterations from the reviewed integrated `main` once its release PR has merged.

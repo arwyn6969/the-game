@@ -1,5 +1,7 @@
 # Verified starting point
 
+Historical baseline, retained for evidence. Its failures and publication status are not current: the trust repair release passed all automated checks and was published on 12 October 2026. Use [RELEASE.md](RELEASE.md) for current validation and [ROADMAP.md](ROADMAP.md) for the next assignment.
+
 Reviewed 11 October 2026. Repository baseline: [`ee5ff6575300bbe8a3ff6509ffb1bc2fcd1e85e3`](https://github.com/arwyn6969/the-game/commit/ee5ff6575300bbe8a3ff6509ffb1bc2fcd1e85e3), “Sync the full town app, not only the simulation slice.” Live reference: https://thegame.grok.me. The live deployment's exact source revision was not independently established.
 
 The updated export includes the React/TanStack Start app, Vite configuration, npm manifest/lockfile, auth/app-data infrastructure, platform scripts, assets and deployment configuration. The core game, TownApp, mind gateway and original town-day check are unchanged from the earlier `1cc7559` review. The previously observed game issues therefore still need work; the scenarios below were rerun against this full export.

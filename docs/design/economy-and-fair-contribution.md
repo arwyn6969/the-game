@@ -1,6 +1,6 @@
 # Value, investment and fair contribution
 
-Proposed design, 11 October 2026, following Arwyn's question about where value comes from, when it is created or invested, where it goes and who accounts for it. Astra reconsidered its earlier recommendation: defer the generic job system, but include paid, budgeted contributions in the first shared project. These rules are a proposal; they are not implemented.
+Proposed design, begun 11 October and updated 12 October 2026, following Arwyn's question about where value comes from, when it is created or invested, where it goes and who accounts for it. Include paid, budgeted contributions in the first shared project; defer a broader job or banking system. These rules are a proposal, not released mechanics. The [roadmap](../ROADMAP.md) records current status; the [implementation plan](../implementation/community-project.md) pins packet boundaries, legacy-work handling and paid completion units.
 
 ## What the economy should represent
 
@@ -14,20 +14,20 @@ Investment begins when residents commit existing funds, time or resources to an 
 
 ## What the reviewed code does
 
-At main code `88f5039ab5743c3b6370a64b2e6d88a7de128da0`:
+Rechecked against published runtime `4e7786c30431e6701c8477d6ddb0b5ffa8ba8ca1` on 12 October 2026 (the same underlying economy rules were observed at `88f5039`):
 
 - `town.ts` seeds 39 coins across six personal purses and 38 in the two shop tills: **77 coins** total. No explicit issuer or opening ledger records this endowment.
 - `sim.ts` transfers wages from a till to a worker. Each midnight it also adds up to 12 café coins and 8 grocery coins without a named source. Its absolute caps can reduce an imported till balance above the cap; a cap is not a recorded expense.
 - `effects.ts` settles a bread tab into Baba's personal purse, while grocery wages use the separate till. Shop income and payroll therefore do not form an explained business account.
 - Balances, debt objects and prose memories provide partial records. There is no comprehensive transaction journal, project budget or ownership record.
 
-These are source observations, not claims about the current hosted build. Resolve them before presenting a complete or fair economy. Preserve existing towns and their balances when introducing the ledger; record a migration opening snapshot, not invented historical earnings.
+These are observations of the released source, not a new hosted economy playtest. Resolve them before presenting a complete or fair economy. Preserve existing towns and their balances when introducing the ledger; record a migration opening snapshot, not invented historical earnings. A correct ledger is necessary but does not establish fairness by itself.
 
 Focused offline engine probes confirmed the midnight effect: a synthetic town with fresh balances advanced from total money 77 to 97 in that step. A constructed above-cap fixture with 50 in each till advanced from 139 to 111, removing 28. These isolate the existing rules; they do not model a whole played day. No gameplay code changed for this design update.
 
 ## A funded first project
 
-Use a grant-funded library index owned in common. The following is one illustrative budget, not a universal wage scale:
+Use a grant-funded library index owned in common. The following is the default prototype budget, not a universal wage scale. The first two checks may share a worker; an independent lookup uses a different worker. All completion evidence and cancellation terms are defined before acceptance in the implementation plan.
 
 | Event                                         | Transfer or allocation                                                          | Result                                                                                                                       |
 | --------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -37,7 +37,9 @@ Use a grant-funded library index owned in common. The following is one illustrat
 | A correction is needed                        | Offer a separate correction task funded by the remaining 2                      | Corrective work is paid; it is not an unpaid obligation imposed after failure.                                               |
 | Project closes without using the reserve      | Return 1 to each contributing till after all liabilities settle                 | No project balance or obligation silently disappears.                                                                        |
 
-Reserve existing payroll and other obligations before approving a contribution. A funded project cannot spend wages already promised elsewhere. Show comparable task scope and completion criteria before acceptance; revise future offers if actual burdens differ. Any necessary coordination or maintenance must also be budgeted or explicitly bounded voluntary work. Declining is allowed without a hidden penalty.
+Reserve existing payroll and other obligations before approving a contribution. Any unresolved or underfunded prior wage claim makes that donor account ineligible until it is resolved and protected; a positive till balance alone is not permission to give it away. A funded project cannot spend wages already promised elsewhere. Show comparable task scope and completion criteria before acceptance; revise future offers if actual burdens differ. Any necessary coordination or maintenance must also be budgeted or explicitly bounded voluntary work. Declining is allowed without a hidden penalty.
+
+On early closure, settle earned liabilities and release only unearned reservations, then return **all** remaining project custody equally to the two equal contributors: 4 each before work, 3 each after one task, 1 each after three tasks, or zero after all three tasks and the correction. An outstanding payable blocks closure. The table's 1-coin refunds describe the completed three-task path only.
 
 Funders bear the risk that honestly performed work produces an unsuccessful experiment. Pay completed agreed tasks regardless of the later lookup result. Partial completion, cancellation and correction terms are visible in advance. Learning that a method fails can be informative without pretending the index now works.
 
@@ -64,4 +66,4 @@ A cooperative approach is a useful starting proposal: voluntary participation, s
 5. Let people decline, inspect their terms and report a discrepancy. Ensure lower starting wealth does not block access to paid tasks or the common result. Do not turn contribution into a compulsory morality or reputation score.
 6. Continue day-5/day-30 economy simulations after the bounded example. Measure concentration, access to work, unpaid obligations and stalled circulation before choosing any future issuance or redistribution rule. Do not claim long-run fairness from this small demonstration.
 
-The first implementation remains trustworthy actions and recovery. The next project packet now includes this minimum accounting contract and paid contributions. General shifts, a broad trading system, loans, new providers and additional residents remain separate work.
+Trustworthy actions and recovery are now released. Next, S1 supplies the accounting/work foundation and migration tests; S2 activates the complete rules with the funded library UI and matching terms. Do not activate an incomplete ledger or silently change live financial terms in a helper-only packet. Existing wages must be protected before project funding. Preserve ambiguous legacy work as labelled evidence, never invented arrears; the implementation plan specifies the bounded recognition and suspension policy. A broad trading system, loans, new providers and additional residents remain separate work.

@@ -1,83 +1,87 @@
-# THE GAME: a stronger town and a route to Kevin World
+# THE GAME: roadmap for the next playable week
 
-Proposed producer plan, updated after the independent Astra review on 11 October 2026. This is a direction for implementation and playtesting, not a record of completed features or a promise of a measured tenfold improvement. Read the [completed Astra decision memo](reviews/2026-10-11-astra-direction.md), its [new evidence](reviews/2026-10-11-astra-evidence.md), and the earlier [playability review](reviews/2026-10-11-playability.md). The [Astra brief](prompts/ASTRA.md) remains the assignment record.
+Updated 12 October 2026. This is the current planning entry point. The dated reviews are historical evidence; proposed features below are not shipped features.
 
-**Recommended next proof: one small, funded library project that changes how residents work with the player.** Give three records a usable index, pay for agreed contributions from an identified budget, show an immediate successful or failed lookup, and remember the player's part tomorrow. Arwyn's subsequent value-and-fairness requirement brings basic accounting and paid contributions into this demonstration; a generic shift system still comes later. See [value, investment and fair contribution](design/economy-and-fair-contribution.md). Astra's three packets—trustworthy choices, one consequential contribution, then return/playtest/release—remain the delivery order.
+**Product promise: “I come back because of what I did yesterday.”** Build a small community where chosen work produces a useful result, payment is explainable, and people remember the player's actual contribution. Keep the existing five residents and the player. The original Kevin World think-tank vision becomes playable through their different contributions to a shared problem; the proposed larger cast comes later.
 
-## The experience we want
+## Read and build
 
-**“I come back because of what I did yesterday.”**
+1. [Product strategy and first week](design/consequential-first-week.md): the intended experience, choices, bread direction and playtest gates.
+2. [Value, investment and fair contribution](design/economy-and-fair-contribution.md): economic principles, the eight-coin example and ownership.
+3. [Implementation plan](implementation/community-project.md): ordered packets, state contracts, migration and acceptance tests.
+4. [Sol 6.1 brief](prompts/SOL-6.1.md): ready-to-use assignment for the first packet, with instructions for subsequent packets.
+5. [Release record](RELEASE.md): what was actually published, checked and left unverified.
 
-The player lives in a small community, makes commitments, contributes to projects and sees people respond. Residents' expertise gives them a reason to notice different things, disagree and help one another. Their work becomes visible in the town: a repaired object, a changed routine, an unfinished promise, a public notice or a story someone remembers.
+## Verified starting point
 
-This connects the current pixel town to Arwyn's original Kevin World think-tank idea. The present cast and personal history remain the starting point. The original proposed 25 residents are a future expansion, to be introduced when each brings a new relationship, activity or problem worth playing.
+The trust-repair game was published to https://thegame.grok.me on 12 October 2026. Runtime source is `4e7786c30431e6701c8477d6ddb0b5ffa8ba8ca1`; `900015b2a3bba0a0826ea6d814f72af2f47dc7f0` adds its release record. This planning branch includes that main revision. Future implementation must fetch and report its actual base; these SHAs identify the reviewed baseline, not a command to discard newer work.
 
-An illustrative future project could involve Kevin and Arwyn repairing a broken library catalogue: his technology interest meets her interest in records, the player can contribute or decline, and success changes what the library offers. That project is a design example, not an implemented feature. Expertise should affect what people do together as well as what they say.
+The released tree passed 317 script/app/auth tests, 64 town tests, typecheck, lint with one inherited warning, diagnostics and a production build. Hosted checks confirmed the new bundles, explicit shift choices, desktop/phone movement and saved progress after reload. Hosted import/recovery was not reverified because Chrome file-upload access was unavailable. See the release record for the remaining limits.
 
-## What “10×” would look like in play
+| Capability         | Current state                                                                           | Next gap                                                                               |
+| ------------------ | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Town and residents | Five residents, places, routines, movement, time controls and replay                    | Make residents' different knowledge useful in an activity                              |
+| Talk and memory    | Online dialogue, offline fallback, notices, stored exchanges and retrieval              | Make public consequences understandable; keep private knowledge private                |
+| Player consent     | Explicit Choices for bread, eating, payment and shifts; stale/repeated actions rejected | Reuse this authority boundary for funded tasks                                         |
+| Work               | Cafe shift 16:00–19:00; full attendance can earn 5 from its till                        | Useful output, reserved pay, employer-specific progress and durable unpaid obligations |
+| Bread              | Receive one loaf with a tab of 2; eat it; repay Baba separately                         | Eating has no health, energy or work benefit; sharing is unbuilt                       |
+| Economy            | Personal purses, business tills, debts and wage transfers                               | Unexplained nightly funding, till caps and incomplete accounts; no project ledger      |
+| Persistence        | Browser saves, v1 import/export, recovery and save warnings                             | Account-based cross-device saves and conflict handling                                 |
+| Community project  | Design only                                                                             | Funded library index, observable use, corrections and attribution                      |
 
-| Today’s verified limitation                                               | Desired experience                                                               | Evidence we need                                                                                      |
-| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| A question about bread can open a debt; a refusal to pay can spend money. | An offer is clear, and the player chooses whether to accept.                     | Inquiries and refusals preserve state; accepted actions apply once and survive reload.                |
-| Asking for work cannot establish the advertised offline shift.            | A player accepts work, sees its terms, attends and receives earned pay.          | Complete the journey through normal controls without a key, including declining or leaving.           |
-| A phone reply can be below the visible conversation history.              | An exchange is readable and responsive.                                          | New replies stay visible while following the conversation; reading older messages preserves position. |
-| A purchased tab has no useful item effect; scenery offers few actions.    | Places give the player small, meaningful choices.                                | Demonstrate one useful purchase and one object or project action with a visible consequence.          |
-| Nearby public activity is absent from the player’s journal.               | The player can follow a community story and ask about what they witnessed.       | Witnessed events can be recalled; distant and private events remain private.                          |
-| Much of NPC continuity is visible mainly through inspection.              | Yesterday’s promise or contribution changes tomorrow’s conversation or behavior. | A fulfilled or broken commitment is acknowledged after reload and a day transition.                   |
-| Source and the hosted site differ.                                        | Everyone plays the same identified release.                                      | Verify the hosted build identifier and repeat the playable journey on that build.                     |
+## Current design assessment
 
-The improvement is a connected experience: **choice → action → visible consequence → memory → a different tomorrow**. More characters and richer language can grow around that loop.
+**Overall: 5/10 as a game today.** This is a qualitative assessment from the code, release evidence and independent Astra review, not measured retention. The concept has a strong identity, but too few actions make a useful difference tomorrow. Passing tests establish correctness within their coverage; they do not establish enjoyment.
 
-## Delivery sequence
+| Area                 | Design score | Reason                                                                            |
+| -------------------- | ------------ | --------------------------------------------------------------------------------- |
+| Vision and identity  | 8/10         | A persistent community with distinct expertise has a clear direction              |
+| First session        | 5/10         | Work and bread can be chosen; interesting decisions and useful rewards are scarce |
+| Reason to return     | 3/10         | State persists, but few consequences change the next visit                        |
+| Economy and fairness | 3/10         | Consent works; production, investment and complete accounting remain weak         |
+| Trust and usability  | 7/10         | Save and interaction repairs are released; AI waits and unsupported prose remain  |
 
-| Stage                                      | Work                                                                                                                                                                                                                                                                    | Exit condition                                                                                                                                                                  |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0. Bring the project together              | Review the existing documentation and retrieval PRs; agree on a source revision; give the local and cloud chats the same brief and ownership. Record source, preview and published revisions separately.                                                                | Each active chat reports its actual checkout, branch and head. One shared roadmap identifies the next change.                                                                   |
-| 1. Make interactions trustworthy           | Correct transaction intent, newest-reply visibility, unreadable-save recovery and misleading status/debt labels. Deliver small PRs with focused acceptance cases.                                                                                                       | The reproduced inquiries cannot spend money, replies are visible and a damaged save has a recovery path.                                                                        |
-| 2. Complete one consequential contribution | Build the three-record library index with an identified budget, paid task agreements, reserved wages, a reconciled ledger and common ownership. Include refusal, different expertise, immediate lookup success/failure and next-day acknowledgment.                     | A fresh player changes the library through normal controls without a key, explains what their choice did, and finds it preserved after reload and a game-day transition.        |
-| 3. Return, measure and release             | Finish the bounded first-week correction and credit states, witness privacy and responsive background jobs. Run the five-player test, then prepare publication through the existing host and verify the exact released build.                                           | Players recognize their consequences and some choose to return; desktop/phone journeys and old-save checks pass on the identified hosted version after authorized publication.  |
-| 4. Carry the town and grow its ideas       | Expand into optional shifts with employer-bound attendance, persistent unpaid wages and a purposeful purchase. Add the signed-in person's cross-device save with offline cache and conflict recovery. Trial richer dialogue and new specialists against measured needs. | The first contribution is already compelling; work is reachable and honest, account isolation/recovery works, and each AI or specialist addition improves an observed weakness. |
+## Three priorities
 
-Astra has completed the independent review and reconsidered the economic scope after Arwyn's follow-up. Stage 1 repairs remain next. Stage 2 now includes a funded project account, reserved payment for agreed tasks, explicit ownership and an auditable transaction ledger. Assess money spent, work performed and benefit delivered separately; volunteers must not be a hidden requirement. The wider shift economy can follow. Account save remains after the first playable day, keeping each person's town separate.
+1. **One useful, fairly funded contribution.** Build a three-record library index with an identified budget, reserved task payments, different resident expertise and an actual lookup that can succeed or fail. Show money spent, work done and benefit delivered separately.
+2. **A different tomorrow.** Carry the result through reload and game-day changes. A specific mistake produces a paid correction opportunity; a working index changes a visible library interaction. Acknowledge the player's real contribution, refusal or withdrawal without inventing feelings or promises.
+3. **An understandable first session.** Within a target 10–15 minutes, let a fresh player discover a need, read terms, choose an action and see a result. Keep controls responsive and offer a brief journal of agreements and outcomes.
 
-The first implementation should finish the existing [PR #7](https://github.com/arwyn6969/the-game/pull/7), not duplicate it. Review found that model-proposed payments still bypass player consent, offline variants still transact, reply following can scroll past the answer, and recovery can truncate a manual backup or resume a paused town. Distinguish asking, refusing and explicitly accepting at the authoritative action boundary. Verify full backup bytes and actual chat visibility, not only helper tests. The [Astra packets](reviews/2026-10-11-astra-direction.md#three-implementation-packets) define benefits, file ownership, acceptance cases and stopping points.
+## Delivery order
 
-## A useful test of the ambition
+These are bounded implementation packets, not parallel permission to edit the same files. The implementation plan owns detailed contracts and stopping points.
 
-Start with five fresh players and a short desktop/phone session, followed by reopening their town and observing the next game day. Record where each hesitates, what they believe happened, and whether the game matches that belief. Ask Arwyn to show one confusing moment and one moment worth returning for; the producer translates those examples into the next task.
+| Packet | Scope                                                          | Exit condition                                                                                                                     | Status                               |
+| ------ | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| S0     | Trust repairs and identified publication                       | Explicit choices, recovery, reply visibility and verified live source                                                              | Released; preserve regressions       |
+| S1     | Accounts, reservations and migration                           | Account commands reconcile; funded-work/migration tests pass; all current money paths have an activation adapter plan              | Next                                 |
+| S2     | Three-record library project                                   | A chosen paid contribution produces a working or visibly provisional index through ordinary controls, without a key                | Planned; depends on S1               |
+| S3     | Tomorrow, week-one consequences and responsiveness             | Outcomes, attribution and bounded corrections persist; public knowledge has a source; delayed background AI does not block walking | Planned; depends on S2               |
+| S4     | Purposeful bread and one optional shared meal                  | Inventory use is discoverable; voluntary sharing produces a specific social encounter and remembered outcome                       | Planned; after the project is useful |
+| S5     | Observe players and release the next slice                     | Journey and save checks pass; playtest evidence supports the loop; separately authorised hosted publication is verified            | Planned                              |
+| Later  | Cross-device saves, richer dialogue and additional specialists | Each addition solves an observed problem; account isolation/conflicts and provider budgets are tested                              | Deferred                             |
 
-Proposed diagnostic targets:
+S1 must prevent new project spending from consuming existing payroll commitments. It must also resolve legacy wage progress without inventing lost earnings or discarding recorded work. There is no blanket approval here for an expanded banking, trading or generic job system.
 
-- At least four of five players perform a chosen contribution or refusal and explain its visible consequence without being told the controls. Target a 10–15 minute demonstration, then measure actual completion time.
-- At least four can explain one consequence of their choice and recognize its acknowledgment on the next game day; at least three choose an optional further visit without being directed to a reward.
-- The reproduced inquiry/refusal cases create no transaction, and recovery tests preserve the original save bytes.
-- Delayed or missing AI permits movement and useful play; measure response delay rather than describing it as “fast.”
-- Each release has a recorded source revision, passing applicable checks and hosted verification.
+## First-session and first-week proof
 
-These small playtests diagnose confusion; they do not establish retention or a tenfold business result. Compare successive builds on the same journey and use the observations to decide the next investment.
+Day one: discover the library problem, inspect its funded offer, choose or refuse one bounded task, see the resulting lookup, and inspect the receipt. The player can leave with a concrete reason to revisit. Day two: show an actual use or an identified error, remember the player's part and offer any correction with its own funded terms. During the first game week: preserve the common result, record use and credit, and let the player choose further involvement. Progress uses game time; absence from the app creates no punishment or unchosen obligations.
 
-## Working as one project
+Run five uncoached 10–15 minute sessions across desktop and phone, then reopen each saved town on the next game day. Diagnostic targets: four can explain their action's visible consequence; four recognise it after reopening; three voluntarily choose a further visit. Record confusion and quotes. These targets do not establish population retention. If people understand the result but do not care, revise the problem before expanding the cast or map.
 
-The canonical repository is [arwyn6969/the-game](https://github.com/arwyn6969/the-game). `arwyn6969/THE_GAME` is the older Python simulator. The local project folder and cloud checkout are on separate machines; ordinary Git branches and explicit handoffs connect their work.
+## Coordination and open branches
 
-- **Arwyn:** creative direction and examples from play. No API key is needed to judge the first-day loop.
-- **Astra:** completed the independent product and systems review, with recommendations, tradeoffs and three implementation packets. A coding assignment is separate.
-- **Producer / Sol:** turn the chosen direction into small engine/data changes, coordinate interfaces, integrate reviewed work and record release evidence.
-- **Grok / experience work:** readable dialogue, contextual interaction, touch/keyboard behavior and visual feedback against real engine outcomes. Hosting work uses the actual existing publishing session.
+Checked on 12 October 2026; recheck before implementation:
 
-These remain proposed implementation responsibilities. Astra and a technical reviewer were dispatched as subagents for this review; the existing local/cloud project chats were not messaged or synchronized by that action. Each implementation task should name its files, behavior, acceptance cases and baseline. Avoid concurrent edits to shared orchestration. The feature handoff identifies the commit and checks; a document does not automatically message another chat.
+- [PR #5](https://github.com/arwyn6969/the-game/pull/5) contains this planning pack and the completed historical Astra review. Plans are not runtime changes.
+- [PR #11](https://github.com/arwyn6969/the-game/pull/11) is an unmerged visual redesign at `971c52ab4a0623a4a6453d1125bbb075e2587fef`. It touches TownApp, render, styles and root assets. Do not overwrite it with an older whole-project export or merge it implicitly into a gameplay packet. Start engine work independently; establish a stable UI baseline before integration.
+- [PR #9](https://github.com/arwyn6969/the-game/pull/9) is a contributor handoff draft. Reconcile its README edits when integrating documentation.
+- [PR #6](https://github.com/arwyn6969/the-game/pull/6) is an optional technology-memory preference and original Kevin World notes. It is not required for the library's deterministic expertise roles and has not been published.
 
-Keep the backlog and these briefs in the repository. A chat should begin by checking the current branch and plan, and end by recording its result and the next unresolved behavior. The user should not have to carry contradictory status between chats.
+Use one checkout/branch per active implementation lane. Sol owns simulation, accounts, save contracts and tests. UI integration has an explicitly named owner once the visual baseline is agreed; the original Sol/Grok lane split is not a reason to leave a requested integration unfinished. Read [coordination guidance](COLLABORATION.md) and preserve the host, provider, auth and PWA contracts.
 
-## Current source and open decisions
+## Decision boundaries
 
-Checked on 11 October 2026:
+Approved planning direction: a funded common library index, fair task payment, persistent consequences, then optional useful bread interactions. Starting totals, payment amounts and player-test thresholds below are prototype defaults to test, not universal economic rules. The default eight-coin project budget is deliberately small. A changed budget or task scope must retain the accounting and fairness invariants and be explained in the implementation handoff.
 
-- [PR #4](https://github.com/arwyn6969/the-game/pull/4) is merged; main is `88f5039ab5743c3b6370a64b2e6d88a7de128da0`. The integrated source passed 295 full tests. Its exact hosted publication has not been established.
-- [PR #5](https://github.com/arwyn6969/the-game/pull/5) is the documentation review and proposed plan, now including the completed Astra review. It preserves the later account-save requirement. Documentation is not a gameplay fix.
-- [PR #7](https://github.com/arwyn6969/the-game/pull/7), reviewed at `2652f719cbe39aee3466b89c8275b2d0afe49d65`, is an open, unmerged trust repair. The [new review evidence](reviews/2026-10-11-astra-evidence.md) records remaining defects despite passing focused tests. Do not count this packet as finished.
-- [PR #6](https://github.com/arwyn6969/the-game/pull/6), head `12e8358d0d869f8a7c25387ee39cbc815d9bf284`, is a draft technology-memory preference and [Kevin World source notes](https://github.com/arwyn6969/the-game/blob/codex/kevin-technology-retrieval/docs/KEVIN_WORLD.md). It passed 48 town and 301 full tests and CI. It has not been merged or published. The preference is not evidence that the dialogue is more enjoyable.
-- Public assets observed earlier that day omit specific integrated save fixes. No cloud publishing session is available. A release needs that access and verification against the hosted site; merging GitHub alone does not complete it.
-- The runtime remains xAI; no alternative-provider adapter or key has been configured. Groq is a candidate for a free trial once its account/model allowance and response quality are checked. First-day rules remain usable without AI. Provider integration is a separate task, with server-side secrets and limits.
-
-Astra recommends foregrounding expertise through one practical shared problem while retaining ordinary town life and the existing personal stories. Its rejected alternative is a large autonomous expert panel before player agency is proven. Test whether players understand and care about their contribution; if they understand it but remain indifferent, change the problem and stakes before adding specialists.
+No new residents, expanded map, multiplayer, token trading, bank, provider migration, compulsory hunger system or cross-device architecture in S1–S3. User-facing prompts must state what is available now. Historical [Astra direction](reviews/2026-10-11-astra-direction.md) and [evidence](reviews/2026-10-11-astra-evidence.md) remain dated records; this roadmap and the current release record resolve their superseded status statements.
