@@ -8,17 +8,19 @@ const server = await createServer({
   configFile: false,
   appType: "custom",
   logLevel: "error",
+  optimizeDeps: { noDiscovery: true },
   server: { middlewareMode: true, hmr: false, ws: false, watch: null },
 });
 const { createTown } = await server.ssrLoadModule("/src/game/town.ts");
 const { advanceTown, stepMinute } = await server.ssrLoadModule("/src/game/sim.ts");
-const { applyResult } = await server.ssrLoadModule("/src/game/effects.ts");
+const { applyResult, playerActions, applyPlayerAction, BABA_LOAF } =
+  await server.ssrLoadModule("/src/game/effects.ts");
 const { offlineResult, prepareRetrievals } = await server.ssrLoadModule("/src/game/offline.ts");
 const save = await server.ssrLoadModule("/src/game/save.ts");
-const { buildPrompt } = await server.ssrLoadModule("/src/game/prompt.ts");
+const { buildPrompt, parseMind } = await server.ssrLoadModule("/src/game/prompt.ts");
 const { makeMemory } = await server.ssrLoadModule("/src/game/memory.ts");
 const { ANCHORS } = await server.ssrLoadModule("/src/game/world.ts");
-const { plain } = await server.ssrLoadModule("/src/game/text.ts");
+const { plain, mentionsSeed } = await server.ssrLoadModule("/src/game/text.ts");
 const storageDescriptor = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
 after(async () => {
   if (storageDescriptor) Object.defineProperty(globalThis, "localStorage", storageDescriptor);
@@ -54,7 +56,7 @@ const debtTown = (amount = 2) => {
   });
   return town;
 };
-const settle = (town, changes = {}) =>
+const proposeSettlement = (town, changes = {}) =>
   applyResult(town, {
     kind: "player",
     mind: "grok",
@@ -67,6 +69,37 @@ const settle = (town, changes = {}) =>
       action: "pay",
       id: "bread",
       from: "player",
+      to: "baba",
+      amount: 30,
+      text: "proposal",
+      ...changes,
+    },
+  });
+
+const near = (town, target) => {
+  agent(town, "player").tile = { ...agent(town, target).tile };
+};
+const actionQuote = (town, target, kind) =>
+  playerActions(town, target).find((action) => JSON.parse(action.id)[0] === kind);
+const choose = (town, target, kind) => {
+  near(town, target);
+  const quote = actionQuote(town, target, kind);
+  assert.ok(quote, `Expected ${kind} quote from ${target}`);
+  return applyPlayerAction(town, target, quote.id);
+};
+const settle = (town) => choose(town, "baba", "pay");
+const settleNpc = (town, changes = {}) =>
+  applyResult(town, {
+    kind: "talk",
+    mind: "grok",
+    a: "northern",
+    b: "baba",
+    lines: [{ speaker: "baba", text: "The tab." }],
+    relationships: [],
+    favor: {
+      action: "pay",
+      id: "bread",
+      from: "northern",
       to: "baba",
       amount: 30,
       text: "proposal",
@@ -234,11 +267,11 @@ test("storage, serialization and unavailable failures have distinct observable r
 });
 
 for (const action of ["pay", "forgive", "break"]) {
-  test(`${action} rejects a referenced debt owned by other participants`, () => {
+  test(`NPC ${action} rejects a referenced debt owned by other participants`, () => {
     const town = debtTown();
-    town.favors[0].from = "northern";
+    town.favors[0].from = "kevin";
     const before = balances(town);
-    settle(town, { action });
+    settleNpc(town, { action });
     assert.deepEqual(balances(town), before);
     assert.equal(town.favors[0].status, "owed");
   });
@@ -251,38 +284,52 @@ for (const edit of [
 ]) {
   test(`settlement rejects invalid reference or participants ${JSON.stringify(edit)}`, () => {
     const town = debtTown();
+    town.favors[0].from = "northern";
     const before = balances(town);
-    settle(town, edit);
+    settleNpc(town, edit);
     assert.deepEqual(balances(town), before);
     assert.equal(town.favors[0].status, "owed");
   });
 }
-test("matching forgiveness and breaking settle once without moving money", () => {
+test("matching NPC forgiveness and breaking settle once without moving money", () => {
   for (const [action, status] of [
     ["forgive", "forgiven"],
     ["break", "broken"],
   ]) {
     const town = debtTown();
+    town.favors[0].from = "northern";
     const before = balances(town);
-    settle(town, { action });
+    const proposal = {
+      kind: "talk",
+      mind: "grok",
+      a: "northern",
+      b: "baba",
+      lines: [{ speaker: "baba", text: "We have settled this." }],
+      relationships: [],
+      favor: { action, id: "bread", from: "northern", to: "baba", amount: 30, text: "proposal" },
+    };
+    applyResult(town, proposal);
     assert.equal(town.favors[0].status, status);
     assert.deepEqual(balances(town), before);
-    const relation = agent(town, "player").relationships.baba.score;
-    settle(town, { action });
-    assert.equal(agent(town, "player").relationships.baba.score, relation);
+    const relation = agent(town, "northern").relationships.baba.score;
+    applyResult(town, proposal);
+    assert.equal(agent(town, "northern").relationships.baba.score, relation);
   }
 });
 
 test("settlement uses the debt's amount and pays once", () => {
   const town = debtTown();
   const before = balances(town);
+  near(town, "baba");
+  const quote = actionQuote(town, "baba", "pay");
   settle(town);
   assert.equal(agent(town, "player").money, before[5] - 2);
   assert.equal(agent(town, "baba").money, before[3] + 2);
   assert.equal(town.favors[0].status, "paid");
   const paid = balances(town);
-  settle(town);
-  settle(town, { action: "break" });
+  assert.equal(applyPlayerAction(town, "baba", quote.id).ok, false);
+  proposeSettlement(town);
+  proposeSettlement(town, { action: "break" });
   assert.deepEqual(balances(town), paid);
   assert.equal(town.favors[0].status, "paid");
 });
@@ -305,10 +352,33 @@ test("insufficient funds and full creditor purses keep the debt and conserve mon
   assert.equal(agent(town, "baba").money, 999);
   assert.equal(town.favors[0].status, "paid");
 });
-test("a zero-money favor can be completed without changing balances", () => {
+test("a zero-money player favor cannot invent completed work", () => {
   const town = debtTown(0);
   const before = balances(town);
-  settle(town);
+  assert.equal(settle(town).ok, false);
+  assert.equal(town.favors[0].status, "owed");
+  assert.deepEqual(balances(town), before);
+});
+test("a zero-money NPC favor can be completed without changing balances", () => {
+  const town = debtTown(0);
+  town.favors[0].from = "northern";
+  const before = balances(town);
+  applyResult(town, {
+    kind: "talk",
+    mind: "offline",
+    a: "northern",
+    b: "baba",
+    lines: [{ speaker: "baba", text: "That favor is done." }],
+    relationships: [],
+    favor: {
+      action: "pay",
+      id: "bread",
+      from: "northern",
+      to: "baba",
+      amount: 30,
+      text: "proposal",
+    },
+  });
   assert.equal(town.favors[0].status, "paid");
   assert.deepEqual(balances(town), before);
 });
@@ -419,8 +489,8 @@ for (const [place, wage] of [
 }
 test("empty and partial tills defer a full wage, allowing payment once funded", () => {
   for (const till of [0, 3]) {
-    const town = shiftTown("player");
-    const player = agent(town, "player");
+    const town = shiftTown("northern");
+    const player = agent(town, "northern");
     const before = player.money;
     town.tills.cafe = till;
     minutes(town, 185);
@@ -460,20 +530,544 @@ test("wages respect purse capacity and reset work credit at midnight", () => {
   assert.equal(player.money, before + 5);
 });
 
+test("an imported legacy player cafe shift still pays during its agreed late hours", () => {
+  const legacy = shiftTown("player", "cafe", 20, 24);
+  const town = save.parseTownFile(save.exportTown(legacy));
+  assert.ok(town, "legacy v1 work remains loadable");
+  const player = agent(town, "player");
+  const before = player.money;
+  const till = town.tills.cafe;
+  minutes(town, 179);
+  assert.equal(player.money, before);
+  minutes(town, 1);
+  assert.equal(player.money, before + 5);
+  assert.equal(town.tills.cafe, till - 5);
+  assert.equal(player.paidToday, true);
+});
+
+test("questions and refusals do not buy bread or pay a tab", () => {
+  const town = createTown("Ada");
+  const before = balances(town);
+  for (const text of [
+    "Do you sell bread?",
+    "I do not want bread.",
+    "What does bread cost?",
+    "I am allergic to apples.",
+    "Can I buy bread?",
+  ]) {
+    const result = say(town, text);
+    assert.equal(result.favor, null, text);
+  }
+  assert.equal(town.favors.length, 0);
+  assert.deepEqual(balances(town), before);
+  choose(town, "baba", "bread");
+  assert.equal(town.favors.length, 1);
+  assert.equal(town.favors[0].status, "owed");
+  const owed = balances(town);
+  for (const text of [
+    "Do not pay my tab yet.",
+    "Can I pay tomorrow?",
+    "How do I pay?",
+    "I cannot pay.",
+  ]) {
+    const result = say(town, text);
+    assert.equal(result.favor, null, text);
+    assert.equal(town.favors[0].status, "owed", text);
+  }
+  assert.deepEqual(balances(town), owed);
+});
+
+test("an unreadable save is reported and left in place", () => {
+  storage({
+    getItem() {
+      return "{not a town";
+    },
+    setItem() {
+      throw new Error("must not overwrite");
+    },
+  });
+  const report = save.readTownSave();
+  assert.equal(report.status, "unreadable");
+  assert.equal(report.raw, "{not a town");
+  assert.equal(save.loadTown(), null);
+  storage({
+    getItem() {
+      return null;
+    },
+  });
+  assert.deepEqual(save.readTownSave(), { status: "missing" });
+  storage(undefined);
+  assert.deepEqual(save.readTownSave(), { status: "unavailable" });
+});
+
+const commitments = (town) => ({
+  money: balances(town),
+  favors: copy(town.favors),
+  projects: copy(agent(town, "player").projects),
+  plan: copy(agent(town, "player").plan),
+  threads: copy(agent(town, "player").threads),
+});
+
+test("free text cannot buy, pay, accept or cancel even with Unicode refusals", () => {
+  const town = createTown("Ada");
+  choose(town, "baba", "bread");
+  choose(town, "kevin", "shift-start");
+  const before = commitments(town);
+  for (const text of [
+    "Don’t give me bread.",
+    "I won’t pay my tab.",
+    "I don’t want to pay you.",
+    "You should pay me for the bread.",
+    "Tell me about bread on a tab.",
+    "Maybe I will buy bread next week.",
+    "I'll take the bread on a tab.",
+    "I accept the cafe shift.",
+    "I do not want to quit my shift.",
+    "Can I quit my shift?",
+    "I won't quit the shift.",
+    "I quit the shift.",
+  ]) {
+    for (const target of ["baba", "kevin"]) say(town, text, target);
+    assert.deepEqual(commitments(town), before, text);
+  }
+});
+
+test("model proposals cannot commit money, player projects, threads or hours", () => {
+  const town = debtTown();
+  const before = commitments(town);
+  for (const text of [
+    "Do you sell bread?",
+    "I do not want bread.",
+    "Can I pay tomorrow?",
+    "I accept the shift.",
+    "Do not cancel my shift.",
+  ]) {
+    for (const action of ["offer", "pay", "forgive", "break"]) {
+      const proposal = parseMind(
+        { kind: "player", agentId: "baba", text, day: town.day, minute: town.minute },
+        JSON.stringify({
+          reply: "Paid and agreed.",
+          favor: { action, id: "bread", from: "player", to: "baba", amount: 2, text: "Bread" },
+          project: {
+            owner: "player",
+            action: "start",
+            kind: "shift",
+            place: "cafe",
+            text: "Unwanted work",
+          },
+          thread: { owner: "player", action: "open", text: "I promised to work." },
+        }),
+      );
+      assert.ok(proposal);
+      proposal.replan = [
+        {
+          id: "player",
+          blocks: [{ from: 0, to: 24, place: "cafe", spot: "out", status: "working" }],
+        },
+      ];
+      applyResult(town, proposal);
+      assert.deepEqual(commitments(town), before, `${text} / ${action}`);
+      assert.match(agent(town, "baba").bubble.text, /Nothing was bought/);
+    }
+  }
+  choose(town, "kevin", "shift-start");
+  const accepted = commitments(town);
+  for (const action of ["drop", "done", "start"]) {
+    applyResult(town, {
+      kind: "player",
+      mind: "grok",
+      agentId: "kevin",
+      playerText: "Hello",
+      reply: "Cancelled",
+      delta: 0,
+      note: "",
+      project: { owner: "player", action, kind: "shift", text: "Other shift" },
+    });
+    assert.deepEqual(commitments(town), accepted, action);
+  }
+});
+
+test("an NPC talk result cannot impersonate the player to bypass consent", () => {
+  const town = debtTown();
+  const before = commitments(town);
+  applyResult(town, {
+    kind: "talk",
+    mind: "grok",
+    a: "player",
+    b: "baba",
+    lines: [{ speaker: "baba", text: "Paid" }],
+    relationships: [],
+    favor: { action: "pay", id: "bread", from: "player", to: "baba", amount: 2, text: "Bread" },
+  });
+  assert.deepEqual(commitments(town), before);
+});
+
+test("explicit payment rejects changed quotes, identities, range and amount", () => {
+  for (const change of [
+    (town) => {
+      town.favors[0].amount = 3;
+    },
+    (town) => {
+      town.favors[0].id = "another-debt";
+    },
+    (town) => {
+      town.favors[0].from = "northern";
+    },
+    (town) => {
+      town.favors[0].to = "kevin";
+    },
+    (town) => {
+      town.favors[0].status = "paid";
+    },
+    (town) => {
+      town.favors[0].text = "A different agreement";
+    },
+    (town) => {
+      agent(town, "player").money = 1;
+    },
+    (town) => {
+      agent(town, "baba").money = 999;
+    },
+    (town) => {
+      agent(town, "player").tile.x += 3;
+    },
+  ]) {
+    const town = debtTown();
+    near(town, "baba");
+    const quote = actionQuote(town, "baba", "pay");
+    assert.match(quote.terms, /Baba 2/);
+    change(town);
+    const before = commitments(town);
+    assert.equal(applyPlayerAction(town, "baba", quote.id).ok, false);
+    assert.deepEqual(commitments(town), before);
+  }
+});
+
+test("an old bread quote cannot be replayed after its tab was paid", () => {
+  const town = createTown("Ada");
+  near(town, "baba");
+  const quote = actionQuote(town, "baba", "bread");
+  const before = commitments(town);
+  playerActions(town, "baba");
+  assert.deepEqual(commitments(town), before, "showing terms has no effects");
+  assert.equal(applyPlayerAction(town, "baba", quote.id).ok, true);
+  assert.equal(settle(town).ok, true);
+  const paid = commitments(town);
+  assert.equal(applyPlayerAction(town, "baba", quote.id).ok, false);
+  assert.deepEqual(commitments(town), paid);
+  assert.notEqual(actionQuote(town, "baba", "bread").id, quote.id);
+});
+
+test("late or unfunded shift acceptance is rejected with no promise of arrears", () => {
+  for (const scenario of ["late", "unfunded", "already-paid"]) {
+    const town = createTown("Ada");
+    near(town, "kevin");
+    const original = actionQuote(town, "kevin", "shift-start");
+    assert.match(original.terms, /each day until cancelled/);
+    assert.match(original.terms, /do not carry past midnight/);
+    if (scenario === "late") town.minute = 16 * 60 + 1;
+    if (scenario === "unfunded") town.tills.cafe = 4;
+    if (scenario === "already-paid") agent(town, "player").paidToday = true;
+    const before = commitments(town);
+    assert.equal(applyPlayerAction(town, "kevin", original.id).ok, false, scenario);
+    assert.deepEqual(commitments(town), before);
+  }
+});
+
+test("routine offline speech does not quote Kevin's private seed", () => {
+  const town = createTown("Ada");
+  const kevin = agent(town, "kevin");
+  const seed = copy(kevin.memories.find((m) => m.seed));
+  for (let hour = 0; hour < 24; hour++) {
+    town.minute = hour * 60;
+    const result = say(town, "Hello.", "kevin");
+    assert.equal(mentionsSeed(result.reply), false, `${hour}: ${result.reply}`);
+  }
+  assert.deepEqual(
+    kevin.memories.find((m) => m.seed),
+    seed,
+  );
+  assert.equal(mentionsSeed(say(town, "Who are you?", "kevin").reply), true);
+});
+
+test("legacy missing timetables and conflicting projects cannot produce false shift acceptance", () => {
+  for (const scenario of ["missing-plan", "empty-beats", "conflicting-project"]) {
+    const raw = createTown("Ada");
+    const player = agent(raw, "player");
+    if (scenario === "missing-plan") delete player.plan;
+    if (scenario === "empty-beats") player.plan.beats = [];
+    if (scenario === "conflicting-project") {
+      player.projects.push({
+        id: "other",
+        owner: "player",
+        kind: "other",
+        status: "open",
+        day: 1,
+        text: "Cafe shift, 16:00 to 19:00 each day until cancelled; 5 after three hours if the till can pay.",
+      });
+    }
+    const town = save.parseTownFile(JSON.stringify({ version: 1, town: raw }));
+    assert.ok(town, `The legacy v1 fixture remains loadable: ${scenario}`);
+    near(town, "kevin");
+    const before = commitments(town);
+    const quote = actionQuote(town, "kevin", "shift-start");
+    assert.ok(quote.disabledReason, scenario);
+    assert.equal(applyPlayerAction(town, "kevin", quote.id).ok, false, scenario);
+    assert.deepEqual(commitments(town), before, scenario);
+  }
+});
+
+test("a player explicitly accepts Kevin's quoted shift, then is paid for real hours", () => {
+  const town = createTown("Ada");
+  const player = agent(town, "player");
+  const before = player.money;
+  for (const text of [
+    "Can I work a shift at Hobbs?",
+    "I want a job. How do I earn money?",
+    "I will not take the shift.",
+  ]) {
+    const result = say(town, text, "kevin");
+    assert.equal(result.favor, null, text);
+  }
+  assert.equal(player.projects.filter((p) => p.status === "open").length, 0);
+  const offer = choose(town, "kevin", "shift-start");
+  assert.equal(offer.ok, true);
+  assert.match(offer.reply, /16:00–19:00/);
+  assert.ok(
+    player.projects.some((p) => p.kind === "shift" && p.status === "open" && p.place === "cafe"),
+  );
+  assert.ok(player.plan.beats.slice(16, 19).every((b) => b.place === "cafe" && b.spot === "out"));
+  assert.equal(player.money, before, "accepting does not pay");
+  town.minute = 16 * 60;
+  player.tile = { ...ANCHORS.cafe };
+  minutes(town, 179);
+  assert.equal(player.money, before, "two hours and fifty-nine minutes is not a wage");
+  minutes(town, 1);
+  assert.equal(player.money, before + 5);
+  assert.equal(town.tills.cafe, 17);
+  const kept = save.parseTownFile(save.exportTown(town));
+  assert.equal(agent(kept, "player").money, before + 5);
+  assert.ok(agent(kept, "player").projects.some((p) => p.kind === "shift" && p.status === "open"));
+  const ack = say(town, "Hello.", "kevin");
+  assert.match(ack.reply, /paid you 5/);
+});
+
+test("accepting the cafe shift does not turn the player's earlier lunch into paid work", () => {
+  const town = createTown("Ada");
+  const player = agent(town, "player");
+  choose(town, "kevin", "shift-start");
+  player.tile = { ...ANCHORS.cafe };
+  town.minute = 12 * 60;
+  const before = player.money;
+  minutes(town, 180);
+  assert.equal(player.money, before);
+  assert.equal(player.shiftHours, 0, "12:00–15:00 is lunch, not the quoted shift");
+  town.minute = 16 * 60;
+  minutes(town, 179);
+  assert.equal(player.money, before);
+  minutes(town, 1);
+  assert.equal(player.money, before + 5);
+  assert.equal(player.shiftHours, 3);
+  minutes(town, 60);
+  assert.equal(player.money, before + 5, "no second wage after the shift");
+});
+
+test("standing at the cafe, or leaving the shift, does not invent a wage", () => {
+  const asked = createTown("Ada");
+  say(asked, "Can I work a shift at Hobbs?", "kevin");
+  agent(asked, "player").tile = { ...ANCHORS.cafe };
+  asked.minute = 16 * 60;
+  const askedMoney = agent(asked, "player").money;
+  minutes(asked, 180);
+  assert.equal(agent(asked, "player").money, askedMoney);
+  assert.equal(agent(asked, "player").shiftHours, 0);
+
+  const town = createTown("Ada");
+  choose(town, "kevin", "shift-start");
+  choose(town, "kevin", "shift-stop");
+  const player = agent(town, "player");
+  assert.ok(player.projects.every((p) => p.status !== "open"));
+  assert.notEqual(player.plan.beats[16].place, "cafe");
+  player.tile = { ...ANCHORS.cafe };
+  town.minute = 16 * 60;
+  const money = player.money;
+  minutes(town, 180);
+  assert.equal(player.money, money);
+});
+
+test("an empty till explains the unpaid shift instead of paying it", () => {
+  const town = createTown("Ada");
+  choose(town, "kevin", "shift-start");
+  const player = agent(town, "player");
+  town.tills.cafe = 0;
+  player.tile = { ...ANCHORS.cafe };
+  town.minute = 16 * 60;
+  const before = player.money;
+  minutes(town, 180);
+  assert.equal(player.money, before);
+  assert.equal(player.memories.filter((m) => m.text.includes("cannot pay the full")).length, 1);
+});
+
+test("taking bread gives a loaf, and eating it does not settle the tab", () => {
+  const town = createTown("Ada");
+  const before = balances(town);
+  say(town, "Do you sell bread?");
+  assert.equal(town.favors.length, 0);
+  say(town, "I'll take the bread on a tab.");
+  assert.equal(town.favors.length, 0, "free text cannot accept the loaf or its debt");
+  assert.equal(choose(town, "baba", "bread").ok, true);
+  const player = agent(town, "player");
+  assert.equal(town.favors[0].status, "owed");
+  assert.equal(town.favors[0].amount, 2);
+  assert.ok(player.projects.some((p) => p.status === "open" && p.text.includes("loaf")));
+  assert.deepEqual(balances(town), before);
+  const held = save.parseTownFile(save.exportTown(town));
+  assert.equal(agent(held, "player").projects.find((p) => p.text === BABA_LOAF).status, "open");
+  assert.equal(held.favors[0].status, "owed");
+  say(town, "I'll eat the bread.");
+  assert.ok(
+    player.projects.some((p) => p.status === "open" && p.text === BABA_LOAF),
+    "speech cannot consume it",
+  );
+  const eatQuote = actionQuote(town, "baba", "eat-loaf");
+  const eaten = applyPlayerAction(town, "baba", eatQuote.id);
+  assert.equal(eaten.ok, true);
+  assert.match(eaten.reply, /eat the loaf/i);
+  assert.ok(player.projects.some((p) => p.status === "done" && p.text.includes("loaf")));
+  assert.equal(town.favors[0].status, "owed");
+  assert.deepEqual(balances(town), before);
+  const finished = commitments(town);
+  assert.equal(applyPlayerAction(town, "baba", eatQuote.id).ok, false);
+  assert.deepEqual(commitments(town), finished, "repeated eating does nothing");
+  const again = say(town, "I'll eat the bread.");
+  assert.match(again.reply, /not carrying/i);
+  assert.equal(town.favors.length, 1);
+  const remembered = say(town, "Hello.");
+  assert.match(remembered.reply, /ate the loaf/i);
+  assert.match(remembered.reply, /owe 2/i);
+  const kept = save.parseTownFile(save.exportTown(town));
+  assert.equal(agent(kept, "player").projects.find((p) => p.text.includes("loaf")).status, "done");
+  assert.equal(kept.favors[0].status, "owed");
+});
+
+test("a bread tab and loaf are refused together when either cannot be recorded", () => {
+  for (const scenario of [
+    "item-capacity",
+    "held-loaf",
+    "conflicting-item",
+    "debt-capacity",
+    "capacity-changed",
+  ]) {
+    const town = createTown("Ada");
+    near(town, "baba");
+    const originalQuote = actionQuote(town, "baba", "bread");
+    const player = agent(town, "player");
+    if (scenario === "item-capacity" || scenario === "capacity-changed") {
+      player.projects = Array.from({ length: 4 }, (_, i) => ({
+        id: `item${i}`,
+        owner: "player",
+        kind: "other",
+        text: `Existing item ${i}`,
+        status: "open",
+        day: 1,
+      }));
+    } else if (scenario === "held-loaf" || scenario === "conflicting-item") {
+      player.projects.push({
+        id: "held",
+        owner: "player",
+        kind: scenario === "held-loaf" ? "other" : "notes",
+        text: BABA_LOAF,
+        status: "open",
+        day: 1,
+      });
+    } else {
+      town.favors = Array.from({ length: 24 }, (_, i) => ({
+        id: `tab${i}`,
+        from: "northern",
+        to: "baba",
+        amount: 2,
+        text: `Existing tab ${i}`,
+        status: "owed",
+        day: 1,
+      }));
+    }
+    const quote =
+      scenario === "capacity-changed" ? originalQuote : actionQuote(town, "baba", "bread");
+    const before = copy(town);
+    assert.equal(applyPlayerAction(town, "baba", quote.id).ok, false, scenario);
+    assert.deepEqual(town, before, `${scenario}: neither item nor debt nor partial memories`);
+  }
+});
+
+test("paying keeps the loaf, and an old eating quote cannot consume a later loaf", () => {
+  const town = createTown("Ada");
+  choose(town, "baba", "bread");
+  assert.equal(settle(town).ok, true);
+  const player = agent(town, "player");
+  const firstLoaf = player.projects.find((p) => p.text === BABA_LOAF && p.status === "open");
+  assert.ok(firstLoaf);
+  assert.equal(town.favors[0].status, "paid");
+  assert.ok(
+    actionQuote(town, "baba", "bread").disabledReason,
+    "cannot accumulate a second held loaf",
+  );
+  const original = actionQuote(town, "baba", "eat-loaf");
+  const paidMoney = balances(town);
+  assert.equal(applyPlayerAction(town, "baba", original.id).ok, true);
+  assert.deepEqual(balances(town), paidMoney);
+  assert.equal(town.favors[0].status, "paid");
+  assert.equal(choose(town, "baba", "bread").ok, true);
+  const before = commitments(town);
+  assert.equal(applyPlayerAction(town, "baba", original.id).ok, false);
+  assert.deepEqual(commitments(town), before);
+  assert.equal(
+    player.projects.filter((p) => p.text === BABA_LOAF && p.status === "open").length,
+    1,
+  );
+});
+
+test("refusals, eating text and model item edits cannot consume the held loaf", () => {
+  const town = createTown("Ada");
+  choose(town, "baba", "bread");
+  const loaf = agent(town, "player").projects.find((p) => p.text === BABA_LOAF);
+  const before = commitments(town);
+  for (const text of [
+    "I'll eat the bread.",
+    "I won’t eat the loaf.",
+    "Can I eat the bread?",
+    "Don’t eat my loaf.",
+  ]) {
+    say(town, text);
+    applyResult(town, {
+      kind: "player",
+      mind: "grok",
+      agentId: "baba",
+      playerText: text,
+      reply: "You ate it.",
+      delta: 0,
+      note: "",
+      project: { owner: "player", action: "done", id: loaf.id, kind: "other", text: BABA_LOAF },
+    });
+    assert.deepEqual(commitments(town), before, text);
+  }
+});
+
 test("offline bread offer, inspection and repayment never duplicate a charge", () => {
   const town = createTown("Ada");
   const before = balances(town);
-  say(town, "Can I buy bread?");
-  say(town, "Can I buy bread?");
+  near(town, "baba");
+  const offered = actionQuote(town, "baba", "bread");
+  assert.equal(applyPlayerAction(town, "baba", offered.id).ok, true);
+  assert.equal(applyPlayerAction(town, "baba", offered.id).ok, false);
   assert.equal(town.favors.length, 1);
   assert.deepEqual(balances(town), before, "offering a tab does not debit a purse");
   assert.match(say(town, "What do I owe you?").reply, /2/);
   assert.deepEqual(balances(town), before);
   agent(town, "player").money = 1;
-  say(town, "I want to pay my bread tab");
+  assert.equal(settle(town).ok, false);
   assert.equal(town.favors[0].status, "owed");
   agent(town, "player").money = 20;
-  say(town, "I want to pay my tab of 2. Here is your money.");
+  assert.equal(settle(town).ok, true);
   assert.equal(agent(town, "player").money, 18);
   assert.equal(agent(town, "baba").money, before[3] + 2);
   assert.equal(town.favors[0].status, "paid");
@@ -558,7 +1152,17 @@ test("diagnostics include forced protected memories with the same text and order
   const kevin = agent(town, "kevin");
   const seed = kevin.memories.find((m) => m.seed);
   seed.importance = 1;
-  kevin.memories.push(makeMemory(town, 30, town.minute, "favor", "Fresh cafe bread stock ledger wage paid today", 10, { protected: true }));
+  kevin.memories.push(
+    makeMemory(
+      town,
+      30,
+      town.minute,
+      "favor",
+      "Fresh cafe bread stock ledger wage paid today",
+      10,
+      { protected: true },
+    ),
+  );
   for (let i = 0; i < 8; i++)
     kevin.memories.push(
       makeMemory(

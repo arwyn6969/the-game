@@ -1,6 +1,6 @@
 import type { Agent, AgentId, ThinkJob, Town } from "./types";
 import { NPC_IDS } from "./types";
-import { applyResult } from "./effects";
+import { applyResult, PLAYER_CAFE_SHIFT } from "./effects";
 import { absMinute, agentById, makeMemory, pushMemory } from "./memory";
 import { offlineResult } from "./offline";
 import { beatAt, goalFor } from "./plan";
@@ -23,7 +23,8 @@ function occupied(town: Town, x: number, y: number, except: AgentId): boolean {
 function blockedTiles(town: Town, except: AgentId): Set<string> {
   const taken = new Set<string>();
   for (const agent of town.agents) {
-    if (agent.id === except || !Number.isFinite(agent.tile?.x) || !Number.isFinite(agent.tile?.y)) continue;
+    if (agent.id === except || !Number.isFinite(agent.tile?.x) || !Number.isFinite(agent.tile?.y))
+      continue;
     taken.add(`${agent.tile.x},${agent.tile.y}`);
   }
   return taken;
@@ -31,7 +32,9 @@ function blockedTiles(town: Town, except: AgentId): Set<string> {
 
 function nudgeApart(town: Town) {
   const seen = new Set<string>();
-  const ordered = [...town.agents].sort((a, b) => (a.id === "player" ? -1 : b.id === "player" ? 1 : 0));
+  const ordered = [...town.agents].sort((a, b) =>
+    a.id === "player" ? -1 : b.id === "player" ? 1 : 0,
+  );
   const dirs = [
     [1, 0],
     [-1, 0],
@@ -87,7 +90,10 @@ function moveNpc(town: Town, agent: Agent, hourStart: boolean) {
     agent.path = [];
   }
   const beat = beatAt(agent, town.minute);
-  agent.status = agent.id === "kevin" && mentionsSeed(beat.status) ? "on the floor, not saying much" : beat.status;
+  agent.status =
+    agent.id === "kevin" && mentionsSeed(beat.status)
+      ? "on the floor, not saying much"
+      : beat.status;
   const goal = goalFor(agent, beat);
   const at = agent.tile.x === goal.x && agent.tile.y === goal.y;
   const blocked = blockedTiles(town, agent.id);
@@ -103,7 +109,10 @@ function moveNpc(town: Town, agent: Agent, hourStart: boolean) {
       break;
     }
     if (occupied(town, next.x, next.y, agent.id)) {
-      agent.path = next.x === goal.x && next.y === goal.y ? [] : findPath(agent.tile, goal, blockedTiles(town, agent.id));
+      agent.path =
+        next.x === goal.x && next.y === goal.y
+          ? []
+          : findPath(agent.tile, goal, blockedTiles(town, agent.id));
       break;
     }
     const dx = next.x - agent.tile.x;
@@ -167,7 +176,10 @@ function working(agent: Agent, zone: string, minute: number): "cafe" | "grocery"
       p.owner === agent.id &&
       p.status === "open" &&
       p.kind === "shift" &&
-      (p.place ?? "cafe") === zone,
+      (p.place ?? "cafe") === zone &&
+      // The new quoted contract excludes lunch; imported legacy contracts keep
+      // their own planned hours instead of inheriting this new restriction.
+      (agent.id !== "player" || p.text !== PLAYER_CAFE_SHIFT || (hour >= 16 && hour < 19)),
   );
   return shift && (zone === "cafe" || zone === "grocery") ? zone : null;
 }
@@ -285,9 +297,13 @@ function askForMind(town: Town) {
   const place = placeTitle(zoneAt(agent.tile.x, agent.tile.y));
   const threads = Array.isArray(agent.threads) ? agent.threads : [];
   const thread =
-    threads.find((t) => t.open && !t.hidden && !mentionsSeed(t.text))?.text ?? "the work in front of me";
+    threads.find((t) => t.open && !t.hidden && !mentionsSeed(t.text))?.text ??
+    "the work in front of me";
   const text = `In the ${place} at ${formatClock(town.minute)}, I am still only what I retrieved and this open thread: ${thread}. If you can switch a mind on, I am asking.`;
-  pushMemory(agent, makeMemory(town, town.day, town.minute, "observe", text, 5, { mind: "offline" }));
+  pushMemory(
+    agent,
+    makeMemory(town, town.day, town.minute, "observe", text, 5, { mind: "offline" }),
+  );
   agent.bubble = {
     text: "If you can switch a mind on, I am still speaking from memory.",
     until: absMinute(town.day, town.minute) + 45,

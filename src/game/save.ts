@@ -263,14 +263,38 @@ function isQuota(error: unknown): boolean {
 }
 
 export function loadTown(): Town | null {
+  const report = readTownSave();
+  return report.status === "ready" ? report.town : null;
+}
+
+export type LoadReport =
+  | { status: "missing" }
+  | { status: "ready"; town: Town }
+  | { status: "unreadable"; raw: string }
+  | { status: "unavailable" };
+
+/** Distinguishes an empty browser from a save that must not be overwritten. */
+export function readTownSave(): LoadReport {
+  let box: Storage | null;
   try {
-    const raw = store()?.getItem(KEY);
-    if (!raw) return null;
-    const data = JSON.parse(raw) as { version?: number; town?: unknown };
-    if (!validateTown(data.town)) return null;
-    return data.town;
+    box = store();
   } catch {
-    return null;
+    return { status: "unavailable" };
+  }
+  if (!box) return { status: "unavailable" };
+  let raw: string | null;
+  try {
+    raw = box.getItem(KEY);
+  } catch {
+    return { status: "unavailable" };
+  }
+  if (!raw) return { status: "missing" };
+  try {
+    const data = JSON.parse(raw) as { version?: number; town?: unknown };
+    if (!validateTown(data.town)) return { status: "unreadable", raw };
+    return { status: "ready", town: data.town };
+  } catch {
+    return { status: "unreadable", raw };
   }
 }
 
