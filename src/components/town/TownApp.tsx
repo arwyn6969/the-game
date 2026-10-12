@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { ArcadeMark, PixelUniverse } from "./ArcadeArt";
 import type { Agent, AgentId, Face, ThinkJob, Town } from "@/game/types";
+import { NPC_IDS } from "@/game/types";
 import {
   applyPlayerAction,
   applyResult,
@@ -216,6 +217,7 @@ export function TownApp() {
   const [tick, setTick] = useState(0);
   const [online, setOnline] = useState(true);
   const [checked, setChecked] = useState(false);
+  const [lastMind, setLastMind] = useState<"online" | "offline" | null>(null);
   const [speed, setSpeed] = useState<0 | 1 | 4>(speedRef.current);
   const [replay, setReplay] = useState<Replay | null>(null);
   const [panel, setPanel] = useState<AgentId | null>(null);
@@ -346,6 +348,7 @@ export function TownApp() {
     let timed: number | undefined;
     let applied = false;
     let landed = false;
+    let usedLocalReply = false;
     const mark = () =>
       job.kind === "player" ? playerChatIds(agentById(live, job.agentId).memories ?? []) : [];
     try {
@@ -361,23 +364,37 @@ export function TownApp() {
       try {
         const before = mark();
         if (parsed) applyResult(live, parsed);
-        else applyResult(live, offlineResult(live, job));
+        else {
+          usedLocalReply = true;
+          applyResult(live, offlineResult(live, job));
+        }
         if (job.kind === "player") landed = exchangeLanded(before, mark());
         applied = true;
-        if (!parsed && mounted.current) setHiccup(true);
+        if (mounted.current) {
+          setLastMind(parsed ? "online" : "offline");
+          if (!parsed) setHiccup(true);
+        }
       } catch {
         applied = true;
+        if (mounted.current) {
+          setLastMind("offline");
+          setHiccup(true);
+        }
       }
     } catch {
       if (townRef.current === live && !applied) {
         try {
           const before = mark();
+          usedLocalReply = true;
           applyResult(live, offlineResult(live, job));
           if (job.kind === "player") landed = exchangeLanded(before, mark());
         } catch {
           /* The clock must resume even if the fallback cannot land. */
         }
-        if (mounted.current) setHiccup(true);
+        if (mounted.current) {
+          setLastMind("offline");
+          setHiccup(true);
+        }
       }
     } finally {
       if (timed) window.clearTimeout(timed);
@@ -390,7 +407,13 @@ export function TownApp() {
           const same = townRef.current === live && panelRef.current === job.agentId;
           setDraft((current) => nextDraft(current, job.text, same, landed));
           if (townRef.current === live) {
-            setSendNote(landed ? "They heard you." : "That did not land. Your line is still here.");
+            setSendNote(
+              landed
+                ? usedLocalReply
+                  ? "They answered with local dialogue."
+                  : "They heard you."
+                : "That did not land. Your line is still here.",
+            );
           }
           if (landed && townRef.current === live && (live.guide ?? 0) < 3) {
             live.guide = 3;
@@ -824,7 +847,7 @@ export function TownApp() {
         setDraft((current) => nextDraft(current, text, panelRef.current === who, landed));
         setSendNote(
           landed
-            ? "They answered from what they already hold."
+            ? "They answered with local dialogue."
             : "That did not land. Your line is still here.",
         );
         if (landed && (live.guide ?? 0) < 3) {
@@ -1012,15 +1035,15 @@ export function TownApp() {
               THE <span>GAME</span>
             </h1>
             <p>
-              Five lives are already unfolding here. You’re the sixth. Meet your neighbors, make a
-              little trouble, see what tomorrow brings.
+              {NPC_IDS.length} neighbors already call this town home. Now it’s your turn. Meet them,
+              make a little trouble, see what tomorrow brings.
             </p>
             <PixelUniverse />
           </div>
           <form onSubmit={enter}>
             <div className="cartridge-label">
               <span>New resident</span>
-              <span>Player 06</span>
+              <span>Player {String(NPC_IDS.length + 1).padStart(2, "0")}</span>
             </div>
             <h2>
               Your next little
@@ -1080,6 +1103,15 @@ export function TownApp() {
   const yourOpenDebts = (town.favors ?? []).filter(
     (f) => f.status === "owed" && (f.from === "player" || f.to === "player"),
   );
+  const nearby = town.agents
+    .filter(
+      (agent) =>
+        agent.id !== "player" &&
+        inTalkRange(player.tile.x, player.tile.y, agent.tile.x, agent.tile.y),
+    )
+    .map((agent) => agent.id);
+  const talkChoices = crowd && crowd.length > 1 ? crowd : nearby;
+  const localReplies = !online || lastMind === "offline";
 
   return (
     <main className="town" data-talking={shown || board ? "true" : "false"}>
@@ -1144,12 +1176,34 @@ export function TownApp() {
           </p>
         )}
         {checked && (
-          <span className="badge" data-off={online ? "false" : "true"}>
-            {online ? "mind on" : "offline mind"}
+          <span
+            className="badge"
+            data-off={localReplies ? "true" : lastMind === "online" ? "false" : undefined}
+            title={
+              localReplies
+                ? "Local dialogue is limited. AI responses are currently unavailable."
+                : lastMind === "online"
+                  ? "The latest AI response was received and accepted."
+                  : "AI is configured, but no response has been verified in this session."
+            }
+          >
+            {localReplies
+              ? "local replies"
+              : lastMind === "online"
+                ? "AI responded"
+                : "AI unverified"}
           </span>
         )}
-        {thinking && <span className="status-message">minds thinking</span>}
-        {hiccup && <span className="status-message">A mind missed and spoke from memory.</span>}
+        {thinking && (
+          <span className="status-message" role="status">
+            Waiting for a reply
+          </span>
+        )}
+        {hiccup && (
+          <span className="status-message" role="status">
+            AI reply unavailable.
+          </span>
+        )}
         <div className="status-controls">
           <span>
             <kbd>WASD / ↑↓←→</kbd> move
@@ -1175,7 +1229,7 @@ export function TownApp() {
       )}
       {checked && !online && !shown && (
         <p className="warn offline-note" role="status">
-          The minds are offline. They still answer from what they already hold.
+          AI is offline. Residents use limited local dialogue and remember your conversations.
         </p>
       )}
       {hint && (town.guide ?? 0) < 3 && !shown && (
@@ -1210,7 +1264,7 @@ export function TownApp() {
           ref={canvasRef}
           className="town-canvas h-full"
           onClick={onCanvasClick}
-          aria-label="The town"
+          aria-label={`The town, home to ${town.agents.length - 1} neighbors and you. Use the nearby conversation buttons or press Enter to talk.`}
         />
         <div className="world-label" aria-hidden>
           <i />
@@ -1221,17 +1275,19 @@ export function TownApp() {
               : "A day in the town"}
         </div>
         <div className="world-caption" aria-hidden>
-          6 residents · endless possibilities
+          {town.agents.length} residents · endless possibilities
         </div>
-        {crowd && crowd.length > 1 && (
-          <div className="crowd" role="listbox" aria-label="Who is here">
-            {crowd.map((id) => {
+        {!shown && !board && replay === null && talkChoices.length > 0 && (
+          <div className="crowd" role="group" aria-label={crowd ? "Who is here" : "Talk nearby"}>
+            <span className="crowd-label">{crowd ? "Who is here" : "Talk nearby"}</span>
+            {talkChoices.map((id) => {
               const person = town.agents.find((agent) => agent.id === id);
               return (
                 <button
                   key={id}
                   className="btn"
                   type="button"
+                  aria-label={id === "player" ? "Your journal" : `Talk with ${person?.name ?? id}`}
                   onClick={() => {
                     setCrowd(null);
                     approach(id);
@@ -1267,6 +1323,7 @@ export function TownApp() {
             busy={thinking !== "" || replay !== null}
             inspect={inspect}
             sendNote={sendNote}
+            localDialogue={checked && localReplies}
             onInspect={setInspect}
             onClose={() => {
               setPinned(false);
@@ -1455,11 +1512,11 @@ function positionsFor(town: Town, replay: Replay | null) {
   const out = {} as Record<AgentId, { x: number; y: number; face: Face }>;
   if (replay) {
     const frame = frameAt(town, replay.m, replay.d);
-    if (frame && frame.length >= town.agents.length * 2) {
+    if (frame) {
       town.agents.forEach((agent, index) => {
         out[agent.id] = {
-          x: frame[index * 2] ?? agent.tile.x,
-          y: frame[index * 2 + 1] ?? agent.tile.y,
+          x: frame[index * 2] ?? Number.NaN,
+          y: frame[index * 2 + 1] ?? Number.NaN,
           face: agent.face,
         };
       });
@@ -1551,6 +1608,7 @@ function Mind({
   busy,
   inspect,
   sendNote,
+  localDialogue,
   onInspect,
   onClose,
   onPin,
@@ -1565,6 +1623,7 @@ function Mind({
   busy: boolean;
   inspect: boolean;
   sendNote: string;
+  localDialogue: boolean;
   onInspect: (value: boolean) => void;
   onClose: () => void;
   onPin: () => void;
@@ -1650,11 +1709,23 @@ function Mind({
               </li>
             )}
             {heard.slice(-8).map((m) => {
-              const turns = spokenTurns(m.text);
+              const turns = m.turns?.length
+                ? m.turns.map((turn) => ({
+                    who:
+                      town.agents.find((person) => person.id === turn.speaker)?.name ??
+                      turn.speaker,
+                    line: turn.text,
+                  }))
+                : spokenTurns(m.text);
               return (
                 <li key={m.id} ref={m.id === newest ? latestRef : undefined}>
                   <p className="text-muted">
                     Day {m.day} {formatClock(m.minute)}
+                    {m.mind === "offline"
+                      ? " · Local reply"
+                      : m.mind === "grok"
+                        ? " · AI reply"
+                        : ""}
                   </p>
                   {turns.length === 0 ? (
                     <p>{m.text}</p>
@@ -1760,6 +1831,11 @@ function Mind({
                 ))}
               </ul>
             </details>
+          )}
+          {localDialogue && (
+            <p className="mb-2 text-xs text-muted" role="note">
+              Local dialogue is active. Open-ended conversation needs a live AI connection.
+            </p>
           )}
           <label className="text-sm text-muted" htmlFor="mind-line">
             Your line to {agent.name}

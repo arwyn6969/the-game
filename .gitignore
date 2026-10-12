@@ -7,3 +7,6 @@ dist
 .grok
 screenshots
 artifacts
+
+config/mind-pool.local.json
+config/mind-pool.*.local.json

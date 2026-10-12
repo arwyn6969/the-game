@@ -2,6 +2,7 @@ import type { Agent, AgentId, Block, Memory, Relationship, Town } from "./types"
 import { AGENT_IDS } from "./types";
 import { makeMemory } from "./memory";
 import { planFromBlocks } from "./plan";
+import { refreshResidentStatus } from "./navigation";
 import { plain } from "./text";
 import { HOMES } from "./world";
 
@@ -25,7 +26,7 @@ function blocks(rows: [number, number, Block["place"], Block["spot"], string][])
 export function createTown(playerName: string): Town {
   const name = plain(playerName, 18) || "Ada";
   const town: Town = {
-    version: 1,
+    version: 2,
     day: 1,
     minute: 7 * 60,
     playerName: name,
@@ -154,7 +155,13 @@ export function createTown(playerName: string): Town {
       blocks([
         [0, 8, "dorms", "home", "awake too early in the dorms, counting coins that are not there"],
         [8, 12, "dorms", "out", "in the dorms, not in class, turning over a plan"],
-        [12, 14, "plaza", "out", "on the plaza, looking for someone who needs an extra pair of hands"],
+        [
+          12,
+          14,
+          "plaza",
+          "out",
+          "on the plaza, looking for someone who needs an extra pair of hands",
+        ],
         [14, 16, "grocery", "out", "at the grocery, doing the math on bread"],
         [16, 20, "cafe", "out", "at the cafe, ready to work if the work is real"],
         [20, 24, "dorms", "home", "back in the dorms, still restless"],
@@ -288,31 +295,119 @@ export function createTown(playerName: string): Town {
 
   town.agents = [kevin, arwyn, northern, baba, sub, player];
 
-  const seedMemory: Memory = makeMemory(
-    town,
-    1,
-    7 * 60,
-    "reflect",
-    SEED,
-    10,
-    { protected: true, seed: true, mind: "offline" },
-  );
+  const seedMemory: Memory = makeMemory(town, 1, 7 * 60, "reflect", SEED, 10, {
+    protected: true,
+    seed: true,
+    mind: "offline",
+  });
   kevin.memories.push(seedMemory);
 
   for (const agent of town.agents) {
-    const born = makeMemory(
-      town,
-      1,
-      6 * 60,
-      "reflect",
-      agent.selfSentence,
-      6,
-      { protected: true, mind: "offline" },
-    );
+    const born = makeMemory(town, 1, 6 * 60, "reflect", agent.selfSentence, 6, {
+      protected: true,
+      mind: "offline",
+    });
     agent.memories.push(born);
   }
 
+  addSpecialists(town);
+  for (const agent of town.agents) refreshResidentStatus(town, agent);
   return town;
+}
+
+/** Arrival is additive: legacy residents and their history are never recreated. */
+export function addSpecialists(town: Town): void {
+  const definitions = [
+    {
+      id: "data" as const,
+      name: "Data",
+      role: "Science and technology researcher",
+      identity:
+        "Data is Kevin World's fictional science and technology researcher. He speaks precisely, asks what a claim can be tested against, and admits when observations are missing. He is learning the town, not reading everyone's private thoughts. He can discuss AI and ledgers but cannot build, browse or repair anything merely by claiming it happened.",
+      selfSentence:
+        "I am a researcher who would rather test a small claim than promise a large miracle.",
+      want: "Help Arwyn make the library records easier to verify, and learn which technical problems Kevin actually needs solved.",
+      tile: { x: 38, y: 20 },
+      money: 6,
+      thread: "Find one library record whose accuracy we can check together.",
+      summary:
+        "Check the library records, compare a small test with Kevin, then spend the evening in the park.",
+      rows: [
+        [0, 7, "dorms", "home", "resting in a room at the college"],
+        [7, 12, "library", "out", "at the library, checking what the records actually say"],
+        [12, 14, "cafe", "out", "at Hobbs, asking Kevin about practical technical problems"],
+        [14, 18, "library", "out", "comparing library records and writing testable questions"],
+        [18, 21, "park", "out", "in the park, watching and listening"],
+        [21, 24, "dorms", "home", "back at the college, putting his notes in order"],
+      ] as [number, number, Block["place"], Block["spot"], string][],
+    },
+    {
+      id: "amelia" as const,
+      name: "Amelia",
+      role: "Economist",
+      identity:
+        "Dr. Amelia Keynes is Kevin World's fictional economist. She asks who pays, who benefits and whose time is being overlooked. She is warm, direct and willing to revise a proposal when the numbers change. She can help compare choices but does not control residents' money or invent funding, payments or agreements.",
+      selfSentence:
+        "I am an economist who wants a useful idea to have an honest budget and fair terms.",
+      want: "Learn what the library needs and help residents compare costs without promising money that nobody has committed.",
+      tile: { x: 28, y: 20 },
+      money: 7,
+      thread: "Find out what a useful library improvement would cost and who would benefit.",
+      summary:
+        "Listen in the plaza, discuss the library's needs, and compare ordinary town expenses without taking over anyone's budget.",
+      rows: [
+        [0, 7, "dorms", "home", "resting at the college with her notebook closed"],
+        [7, 10, "plaza", "out", "in the plaza, asking what residents need"],
+        [10, 12, "library", "out", "at the library, comparing possible improvements"],
+        [12, 15, "cafe", "out", "at Hobbs, listening to how people make ends meet"],
+        [15, 18, "grocery", "out", "at the grocery, discussing costs with Baba"],
+        [18, 21, "noticeboard", "out", "reading community proposals at the noticeboard"],
+        [21, 24, "dorms", "home", "back at the college, checking her notes"],
+      ] as [number, number, Block["place"], Block["spot"], string][],
+    },
+  ];
+  for (const definition of definitions) {
+    if (town.agents.some((a) => a.id === definition.id)) continue;
+    const { id, name, role, identity, selfSentence, want, tile, money, thread, summary, rows } =
+      definition;
+    const agent: Agent = {
+      id,
+      name,
+      role,
+      identity,
+      selfSentence,
+      want,
+      tile: { ...tile },
+      home: { ...HOMES[id] },
+      face: "s",
+      money,
+      relationships: relate(id),
+      threads: [{ id: `${id}-library`, text: thread, open: true }],
+      memories: [],
+      plan: planFromBlocks(town.day, summary, blocks(rows)),
+      projects: [],
+      newMemories: 0,
+      shiftHours: 0,
+      paidToday: false,
+      callUsed: false,
+      path: [],
+      status: "new in town",
+      lastTalk: {},
+    };
+    agent.memories.push(
+      makeMemory(
+        town,
+        town.day,
+        town.minute,
+        "observe",
+        `I arrived in town today. ${selfSentence}`,
+        7,
+        { protected: true, source: "event", mind: "offline" },
+      ),
+    );
+    town.agents.push(agent);
+    refreshResidentStatus(town, agent);
+  }
 }
 
 export const SEED_TEXT = SEED;

@@ -108,7 +108,7 @@ const settleNpc = (town, changes = {}) =>
   });
 
 // These assert the previous review's diagnostic scenarios; diagnostics alone are not a verdict.
-test("day-5 and day-30 exports and older pretty v1 saves round trip", () => {
+test("day-5 and day-30 exports and pretty current saves round trip", () => {
   const town = createTown("Ada");
   for (let day = 1; day <= 30; day++) {
     if (day > 1) advanceTown(town, 1440);
@@ -126,9 +126,13 @@ test("day-5 and day-30 exports and older pretty v1 saves round trip", () => {
     assert.equal(save.validateTown(legacy), true);
     for (const old of [
       JSON.stringify(town, null, 2),
-      JSON.stringify({ version: 1, town }, null, 2),
+      JSON.stringify({ version: town.version, town }, null, 2),
     ]) {
-      assert.deepEqual(save.parseTownFile(old), legacy, "raw and wrapped v1 remain supported");
+      assert.deepEqual(
+        save.parseTownFile(old),
+        legacy,
+        "raw and wrapped current saves remain supported",
+      );
     }
     assert.ok(
       agent(town, "northern").memories.some((m) => m.text.includes("paid me 5")),
@@ -139,6 +143,8 @@ test("day-5 and day-30 exports and older pretty v1 saves round trip", () => {
 
 test("older v1 files repair absent optional fields while keeping personal history", () => {
   const town = debtTown();
+  town.version = 1;
+  town.agents = town.agents.filter((a) => a.id !== "data" && a.id !== "amelia");
   town.playerName = "Iris";
   const kevin = agent(town, "kevin");
   kevin.want =
@@ -165,7 +171,7 @@ test("older v1 files repair absent optional fields while keeping personal histor
   }
   const imported = save.parseTownFile(JSON.stringify(town, null, 2));
   assert.ok(imported);
-  assert.equal(imported.version, 1);
+  assert.equal(imported.version, 2);
   assert.equal(imported.playerName, "Iris");
   assert.equal(agent(imported, "player").name, "Iris");
   assert.ok(
@@ -793,6 +799,8 @@ test("routine offline speech does not quote Kevin's private seed", () => {
 test("legacy missing timetables and conflicting projects cannot produce false shift acceptance", () => {
   for (const scenario of ["missing-plan", "empty-beats", "conflicting-project"]) {
     const raw = createTown("Ada");
+    raw.version = 1;
+    raw.agents = raw.agents.filter((a) => a.id !== "data" && a.id !== "amelia");
     const player = agent(raw, "player");
     if (scenario === "missing-plan") delete player.plan;
     if (scenario === "empty-beats") player.plan.beats = [];
@@ -1203,7 +1211,7 @@ test("another resident's private seed is never retrieved without a witnessed cop
 test("Kevin, Arwyn, Northern, Baba and Sub are written as men, including an older save", () => {
   const town = createTown("Ada");
   for (const person of town.agents) {
-    if (person.id === "player") continue;
+    if (!["kevin", "arwyn", "northern", "baba", "sub"].includes(person.id)) continue;
     assert.doesNotMatch(`${person.identity} ${person.status}`, /\b(she|her|hers)\b/i);
   }
   const raw = JSON.parse(save.exportTown(town));
@@ -1211,7 +1219,8 @@ test("Kevin, Arwyn, Northern, Baba and Sub are written as men, including an olde
   arwyn.identity =
     "Arwyn lives in the back room of the library, among boxes nobody has catalogued since the college shrank. She is a researcher by temperament more than by paycheck: margins, dates, the way a person tells a story twice and changes one fact. She dresses like the stacks, grey-green and unfussy, and she listens longer than is comfortable. Origins are her private weather. She believes a town is a set of documents that learned to walk.";
   arwyn.selfSentence = "Right now I am still the one who reads a life before she interrupts it.";
-  arwyn.plan.beats.find((b) => b.place === "cafe").status = "at the cafe, listening more than she drinks";
+  arwyn.plan.beats.find((b) => b.place === "cafe").status =
+    "at the cafe, listening more than she drinks";
   arwyn.relationships.kevin = {
     score: 1,
     note: "She listened when I said I do not know who I am, and she did not turn it into a place.",

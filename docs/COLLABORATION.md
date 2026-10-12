@@ -2,6 +2,8 @@
 
 Prepared 11 October 2026 for `arwyn6969/the-game`. Live reference: https://thegame.grok.me.
 
+The seven-resident integration is a later, explicitly authorized milestone. Its current schema is version 2, with version-1 loading preserved. See [the seven-resident handoff](handoffs/seven-resident-coherence.md). The lane setup and first-day scope below record the earlier milestone.
+
 The first completed lane diffs have now been reviewed and combined in `codex/first-day-integration`. See [the release record](RELEASE.md) for current checks and publication status. The setup and lane prompts below describe the initial division of work; start future iterations from the reviewed integrated `main` once its release PR has merged.
 
 ## Goal
@@ -31,7 +33,7 @@ Work in separate checkouts. A separate branch in a shared working directory does
 
 `TownApp.tsx` contains both UI and orchestration. Grok owns it during parallel work. Sol records required orchestration changes instead of editing it concurrently. For example, Sol can introduce an additive save-status API while preserving `saveTown(town)` callers; the status display is wired in the integration pass. Grok's UI branch must keep working with the original exports until that pass.
 
-Keep `Town.version === 1`, existing imports/exports, and public function signatures compatible. Each agent records any proposed interface change in its own handoff with an example and test. Neither assumes an interface exists because the other agent might implement it.
+Keep the current save schema and exported function signatures stable during independent lane work. The seven-resident integration uses `Town.version === 2` and preserves version-1 imports. Each agent records any proposed interface change in its own handoff with an example and test. Neither assumes an interface exists because the other agent might implement it.
 
 ## Grok web mode has a separate handoff route
 
