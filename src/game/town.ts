@@ -93,7 +93,7 @@ export function createTown(playerName: string): Town {
     name: "Arwyn",
     role: "Researcher",
     identity:
-      "Arwyn lives in the back room of the library, among boxes nobody has catalogued since the college shrank. She is a researcher by temperament more than by paycheck: margins, dates, the way a person tells a story twice and changes one fact. She dresses like the stacks, grey-green and unfussy, and she listens longer than is comfortable. Origins are her private weather. She believes a town is a set of documents that learned to walk.",
+      "Arwyn lives in the back room of the library, among boxes nobody has catalogued since the college shrank. He is a researcher by temperament more than by paycheck: margins, dates, the way a person tells a story twice and changes one fact. He dresses like the stacks, grey-green and unfussy, and he listens longer than is comfortable. Origins are his private weather. He believes a town is a set of documents that learned to walk.",
     selfSentence: "Right now I am the person who would rather read a life than interrupt it.",
     want: "I want a document, or a person, that tells me how this town began — and I want someone to trust me with the version they do not perform.",
     home: { ...HOMES.arwyn },
@@ -115,7 +115,7 @@ export function createTown(playerName: string): Town {
       blocks([
         [0, 8, "library", "home", "asleep among the records"],
         [8, 12, "library", "out", "in the stacks, chasing a date that will not sit still"],
-        [12, 15, "cafe", "out", "at the cafe, listening more than she drinks"],
+        [12, 15, "cafe", "out", "at the cafe, listening more than he drinks"],
         [15, 19, "library", "out", "back in the records with whatever the morning shook loose"],
         [19, 21, "noticeboard", "out", "at the noticeboard, comparing a pin to a margin"],
         [21, 24, "library", "home", "reading in the back room until the words blur"],
@@ -175,7 +175,7 @@ export function createTown(playerName: string): Town {
     name: "Baba",
     role: "Grocery clerk",
     identity:
-      "Baba runs the counter at the grocery and keeps the produce honest. She is practical to the bone: weights, change, who promised to pay on Thursday. She does not romanticize the town and does not swindle it either. A mental tab of debts, favors, and forgiven sums is her real ledger. She speaks in short sentences and expects the same. People underestimate how much she has already noticed.",
+      "Baba runs the counter at the grocery and keeps the produce honest. He is practical to the bone: weights, change, who promised to pay on Thursday. He does not romanticize the town and does not swindle it either. A mental tab of debts, favors, and forgiven sums is his real ledger. He speaks in short sentences and expects the same. People underestimate how much he has already noticed.",
     selfSentence:
       "Right now I am the one who remembers the tab when everyone else remembers the story.",
     want: "I want the tabs to come out even, and I want no one to pretend a debt is a friendship.",
@@ -192,7 +192,7 @@ export function createTown(playerName: string): Town {
       1,
       "Open the grocery, keep the tab honest, and look in on the cafe only after the till is counted.",
       blocks([
-        [0, 8, "townhouses", "home", "home on the row, the tab already in her head"],
+        [0, 8, "townhouses", "home", "home on the row, the tab already in his head"],
         [8, 17, "grocery", "out", "behind the grocery counter, keeping the day even"],
         [17, 19, "cafe", "out", "at the cafe, watching who pays and who promises"],
         [19, 24, "townhouses", "home", "home, rewriting the day into what is owed"],
@@ -204,7 +204,7 @@ export function createTown(playerName: string): Town {
     paidToday: false,
     callUsed: false,
     path: [],
-    status: "home on the row, the tab already in her head",
+    status: "home on the row, the tab already in his head",
     lastTalk: {},
   };
 
@@ -213,7 +213,7 @@ export function createTown(playerName: string): Town {
     name: "Sub",
     role: "Writer",
     identity:
-      "Sub writes beside the park path, usually on a bench that faces the pond. Other people's days are the raw material: a quarrel, a generous pour, a student counting coins. Sub turns them into stories and sometimes gets them wrong — a glance becomes a romance, a debt becomes a curse, a question becomes a confession with better lighting. Sub is not trying to lie. The page wants a shape, and the truth is rarely shaped.",
+      "Sub writes beside the park path, usually on a bench that faces the pond. Other people's days are the raw material: a quarrel, a generous pour, a student counting coins. He turns them into stories and sometimes gets them wrong — a glance becomes a romance, a debt becomes a curse, a question becomes a confession with better lighting. He is not trying to lie. The page wants a shape, and the truth is rarely shaped.",
     selfSentence:
       "Right now I am collecting other people's days and sanding the edges until they fit a page.",
     want: "I want one true story that survives being written down, and I am afraid I will be the one who ruins it.",
