@@ -345,6 +345,92 @@ test("bounded dawn prompts and parsing operate only on requested residents", () 
   assert.equal(parseMind(job, JSON.stringify({ plans: [plan("kevin")] })), null);
 });
 
+test("long histories and full ledgers leave room for public personas within the gateway budget", () => {
+  const town = createTown("Ada");
+  const a = resident(town, "baba"),
+    b = resident(town, "northern");
+  for (const person of [a, b]) {
+    person.identity = "i".repeat(600);
+    person.want = "w".repeat(180);
+    person.selfSentence = "s".repeat(160);
+    person.memories = [];
+    person.threads = Array.from({ length: 4 }, (_, i) => ({
+      id: `t${i}`,
+      text: "t".repeat(100),
+      open: true,
+    }));
+    person.projects = Array.from({ length: 3 }, (_, i) => ({
+      id: `p${i}`,
+      owner: person.id,
+      kind: "other",
+      text: "p".repeat(100),
+      status: "open",
+      day: 1,
+    }));
+    for (let i = 0; i < 4; i++)
+      person.memories.push(makeMemory(town, 1, 423, "observe", "a".repeat(420), 10));
+    person.memories.push(
+      makeMemory(town, 1, 420, "favor", "z".repeat(420), 1, { protected: true }),
+    );
+  }
+  for (let i = 0; i < 3; i++) {
+    a.memories.push(
+      makeMemory(town, 1, 420 + i, "chat", "x".repeat(420), 7, {
+        with: "player",
+        turns: [
+          { speaker: "player", text: "x".repeat(400) },
+          { speaker: "baba", text: "y".repeat(700) },
+        ],
+      }),
+    );
+  }
+  for (let i = 0; i < 24; i++)
+    town.favors.push({
+      id: `d${i}`,
+      from: "player",
+      to: "baba",
+      amount: 2,
+      text: "z".repeat(180),
+      status: "owed",
+      day: 1,
+    });
+  const playerPrompt = buildPrompt(town, playerJob(town, "a".repeat(400), "baba"));
+  const context = JSON.parse(playerPrompt.split("\nResident: ")[1].split("\nCurrent beat:")[0]);
+  assert.ok(playerPrompt.length + 900 < 14000, "allow 900 chars for a public persona");
+  assert.equal(context.recentConversation.length, 6);
+  assert.equal(context.currentFacts.openObligationCount, 24);
+  assert.equal(context.currentFacts.obligationsOmitted, 20);
+  assert.equal(context.currentFacts.choicesOmitted, 21);
+  assert.deepEqual(
+    town.retrievals.at(-1).top.map((memory) => memory.text),
+    context.memories.map((memory) => memory.text),
+  );
+  town.favors = town.favors.map((favor) => ({ ...favor, from: "northern" }));
+  for (let i = 0; i < 2; i++) {
+    const turns = Array.from({ length: 4 }, (_, n) => ({
+      speaker: n % 2 ? "baba" : "northern",
+      text: String(i).repeat(700),
+    }));
+    for (const person of [a, b])
+      person.memories.push(
+        makeMemory(town, 1, 425 + i, "chat", `shared ${i}`, 7, {
+          with: person.id === "baba" ? "northern" : "baba",
+          turns,
+        }),
+      );
+  }
+  const talk = buildPrompt(town, { kind: "talk", a: "baba", b: "northern", day: 1, minute: 426 });
+  assert.ok(talk.length + 1800 < 14000, "allow two 900-char public personas");
+  const pairPacket = JSON.parse(talk.split("\nA: ")[1].split("\nB: ")[0]);
+  assert.equal(pairPacket.obligationsOmitted, 20);
+  assert.ok(pairPacket.recentConversation.length >= 2);
+  assert.equal(pairPacket.recentConversation.at(-1).text, "1".repeat(700));
+  assert.equal(
+    pairPacket.recentConversation.length + (pairPacket.omittedContext?.recentConversation ?? 0),
+    6,
+  );
+});
+
 const request = { kind: "player", user: "A synthetic fixture question." };
 test("missing keys and exhausted limits make zero provider attempts", async () => {
   let count = 0;

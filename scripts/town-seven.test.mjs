@@ -263,7 +263,12 @@ test("a generated conversation can change trust only between its participants", 
     b: "amelia",
     lines: [{ speaker: "data", text: "We can compare the options." }],
     relationships: [
-      { owner: "data", about: "player", delta: 1, note: "Unsupported claim about an absent person." },
+      {
+        owner: "data",
+        about: "player",
+        delta: 1,
+        note: "Unsupported claim about an absent person.",
+      },
       { owner: "data", about: "kevin", delta: 1, note: "Another absent person." },
       { owner: "data", about: "amelia", delta: 1, note: "We compared the options." },
     ],

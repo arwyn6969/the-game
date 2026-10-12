@@ -16,6 +16,46 @@ export function planResidents(job: Extract<ThinkJob, { kind: "plan" }>) {
   );
 }
 
+function fitPacket<
+  T extends Record<string, unknown> & { id: string; memories: { id: string; text: string }[] },
+>(town: Town, value: T, budget: number): T {
+  const packet: Record<string, unknown> = value;
+  const omitted: Record<string, number> = {};
+  const size = () => JSON.stringify(packet).length;
+  const trim = (field: string, keep: number, oldestFirst = false) => {
+    const list = packet[field];
+    if (!Array.isArray(list)) return;
+    while (size() > budget && list.length > keep) {
+      if (oldestFirst) list.shift();
+      else list.pop();
+      omitted[field] = (omitted[field] ?? 0) + 1;
+      packet.omittedContext = omitted;
+    }
+  };
+  // Recent turns and current records outrank repeated excerpts and private colour.
+  trim("memories", 0);
+  for (const field of ["relationships", "projects", "threads"]) trim(field, 0);
+  for (const field of ["selfSentence", "want", "identity"]) {
+    if (size() <= budget) break;
+    if (field in packet) {
+      delete packet[field];
+      omitted[field] = 1;
+      packet.omittedContext = omitted;
+    }
+  }
+  trim("recentConversation", 2, true);
+  if (size() > budget) throw new Error("resident context exceeds its bounded budget");
+  if (omitted.memories) {
+    const log = [...town.retrievals].reverse().find((entry) => entry.agentId === value.id);
+    if (log) {
+      log.top = log.top.slice(0, value.memories.length);
+      if (log.seedRank !== null && log.seedRank > log.top.length) log.seedRank = null;
+      if (log.seedInStream) log.missed = log.seedRank === null;
+    }
+  }
+  return value;
+}
+
 function packet(town: Town, agent: Agent, job: ThinkJob) {
   const threads = Array.isArray(agent.threads) ? agent.threads : [];
   const memories = promptMemories(town, agent, job);
@@ -29,67 +69,86 @@ function packet(town: Town, agent: Agent, job: ThinkJob) {
   if (job.kind === "talk") {
     const other = agentById(town, job.a === agent.id ? job.b : job.a);
     const shared = { ...agent, memories: sharedMemories(agent, other) };
-    return {
-      id: agent.id,
-      name: agent.name,
-      role: agent.role,
-      perspective,
-      place: placeTitle(zoneAt(agent.tile.x, agent.tile.y)),
-      status: clip(agent.status, 80),
-      memories,
-      recentConversation: recentConversation(shared, other.id),
-      obligations: pairObligations(town, agent.id, other.id),
-    };
+    const obligations = pairObligations(town, agent.id, other.id);
+    return fitPacket(
+      town,
+      {
+        id: agent.id,
+        name: clip(agent.name, 40),
+        role: clip(agent.role, 80),
+        perspective,
+        place: placeTitle(zoneAt(agent.tile.x, agent.tile.y)),
+        status: clip(agent.status, 80),
+        memories,
+        recentConversation: recentConversation(shared, other.id),
+        obligations: obligations.slice(0, 4),
+        obligationCount: obligations.length,
+        obligationsOmitted: Math.max(0, obligations.length - 4),
+      },
+      5500,
+    );
   }
   const owed = (town.favors ?? []).find(
     (f) => f.status === "owed" && (f.from === agent.id || f.to === agent.id),
   );
   const relationships =
     agent.relationships && typeof agent.relationships === "object" ? agent.relationships : {};
-  return {
-    id: agent.id,
-    name: agent.name,
-    role: agent.role,
-    perspective,
-    identity: clip(agent.identity, 600),
-    selfSentence: clip(agent.selfSentence, 160),
-    want: clip(agent.want, 180),
-    money: agent.money,
-    owed: owed ? clip(`${owed.from} owes ${owed.to}: ${owed.text}`, 80) : "",
-    place: placeTitle(zoneAt(agent.tile.x, agent.tile.y)),
-    status: clip(agent.status, 80),
-    threads: threads
-      .filter((t) => t.open)
-      .slice(0, 4)
-      .map((t) => ({
-        id: t.id,
-        text: clip(t.text, 100),
-        hidden: Boolean(t.hidden),
-        seed: Boolean(t.seed),
-      })),
-    relationships: Object.entries(relationships)
-      .slice(0, 5)
-      .map(([id, rel]) => ({
-        id,
-        score: rel?.score ?? 0,
-        note: clip(rel?.note ?? "", 60),
-      })),
-    projects: (agent.projects ?? [])
-      .filter((p) => p.status === "open")
-      .slice(0, 3)
-      .map((p) => ({
-        id: p.id,
-        kind: p.kind,
-        text: clip(p.text, 100),
-      })),
-    memories,
-    ...(job.kind === "player"
-      ? {
-          recentConversation: recentConversation(agent, "player"),
-          currentFacts: playerFacts(town, agent),
-        }
-      : {}),
-  };
+  const people =
+    job.kind === "plan"
+      ? planResidents(job).length
+      : job.kind === "reflect"
+        ? job.agents.length
+        : 1;
+  const budget =
+    job.kind === "player" ? 10500 : Math.min(5500, Math.floor(11000 / Math.max(1, people)));
+  return fitPacket(
+    town,
+    {
+      id: agent.id,
+      name: clip(agent.name, 40),
+      role: clip(agent.role, 80),
+      perspective,
+      identity: clip(agent.identity, 600),
+      selfSentence: clip(agent.selfSentence, 160),
+      want: clip(agent.want, 180),
+      money: agent.money,
+      owed: owed ? clip(`${owed.from} owes ${owed.to}: ${owed.text}`, 80) : "",
+      place: placeTitle(zoneAt(agent.tile.x, agent.tile.y)),
+      status: clip(agent.status, 80),
+      threads: threads
+        .filter((t) => t.open)
+        .slice(0, 4)
+        .map((t) => ({
+          id: t.id,
+          text: clip(t.text, 100),
+          hidden: Boolean(t.hidden),
+          seed: Boolean(t.seed),
+        })),
+      relationships: Object.entries(relationships)
+        .slice(0, 5)
+        .map(([id, rel]) => ({
+          id,
+          score: rel?.score ?? 0,
+          note: clip(rel?.note ?? "", 60),
+        })),
+      projects: (agent.projects ?? [])
+        .filter((p) => p.status === "open")
+        .slice(0, 3)
+        .map((p) => ({
+          id: p.id,
+          kind: p.kind,
+          text: clip(p.text, 100),
+        })),
+      memories,
+      ...(job.kind === "player"
+        ? {
+            recentConversation: recentConversation(agent, "player"),
+            currentFacts: playerFacts(town, agent),
+          }
+        : {}),
+    },
+    budget,
+  );
 }
 
 function playerFacts(town: Town, agent: Agent) {
@@ -111,12 +170,12 @@ function playerFacts(town: Town, agent: Agent) {
   return {
     source: "event",
     openObligationCount: owed.length,
-    obligations: obligations.slice(0, 8),
-    obligationsOmitted: Math.max(0, obligations.length - 8),
+    obligations: obligations.slice(0, 4),
+    obligationsOmitted: Math.max(0, obligations.length - 4),
     offeredChoices: actions
-      .slice(0, 6)
+      .slice(0, 3)
       .map(({ label, terms, disabledReason }) => ({ label, terms, disabledReason })),
-    choicesOmitted: Math.max(0, actions.length - 6),
+    choicesOmitted: Math.max(0, actions.length - 3),
     wageReceipts: wageReceipts.map(({ id, text, day, minute }) => ({ id, text, day, minute })),
     // Choices already describe relevant inventory and agreements without leaking unrelated projects.
     notice:
@@ -153,10 +212,10 @@ B: ${JSON.stringify(b)}`;
   const agent = agentById(town, job.agentId);
   const body = packet(town, agent, job);
   const said = plain(job.text, 400);
-  return `${clock} The player, ${plain(town.playerName, 18)}, says to ${agent.name}: "${said}". Answer their actual question in character, usually one to three sentences. Use recentConversation for follow-ups such as "why?" or "that" before searching older memories. You may use a retrieved memory and an open thread (${openThreadText(agent)}), but do not force every answer back to it. Memory source "statement" records words spoken, not verified facts; "reflection" records a belief or intention. Dates are game dates: resolve yesterday/tomorrow relative to the original event, not now. Current facts and receipts outrank remembered claims. Admit missing knowledge and ask one concrete clarification rather than inventing an answer. You may ask for help with work inside this town. You may start or drop one project of your own, never claim its completion without a verified event. JSON: {"reply":"","delta":0,"note":"","favor":null,"thread":null,"notice":null,"project":null}
+  return `${clock} The player, ${plain(town.playerName, 18)}, says to ${clip(agent.name, 40)}: "${said}". Answer their actual question in character, usually one to three sentences. Use recentConversation for follow-ups such as "why?" or "that" before searching older memories. You may use a retrieved memory and an open thread (${clip(openThreadText(agent), 180)}), but do not force every answer back to it. Memory source "statement" records words spoken, not verified facts; "reflection" records a belief or intention. Dates are game dates: resolve yesterday/tomorrow relative to the original event, not now. Current facts and receipts outrank remembered claims. Admit missing knowledge and ask one concrete clarification rather than inventing an answer. You may ask for help with work inside this town. You may start or drop one project of your own, never claim its completion without a verified event. JSON: {"reply":"","delta":0,"note":"","favor":null,"thread":null,"notice":null,"project":null}
 Speech cannot buy, pay, accept or cancel work, or edit the player's projects, threads or schedule. Those require the player's separate quoted action button. Keep favor null and never claim an action completed because of text alone.
 Resident: ${JSON.stringify(body)}
-Current beat: ${beatAt(agent, town.minute).status}`;
+Current beat: ${clip(beatAt(agent, town.minute).status, 110)}`;
 }
 
 function extractJson(text: string): unknown {
@@ -238,7 +297,9 @@ export function parseMind(job: ThinkJob, text: string): MindResult | null {
           thread: parseThread(row.thread),
         };
       })
-      .filter((p) => p && planResidents(job).includes(p.id) && blocksToBeats(p.blocks).length === 24);
+      .filter(
+        (p) => p && planResidents(job).includes(p.id) && blocksToBeats(p.blocks).length === 24,
+      );
     if (!mapped.length) return null;
     return {
       kind: "plan",
