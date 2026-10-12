@@ -13,6 +13,17 @@ import {
   X,
 } from "lucide-react";
 import { ArcadeMark, PixelUniverse } from "./ArcadeArt";
+import {
+  CharacterOverview,
+  CharacterProgress,
+  CharacterReflections,
+  CharacterStrengths,
+  ConversationCaption,
+  Portrait,
+  ResidentStrip,
+  SocialPanel,
+} from "./CharacterSocial";
+import { visibleSocialEvents } from "@/game/social";
 import type { Agent, AgentId, Face, ThinkJob, Town } from "@/game/types";
 import { NPC_IDS } from "@/game/types";
 import {
@@ -221,13 +232,28 @@ export function TownApp() {
   const [speed, setSpeed] = useState<0 | 1 | 4>(speedRef.current);
   const [replay, setReplay] = useState<Replay | null>(null);
   const [panel, setPanel] = useState<AgentId | null>(null);
-  const [pinned, setPinned] = useState(false);
+  const [pinned, setPinned] = useState<AgentId | null>(null);
+  const [watchTown, setWatchTown] = useState(false);
+  const [watching, setWatching] = useState<AgentId | null>(null);
+  const watchingRef = useRef<AgentId | null>(null);
+  watchingRef.current = watching;
+  const [socialOpen, setSocialOpen] = useState(false);
+  const [startTalking, setStartTalking] = useState(false);
   const [board, setBoard] = useState(false);
   const [thinking, setThinking] = useState("");
   const [hiccup, setHiccup] = useState(false);
   const [importText, setImportText] = useState<string | null>(null);
   const [importError, setImportError] = useState("");
-  const [draft, setDraft] = useState("");
+  const [drafts, setDrafts] = useState<Partial<Record<AgentId, string>>>({});
+  const draft = drafts[panel ?? "player"] ?? "";
+  const setDraft = (
+    value: string | ((current: string) => string),
+    id = panelRef.current ?? "player",
+  ) =>
+    setDrafts((previous) => ({
+      ...previous,
+      [id]: typeof value === "function" ? value(previous[id] ?? "") : value,
+    }));
   const [hint, setHint] = useState(townRef.current ? !townRef.current.sawHint : true);
   const [inspect, setInspect] = useState(false);
   const [sendNote, setSendNote] = useState("");
@@ -248,7 +274,7 @@ export function TownApp() {
     speedRef.current = next.paused ? 0 : 1;
     setSpeed(speedRef.current);
     setHint(!next.sawHint);
-    setDraft("");
+    setDrafts({});
     setSendNote("");
     setInspect(false);
     resetGlide(next);
@@ -258,7 +284,10 @@ export function TownApp() {
     setRecoverNote("");
     panelRef.current = null;
     setPanel(null);
-    setPinned(false);
+    setPinned(null);
+    setWatching(null);
+    setWatchTown(false);
+    setSocialOpen(false);
     boardRef.current = false;
     setBoard(false);
     setCrowd(null);
@@ -290,6 +319,11 @@ export function TownApp() {
   }, [online]);
   useEffect(() => {
     replayRef.current = replay;
+    if (replay !== null) {
+      setPanel(null);
+      setPinned(null);
+      setBoard(false);
+    }
   }, [replay]);
 
   useEffect(() => {
@@ -405,8 +439,8 @@ export function TownApp() {
         setTick((n) => n + 1);
         if (job.kind === "player") {
           const same = townRef.current === live && panelRef.current === job.agentId;
-          setDraft((current) => nextDraft(current, job.text, same, landed));
-          if (townRef.current === live) {
+          setDraft((current) => nextDraft(current, job.text, same, landed), job.agentId);
+          if (same) {
             setSendNote(
               landed
                 ? usedLocalReply
@@ -429,8 +463,8 @@ export function TownApp() {
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
       if (event.code === "Escape") {
+        setSocialOpen(false);
         if (panelRef.current) {
-          setPinned(false);
           setPanel(null);
         }
         setCrowd(null);
@@ -445,6 +479,7 @@ export function TownApp() {
         if (!nearId) return;
         event.preventDefault();
         setPanel(nearId);
+        setStartTalking(true);
         if (nearId === "kevin" && (live.guide ?? 0) < 2) {
           live.guide = 2;
           persistTown(live);
@@ -504,6 +539,10 @@ export function TownApp() {
       const live = townRef.current;
       if (!live || replayRef.current !== null || pendingRef.current) return;
       const { x, y } = axis(keysRef.current);
+      if ((x || y) && watchingRef.current) {
+        watchingRef.current = null;
+        setWatching(null);
+      }
       if (!x && !y) {
         moveCool = 0;
         const player = agentById(live, "player");
@@ -578,6 +617,9 @@ export function TownApp() {
           const parent = canvas.parentElement;
           const w = parent?.clientWidth || 800;
           const h = canvas.clientHeight || 600;
+          const panelTop = `${Math.round(canvas.getBoundingClientRect().top)}px`;
+          if (parent && parent.style.getPropertyValue("--character-panel-top") !== panelTop)
+            parent.style.setProperty("--character-panel-top", panelTop);
           if (w !== view.w || h !== view.h) {
             view.w = w;
             view.h = h;
@@ -586,7 +628,11 @@ export function TownApp() {
           if (replayRef.current === null) syncGlide(live, dt, snap);
           const positions = positionsFor(live, replayRef.current);
           const playerPos = positions.player ?? glideOf("player");
-          const cam = cameraFor(playerPos.x, playerPos.y, w, h);
+          const focus =
+            replayRef.current === null && watchingRef.current
+              ? (positions[watchingRef.current] ?? playerPos)
+              : playerPos;
+          const cam = cameraFor(focus.x, focus.y, w, h);
           const dpr = Math.min(2, window.devicePixelRatio || 1);
           if (canvas.width !== Math.floor(w * dpr) || canvas.height !== Math.floor(h * dpr)) {
             canvas.width = Math.floor(w * dpr);
@@ -606,7 +652,7 @@ export function TownApp() {
               camY: cam.camY,
               positions,
               replay: replayRef.current !== null,
-              selected: null,
+              selected: panelRef.current ?? watchingRef.current,
               names: Object.fromEntries(live.agents.map((a) => [a.id, a.name])) as Record<
                 AgentId,
                 string
@@ -751,21 +797,21 @@ export function TownApp() {
     }
   }
 
-  function approach(id: AgentId) {
+  function approach(id: AgentId, talk = false) {
     const live = townRef.current;
     if (!live) return;
-    const target: AgentId = pinned && id !== "player" ? "kevin" : id;
-    if (target !== "player") {
-      const player = agentById(live, "player");
-      const other = agentById(live, target);
-      if (!inTalkRange(player.tile.x, player.tile.y, other.tile.x, other.tile.y)) {
-        setFarNote(`${other.name} is too far to hear you. Walk closer.`);
-        return;
-      }
-    }
+    const target: AgentId = id;
     setFarNote("");
+    setSendNote("");
+    setStartTalking(talk);
     setPanel(target);
-    if (target === "kevin" && (live.guide ?? 0) < 2) {
+    const player = agentById(live, "player");
+    const other = agentById(live, target);
+    if (
+      target === "kevin" &&
+      (live.guide ?? 0) < 2 &&
+      inTalkRange(player.tile.x, player.tile.y, other.tile.x, other.tile.y)
+    ) {
       live.guide = 2;
       persistTown(live);
       setTick((n) => n + 1);
@@ -781,7 +827,8 @@ export function TownApp() {
     const sy = event.clientY - rect.top;
     const positions = positionsFor(live, null);
     const playerPos = positions.player ?? { x: 0, y: 0 };
-    const cam = cameraFor(playerPos.x, playerPos.y, rect.width, rect.height);
+    const focus = watchingRef.current ? (positions[watchingRef.current] ?? playerPos) : playerPos;
+    const cam = cameraFor(focus.x, focus.y, rect.width, rect.height);
     const hit = pickAgents(sx, sy, cam.camX, cam.camY, positions);
     if (hit.length > 1) {
       setCrowd(hit);
@@ -807,7 +854,7 @@ export function TownApp() {
 
   async function sendLine() {
     const live = townRef.current;
-    const who = pinned ? "kevin" : panel;
+    const who = panel;
     if (!live || !who || who === "player" || pendingRef.current || replayRef.current !== null)
       return;
     const text = draft.trim().slice(0, 400);
@@ -844,7 +891,7 @@ export function TownApp() {
         applyResult(live, offlineResult(live, job));
         persistTown(live);
         const landed = exchangeLanded(before, playerChatIds(agentById(live, who).memories ?? []));
-        setDraft((current) => nextDraft(current, text, panelRef.current === who, landed));
+        setDraft((current) => nextDraft(current, text, panelRef.current === who, landed), who);
         setSendNote(
           landed
             ? "They answered with local dialogue."
@@ -1083,7 +1130,7 @@ export function TownApp() {
   const town = townRef.current;
   void tick;
   const player = agentById(town, "player");
-  const shown = pinned ? "kevin" : panel;
+  const shown = panel;
   panelRef.current = shown;
   boardRef.current = board;
   const near = onBoard(player.tile.x, player.tile.y);
@@ -1112,9 +1159,17 @@ export function TownApp() {
     .map((agent) => agent.id);
   const talkChoices = crowd && crowd.length > 1 ? crowd : nearby;
   const localReplies = !online || lastMind === "offline";
+  const events = visibleSocialEvents(town, watchTown, { day: clockDay, minute: clockMinute });
+  const conversations = events.filter((event) => event.kind === "conversation");
+  const followCharacter = (id: AgentId) => {
+    setWatchTown(true);
+    setWatching(id);
+    setPanel(null);
+    setBoard(false);
+  };
 
   return (
-    <main className="town" data-talking={shown || board ? "true" : "false"}>
+    <main className="town" data-talking={shown || board || socialOpen ? "true" : "false"}>
       <header className="hud">
         <div className="brand">
           <ArcadeMark className="brand-icon" />
@@ -1213,6 +1268,36 @@ export function TownApp() {
           </span>
         </div>
       </div>
+      <div className="social-toolbar">
+        <ResidentStrip
+          town={town}
+          selected={shown}
+          pinned={pinned}
+          onSelect={approach}
+          replay={replay !== null}
+        />
+        <button
+          className="btn town-life-toggle"
+          type="button"
+          aria-expanded={socialOpen}
+          onClick={() => {
+            setSocialOpen((value) => !value);
+            setPanel(null);
+            setBoard(false);
+          }}
+        >
+          Town life{" "}
+          <span>
+            {watchTown ? "Watch · " : ""}
+            {conversations.length} exchanges
+          </span>
+        </button>
+        {watching && (
+          <button className="btn return-to-player" type="button" onClick={() => setWatching(null)}>
+            Following {agentById(town, watching).name} · Return to me
+          </button>
+        )}
+      </div>
       {saveStatus && !saveStatus.ok && (
         <p className="warn" role="alert">
           This town has not saved in this browser. Download a copy before closing the page.{" "}
@@ -1277,6 +1362,28 @@ export function TownApp() {
         <div className="world-caption" aria-hidden>
           {town.agents.length} residents · endless possibilities
         </div>
+        {!shown && !board && !socialOpen && (
+          <ConversationCaption
+            town={town}
+            event={conversations[0]}
+            onOpen={() => setSocialOpen(true)}
+          />
+        )}
+        {!shown && !board && socialOpen && (
+          <SocialPanel
+            town={town}
+            events={events}
+            watch={watchTown}
+            replay={replay !== null}
+            onWatch={(value) => {
+              setWatchTown(value);
+              if (!value) setWatching(null);
+            }}
+            onClose={() => setSocialOpen(false)}
+            onFollow={followCharacter}
+            onProfile={approach}
+          />
+        )}
         {!shown && !board && replay === null && talkChoices.length > 0 && (
           <div className="crowd" role="group" aria-label={crowd ? "Who is here" : "Talk nearby"}>
             <span className="crowd-label">{crowd ? "Who is here" : "Talk nearby"}</span>
@@ -1290,7 +1397,7 @@ export function TownApp() {
                   aria-label={id === "player" ? "Your journal" : `Talk with ${person?.name ?? id}`}
                   onClick={() => {
                     setCrowd(null);
-                    approach(id);
+                    approach(id, true);
                   }}
                 >
                   {person?.name ?? id}
@@ -1315,9 +1422,14 @@ export function TownApp() {
         </div>
         {shown && (
           <Mind
+            key={shown}
             town={town}
             agent={agentById(town, shown)}
-            pinned={pinned}
+            pinned={pinned === shown}
+            startTalking={startTalking}
+            watch={watchTown}
+            replay={replay !== null}
+            onWatch={() => followCharacter(shown)}
             draft={draft}
             setDraft={setDraft}
             busy={thinking !== "" || replay !== null}
@@ -1326,12 +1438,10 @@ export function TownApp() {
             localDialogue={checked && localReplies}
             onInspect={setInspect}
             onClose={() => {
-              setPinned(false);
               setPanel(null);
             }}
             onPin={() => {
-              setPinned((v) => !v);
-              setPanel("kevin");
+              setPinned((value) => (value === shown ? null : shown));
             }}
             onSend={() => void sendLine()}
             onAction={(id) => chooseAction(town, shown, id)}
@@ -1603,6 +1713,10 @@ function Mind({
   town,
   agent,
   pinned,
+  startTalking,
+  watch,
+  replay,
+  onWatch,
   draft,
   setDraft,
   busy,
@@ -1618,6 +1732,10 @@ function Mind({
   town: Town;
   agent: Agent;
   pinned: boolean;
+  startTalking: boolean;
+  watch: boolean;
+  replay: boolean;
+  onWatch: () => void;
   draft: string;
   setDraft: (value: string) => void;
   busy: boolean;
@@ -1635,11 +1753,15 @@ function Mind({
   const latestRef = useRef<HTMLLIElement | null>(null);
   const followRef = useRef(true);
   const [behind, setBehind] = useState(false);
+  const [tab, setTab] = useState<"overview" | "strengths" | "together" | "progress">(
+    startTalking || agent.id === "player" ? "together" : "overview",
+  );
   useEffect(() => {
     followRef.current = true;
-    lineRef.current?.focus();
-  }, [agent.id]);
+    if (tab === "together") lineRef.current?.focus();
+  }, [agent.id, tab]);
   const player = agentById(town, "player");
+  const canTalk = inTalkRange(player.tile.x, player.tile.y, agent.tile.x, agent.tile.y);
   const memories = Array.isArray(agent.memories) ? agent.memories : [];
   const heard =
     agent.id === "player"
@@ -1666,21 +1788,45 @@ function Mind({
   return (
     <aside className="mind" aria-label={`Talk with ${agent.name}`}>
       <div className="mind-bar">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-muted">{agent.role}</p>
-          <h2 className="font-display text-3xl leading-none">{agent.name}</h2>
-          <p className="mt-1 text-sm text-muted">
-            {agent.id === "player" ? `${player.money} on you · ${agent.status}` : agent.status}
-          </p>
+        <div className="character-heading">
+          <Portrait id={agent.id} />
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted">{agent.role}</p>
+            <h2 className="font-display text-3xl leading-none">{agent.name}</h2>
+            <p className="mt-1 text-sm text-muted">
+              {replay
+                ? "Recorded positions"
+                : agent.id === "player"
+                  ? `${player.money} on you`
+                  : canTalk
+                    ? "Nearby · you can talk"
+                    : "Walk closer to talk"}
+            </p>
+          </div>
         </div>
         <div className="flex gap-2">
           <button className="btn" type="button" data-on={pinned ? "true" : "false"} onClick={onPin}>
-            <Pin className="inline size-4" aria-hidden /> {pinned ? "Unpin" : "Pin Kevin"}
+            <Pin className="inline size-4" aria-hidden /> {pinned ? "Unpin" : "Pin"}
           </button>
           <button className="btn" type="button" onClick={onClose} aria-label="Close conversation">
             <X className="size-4" />
           </button>
         </div>
+      </div>
+      <div className="character-tabs" role="tablist" aria-label={`${agent.name} card sections`}>
+        {(["overview", "strengths", "together", "progress"] as const).map((name) => (
+          <button
+            type="button"
+            key={name}
+            role="tab"
+            id={`character-tab-${name}`}
+            aria-controls={`character-section-${name}`}
+            aria-selected={tab === name}
+            onClick={() => setTab(name)}
+          >
+            {name === "together" ? "Together" : name.charAt(0).toUpperCase() + name.slice(1)}
+          </button>
+        ))}
       </div>
       <div
         className="mind-body"
@@ -1696,76 +1842,119 @@ function Mind({
           setBehind(!follow);
         }}
       >
-        <section>
-          <h3 className="text-sm uppercase tracking-wide text-muted">
-            {agent.id === "player" ? "Your journal" : "What you heard"}
-          </h3>
-          <ul className="mt-1 space-y-2 text-sm">
-            {heard.length === 0 && (
-              <li className="text-muted">
-                {agent.id === "player"
-                  ? "You have not spoken yet."
-                  : "You have not spoken with them yet."}
-              </li>
-            )}
-            {heard.slice(-8).map((m) => {
-              const turns = m.turns?.length
-                ? m.turns.map((turn) => ({
-                    who:
-                      town.agents.find((person) => person.id === turn.speaker)?.name ??
-                      turn.speaker,
-                    line: turn.text,
-                  }))
-                : spokenTurns(m.text);
-              return (
-                <li key={m.id} ref={m.id === newest ? latestRef : undefined}>
-                  <p className="text-muted">
-                    Day {m.day} {formatClock(m.minute)}
-                    {m.mind === "offline"
-                      ? " · Local reply"
-                      : m.mind === "grok"
-                        ? " · AI reply"
-                        : ""}
-                  </p>
-                  {turns.length === 0 ? (
-                    <p>{m.text}</p>
-                  ) : (
-                    turns.map((turn, index) => (
-                      <p key={`${m.id}-${index}`}>
-                        <span className="text-muted">{turn.who}. </span>
-                        {turn.line}
-                      </p>
-                    ))
-                  )}
+        <div
+          id="character-section-overview"
+          role="tabpanel"
+          aria-labelledby="character-tab-overview"
+          hidden={tab !== "overview"}
+        >
+          <CharacterOverview town={town} agent={agent} watch={watch} replay={replay} />
+          {agent.id !== "player" && (
+            <div className="character-overview-actions">
+              <button className="btn" type="button" onClick={() => setTab("together")}>
+                Talk with {agent.name}
+              </button>
+              <button className="btn" type="button" disabled={replay} onClick={onWatch}>
+                Watch {agent.name}
+              </button>
+            </div>
+          )}
+          {watch && <CharacterReflections town={town} id={agent.id} replay={replay} />}
+          {pinned && <p className="character-note">Pinned to the front of the resident strip.</p>}
+        </div>
+        <div
+          id="character-section-strengths"
+          role="tabpanel"
+          aria-labelledby="character-tab-strengths"
+          hidden={tab !== "strengths"}
+        >
+          <CharacterStrengths id={agent.id} />
+        </div>
+        <div
+          id="character-section-progress"
+          role="tabpanel"
+          aria-labelledby="character-tab-progress"
+          hidden={tab !== "progress"}
+        >
+          <CharacterProgress town={town} agent={agent} watch={watch} replay={replay} />
+        </div>
+        <div
+          id="character-section-together"
+          role="tabpanel"
+          aria-labelledby="character-tab-together"
+          hidden={tab !== "together"}
+        >
+          <section>
+            <h3 className="text-sm uppercase tracking-wide text-muted">
+              {agent.id === "player" ? "Your journal" : "What you heard"}
+            </h3>
+            <ul className="mt-1 space-y-2 text-sm">
+              {heard.length === 0 && (
+                <li className="text-muted">
+                  {agent.id === "player"
+                    ? "You have not spoken yet."
+                    : "You have not spoken with them yet."}
                 </li>
-              );
-            })}
-          </ul>
-        </section>
-        <section className="mt-4">
-          <h3 className="text-sm uppercase tracking-wide text-muted">What is still open</h3>
-          <ul className="mt-1 space-y-1 text-sm">
-            {favors.length === 0 && (player.projects ?? []).every((p) => p.status !== "open") && (
-              <li className="text-muted">Nothing written down between you.</li>
-            )}
-            {(player.projects ?? [])
-              .filter((project) => project.status === "open")
-              .map((project) => (
-                <li key={project.id}>
-                  {project.kind === "other" && project.text === BABA_LOAF
-                    ? "Carrying"
-                    : "Commitment"}
-                  : {project.text}
+              )}
+              {heard.slice(-8).map((m) => {
+                const turns = m.turns?.length
+                  ? m.turns.map((turn) => ({
+                      who:
+                        town.agents.find((person) => person.id === turn.speaker)?.name ??
+                        turn.speaker,
+                      line: turn.text,
+                    }))
+                  : spokenTurns(m.text);
+                return (
+                  <li key={m.id} ref={m.id === newest ? latestRef : undefined}>
+                    <p className="text-muted">
+                      Day {m.day} {formatClock(m.minute)}
+                      {m.mind === "offline"
+                        ? " · Local reply"
+                        : m.mind === "grok"
+                          ? " · AI reply"
+                          : ""}
+                    </p>
+                    {turns.length === 0 ? (
+                      <p>{m.text}</p>
+                    ) : (
+                      turns.map((turn, index) => (
+                        <p key={`${m.id}-${index}`}>
+                          <span className="text-muted">{turn.who}. </span>
+                          {turn.line}
+                        </p>
+                      ))
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+          <section className="mt-4">
+            <h3 className="text-sm uppercase tracking-wide text-muted">What is still open</h3>
+            <ul className="mt-1 space-y-1 text-sm">
+              {favors.length === 0 && (player.projects ?? []).every((p) => p.status !== "open") && (
+                <li className="text-muted">Nothing written down between you.</li>
+              )}
+              {(player.projects ?? [])
+                .filter((project) => project.status === "open")
+                .map((project) => (
+                  <li key={project.id}>
+                    {project.kind === "other" && project.text === BABA_LOAF
+                      ? "Carrying"
+                      : "Commitment"}
+                    : {project.text}
+                  </li>
+                ))}
+              {favors.map((favor) => (
+                <li key={favor.id}>
+                  {favor.status === "owed" ? "Still owed" : favor.status}: {favor.text}
+                  {favor.amount ? ` (${favor.amount})` : ""}
                 </li>
               ))}
-            {favors.map((favor) => (
-              <li key={favor.id}>
-                {favor.status === "owed" ? "Still owed" : favor.status}: {favor.text}
-                {favor.amount ? ` (${favor.amount})` : ""}
-              </li>
-            ))}
-          </ul>
-        </section>
+            </ul>
+          </section>
+        </div>
         <label className="mt-4 flex items-center gap-2 text-sm text-muted" htmlFor="mind-inspect">
           <input
             id="mind-inspect"
@@ -1793,11 +1982,12 @@ function Mind({
           Newest reply
         </button>
       )}
-      {agent.id !== "player" && (
+      {agent.id !== "player" && tab === "together" && (
         <form
           className="mind-say"
           onSubmit={(event) => {
             event.preventDefault();
+            setTab("together");
             onSend();
           }}
         >
@@ -1837,6 +2027,9 @@ function Mind({
               Local dialogue is active. Open-ended conversation needs a live AI connection.
             </p>
           )}
+          {!canTalk && (
+            <p className="character-note">Walk closer to speak. Your draft stays on this card.</p>
+          )}
           <label className="text-sm text-muted" htmlFor="mind-line">
             Your line to {agent.name}
           </label>
@@ -1849,7 +2042,12 @@ function Mind({
             onChange={(event) => setDraft(event.target.value)}
           />
           <div className="mt-2 flex items-center gap-2">
-            <button className="btn" data-on="true" type="submit" disabled={busy || !draft.trim()}>
+            <button
+              className="btn"
+              data-on="true"
+              type="submit"
+              disabled={busy || !draft.trim() || !canTalk}
+            >
               {busy ? "Saying it" : "Say it"}
             </button>
             <p className="mind-send-note text-sm text-muted" role="status" aria-live="polite">

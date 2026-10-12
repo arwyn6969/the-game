@@ -22,6 +22,8 @@ Version-1 towns migrate to version 2 with their original residents and history r
 
 ## What is in this repo
 
+The character UI development build adds portrait cards with Overview, Strengths, Together and Progress tabs. Open **Town life** for readable NPC exchanges, recorded relationship changes and updated plans. **Watch town conversations** follows non-secret public dialogue without adding player knowledge; dated reflections are an optional separate view. Character drafts, pinning and camera following work for every resident. See [the character UI design and browser checks](docs/design/character-social-ui.md).
+
 The full app source as of October 2026: the town (`src/game`), the screen (`src/components/town`), the mind call, styles, and the day-two check (`scripts/town-day.test.mjs`).
 
 `npm run test:town` runs the town, save, economy, retrieval, conversation and collision regressions without a running Vite app. The day-two check verifies that the question travels, the seed cannot be closed, money stays a number, and a later hour does not repeat the same line.
