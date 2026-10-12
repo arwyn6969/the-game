@@ -17,6 +17,7 @@ export function requestBody(
     ],
   };
   if (jsonMode) body.response_format = { type: "json_object" };
+  if (candidate.route.reasoningEffort) body.reasoning_effort = candidate.route.reasoningEffort;
   return body;
 }
 

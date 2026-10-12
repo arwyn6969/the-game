@@ -4,14 +4,16 @@ Built for private development, 12 October 2026. The pool automatically prefers t
 
 ## Which models serve which jobs
 
-| Game job                                  | First configured preference | Next preference   | Why this starting order                                                   |
-| ----------------------------------------- | --------------------------- | ----------------- | ------------------------------------------------------------------------- |
-| `plan`: dawn schedules and projects       | Gemini 2.5 Pro              | Groq GPT-OSS 120B | Prefer a reasoning model for coordinating several residents and schedules |
-| `reflect`: memories and identity          | Gemini 2.5 Pro              | Groq GPT-OSS 120B | Prefer synthesis and continuity over response speed                       |
-| `talk`: resident-to-resident conversation | Groq GPT-OSS 120B           | Gemini 2.5 Flash  | Keep a large model while favouring interactive response time              |
-| `player`: reply to the player             | Groq GPT-OSS 120B           | Gemini 2.5 Flash  | Same dialogue preference, with a smaller output allowance                 |
+The table describes catalog defaults. The activated private profile in this workspace prefers NVIDIA Nemotron 3 Ultra for planning, Gemini 3.8 Flash for reflection, and Cohere Command A+ for resident/player dialogue. NVIDIA Super, Gemini, Cohere and OpenRouter provide eligible per-service fallbacks. `ai:pool status` reads the actual ignored local configuration.
 
-Additional configured fallbacks are NVIDIA Nemotron 3 Super, Cohere Command A+, Mistral Small, OpenRouter's free router, and local Ollama/Qwen3. Cohere ranks ahead of NVIDIA for dialogue. All seven start disabled. Enable only providers with a key and a confirmed suitable free/evaluation account. OpenRouter's `openrouter/free` chooses its own model and cannot promise the most capable model; replace it with a currently available named `:free` model if you need a fixed choice. Local model quality and speed depend on your hardware.
+| Game job                                  | First configured preference | Next preference   | Why this starting order                                                       |
+| ----------------------------------------- | --------------------------- | ----------------- | ----------------------------------------------------------------------------- |
+| `plan`: dawn schedules and projects       | Gemini 3.8 Flash            | Groq GPT-OSS 120B | Prefer the current verified free-tier Gemini model for coordinating residents |
+| `reflect`: memories and identity          | Gemini 3.8 Flash            | Groq GPT-OSS 120B | Prefer synthesis and continuity over response speed                           |
+| `talk`: resident-to-resident conversation | Groq GPT-OSS 120B           | Gemini 3.8 Flash  | Keep a large model while favouring interactive response time                  |
+| `player`: reply to the player             | Groq GPT-OSS 120B           | Gemini 3.8 Flash  | Same dialogue preference, with a smaller output allowance                     |
+
+Additional configured fallbacks are NVIDIA Nemotron 3 Ultra/Super, Cohere Command A+, Mistral Small, OpenRouter's free router, and local Ollama/Qwen3. Cohere ranks ahead of NVIDIA for dialogue. All seven start disabled. Enable only providers with a key and a confirmed suitable free/evaluation account. OpenRouter's `openrouter/free` chooses its own model and cannot promise the most capable model; replace it with a currently available named `:free` model if you need a fixed choice. Local model quality and speed depend on your hardware.
 
 To favour intelligence for every job regardless of speed, assign your preferred reasoning model and the lowest rank to **all four routes**. The router always checks ranks first; it does not round-robin away from a healthy first choice. Changing models and ranks does not reset usage. The same provider's models share its account quota and concurrency limit.
 
@@ -41,10 +43,10 @@ npm run ai:pool -- dev
 Each route has `model`, `rank`, and `maxTokens`. For example:
 
 ```json
-"plan": { "model": "gemini-2.5-pro", "rank": 10, "maxTokens": 6000 }
+"plan": { "model": "gemini-3.8-flash", "rank": 10, "maxTokens": 6000 }
 ```
 
-The output allowance includes any model reasoning that the provider counts against `max_tokens`. Longer reasoning can consume that allowance or hit the timeout before producing JSON. Increase it within your quota after comparing real game results, or use a faster model. Default per-attempt timeout is 8 seconds; the provider I/O deadline is 28 seconds with at most three attempts. Timeout may be raised to 12 seconds and the deadline to 30 seconds; database queries have separate 3-second bounds when using Postgres.
+The output allowance includes any model reasoning that the provider counts against `max_tokens`. Longer reasoning can consume that allowance or hit the timeout before producing JSON. Increase it within your quota after comparing real game results, or use a faster model. Default per-attempt timeout is 12 seconds; the provider I/O deadline is 30 seconds with at most three attempts. Database queries have separate 3-second bounds when using Postgres. Gemini routes use medium reasoning effort for planning/reflection and low effort for dialogue to keep deliberate work within the interactive deadline. Other compatible routes can opt into `reasoningEffort` after checking model support.
 
 ## How requests work
 
@@ -66,7 +68,7 @@ Request quotas use rolling 60-second, 24-hour and 31-day windows. This is delibe
 
 The SQL account lock prevents concurrent workers from reserving the same remaining allowance. In-flight leases expire after a request timeout plus ten seconds, so a crashed worker does not hold concurrency forever. A provider may still be computing after a client abort; its own server-side limits remain authoritative.
 
-A 429 honours `Retry-After` across the whole provider account. Authentication/payment errors disable the account until corrected; bad model configuration disables that model. Transient errors and malformed output cool down the model for 30 seconds. Unsupported JSON mode gets one explicitly identified format retry, charged as another attempt, then is remembered for that model. Redirects are rejected so keys cannot be forwarded to a redirected destination. A ledger failure returns offline/unreachable rather than making an unmetered call.
+A 429 honours `Retry-After` across the whole provider account. Authentication/payment errors disable the account until corrected; bad model configuration disables that model. Transient errors and malformed output cool down the model for 30 seconds. Unsupported JSON mode gets one explicitly identified format retry, charged as another attempt, then is remembered for that model. Recognizable Gemini, Groq, NVIDIA and OpenRouter key prefixes are rejected when the configured API host belongs to another provider, before reserving quota or making a request. This catches copied-key mix-ups; unprefixed Cohere/Mistral keys and custom endpoints still need correct configuration. Redirects are rejected so keys cannot be forwarded to a redirected destination. A ledger failure returns offline/unreachable rather than making an unmetered call.
 
 ## Shared quota tracking and diagnostics
 
@@ -95,10 +97,10 @@ Unset the mode, or explicitly set `MIND_PROVIDER_MODE=legacy`, to use the existi
 
 ## Account/model checks and sources
 
-Use the [community API list](https://github.com/mnfst/awesome-free-llm-apis) for discovery, then verify provider documentation and your account. No accounts, keys, paid credits or duplicate quota-bypassing accounts were created.
+Use the [community API list](https://github.com/mnfst/awesome-free-llm-apis) for discovery, then verify provider documentation and your account. Provider enrollment and local credentials are separate setup steps; the catalog does not create accounts or purchase credits. Use one legitimate account per provider and share its limits across all keys.
 
 - [Groq models](https://console.groq.com/docs/models) and [rate limits](https://console.groq.com/docs/rate-limits): supported model IDs and account quotas. GPT-OSS 120B is the default large-model Groq choice.
-- [Gemini OpenAI compatibility](https://ai.google.dev/gemini-api/docs/openai), [pricing](https://ai.google.dev/gemini-api/docs/pricing), and [limits](https://ai.google.dev/gemini-api/docs/rate-limits): compatibility endpoint, eligible free tiers, project quotas and free-tier data handling. 2.5 Pro/Flash are configured examples; newer eligible models can be substituted after verification.
+- [Gemini OpenAI compatibility](https://ai.google.dev/gemini-api/docs/openai), [pricing](https://ai.google.dev/gemini-api/docs/pricing), and [limits](https://ai.google.dev/gemini-api/docs/rate-limits): compatibility endpoint, eligible free tiers, project quotas and free-tier data handling. 3.8 Flash is the current verified example. The earlier 2.5 models returned unavailable-for-new-users errors in live setup checks; verify model access before activation.
 - [Cohere v2 Chat](https://docs.cohere.com/reference/chat) and [trial limits](https://docs.cohere.com/docs/rate-limits): separate adapter and a 1,000-call monthly trial cap. Its catalog allocation is 900 calls per rolling 31 days, and remains intended for this private development setup.
 - [Mistral Chat API](https://docs.mistral.ai/api/endpoint/chat): compatible chat endpoint. Confirm free mode and exact account limits in Mistral's console before enabling it.
 - [NVIDIA API reference](https://docs.api.nvidia.com/nim/reference/llm-apis): model API reference. Confirm Developer Program endpoint/model entitlement before enabling the example model.

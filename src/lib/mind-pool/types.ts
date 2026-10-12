@@ -13,6 +13,7 @@ export type Limits = {
 export type Route = {
   model: string;
   maxTokens: number;
+  reasoningEffort?: "low" | "medium" | "high";
   // Lower ranks are preferred. This is an operator preference, not a benchmark.
   rank: number;
 };

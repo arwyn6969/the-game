@@ -1,5 +1,15 @@
 # Sol handoff
 
+## 12 October 2026 — provider activation follow-up
+
+- User authorized free-provider enrollment and private local key configuration. Gemini, Cohere trial, NVIDIA NIM and OpenRouter free access were verified with synthetic JSON requests. Secrets and account-specific preferences are in ignored local files with mode 0600. No production secrets, database or deployment were changed; Groq, Mistral and Ollama remain disabled where free access or a running local model was unavailable.
+- Updated the Gemini catalog to the model actually available during setup (`gemini-3.8-flash`), added optional compatible reasoning effort, and increased bounded request timeouts to 12 seconds within a 30-second deadline. NVIDIA uses Nemotron 3 Ultra for deliberate work and Super for dialogue. Preferences remain editable and are not benchmarked intelligence scores.
+- Added endpoint checks for recognizable provider key prefixes plus a regression covering foreign providers and custom hosts. This prevents those copied-key mix-ups from transmitting credentials. It cannot identify unprefixed keys. CLI status reports the check without displaying any secret.
+- Validation after these changes: 345 tests passed (290 script plus 55 app/auth), typecheck passed, lint passed with one inherited auth warning, and build passed with the database URL unset. All four live game jobs succeeded; the quota-limited run demonstrated Gemini timeout → Cohere and exhausted preferred allocations → OpenRouter. A fifth stress request timed out after the other allocations were deliberately exhausted; the router returned a bounded unreachable result for existing offline handling. These checks establish connectivity/fallback, not full-game quality or sustained load capacity.
+- Local provider setup did not purchase credits or paid upgrades. All account-specific credentials remain outside the reviewable source diff.
+
+The original implementation evidence below describes its earlier state before provider setup.
+
 ## 12 October 2026 — private AI provider pool
 
 - Branch: `codex/free-api-pool`, isolated local checkout `llm-pool`, based on current main `9377857c3283a6a2ef19dc39912d0ff4e2d0a30a`. The user explicitly requested multiple free providers, then intelligent-first routing and model choices by service; this authorizes the opt-in provider addition beyond the earlier milestone's provider freeze.

@@ -22,6 +22,12 @@ function provider(
     maxTokens:
       kind === "plan" ? 6_000 : kind === "reflect" ? 4_000 : kind === "talk" ? 2_000 : 1_500,
     rank: kind === "plan" || kind === "reflect" ? ranks[0] : ranks[1],
+    ...(id === "gemini"
+      ? {
+          reasoningEffort: (kind === "plan" || kind === "reflect" ? "medium" : "low") as
+            "medium" | "low",
+        }
+      : {}),
   });
   return {
     id,
@@ -45,15 +51,15 @@ function provider(
 // Confirm models, free mode and limits in each account before enabling a provider.
 export const DEFAULT_CONFIG: PoolConfig = {
   version: 1,
-  timeoutMs: 8_000,
-  deadlineMs: 28_000,
+  timeoutMs: 12_000,
+  deadlineMs: 30_000,
   maxAttempts: 3,
   providers: [
     provider(
       "gemini",
       "https://generativelanguage.googleapis.com/v1beta/openai",
       "GEMINI_API_KEY",
-      ["gemini-2.5-pro", "gemini-2.5-flash"],
+      ["gemini-3.8-flash", "gemini-3.8-flash"],
       [10, 20],
     ),
     provider(
@@ -68,7 +74,7 @@ export const DEFAULT_CONFIG: PoolConfig = {
       "nvidia",
       "https://integrate.api.nvidia.com/v1",
       "NVIDIA_API_KEY",
-      ["nvidia/nemotron-3-super-120b-a12b", "nvidia/nemotron-3-super-120b-a12b"],
+      ["nvidia/nemotron-3-ultra-550b-a55b", "nvidia/nemotron-3-super-120b-a12b"],
       [30, 40],
     ),
     provider(
