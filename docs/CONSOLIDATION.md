@@ -66,7 +66,7 @@ The normal development contract remains port 8080. Port 8090 is this isolated re
 
 GitHub started with 19 branches including main, six open drafts, eleven merged PRs and two closed predecessor PRs. The [branch manifest](review/consolidation/branches.json) pins every original remote head. Every branch proposed for retirement is an ancestor of this candidate; the unfinished economy branch is not.
 
-After approval, merge the consolidation with a **merge commit**, preserving ancestry. A squash would make the branch ancestry checks less useful. Re-fetch and verify that each pinned head is still current and reachable from main before deleting its branch. Recheck the five source PRs and close any still-open incorporated draft as superseded. Never delete a ref that has advanced beyond the manifest without another review.
+After approval, merge the consolidation with a **merge commit**, preserving ancestry. A squash would make the branch ancestry checks less useful. Re-fetch and verify that each pinned head is still current and reachable from main before deleting its branch. Recheck the five source PRs and close any still-open incorporated draft as superseded. Retarget the retained PR #16 from `codex/playability-review` to main before retiring that base branch; its v2 reconciliation remains outstanding. Never delete a ref that has advanced beyond the manifest without another review.
 
 Retire these 17 remote branches after that verification:
 
