@@ -1211,7 +1211,7 @@ test("another resident's private seed is never retrieved without a witnessed cop
 test("Kevin, Arwyn, Northern, Baba and Sub are written as men, including an older save", () => {
   const town = createTown("Ada");
   for (const person of town.agents) {
-    if (person.id === "player") continue;
+    if (!["kevin", "arwyn", "northern", "baba", "sub"].includes(person.id)) continue;
     assert.doesNotMatch(`${person.identity} ${person.status}`, /\b(she|her|hers)\b/i);
   }
   const raw = JSON.parse(save.exportTown(town));

@@ -413,7 +413,7 @@ export function readTownSave(): LoadReport {
   } catch {
     return { status: "unavailable" };
   }
-  if (!raw) return { status: "missing" };
+  if (raw === null) return { status: "missing" };
   try {
     const town = parseTownFile(raw);
     if (!town) return { status: "unreadable", raw };

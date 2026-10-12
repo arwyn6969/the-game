@@ -112,6 +112,9 @@ test("migration retains the old bytes even if saving the new town fails", () => 
   assert.equal(save.readTownSave().town.agents.length, 8);
   items.set(save.TOWN_STORAGE_KEY, "{broken newer save");
   assert.deepEqual(save.readTownSave(), { status: "unreadable", raw: "{broken newer save" });
+  items.set(save.TOWN_STORAGE_KEY, "");
+  assert.deepEqual(save.readTownSave(), { status: "unreadable", raw: "" });
+  assert.equal(items.get(save.LEGACY_TOWN_STORAGE_KEY), fixture);
 });
 
 test("unknown versions, partial rosters, duplicate IDs and inconsistent wrappers are recoverable errors", () => {
@@ -179,6 +182,7 @@ test("structured conversation turns and attribution survive export and reload", 
 
 test("seven residents plan in bounded batches without losing any resident", () => {
   const town = createTown("Ada");
+  town.day = 2;
   town.minute = 299;
   const planned = [];
   for (let i = 0; i < 4; i++) {
@@ -199,6 +203,27 @@ test("seven residents plan in bounded batches without losing any resident", () =
     planned.sort(),
     ["kevin", "arwyn", "northern", "baba", "sub", "data", "amelia"].sort(),
   );
+});
+
+test("dawn resumes unapplied plans after a reload, even after the normal batch window", () => {
+  const town = createTown("Ada");
+  town.day = 2;
+  town.minute = 299;
+  const interrupted = stepMinute(town, true);
+  assert.deepEqual(interrupted.agents, ["kevin", "arwyn"]);
+  const restored = save.parseTownFile(save.exportTown(town));
+  // The request was interrupted before its result reached the saved town.
+  restored.minute = 310;
+  const planned = [];
+  for (let i = 0; i < 4; i++) {
+    const job = stepMinute(restored, true);
+    assert.equal(job.kind, "plan");
+    assert.ok(job.agents.length <= 2);
+    planned.push(...job.agents);
+    applyResult(restored, offlineResult(restored, job));
+  }
+  assert.equal(new Set(planned).size, 7);
+  assert.ok(restored.agents.filter((a) => a.id !== "player").every((a) => a.plan.day === 2));
 });
 
 test("specialists remain themselves through a week and a save round trip", () => {

@@ -360,12 +360,12 @@ export function stepMinute(town: Town, online: boolean): ThinkJob | null {
     if (!online && town.askedMindDay !== town.day && town.minute === 8 * 60)
       morningObservation(town);
   }
-  // Each dawn request contains at most two residents. No persistent queue is
-  // needed: save/reload resumes at the same deterministic minute and batch.
-  const dawnBatch = town.minute - 5 * 60;
+  // Completed plans are the receipt. If a save interrupts a request, the next
+  // minute retries the still-stale residents instead of skipping their batch.
   const residents = npcs(town);
-  if (dawnBatch >= 0 && dawnBatch < Math.ceil(residents.length / 2)) {
-    const agents = residents.slice(dawnBatch * 2, dawnBatch * 2 + 2).map((a) => a.id);
+  const needsPlan = residents.filter((a) => a.plan.day < town.day).slice(0, 2);
+  if (town.minute >= 5 * 60 && needsPlan.length) {
+    const agents = needsPlan.map((a) => a.id);
     for (const id of agents) agentById(town, id).callUsed = true;
     job = { kind: "plan", day: town.day, minute: town.minute, weekly: town.day % 7 === 0, agents };
   }
