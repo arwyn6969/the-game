@@ -4,10 +4,17 @@ import { absMinute } from "./memory";
 import { periodName } from "./text";
 import { ANCHORS, MAP_H, MAP_W, TILE, cell, cellsAll, zoneAt } from "./world";
 
-const PALETTE: Record<
-  AgentId,
-  { skin: string; hair: string; shirt: string; pants: string; shoe: string; extra: string }
-> = {
+type Appearance = {
+  skin: string;
+  hair: string;
+  shirt: string;
+  pants: string;
+  shoe: string;
+  extra: string;
+  accessory?: "tablet" | "scarf";
+};
+
+const PALETTE: Record<AgentId | "data" | "amelia", Appearance> = {
   kevin: {
     skin: "#c68642",
     hair: "#241c14",
@@ -47,6 +54,24 @@ const PALETTE: Record<
     pants: "#262237",
     shoe: "#161121",
     extra: "#f3eaff",
+  },
+  data: {
+    skin: "#dbc9a4",
+    hair: "#202336",
+    shirt: "#69d8dc",
+    pants: "#233446",
+    shoe: "#141629",
+    extra: "#ddfbff",
+    accessory: "tablet",
+  },
+  amelia: {
+    skin: "#ad754e",
+    hair: "#382235",
+    shirt: "#eaa769",
+    pants: "#513b54",
+    shoe: "#251329",
+    extra: "#f4e2aa",
+    accessory: "scarf",
   },
   player: {
     skin: "#d9a066",
@@ -323,6 +348,16 @@ function drawPerson(
     g.fillStyle = p.extra;
     g.fillRect(4, -18, 5, 7);
   }
+  if (p.accessory === "tablet") {
+    g.fillStyle = p.pants;
+    g.fillRect(4, -20, 7, 10);
+    g.fillStyle = p.extra;
+    g.fillRect(5, -19, 5, 6);
+  } else if (p.accessory === "scarf") {
+    g.fillStyle = p.extra;
+    g.fillRect(-6, -23, 12, 3);
+    g.fillRect(2, -20, 3, 9);
+  }
   g.fillStyle = p.skin;
   g.fillRect(-5, -32, 10, 10);
   g.fillStyle = p.hair;
@@ -335,6 +370,9 @@ function drawPerson(
   } else if (id === "kevin") {
     g.fillRect(-6, -35, 12, 5);
     g.fillRect(-7, -32, 3, 4);
+  } else if (p.accessory === "scarf") {
+    g.fillRect(-6, -35, 12, 6);
+    g.fillRect(-8, -33, 3, 7);
   } else {
     g.fillRect(-6, -34, 12, 5);
   }

@@ -406,6 +406,15 @@ kbd {
   flex-wrap: wrap;
   gap: 0.35rem;
   max-width: min(22rem, calc(100% - 1.5rem));
+  padding: 0.4rem;
+  background: #10091ce8;
+  border: 1px solid var(--color-line);
+}
+.crowd-label {
+  width: 100%;
+  color: var(--color-muted);
+  font: 400 0.55rem/1.4 var(--font-display);
+  padding: 0.15rem 0.15rem 0.25rem;
 }
 
 .mind {
