@@ -2,7 +2,7 @@
 
 ## Current graphics pass — 12 October 2026
 
-Branch: `codex/town-graphics`. Base: released `main` at `65d93a905f256abdcdddc21d7612e7d4b8b07d53`. Code/art head and draft PR are recorded in the delivery entry below.
+Branch: `codex/town-graphics`. Base: released `main` at `65d93a905f256abdcdddc21d7612e7d4b8b07d53`. Code/art head: `fadefc2ce34189b567908be9386966c4e0386b63`. Draft PR: [#15](https://github.com/arwyn6969/the-game/pull/15). Subsequent documentation commits record delivery metadata.
 
 - `src/components/town/WorldArt.ts`: cached ground art, distinct room materials/rugs, furniture sprites, tree canopies, food/books, shoreline/lily details and light gradients. Raised art follows existing collision cells.
 - `src/game/render.ts`: shared furniture/resident depth order, stronger resident silhouettes, four facing views, walking based on movement distance, public-activity poses, shadows, night light pools, steam/ripples/leaves/fireflies and collision-free name/speech placement. Pause, replay and reduced motion freeze animation; rendering leaves saves untouched.
