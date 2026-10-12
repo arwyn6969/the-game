@@ -1,0 +1,147 @@
+{
+  "date": "2026-10-12",
+  "repository": "arwyn6969/the-game",
+  "mergeCommit": "8d15a722b61c09a7dca198ccf49ea8dd0b3f8125",
+  "tree": "363f3de46f3c40e4981331de494e84354d8139e4",
+  "removed": [
+    {
+      "name": "codex/agent-collaboration-setup",
+      "sha": "b8d6c97ebe5d88b2f97a56e5e5edc82287554ad1"
+    },
+    {
+      "name": "codex/developer-handoff",
+      "sha": "bd24550f215260b740518d17e217a5bb0bee7ded"
+    },
+    {
+      "name": "codex/first-day-integration",
+      "sha": "8c691142e452c251c563ac37a1cfd880d98c9936"
+    },
+    {
+      "name": "codex/free-api-pool",
+      "sha": "19920725eda43dba1103c0290d4fecdd93afdc98"
+    },
+    {
+      "name": "codex/graphics-release-evidence",
+      "sha": "787f06e37f71c5a6ef0d58c0ff662cfe920f3b6e"
+    },
+    {
+      "name": "codex/grok-player-experience",
+      "sha": "46e7e369929e8fc0234ff73393b48bb0660d6e2e"
+    },
+    {
+      "name": "codex/grok-trustworthy-talk",
+      "sha": "339995af5a93e51358a63c03d45dcfbb676c2ffd"
+    },
+    {
+      "name": "codex/kevin-technology-retrieval",
+      "sha": "12e8358d0d869f8a7c25387ee39cbc815d9bf284"
+    },
+    {
+      "name": "codex/live-release-evidence",
+      "sha": "5c03290def9bc5db69c87cb4c234aadb824e5df7"
+    },
+    {
+      "name": "codex/male-residents",
+      "sha": "f9757ac9fdcfbba48ebc2f858ba6bf9e98dac877"
+    },
+    {
+      "name": "codex/neon-arcade-ui",
+      "sha": "971c52ab4a0623a4a6453d1125bbb075e2587fef"
+    },
+    {
+      "name": "codex/neon-share-cards",
+      "sha": "15745a8426dac69cf0971c5516bb298958b73624"
+    },
+    {
+      "name": "codex/playability-review",
+      "sha": "a8e9098c4d0be76e96138fc0db7f34b662661d01"
+    },
+    {
+      "name": "codex/seven-resident-coherence",
+      "sha": "578ab313d8679aab80a9badef058dbd36f51be30"
+    },
+    {
+      "name": "codex/sol-foundation",
+      "sha": "df95ee6da39c9ad0519c8742a880ec48381e5edd"
+    },
+    {
+      "name": "codex/town-graphics",
+      "sha": "70ff38f1db170631ee8c0ad073158de321f9c36e"
+    },
+    {
+      "name": "codex/trust-repair-followup",
+      "sha": "cd05ec331c2d8d2138fd0b838ef03fb90e855219"
+    }
+  ],
+  "retained": [
+    {
+      "name": "codex/funded-project-accounts",
+      "protected": false,
+      "sha": "53bd9ac5b4354ac00195685cca429d7ca0681944"
+    },
+    {
+      "name": "codex/product-consolidation",
+      "protected": false,
+      "sha": "b7d5595de6e962b42cffb7227769a9f8648e5c74"
+    },
+    {
+      "name": "main",
+      "protected": false,
+      "sha": "8d15a722b61c09a7dca198ccf49ea8dd0b3f8125"
+    }
+  ],
+  "openPRs": [
+    {
+      "baseRefName": "main",
+      "headRefName": "codex/funded-project-accounts",
+      "number": 16
+    }
+  ],
+  "sourcePRs": [
+    {
+      "baseRefName": "main",
+      "headRefName": "codex/playability-review",
+      "mergedAt": "2026-10-12T19:14:23Z",
+      "number": 5,
+      "state": "MERGED",
+      "url": "https://github.com/arwyn6969/the-game/pull/5"
+    },
+    {
+      "baseRefName": "main",
+      "headRefName": "codex/kevin-technology-retrieval",
+      "mergedAt": "2026-10-12T19:14:23Z",
+      "number": 6,
+      "state": "MERGED",
+      "url": "https://github.com/arwyn6969/the-game/pull/6"
+    },
+    {
+      "baseRefName": "main",
+      "headRefName": "codex/developer-handoff",
+      "mergedAt": "2026-10-12T19:14:23Z",
+      "number": 9,
+      "state": "MERGED",
+      "url": "https://github.com/arwyn6969/the-game/pull/9"
+    },
+    {
+      "baseRefName": "main",
+      "headRefName": "codex/free-api-pool",
+      "mergedAt": "2026-10-12T19:14:23Z",
+      "number": 13,
+      "state": "MERGED",
+      "url": "https://github.com/arwyn6969/the-game/pull/13"
+    },
+    {
+      "baseRefName": "main",
+      "headRefName": "codex/seven-resident-coherence",
+      "mergedAt": "2026-10-12T19:14:23Z",
+      "number": 14,
+      "state": "MERGED",
+      "url": "https://github.com/arwyn6969/the-game/pull/14"
+    }
+  ],
+  "mainCI": {
+    "run": 38296308695,
+    "conclusion": "success",
+    "url": "https://github.com/arwyn6969/the-game/actions/runs/38296308695"
+  }
+}

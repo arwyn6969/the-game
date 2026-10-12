@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
-import { defaultConfig, candidatesFor } from "../src/lib/mind-pool/config.ts";
+import {
+  defaultConfig,
+  candidatesFor,
+  credentialMatchesEndpoint,
+} from "../src/lib/mind-pool/config.ts";
 import { loadPoolConfig } from "../src/lib/mind-pool/server.ts";
 import { routeMind } from "../src/lib/mind-pool/router.ts";
 import { SqlQuotaStore } from "../src/lib/mind-pool/store.ts";
@@ -132,6 +136,10 @@ async function main() {
         enabled: p.enabled,
         freeConfirmed: p.freeTierConfirmed,
         keyPresent: p.apiKeyEnv ? Boolean(process.env[p.apiKeyEnv]?.trim()) : "local",
+        keyEndpointMatch:
+          p.apiKeyEnv && process.env[p.apiKeyEnv]?.trim()
+            ? credentialMatchesEndpoint(p.baseUrl, process.env[p.apiKeyEnv])
+            : "n/a",
         rpm: p.limits.rpm,
         rpd: p.limits.rpd,
         concurrency: p.limits.concurrent,

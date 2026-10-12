@@ -1,5 +1,23 @@
 # Working with Sol and Grok
 
+## Current integration — 12 October 2026
+
+Use [the consolidation record](CONSOLIDATION.md) as the current source and cleanup entry point. PR #19 merged PRs #5, #6, #9, #13 and #14 into main. The 17 incorporated remote branches are retired; start new work from current `origin/main`. The existing graphics are retained. Do not restart their historical lanes or copy an older whole-project export over this candidate.
+
+PR #16 remains the separate, inactive S1 economy foundation. Its six-actor version-1 ledger needs reconciliation with the eight-actor version-2 save, including new resident accounts and opening totals. Only then should S2 activate every cash path and matching player terms together. Assign an owner and use a fresh branch from the accepted consolidated baseline.
+
+Keep each active task in its own checkout. Complete integration and validation before requesting release approval. Merge and hosted publication remain separate decisions; no document automatically messages or wakes another chat.
+
+## Earlier packet brief — funded community project
+
+The first-day and trust-repair work is merged and published. Start new work from the [roadmap](ROADMAP.md), [community-project packets](implementation/community-project.md), [Sol brief](prompts/SOL-6.1.md) and [release record](RELEASE.md). The setup-branch instructions below are historical; do not restart the old foundation assignment.
+
+For the next packet, fetch and identify current main, then include this reviewed planning pack if it is still on PR #5. Sol owns S1 engine/account/save work. PR #11 currently owns an unmerged visual redesign of TownApp, render, styles and root assets. Avoid concurrent edits; define an additive UI contract, and assign one integration owner after the visual baseline is stable. Do not silently merge that draft or replace its whole-project source. If only one implementation agent is active, that agent can perform the later explicitly assigned UI integration on its own branch. No chat is synchronised or messaged merely because this document names it.
+
+Each handoff records packet, base/head, behavior, tests, save migration, open limitations and the next packet. User-authorised scope governs implementation; these briefs do not themselves authorise a new publication or production configuration change.
+
+## Original first-day workflow (historical)
+
 Prepared 11 October 2026 for `arwyn6969/the-game`. Live reference: https://thegame.grok.me.
 
 The seven-resident integration is a later, explicitly authorized milestone. Its current schema is version 2, with version-1 loading preserved. See [the seven-resident handoff](handoffs/seven-resident-coherence.md). The lane setup and first-day scope below record the earlier milestone.

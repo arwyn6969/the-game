@@ -1,7 +1,7 @@
 import type { AgentId, Town } from "./types";
 import { AGENT_IDS } from "./types";
 import { absMinute } from "./memory";
-import { periodName } from "./text";
+import { mentionsSeed, periodName } from "./text";
 import { ANCHORS, MAP_H, MAP_W, TILE, zoneAt } from "./world";
 import {
   floorArt,
@@ -14,10 +14,17 @@ import {
 } from "../components/town/WorldArt";
 import type { Scenery } from "../components/town/WorldArt";
 
-const PALETTE: Record<
-  AgentId,
-  { skin: string; hair: string; shirt: string; pants: string; shoe: string; extra: string }
-> = {
+type Appearance = {
+  skin: string;
+  hair: string;
+  shirt: string;
+  pants: string;
+  shoe: string;
+  extra: string;
+  accessory?: "tablet" | "scarf";
+};
+
+const PALETTE: Record<AgentId, Appearance> = {
   kevin: {
     skin: "#c68642",
     hair: "#241c14",
@@ -65,6 +72,7 @@ const PALETTE: Record<
     pants: "#233446",
     shoe: "#141629",
     extra: "#ddfbff",
+    accessory: "tablet",
   },
   amelia: {
     skin: "#ad754e",
@@ -73,6 +81,7 @@ const PALETTE: Record<
     pants: "#513b54",
     shoe: "#251329",
     extra: "#f4e2aa",
+    accessory: "scarf",
   },
   player: {
     skin: "#d9a066",
@@ -245,17 +254,16 @@ function drawPerson(
     rect(g, p.extra, 5, -22, 5, 3);
     rect(g, "#c3ae91", 7, -17, 2, 2);
   }
+  if (p.accessory === "tablet") {
+    rect(g, p.pants, side ? 4 : 2, -22, 7, 10);
+    if (!back) rect(g, p.extra, side ? 5 : 3, -21, 5, 6);
+  } else if (p.accessory === "scarf") {
+    rect(g, p.extra, bx, -27, bodyW, 3);
+    rect(g, p.extra, side ? 3 : 2, -24, 3, 9);
+  }
   if (id === "player") {
     rect(g, p.extra, bx + 2, -27, bodyW - 4, 2);
     rect(g, p.extra, side ? 3 : -4, -25, 3, 7);
-  }
-  if (id === "data" && !back) {
-    rect(g, "#294555", 3, -23, 8, 11);
-    rect(g, p.extra, 4, -22, 6, 8);
-  }
-  if (id === "amelia") {
-    rect(g, p.extra, -5, -29, 10, 3);
-    rect(g, p.extra, 3, -26, 3, 10);
   }
   // Every view has a distinct silhouette: profile nose/ear and a full hair back.
   rect(g, "#30253c", -7, -40, 14, 13);
@@ -320,7 +328,7 @@ function drawPerson(
   g.restore();
 }
 
-/** The card uses the same appearance and silhouette as the town sprite. */
+/** Card portraits retain the current town sprite's appearance and silhouette. */
 export function paintPortrait(ctx: CanvasRenderingContext2D, id: AgentId) {
   ctx.clearRect(0, 0, 72, 88);
   ctx.imageSmoothingEnabled = false;
@@ -495,7 +503,8 @@ function drawLabels(g: CanvasRenderingContext2D, opts: PaintOpts) {
       !showingNow ||
       !agent?.bubble ||
       typeof agent.bubble.text !== "string" ||
-      agent.bubble.until < now
+      agent.bubble.until < now ||
+      mentionsSeed(agent.bubble.text)
     )
       continue;
     const text = agent.bubble.text;

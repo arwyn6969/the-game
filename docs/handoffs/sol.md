@@ -1,5 +1,28 @@
 # Sol handoff
 
+## 12 October 2026 — provider activation follow-up
+
+- User authorized free-provider enrollment and private local key configuration. Gemini, Cohere trial, NVIDIA NIM and OpenRouter free access were verified with synthetic JSON requests. Secrets and account-specific preferences are in ignored local files with mode 0600. No production secrets, database or deployment were changed; Groq, Mistral and Ollama remain disabled where free access or a running local model was unavailable.
+- Updated the Gemini catalog to the model actually available during setup (`gemini-3.8-flash`), added optional compatible reasoning effort, and increased bounded request timeouts to 12 seconds within a 30-second deadline. NVIDIA uses Nemotron 3 Ultra for deliberate work and Super for dialogue. Preferences remain editable and are not benchmarked intelligence scores.
+- Added endpoint checks for recognizable provider key prefixes plus a regression covering foreign providers and custom hosts. This prevents those copied-key mix-ups from transmitting credentials. It cannot identify unprefixed keys. CLI status reports the check without displaying any secret.
+- Validation after these changes: 345 tests passed (290 script plus 55 app/auth), typecheck passed, lint passed with one inherited auth warning, and build passed with the database URL unset. All four live game jobs succeeded; the quota-limited run demonstrated Gemini timeout → Cohere and exhausted preferred allocations → OpenRouter. A fifth stress request timed out after the other allocations were deliberately exhausted; the router returned a bounded unreachable result for existing offline handling. These checks establish connectivity/fallback, not full-game quality or sustained load capacity.
+- Local provider setup did not purchase credits or paid upgrades. All account-specific credentials remain outside the reviewable source diff.
+
+The original implementation evidence below describes its earlier state before provider setup.
+
+## 12 October 2026 — private AI provider pool
+
+- Branch: `codex/free-api-pool`, isolated local checkout `llm-pool`, based on current main `9377857c3283a6a2ef19dc39912d0ff4e2d0a30a`. The user explicitly requested multiple free providers, then intelligent-first routing and model choices by service; this authorizes the opt-in provider addition beyond the earlier milestone's provider freeze.
+- Added ranked, per-job model routes for planning, reflection, resident dialogue and player replies; seven provider templates; OpenAI-compatible and Cohere v2 adapters; bounded attempts/timeouts; explicit JSON-format retry; health/cooldowns; and an atomic SQL quota/lease ledger. Original gateway exports and town/save signatures remain compatible.
+- Setup, private model preferences, quota/billing limits and commands are in [the provider-pool guide](../AI_PROVIDER_POOL.md). CLI commands are `init`, `status`, `demo`, `dev`, `usage`, and `reset-health`. A local ignored configuration was generated with all providers disabled. No keys were created or configured.
+- Node 24.19.0 clean `npm ci`, typecheck, lint (zero errors, one inherited auth unused-disable warning), full tests (289 script tests plus 55 app/auth tests: 344 total), 65 town tests, 30-day diagnostics and production build passed. Diagnostics found no world-audit issues and all measured exports imported. Build ran with `DATABASE_URL` and `XAI_API_KEY` unset and skipped the database migration. The 26 new pool tests execute the migration/SQL functions in disposable PGLite with mocked provider responses, including concurrent reservations, lease expiry, quota boundaries, ranked selection, 429, invalid JSON, errors, timeout, and format retry. The CLI demo showed Gemini 429 → Groq success without external model calls.
+- The new root migration invalidated the old test assumption that the app has no application migrations. Updated that test to assert the new application migration is present while preserving the assertion that auth SQL remains outside the root migration set.
+- The actual local pool-mode startup applied the migration in PGLite and returned HTTP 200. `check:auth` confirmed dev/build agree with sign-in on. Server-only pool code/key variable names were absent from generated static JS. No UI changes were made; no new desktop/mobile interaction pass was needed for this backend/tooling diff.
+- Remaining limits: real provider entitlement, live response quality/latency, zero-cost account configuration and production Postgres contention are untested. Rankings are editable preferences, not measured intelligence scores. Local PGLite is process-local and resets on restart; multi-instance limits require shared Postgres and the reviewed migration. Grok/Vercel pool deployment refuses a missing shared DB. Other hosts must supply it explicitly. The existing save marker `mind: "grok"` still denotes online output; actual provider/model attribution lives only in the server ledger. Per-player fairness and stale client-result handling remain separate work.
+- No merge, hosted publication, production secret update, production database migration, paid call or provider account signup was performed.
+
+The earlier handoff below remains historical evidence.
+
 The later integration pass combines this branch with the completed player-experience branch, wires save feedback/import limits, and verifies the shared game. Current release evidence and publishing limitations are recorded in [docs/RELEASE.md](../RELEASE.md); the independent-lane record below remains historical evidence.
 
 Implemented and locally validated on 11 October 2026. The setup branch remains unmerged, so the implementation targets `codex/agent-collaboration-setup`.
@@ -31,16 +54,16 @@ No Grok-owned game UI, renderer, styles or game assets were edited. No completed
 
 Node `24.19.0`, npm `11.9.0`, committed lockfile; no production database or model credentials used. A repeated clean installation and final checks passed after the implementation stabilized.
 
-| Command | Actual result |
-| --- | --- |
-| `npm ci --no-audit --no-fund --cache /workspace/.cache/npm` | Passed, 428 packages; lockfile unchanged |
-| `npm run typecheck` | Passed |
-| `npm run lint` | Passed, zero errors; one inherited unused-disable warning at `src/lib/auth/use-current-user.ts:59` |
-| `npm run test:town` | 34 passed: existing town-day module plus 33 targeted regressions; zero failures/skips |
-| `npm test` | 232 script tests and 55 app/auth tests passed; zero failures/skips |
-| `npm run diagnose:town` | Scenarios completed; their repaired behaviors are separately asserted by the regression suite |
-| `env -u DATABASE_URL -u XAI_API_KEY npm run build` | Passed; migration explicitly skipped; inherited dependency/bundler warnings remain |
-| `git diff --check` | Passed |
+| Command                                                     | Actual result                                                                                      |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `npm ci --no-audit --no-fund --cache /workspace/.cache/npm` | Passed, 428 packages; lockfile unchanged                                                           |
+| `npm run typecheck`                                         | Passed                                                                                             |
+| `npm run lint`                                              | Passed, zero errors; one inherited unused-disable warning at `src/lib/auth/use-current-user.ts:59` |
+| `npm run test:town`                                         | 34 passed: existing town-day module plus 33 targeted regressions; zero failures/skips              |
+| `npm test`                                                  | 232 script tests and 55 app/auth tests passed; zero failures/skips                                 |
+| `npm run diagnose:town`                                     | Scenarios completed; their repaired behaviors are separately asserted by the regression suite      |
+| `env -u DATABASE_URL -u XAI_API_KEY npm run build`          | Passed; migration explicitly skipped; inherited dependency/bundler warnings remain                 |
+| `git diff --check`                                          | Passed                                                                                             |
 
 CI repeats install, typecheck, lint, game/full tests, diagnostics and a build on Node 24 with empty database/provider variables and read-only repository permissions. GitHub's `verify` job passed on PR #3 at head `7d20d638f7303cf2ff1db938f55c31e5552d5dee`; the following documentation update records that result.
 

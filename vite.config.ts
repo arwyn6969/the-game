@@ -177,10 +177,21 @@ export default defineConfig(({ command, isPreview }) => ({
             // manifest + head-tag middleware). Nitro v3 defaults serverDir to
             // false, so removing this silently unwires /?install=1 on deploys.
             serverDir: "./server",
-            hooks: {
-              compiled: (instance) => copyPgliteAssets(instance.options.output.serverDir),
-            },
           }),
+          // Must not be a nitro `compiled` hook: that replaces the preset hook
+          // which writes .vercel/output/config.json, and Vercel then looks for dist.
+          {
+            name: "app-builder:pglite-assets",
+            apply: "build",
+            buildApp: {
+              order: "post",
+              async handler() {
+                await copyPgliteAssets(
+                  join(process.cwd(), ".vercel/output/functions/__server.func"),
+                );
+              },
+            },
+          },
         ]
       : []),
     viteReact(),

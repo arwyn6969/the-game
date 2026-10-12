@@ -8,6 +8,19 @@ const object = (v: unknown): v is Record<string, unknown> =>
 const integer = (v: unknown, min: number, max: number) =>
   Number.isSafeInteger(v) && Number(v) >= min && Number(v) <= max;
 
+// A recognizable provider credential must only go to that provider's API host.
+// Unprefixed keys remain supported for Cohere, Mistral and custom endpoints.
+const KEY_HOSTS: [string, string][] = [
+  ["AIza", "generativelanguage.googleapis.com"],
+  ["gsk_", "api.groq.com"],
+  ["nvapi-", "integrate.api.nvidia.com"],
+  ["sk-or-v1-", "openrouter.ai"],
+];
+export function credentialMatchesEndpoint(baseUrl: string, key: string): boolean {
+  const owner = KEY_HOSTS.find(([prefix]) => key.trim().startsWith(prefix));
+  return !owner || new URL(baseUrl).hostname === owner[1];
+}
+
 export function validateConfig(value: unknown): PoolConfig {
   if (
     !object(value) ||
@@ -71,7 +84,9 @@ export function validateConfig(value: unknown): PoolConfig {
         throw new Error("Invalid mind pool route");
       if (
         r.reasoningEffort !== undefined &&
-        (!["low", "medium", "high"].includes(String(r.reasoningEffort)) || p.protocol === "cohere")
+        (typeof r.reasoningEffort !== "string" ||
+          !["low", "medium", "high"].includes(r.reasoningEffort) ||
+          p.protocol === "cohere")
       ) {
         throw new Error("Invalid mind pool reasoning effort");
       }
@@ -97,7 +112,11 @@ export function candidatesFor(
   return config.providers
     .filter(
       (p) =>
-        p.enabled && p.freeTierConfirmed && (!p.apiKeyEnv || Boolean(env[p.apiKeyEnv]?.trim())),
+        p.enabled &&
+        p.freeTierConfirmed &&
+        (!p.apiKeyEnv ||
+          (Boolean(env[p.apiKeyEnv]?.trim()) &&
+            credentialMatchesEndpoint(p.baseUrl, env[p.apiKeyEnv]!))),
     )
     .map((provider) => ({ provider, route: provider.routes[kind] }))
     .sort((a, b) => a.route.rank - b.route.rank);

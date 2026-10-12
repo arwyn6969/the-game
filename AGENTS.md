@@ -1,11 +1,11 @@
 # THE GAME — project instructions
 
-THE GAME is a persistent, open-ended pixel town with seven residents and the player. Preserve its cast, tone, existing towns, and the premise that the player is a resident. The current milestone adds coherent conversation, Data and Amelia, and a version-2 save format with version-1 import and migration. See `docs/handoffs/seven-resident-coherence.md` for validation and remaining limits.
+THE GAME is a persistent, open-ended pixel town with seven residents and the player. Preserve its cast, tone, existing towns, and the premise that the player is a resident. The consolidated main combines released art, coherent conversation, Data and Amelia, opt-in provider routing and version-2 saves with version-1 import. Start with `docs/CONSOLIDATION.md` for current source status and `docs/ROADMAP.md` for the next milestone.
 
 ## Start and scope
 
 - Use Node 24 and the committed npm lockfile. Setup: `npm ci`. Development: `npm run dev` (the Grok preview contract is port 8080).
-- Read `docs/COLLABORATION.md` for your lane and `docs/BASELINE.md` for verified starting conditions. Read the relevant files, rather than every document on every edit.
+- Read `docs/CONSOLIDATION.md` for the current baseline and `docs/COLLABORATION.md` for coordination. `docs/BASELINE.md` records historical starting failures. Read the relevant files, rather than every document on every edit.
 - Keep work in your own checkout and feature branch. Preserve user changes. Do not reset or force-push someone else's work.
 - Implement and test the assigned milestone; make routine, reversible decisions without repeated approval requests. Leave a reviewable diff and an honest account of what ran.
 
@@ -29,7 +29,7 @@ THE GAME is a persistent, open-ended pixel town with seven residents and the pla
 ## Validation and delivery
 
 - Run checks relevant to the change: `npm run typecheck`, `npm run lint`, `npm run test:town`, `npm test`. Run `npm run diagnose:town` for the previous review's scenarios; it prints observations, not a release verdict.
-- The full test and lint baseline currently has failures listed in `docs/BASELINE.md`. Reproduce and distinguish inherited failures; do not suppress assertions or claim the entire suite passed.
+- Record current check results and distinguish inherited failures. Do not suppress assertions or use historical failures in `docs/BASELINE.md` to excuse a new regression.
 - `npm run build` also invokes database migrations. For a local build, run with `DATABASE_URL` unset and without production credentials. Do not run migrations against a live database as part of validation.
 - UI work needs actual browser checks at 1280×800 and 390×844, including conversation entry, movement, pause, reload, and import/export. Capture screenshots and report untested interactions.
 - Feature branches and draft PRs are the handoff. Do not merge to `main`, publish the Grok app, switch hosting, spend on services, or change production secrets as part of these implementation prompts.

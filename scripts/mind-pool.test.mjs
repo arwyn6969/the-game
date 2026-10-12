@@ -73,6 +73,35 @@ test("missing keys and unconfirmed free tier are ineligible", async () => {
   assert.deepEqual(result, { ok: false, error: "offline" });
   assert.equal(calls, 0);
 });
+test("recognizable foreign-provider credentials are rejected before transmission", async () => {
+  const prefixes = { gemini: "AIza", groq: "gsk_", nvidia: "nvapi-", openrouter: "sk-or-v1-" };
+  for (const [owner, prefix] of Object.entries(prefixes)) {
+    const key = prefix + "synthetic".repeat(8);
+    const own = fixture([owner]);
+    own.env[own.config.providers[0].apiKeyEnv] = key;
+    assert.equal(candidatesFor(own.config, "plan", own.env).length, 1);
+    for (const recipient of ["gemini", "groq", "nvidia", "openrouter", "cohere", "mistral"]) {
+      if (recipient === owner) continue;
+      const f = fixture([recipient]);
+      f.env[f.config.providers[0].apiKeyEnv] = key;
+      let calls = 0;
+      assert.deepEqual(
+        await routeMind({
+          ...f,
+          fetcher: async () => {
+            calls++;
+            return success();
+          },
+        }),
+        { ok: false, error: "offline" },
+      );
+      assert.equal(calls, 0);
+    }
+    own.config.providers[0].baseUrl = "https://example.com/v1";
+    assert.equal(candidatesFor(own.config, "plan", own.env).length, 0);
+  }
+  assert.equal((await rows()).length, 0);
+});
 test("strongest available model is repeatedly preferred, without round robin", async () => {
   const f = fixture();
   const calls = [];
@@ -420,6 +449,15 @@ test("config rejects paid OpenRouter models, embedded credentials and zero quota
     },
     (c) => {
       c.providers[0].apiKeyEnv = "VITE_EXPOSED_KEY";
+    },
+    (c) => {
+      c.providers[0].routes.plan.reasoningEffort = ["low"];
+    },
+    (c) => {
+      c.providers[0].routes.plan.reasoningEffort = "unsupported";
+    },
+    (c) => {
+      c.providers.find((p) => p.id === "cohere").routes.plan.reasoningEffort = "low";
     },
   ]) {
     const config = defaultConfig();

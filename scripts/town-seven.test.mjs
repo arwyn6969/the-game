@@ -50,6 +50,22 @@ test("new towns have seven distinct residents plus the player", () => {
   assert.match(agent(town, "amelia").identity, /economist/);
 });
 
+test("an experimental funded ledger is retained for recovery rather than migrated into unsupported books", () => {
+  for (const town of [JSON.parse(fixture).town, createTown("Ada")]) {
+    town.economy = { version: 1, openingTotal: 77, transactions: [] };
+    const before = structuredClone(town);
+    assert.equal(save.validateTown(town), false);
+    assert.deepEqual(town, before, "rejection must precede roster or balance changes");
+    const raw = JSON.stringify({ version: town.version, town });
+    assert.equal(save.parseTownFile(raw), null);
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      value: { getItem: () => raw },
+    });
+    assert.deepEqual(save.readTownSave(), { status: "unreadable", raw });
+  }
+});
+
 test("a genuine v1 town migrates once without replacing the original residents", () => {
   const old = JSON.parse(fixture).town;
   const migrated = save.parseTownFile(fixture);

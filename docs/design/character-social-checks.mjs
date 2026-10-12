@@ -89,6 +89,7 @@ applyResult(town, {
     },
   ],
 });
+person("kevin").bubble = { text: "I do not know who I am, the man under the apron.", until: 1100 };
 const seed = exportTown(town);
 await source.close();
 const browser = await chromium.launch({ headless: true });
@@ -106,6 +107,15 @@ try {
     await context.addInitScript((text) => {
       if (!localStorage.getItem("the-game-town-v2")) localStorage.setItem("the-game-town-v2", text);
     }, seed);
+    await context.addInitScript(() => {
+      const original = CanvasRenderingContext2D.prototype.fillText;
+      window.__paintedWords = [];
+      CanvasRenderingContext2D.prototype.fillText = function (text, ...args) {
+        window.__paintedWords.push(String(text));
+        if (window.__paintedWords.length > 1000) window.__paintedWords.splice(0, 500);
+        return original.call(this, text, ...args);
+      };
+    });
     const page = await context.newPage();
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
@@ -145,6 +155,12 @@ try {
     assert.match(await social.textContent(), /0 → 1/);
     const watch = social.getByRole("checkbox", { name: "Watch town conversations" });
     await watch.check();
+    assert.equal(
+      await page.evaluate(() =>
+        window.__paintedWords.some((text) => /not know who I am/i.test(text)),
+      ),
+      false,
+    );
     await social.getByRole("button", { name: /Arwyn ↔ Data/ }).click();
     assert.match(
       await social.locator(".social-exchange").textContent(),

@@ -13,7 +13,9 @@ const results = { url, node: process.version, checks: {}, screenshots: [], failu
 const browser = await chromium.launch({ headless: true });
 const savedTown = (page) =>
   page.evaluate(() => {
-    const value = JSON.parse(localStorage.getItem("the-game-town-v1"));
+    const value = JSON.parse(
+      localStorage.getItem("the-game-town-v2") ?? localStorage.getItem("the-game-town-v1"),
+    );
     return value.town ?? value;
   });
 const xy = (page) =>
@@ -146,7 +148,7 @@ async function downloadTown(page, name) {
   await download.saveAs(path);
   const value = JSON.parse(await readFile(path, "utf8"));
   const town = value.town ?? value;
-  assert.equal(town.version, 1);
+  assert.equal(town.version, 2);
   assert.deepEqual(
     town.agents.map((a) => a.id).sort(),
     (await savedTown(page)).agents.map((a) => a.id).sort(),
@@ -287,7 +289,7 @@ try {
       await screenshot(page, `${vp.name}-conversation-active`);
       await page.getByRole("button", { name: "Say it", exact: true }).click();
       await page.waitForFunction(() =>
-        /They heard you\.|They answered from what they already hold\./.test(
+        /They answered with local dialogue\./.test(
           document.querySelector(".mind-send-note")?.textContent || "",
         ),
       );
@@ -311,10 +313,78 @@ try {
       await page.getByRole("button", { name: "Close conversation", exact: true }).click();
       await page.locator(".mind").waitFor({ state: "hidden" });
       await screenshot(page, `${vp.name}-hobbs`);
+      check.specialists = {};
+      for (const id of ["data", "amelia"]) {
+        const next = await savedTown(page);
+        const resident = next.agents.find((a) => a.id === id);
+        const player = next.agents.find((a) => a.id === "player");
+        player.tile = await page.evaluate(
+          ({ target, occupied }) =>
+            [
+              { x: target.x + 1, y: target.y },
+              { x: target.x - 1, y: target.y },
+              { x: target.x, y: target.y + 1 },
+              { x: target.x, y: target.y - 1 },
+            ].find(
+              (p) =>
+                window.__game.tile(p.x, p.y)?.block === false &&
+                !occupied.some((t) => t.x === p.x && t.y === p.y),
+            ),
+          {
+            target: resident.tile,
+            occupied: next.agents.filter((a) => a.id !== "player").map((a) => a.tile),
+          },
+        );
+        assert.ok(player.tile);
+        const finances = {
+          money: next.agents.map((a) => a.money),
+          favors: next.favors,
+          projects: player.projects,
+        };
+        await importTown(page, next, `${vp.name}-near-${id}`);
+        await page.evaluate(() => document.activeElement?.blur());
+        await page.keyboard.press("Enter");
+        const input = page.getByLabel(`Your line to ${resident.name}`, { exact: true });
+        await input.fill("What kind of work matters to you?");
+        await page.getByRole("button", { name: "Say it", exact: true }).click();
+        await page.waitForFunction(() =>
+          /They answered with local dialogue\./.test(
+            document.querySelector(".mind-send-note")?.textContent || "",
+          ),
+        );
+        const after = await savedTown(page);
+        assert.deepEqual(
+          {
+            money: after.agents.map((a) => a.money),
+            favors: after.favors,
+            projects: after.agents.find((a) => a.id === "player").projects,
+          },
+          finances,
+        );
+        assert.ok(
+          after.agents
+            .find((a) => a.id === id)
+            .memories.some(
+              (memory) =>
+                memory.with === "player" &&
+                memory.turns?.some((turn) => turn.speaker === id && turn.text.length > 0),
+            ),
+        );
+        await screenshot(page, `${vp.name}-${id}-conversation`);
+        check.specialists[id] = { offlineReply: true, financesUnchanged: true };
+        await page.getByRole("button", { name: "Close conversation", exact: true }).click();
+      }
       const beforeReload = await savedTown(page);
       await page.reload({ waitUntil: "domcontentloaded" });
       await page.waitForFunction(() => Boolean(window.__game && window.__controlsTest));
       const afterReload = await savedTown(page);
+      for (const id of ["kevin", "data", "amelia"]) {
+        assert.deepEqual(
+          afterReload.agents.find((a) => a.id === id).memories.filter((m) => m.type === "chat"),
+          beforeReload.agents.find((a) => a.id === id).memories.filter((m) => m.type === "chat"),
+          `${id} conversation survives reload`,
+        );
+      }
       assert.equal(afterReload.playerName, beforeReload.playerName);
       assert.deepEqual(
         afterReload.agents.find((a) => a.id === "player").tile,
