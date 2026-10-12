@@ -4,6 +4,7 @@ import { agentById, absMinute } from "./memory";
 import { characterProfile, type DiscussionTopic } from "./characters";
 import { promptMemories } from "./retrieval";
 import { beatAt } from "./plan";
+import { localReflections } from "./reflections";
 import { clip, formatClock, mentionsSeed } from "./text";
 import { placeTitle, placeTitleOf, zoneAt } from "./world";
 
@@ -171,18 +172,9 @@ function offlineReflect(town: Town, ids: AgentId[], weekly: boolean): MindResult
     mind: "offline",
     agents: ids.map((id) => {
       const agent = agentById(town, id);
-      // Do not quote a reflection into the next reflection, growing a recursive monologue.
-      const recent = [...agent.memories]
-        .reverse()
-        .find((m) => m.type === "favor" || m.type === "observe");
       return {
         id,
-        reflections: [
-          recent
-            ? `I remember this event: ${clip(recent.text, 180)}`
-            : "I do not have a new event to draw a conclusion from yet.",
-          characterProfile(agent.id).reflection,
-        ],
+        reflections: localReflections(town, agent),
         selfSentence: weekly ? weeklyLine(agent, holds(agent)) : undefined,
       };
     }),
