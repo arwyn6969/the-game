@@ -1,6 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { activityStatus, exchangeLanded, followingLatest, inTalkRange, interactiveControl, nextDraft, opensTalk, playerChatIds, spokenTurns } from "./talk.ts";
+import {
+  activityStatus,
+  exchangeLanded,
+  followingLatest,
+  inTalkRange,
+  interactiveControl,
+  nextDraft,
+  opensTalk,
+  playerChatIds,
+  spokenTurns,
+} from "./talk.ts";
 
 const sent = "Hello\nKevin, nice morning.";
 const stored = `In the cafe at 07:00, Ada said: "${sent.replace(/\s+/g, " ")}" Kevin answered: "Morning."`;
@@ -34,7 +44,10 @@ describe("a far click is not a conversation", () => {
   it("uses the same two-tile reach as Enter", () => {
     assert.equal(inTalkRange(0, 0, 2, 0), true);
     assert.equal(inTalkRange(0, 0, 3, 0), false);
-    assert.equal(activityStatus("plaza", "townhouses", "asleep in the last townhouse"), "on foot, not where that hour planned");
+    assert.equal(
+      activityStatus("plaza", "townhouses", "asleep in the last townhouse"),
+      "on foot, not where that hour planned",
+    );
     assert.equal(activityStatus("cafe", "cafe", "behind the counter"), "behind the counter");
   });
 });
@@ -49,14 +62,22 @@ describe("the newest reply stays readable", () => {
     assert.equal(followingLatest(0, 904, 294), false);
     assert.equal(followingLatest(600, 904, 294), true);
     assert.equal(followingLatest(0, 200, 294), true);
+    // Open commitments can extend below chat. Following is anchored to the reply,
+    // and scrolling down past it should offer a way back to it.
+    assert.equal(followingLatest(500, 700, 294), true);
+    assert.equal(followingLatest(900, 700, 294), false);
   });
 });
 describe("Enter on a control does not open talk", () => {
   it("lets a focused button keep Enter", () => {
     const button = interactiveControl({ tagName: "BUTTON" });
+    assert.equal(interactiveControl({ tagName: "SUMMARY" }), true);
     assert.equal(opensTalk("Enter", button, false), false);
     assert.equal(opensTalk("Enter", interactiveControl({ tagName: "CANVAS" }), false), true);
-    assert.equal(opensTalk("Enter", interactiveControl({ tagName: "SPAN", closest: () => ({}) }), false), false);
+    assert.equal(
+      opensTalk("Enter", interactiveControl({ tagName: "SPAN", closest: () => ({}) }), false),
+      false,
+    );
     assert.equal(opensTalk("KeyE", interactiveControl(null), false), true);
     assert.equal(opensTalk("Enter", false, true), false);
   });

@@ -104,7 +104,11 @@ function applyThread(town: Town, edit: ThreadEdit | null | undefined) {
     ? owner.threads.find((t) => t.id === edit.id)
     : owner.threads.find((t) => t.open && !t.seed);
   if (!target) {
-    if (edit.action !== "close" && text && owner.threads.filter((t) => t.open && !t.seed).length < 8) {
+    if (
+      edit.action !== "close" &&
+      text &&
+      owner.threads.filter((t) => t.open && !t.seed).length < 8
+    ) {
       owner.threads.push({ id: `th${town.nextId++}`, text, open: true });
     }
     return;
@@ -284,112 +288,443 @@ export function applyResult(town: Town, result: MindResult) {
   if (!Number.isFinite(town.day) || town.day < 1) town.day = 1;
   if (!Number.isFinite(town.nextId)) town.nextId = 1;
   try {
-  const until = (town.day - 1) * 1440 + town.minute + 20;
-  if (result.kind === "plan") {
-    for (const draft of result.plans ?? []) safely(() => applyPlanDraft(town, draft, result.mind, result.weekly === true));
-    return;
-  }
-  if (result.kind === "reflect") {
-    for (const item of result.agents ?? []) {
-      const agent = maybeAgent(town, item.id);
-      if (!agent) continue;
-      for (const line of (item.reflections ?? []).slice(0, 2)) {
-        const text = clip(String(line ?? ""), 320);
-        if (!text) continue;
+    const until = (town.day - 1) * 1440 + town.minute + 20;
+    if (result.kind === "plan") {
+      for (const draft of result.plans ?? [])
+        safely(() => applyPlanDraft(town, draft, result.mind, result.weekly === true));
+      return;
+    }
+    if (result.kind === "reflect") {
+      for (const item of result.agents ?? []) {
+        const agent = maybeAgent(town, item.id);
+        if (!agent) continue;
+        for (const line of (item.reflections ?? []).slice(0, 2)) {
+          const text = clip(String(line ?? ""), 320);
+          if (!text) continue;
+          pushMemory(
+            agent,
+            makeMemory(town, town.day, town.minute, "reflect", text, 8, {
+              protected: true,
+              mind: result.mind,
+            }),
+          );
+        }
+        agent.newMemories = 0;
+      }
+      return;
+    }
+    if (result.kind === "talk") {
+      const a = maybeAgent(town, result.a);
+      const b = maybeAgent(town, result.b);
+      if (!a || !b || a.id === b.id || a.id === "player" || b.id === "player") return;
+      const pair: AgentId[] = [a.id, b.id];
+      const lines = (result.lines ?? [])
+        .filter((l) => l?.text && (l.speaker === a.id || l.speaker === b.id))
+        .slice(0, 4);
+      const place = placeTitle(zoneAt(a.tile.x, a.tile.y));
+      const script = lines
+        .map((l) => `${maybeAgent(town, l.speaker)?.name ?? l.speaker}: ${clip(l.text, 220)}`)
+        .join(" ");
+      const wrapped = `In ${place} at ${formatClock(town.minute)}, ${a.name} and ${b.name} spoke. ${script}`;
+      const revealed = Boolean(result.revealedSeed) || mentionsSeed(wrapped);
+      for (const agent of [a, b]) {
         pushMemory(
           agent,
-          makeMemory(town, town.day, town.minute, "reflect", text, 8, {
-            protected: true,
+          makeMemory(town, town.day, town.minute, "chat", wrapped, revealed ? 8 : 6, {
+            with: agent.id === a.id ? b.id : a.id,
             mind: result.mind,
+            protected: revealed,
           }),
         );
+        const own = [...lines].reverse().find((l) => l.speaker === agent.id);
+        if (own) sayBubble(agent, own.text, until);
+        if (!agent.lastTalk || typeof agent.lastTalk !== "object") agent.lastTalk = {};
+        agent.lastTalk[agent.id === a.id ? b.id : a.id] = (town.day - 1) * 1440 + town.minute;
       }
-      agent.newMemories = 0;
+      for (const rel of result.relationships ?? []) {
+        if (rel.owner !== a.id && rel.owner !== b.id) continue;
+        safely(() => adjustRelation(town, rel.owner, rel.about, rel.delta, rel.note));
+      }
+      safely(() => applyFavor(town, result.favor, pair));
+      if (result.thread && pair.includes(result.thread.owner))
+        safely(() => applyThread(town, result.thread!));
+      if (result.notice?.text && pair.includes(result.notice.author))
+        safely(() => pinNotice(town, result.notice!.author, result.notice!.text));
+      if (result.project && pair.includes(result.project.owner))
+        safely(() => applyProject(town, result.project!));
+      const hour = Math.floor(town.minute / 60);
+      for (const re of result.replan ?? []) {
+        if (re.id !== a.id && re.id !== b.id) continue;
+        const who = maybeAgent(town, re.id);
+        if (who) safely(() => applyBlocks(who, re.blocks, hour));
+      }
+      return;
     }
-    return;
-  }
-  if (result.kind === "talk") {
-    const a = maybeAgent(town, result.a);
-    const b = maybeAgent(town, result.b);
-    if (!a || !b || a.id === b.id) return;
-    const pair: AgentId[] = [a.id, b.id];
-    const lines = (result.lines ?? [])
-      .filter((l) => l?.text && (l.speaker === a.id || l.speaker === b.id))
-      .slice(0, 4);
-    const place = placeTitle(zoneAt(a.tile.x, a.tile.y));
-    const script = lines
-      .map((l) => `${maybeAgent(town, l.speaker)?.name ?? l.speaker}: ${clip(l.text, 220)}`)
-      .join(" ");
-    const wrapped = `In ${place} at ${formatClock(town.minute)}, ${a.name} and ${b.name} spoke. ${script}`;
-    const revealed = Boolean(result.revealedSeed) || mentionsSeed(wrapped);
-    for (const agent of [a, b]) {
-      pushMemory(
-        agent,
-        makeMemory(town, town.day, town.minute, "chat", wrapped, revealed ? 8 : 6, {
-          with: agent.id === a.id ? b.id : a.id,
-          mind: result.mind,
-          protected: revealed,
-        }),
-      );
-      const own = [...lines].reverse().find((l) => l.speaker === agent.id);
-      if (own) sayBubble(agent, own.text, until);
-      if (!agent.lastTalk || typeof agent.lastTalk !== "object") agent.lastTalk = {};
-      agent.lastTalk[agent.id === a.id ? b.id : a.id] = (town.day - 1) * 1440 + town.minute;
-    }
-    for (const rel of result.relationships ?? []) {
-      if (rel.owner !== a.id && rel.owner !== b.id) continue;
-      safely(() => adjustRelation(town, rel.owner, rel.about, rel.delta, rel.note));
-    }
-    safely(() => applyFavor(town, result.favor, pair));
-    if (result.thread && pair.includes(result.thread.owner)) safely(() => applyThread(town, result.thread!));
-    if (result.notice?.text && pair.includes(result.notice.author))
+    const agent = maybeAgent(town, result.agentId);
+    const player = maybeAgent(town, "player");
+    if (!agent || !player || agent.id === "player") return;
+    const proposedCommitment =
+      result.favor ||
+      result.project?.owner === "player" ||
+      result.thread?.owner === "player" ||
+      result.replan?.some((re) => re.id === "player");
+    const reply = proposedCommitment
+      ? "Nothing was bought, paid, accepted or cancelled by this conversation. Read the quoted actions and choose explicitly if you want a change."
+      : result.reply;
+    const place = placeTitle(zoneAt(agent.tile.x, agent.tile.y));
+    const exchange = `In ${place} at ${formatClock(town.minute)}, ${player.name} said: "${clip(result.playerText, 180)}" ${agent.name} answered: "${clip(reply, 320)}"`;
+    pushMemory(
+      agent,
+      makeMemory(town, town.day, town.minute, "chat", exchange, 7, {
+        with: "player",
+        mind: result.mind,
+        protected: mentionsSeed(exchange),
+      }),
+    );
+    pushMemory(
+      player,
+      makeMemory(town, town.day, town.minute, "chat", exchange, 7, {
+        with: agent.id,
+        mind: result.mind,
+        protected: mentionsSeed(exchange),
+      }),
+    );
+    sayBubble(agent, reply, until);
+    safely(() => adjustRelation(town, agent.id, "player", result.delta, result.note));
+    safely(() => adjustRelation(town, "player", agent.id, result.delta, result.note));
+    // Speech is never authorization to move money or commit the player's time.
+    // Only applyPlayerAction, called with a displayed quote, can apply those edits.
+    if (result.thread?.owner === agent.id) safely(() => applyThread(town, result.thread!));
+    if (result.notice?.text && result.notice.author === agent.id)
       safely(() => pinNotice(town, result.notice!.author, result.notice!.text));
-    if (result.project && pair.includes(result.project.owner)) safely(() => applyProject(town, result.project!));
-    const hour = Math.floor(town.minute / 60);
+    if (result.project?.owner === agent.id) safely(() => applyProject(town, result.project!));
     for (const re of result.replan ?? []) {
-      if (re.id !== a.id && re.id !== b.id) continue;
       const who = maybeAgent(town, re.id);
-      if (who) safely(() => applyBlocks(who, re.blocks, hour));
+      if (who?.id === agent.id) safely(() => paintHours(who, re.blocks));
     }
-    return;
-  }
-  const agent = maybeAgent(town, result.agentId);
-  const player = maybeAgent(town, "player");
-  if (!agent || !player || agent.id === "player") return;
-  const pair: AgentId[] = [agent.id, "player"];
-  const place = placeTitle(zoneAt(agent.tile.x, agent.tile.y));
-  const exchange = `In ${place} at ${formatClock(town.minute)}, ${player.name} said: "${clip(result.playerText, 180)}" ${agent.name} answered: "${clip(result.reply, 320)}"`;
-  pushMemory(
-    agent,
-    makeMemory(town, town.day, town.minute, "chat", exchange, 7, {
-      with: "player",
-      mind: result.mind,
-      protected: mentionsSeed(exchange),
-    }),
-  );
-  pushMemory(
-    player,
-    makeMemory(town, town.day, town.minute, "chat", exchange, 7, {
-      with: agent.id,
-      mind: result.mind,
-      protected: mentionsSeed(exchange),
-    }),
-  );
-  sayBubble(agent, result.reply, until);
-  safely(() => adjustRelation(town, agent.id, "player", result.delta, result.note));
-  safely(() => adjustRelation(town, "player", agent.id, result.delta, result.note));
-  safely(() => applyFavor(town, result.favor, pair));
-  if (result.thread && pair.includes(result.thread.owner)) safely(() => applyThread(town, result.thread!));
-  if (result.notice?.text && pair.includes(result.notice.author))
-    safely(() => pinNotice(town, result.notice!.author, result.notice!.text));
-  if (result.project && pair.includes(result.project.owner)) safely(() => applyProject(town, result.project!));
-  for (const re of result.replan ?? []) {
-    const who = maybeAgent(town, re.id);
-    if (who && (who.id === "player" || who.id === agent.id)) safely(() => paintHours(who, re.blocks));
-  }
   } catch {
     /* A partial hour is kept. The clock still moves. */
   }
+}
+
+export type PlayerAction = {
+  id: string;
+  label: string;
+  terms: string;
+  disabledReason?: string;
+};
+
+type QuotedAction = PlayerAction & {
+  kind: "bread" | "eat-loaf" | "pay" | "shift-start" | "shift-stop";
+  reference?: string;
+};
+
+// Shared contract identity while retaining the existing v1 Project schema.
+export const PLAYER_CAFE_SHIFT =
+  "Cafe shift, 16:00 to 19:00 each day until cancelled; 5 after three hours if the till can pay.";
+export const BABA_LOAF = "A loaf from Baba. It can be eaten.";
+
+function quotedPlayerActions(town: Town, target: AgentId): QuotedAction[] {
+  const player = maybeAgent(town, "player");
+  const other = maybeAgent(town, target);
+  if (!player || !other || target === "player") return [];
+  const actions: QuotedAction[] = [];
+  const add = (
+    kind: QuotedAction["kind"],
+    label: string,
+    terms: string,
+    reference?: string,
+    disabledReason?: string,
+  ) => {
+    // The existing nextId is a save-compatible revision. A used quote cannot be
+    // replayed after its debt has been paid. The UI also checks town identity.
+    const id = JSON.stringify([kind, target, town.day, town.nextId, reference ?? "", terms]);
+    actions.push({ id, kind, label, terms, reference, disabledReason });
+  };
+  const debts = (town.favors ?? []).filter(
+    (f) => f.from === "player" && f.to === target && f.status === "owed",
+  );
+  const loaf = (player.projects ?? []).find(
+    (project) =>
+      project.owner === "player" &&
+      project.kind === "other" &&
+      project.status === "open" &&
+      project.text === BABA_LOAF,
+  );
+  if (loaf) {
+    add(
+      "eat-loaf",
+      "Eat loaf",
+      "Eat your held loaf once. It will be gone; any unpaid tab stays open. Eating does not move money.",
+      loaf.id,
+    );
+  }
+  for (const debt of debts) {
+    const validAmount = Number.isInteger(debt.amount) && debt.amount >= 0 && debt.amount <= 30;
+    const canPay =
+      validAmount &&
+      Number.isInteger(player.money) &&
+      player.money >= debt.amount &&
+      player.money <= 999 &&
+      Number.isInteger(other.money) &&
+      other.money >= 0 &&
+      other.money + debt.amount <= 999;
+    add(
+      "pay",
+      debt.amount === 0 ? "Complete this favor" : `Pay ${debt.amount}`,
+      `Pay ${other.name} ${debt.amount} to close this exact tab: ${debt.text}`,
+      debt.id,
+      !validAmount
+        ? "This tab's amount is invalid. It has been preserved for recovery."
+        : debt.amount === 0
+          ? "This favor needs a recorded completion before it can be closed."
+          : !canPay
+            ? "The full payment cannot be transferred now. The tab stays open."
+            : undefined,
+    );
+  }
+  if (target === "baba" && debts.length === 0) {
+    const conflictingLoaf = (player.projects ?? []).some(
+      (project) => project.status === "open" && project.text === BABA_LOAF,
+    );
+    add(
+      "bread",
+      "Accept bread tab · 2",
+      "Receive one loaf from Baba and owe Baba 2. No money moves until you choose to pay. You can eat the loaf once; eating does not pay the tab.",
+      undefined,
+      conflictingLoaf
+        ? "You already have a loaf or a conflicting item. Finish it before taking another."
+        : (player.projects ?? []).filter((project) => project.status === "open").length >= 4
+          ? "There is no room to carry a loaf. Finish an open item or project first."
+          : (town.favors ?? []).filter((f) => f.status === "owed").length >= 24
+            ? "The town cannot record another open tab yet."
+            : undefined,
+    );
+  }
+  if (target === "kevin") {
+    const shifts = (player.projects ?? []).filter(
+      (p) => p.owner === "player" && p.kind === "shift" && p.status === "open",
+    );
+    const shift = shifts.find((p) => (p.place ?? "cafe") === "cafe");
+    if (shift) {
+      add(
+        "shift-stop",
+        "Cancel cafe shift",
+        `End the cafe shift now. This pays no wage and keeps money already earned. Today's ${Math.round(player.shiftHours * 60)} worked minutes remain until midnight; cancelled hours earn nothing.`,
+        shift.id,
+      );
+    } else {
+      const hasTimetable =
+        Array.isArray(player.plan?.beats) &&
+        player.plan.beats.length === 24 &&
+        player.plan.beats.every((beat, hour) => beat?.hour === hour);
+      const conflictingProject = (player.projects ?? []).some(
+        (project) => project.status === "open" && project.text === PLAYER_CAFE_SHIFT,
+      );
+      const disabledReason = !hasTimetable
+        ? "Your saved timetable needs repair before you can take this shift."
+        : conflictingProject
+          ? "An existing project conflicts with this shift. Resolve it before accepting."
+          : shifts.length
+            ? "You already have an open shift elsewhere."
+            : town.minute > 16 * 60
+              ? "Come back before 16:00 to take a full shift."
+              : player.paidToday
+                ? "You have already received today's wage."
+                : (town.tills?.cafe ?? 0) < 5
+                  ? "The cafe till cannot fund a wage of 5 now."
+                  : (player.projects ?? []).filter((p) => p.status === "open").length >= 4
+                    ? "Finish or drop an open project before taking a shift."
+                    : undefined;
+      add(
+        "shift-start",
+        "Accept cafe shift · 5",
+        "Work at Hobbs Cafe, 16:00–19:00 each day until cancelled. Three game hours on the floor earn 5 if the till can pay in full. No advance or part-payment. Worked minutes and unpaid wages do not carry past midnight.",
+        undefined,
+        disabledReason,
+      );
+    }
+  }
+  return actions;
+}
+
+/** Read-only quotes: showing or discussing an offer does not accept it. */
+export function playerActions(town: Town, target: AgentId): PlayerAction[] {
+  return quotedPlayerActions(town, target).map(({ id, label, terms, disabledReason }) => ({
+    id,
+    label,
+    terms,
+    disabledReason,
+  }));
+}
+
+/** Only explicit UI actions enter here; model output cannot call this boundary. */
+export function applyPlayerAction(
+  town: Town,
+  target: AgentId,
+  actionId: string,
+): { ok: boolean; reply: string } {
+  const player = maybeAgent(town, "player");
+  const other = maybeAgent(town, target);
+  if (!player || !other || target === "player")
+    return { ok: false, reply: "That resident is not here." };
+  if (Math.abs(player.tile.x - other.tile.x) + Math.abs(player.tile.y - other.tile.y) > 2)
+    return { ok: false, reply: `${other.name} is too far away. Walk closer before choosing.` };
+  const action = quotedPlayerActions(town, target).find((candidate) => candidate.id === actionId);
+  if (!action)
+    return {
+      ok: false,
+      reply: "That offer has changed. Read the current terms before choosing again.",
+    };
+  if (action.disabledReason) return { ok: false, reply: action.disabledReason };
+  let reply: string;
+  if (action.kind === "bread") {
+    // Stage both effects before adopting either: a refused item must never
+    // leave the player owing for a loaf they did not receive.
+    try {
+      const staged = structuredClone(town);
+      const stagedPlayer = maybeAgent(staged, "player")!;
+      const stagedBaba = maybeAgent(staged, "baba")!;
+      const previousFavors = staged.favors.length;
+      applyFavor(
+        staged,
+        { action: "offer", from: "player", to: "baba", amount: 2, text: "Bread, to be paid back." },
+        ["player", "baba"],
+      );
+      applyProject(staged, {
+        owner: "player",
+        action: "start",
+        kind: "other",
+        place: "grocery",
+        text: BABA_LOAF,
+      });
+      const received = stagedPlayer.projects.some(
+        (project) =>
+          project.owner === "player" &&
+          project.kind === "other" &&
+          project.text === BABA_LOAF &&
+          project.status === "open",
+      );
+      const debt = staged.favors.at(-1);
+      if (
+        !received ||
+        staged.favors.length !== previousFavors + 1 ||
+        debt?.from !== "player" ||
+        debt.to !== "baba" ||
+        debt.amount !== 2 ||
+        debt.status !== "owed"
+      ) {
+        return {
+          ok: false,
+          reply:
+            "The loaf and its tab could not both be recorded. You received no loaf and owe nothing new.",
+        };
+      }
+      town.favors = staged.favors;
+      town.nextId = staged.nextId;
+      player.projects = stagedPlayer.projects;
+      player.memories = stagedPlayer.memories;
+      player.newMemories = stagedPlayer.newMemories;
+      other.memories = stagedBaba.memories;
+      other.newMemories = stagedBaba.newMemories;
+    } catch {
+      return {
+        ok: false,
+        reply:
+          "The loaf and its tab could not both be recorded. You received no loaf and owe nothing new.",
+      };
+    }
+    reply =
+      "You received one loaf and accepted a tab of 2 with Baba. No money has moved. You can choose Eat loaf when you want it.";
+  } else if (action.kind === "eat-loaf") {
+    const loaf = player.projects.find(
+      (project) =>
+        project.id === action.reference &&
+        project.owner === "player" &&
+        project.kind === "other" &&
+        project.text === BABA_LOAF &&
+        project.status === "open",
+    );
+    if (!loaf) return { ok: false, reply: "You are not carrying that loaf anymore." };
+    loaf.status = "done";
+    reply = "You eat the loaf. It is gone. Any unpaid tab stays open; no money moved.";
+  } else if (action.kind === "pay") {
+    const debt = town.favors.find(
+      (f) =>
+        f.id === action.reference && f.from === "player" && f.to === target && f.status === "owed",
+    );
+    if (!debt) return { ok: false, reply: "That tab is no longer open." };
+    applyFavor(
+      town,
+      {
+        action: "pay",
+        id: debt.id,
+        from: debt.from,
+        to: debt.to,
+        amount: debt.amount,
+        text: debt.text,
+      },
+      ["player", target],
+    );
+    if (debt.status !== "paid")
+      return { ok: false, reply: "The payment could not be completed. The tab stays open." };
+    reply = debt.amount
+      ? `Paid ${other.name} ${debt.amount}. That tab is closed.`
+      : "That favor is complete. No money moved.";
+  } else if (action.kind === "shift-start") {
+    applyProject(town, {
+      owner: "player",
+      action: "start",
+      kind: "shift",
+      place: "cafe",
+      text: PLAYER_CAFE_SHIFT,
+    });
+    if (
+      !player.projects.some(
+        (project) =>
+          project.owner === "player" &&
+          project.kind === "shift" &&
+          project.place === "cafe" &&
+          project.status === "open" &&
+          project.text === PLAYER_CAFE_SHIFT,
+      )
+    ) {
+      return {
+        ok: false,
+        reply: "The shift could not be recorded. Your timetable has not changed.",
+      };
+    }
+    paintHours(player, [
+      { from: 16, to: 19, place: "cafe", spot: "out", status: "on a cafe shift, earning it" },
+    ]);
+    reply =
+      "Cafe shift accepted: 16:00–19:00 each day until cancelled. Three game hours on the floor, then 5 if the till can pay. Nothing paid in advance.";
+  } else {
+    applyProject(town, {
+      owner: "player",
+      action: "drop",
+      id: action.reference,
+      kind: "shift",
+      text: "",
+    });
+    paintHours(player, [
+      { from: 16, to: 18, place: "park", spot: "out", status: "in the park, keeping to the path" },
+      { from: 18, to: 19, place: "townhouses", spot: "home", status: "home on the row, lamp low" },
+    ]);
+    reply =
+      "Cafe shift cancelled. No wage was paid by cancelling; money already earned stays yours.";
+  }
+  applyResult(town, {
+    kind: "player",
+    mind: "offline",
+    agentId: target,
+    playerText: action.label,
+    reply,
+    delta: 0,
+    note: "",
+    favor: null,
+  });
+  return { ok: true, reply };
 }
 
 function applyPlanDraft(town: Town, draft: PlanDraft, mind: "grok" | "offline", weekly: boolean) {
@@ -411,25 +746,23 @@ function applyPlanDraft(town: Town, draft: PlanDraft, mind: "grok" | "offline", 
   }
   pushMemory(
     agent,
-    makeMemory(
-      town,
-      town.day,
-      town.minute,
-      "plan",
-      `Day ${town.day}: ${agent.plan.summary}`,
-      5,
-      { mind },
-    ),
+    makeMemory(town, town.day, town.minute, "plan", `Day ${town.day}: ${agent.plan.summary}`, 5, {
+      mind,
+    }),
   );
   if (draft.project) applyProject(town, { ...draft.project, owner: agent.id });
   if (draft.thread) safely(() => applyThread(town, { ...draft.thread!, owner: agent.id }));
   agent.status = beatAt(agent, town.minute).status;
-  if (agent.id === "kevin" && mentionsSeed(agent.status)) agent.status = "on the floor, not saying much";
+  if (agent.id === "kevin" && mentionsSeed(agent.status))
+    agent.status = "on the floor, not saying much";
 }
 
 export function spreadView(town: Town) {
   const holders = town.agents.filter(
-    (a) => a.id !== "kevin" && Array.isArray(a.memories) && a.memories.some((m) => m.seed || mentionsSeed(m.text)),
+    (a) =>
+      a.id !== "kevin" &&
+      Array.isArray(a.memories) &&
+      a.memories.some((m) => m.seed || mentionsSeed(m.text)),
   );
   const notes = (town.notices ?? []).filter((n) => mentionsSeed(n.text));
   const missed = (town.retrievals ?? []).filter((r) => r.missed);

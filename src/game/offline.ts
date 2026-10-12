@@ -1,6 +1,6 @@
 import type { Agent, AgentId, Block, MindResult, ThinkJob, ThreadEdit, Town } from "./types";
 import { NPC_IDS } from "./types";
-import { openThreadText } from "./effects";
+import { BABA_LOAF, openThreadText } from "./effects";
 import { absMinute, agentById, retrieve } from "./memory";
 import { promptMemories } from "./retrieval";
 import { beatAt } from "./plan";
@@ -22,9 +22,16 @@ export function prepareRetrievals(town: Town, job: ThinkJob) {
   }
 }
 
-function quote(town: Town, agent: Agent, query: string): string {
-  const hit = retrieve(agent.memories, query, absMinute(town.day, town.minute), 1)[0];
-  return clip(hit?.memory.text ?? agent.selfSentence, 100);
+function quote(town: Town, agent: Agent, query: string, spoken = false): string {
+  const memories = spoken
+    ? agent.memories.filter((m) => !m.seed && !mentionsSeed(m.text))
+    : agent.memories;
+  const hit = retrieve(memories, query, absMinute(town.day, town.minute), 1)[0];
+  const fallback =
+    spoken && mentionsSeed(agent.selfSentence)
+      ? "There is a day to get through."
+      : agent.selfSentence;
+  return clip(hit?.memory.text ?? fallback, 100);
 }
 
 function blocksFromPlan(agent: Agent): Block[] {
@@ -93,12 +100,16 @@ function offlinePlan(town: Town, weekly: boolean): MindResult {
         text: "Kevin asked for help with who he is. Where he came from is that question, not a place. The records may not be enough, and he still has to make some money.",
       };
     }
-    if (id === "northern" && agent.projects.some((p) => p.kind === "shift" && p.status === "open")) {
+    if (
+      id === "northern" &&
+      agent.projects.some((p) => p.kind === "shift" && p.status === "open")
+    ) {
       want = "I want the cafe shift to become money, not another story I tell in the dorms.";
       summary = "Show up for the cafe shift and do not spend the wage before it exists.";
     }
     if (id === "sub" && known) {
-      summary = "Turn the cafe conversation into a page, and try — this once — not to sand it into a better lie.";
+      summary =
+        "Turn the cafe conversation into a page, and try — this once — not to sand it into a better lie.";
     }
     if (id === "baba") {
       summary = "Keep the grocery even, and do not let a story erase a tab.";
@@ -203,7 +214,11 @@ function offlineTalk(town: Town, aId: AgentId, bId: AgentId): MindResult {
   if (
     pair.has("kevin") &&
     pair.has("northern") &&
-    [a, b].some((agent) => (agent.threads ?? []).some((t) => /introduced/i.test(t.text)) || (agent.memories ?? []).some((m) => /introduced/i.test(m.text)))
+    [a, b].some(
+      (agent) =>
+        (agent.threads ?? []).some((t) => /introduced/i.test(t.text)) ||
+        (agent.memories ?? []).some((m) => /introduced/i.test(m.text)),
+    )
   ) {
     return talkIntroduced(town, a, b);
   }
@@ -225,13 +240,32 @@ function talkIntroduced(town: Town, a: Agent, b: Agent): MindResult {
     a: a.id,
     b: b.id,
     lines: [
-      { speaker: "northern", text: cite(town, agentById(town, "northern"), agentById(town, "kevin")) },
-      { speaker: "kevin", text: `The new resident introduced us in the ${place}. I am not calling that friendship. I am calling it a name I can use.` },
-      { speaker: "northern", text: "I will take the introduction. A shift still pays better than a hello." },
+      {
+        speaker: "northern",
+        text: cite(town, agentById(town, "northern"), agentById(town, "kevin")),
+      },
+      {
+        speaker: "kevin",
+        text: `The new resident introduced us in the ${place}. I am not calling that friendship. I am calling it a name I can use.`,
+      },
+      {
+        speaker: "northern",
+        text: "I will take the introduction. A shift still pays better than a hello.",
+      },
     ],
     relationships: [
-      { owner: "kevin", about: "northern", delta: 1, note: "We were introduced. That is a start, not a debt." },
-      { owner: "northern", about: "kevin", delta: 1, note: "Someone introduced us. I still need the shift." },
+      {
+        owner: "kevin",
+        about: "northern",
+        delta: 1,
+        note: "We were introduced. That is a start, not a debt.",
+      },
+      {
+        owner: "northern",
+        about: "kevin",
+        delta: 1,
+        note: "Someone introduced us. I still need the shift.",
+      },
     ],
     favor: null,
     thread: null,
@@ -243,18 +277,27 @@ function talkIntroduced(town: Town, a: Agent, b: Agent): MindResult {
 function compose(town: Town, speaker: Agent, other: Agent): string {
   const place = placeTitle(zoneAt(speaker.tile.x, speaker.tile.y));
   const clock = formatClock(town.minute);
-  const mem = quote(town, speaker, `${other.name} ${place} ${openThreadText(speaker)} ${speaker.want ?? ""}`);
+  const publicThread = (speaker.threads ?? []).find(
+    (t) => t.open && !t.hidden && !t.seed && !mentionsSeed(t.text),
+  )?.text;
+  const thread = publicThread ?? "The day's ordinary work is still here.";
+  const mem = quote(town, speaker, `${other.name} ${place} ${thread}`, true);
   const owed = (town.favors ?? []).find(
-    (f) => f.status === "owed" && ((f.from === speaker.id && f.to === other.id) || (f.from === other.id && f.to === speaker.id)),
+    (f) =>
+      f.status === "owed" &&
+      ((f.from === speaker.id && f.to === other.id) ||
+        (f.from === other.id && f.to === speaker.id)),
   );
-  const last = [...(speaker.memories ?? [])].reverse().find((m) => m.type === "chat" && m.text.includes(other.name));
+  const last = [...(speaker.memories ?? [])]
+    .reverse()
+    .find(
+      (m) => m.type === "chat" && m.text.includes(other.name) && !m.seed && !mentionsSeed(m.text),
+    );
   const beats = [
     `${place}, ${clock}. I keep turning over "${mem}".`,
-    `The open thread is still: ${openThreadText(speaker)}.`,
+    `The open thread is still: ${thread}.`,
     owed ? `The tab is still open: ${clip(owed.text, 80)}. I am not pretending it was paid.` : "",
     last ? `Last time, what stayed was: ${clip(last.text, 80)}.` : "",
-    holds(speaker) && speaker.id !== "kevin" ? "Who he is has already traveled. I am not pinning it again." : "",
-    speaker.id === "kevin" && holds(other) ? "You already heard who I am. I am not saying it to the room." : "",
     `${periodName(town.minute)} can keep the rest. I am not closing anything.`,
   ].filter(Boolean);
   const index = Math.abs(town.day * 3 + Math.floor(town.minute / 60)) % beats.length;
@@ -379,7 +422,10 @@ function talkSub(town: Town, a: Agent, b: Agent): MindResult {
     notice:
       town.day % 2 === 0
         ? null
-        : { author: "sub", text: "A note I am not sure I should have pinned: he needs help with who he is. The buried fortune was mine, not his." },
+        : {
+            author: "sub",
+            text: "A note I am not sure I should have pinned: he needs help with who he is. The buried fortune was mine, not his.",
+          },
   };
 }
 
@@ -498,7 +544,9 @@ function talkTab(town: Town): MindResult {
 function talkGeneric(town: Town, a: Agent, b: Agent): MindResult {
   const place = placeTitle(zoneAt(a.tile.x, a.tile.y));
   const owed = (town.favors ?? []).find(
-    (f) => f.status === "owed" && ((f.from === a.id && f.to === b.id) || (f.from === b.id && f.to === a.id)),
+    (f) =>
+      f.status === "owed" &&
+      ((f.from === a.id && f.to === b.id) || (f.from === b.id && f.to === a.id)),
   );
   const till = town.tills?.cafe === 0 ? "Hobbs" : town.tills?.grocery === 0 ? "the grocery" : "";
   const held = holds(a) || holds(b);
@@ -530,7 +578,9 @@ function talkGeneric(town: Town, a: Agent, b: Agent): MindResult {
         owner: a.id,
         about: b.id,
         delta: 0,
-        note: owed ? `We spoke, and the tab still stands: ${clip(owed.text, 80)}.` : `We spoke in the ${place}. Nothing was settled.`,
+        note: owed
+          ? `We spoke, and the tab still stands: ${clip(owed.text, 80)}.`
+          : `We spoke in the ${place}. Nothing was settled.`,
       },
       {
         owner: b.id,
@@ -545,34 +595,6 @@ function talkGeneric(town: Town, a: Agent, b: Agent): MindResult {
     project: null,
   };
 }
-
-function declined(text: string): boolean {
-  return /\b(?:do not|don't|dont|cannot|can't|cant|won't|wont|never|without|not)\b/i.test(text);
-}
-
-function inquiring(text: string): boolean {
-  return /[?]|\b(?:do you|does|can i|could i|would you|what|how|why|when|where|is there|how much)\b/i.test(text);
-}
-
-const SHIFT_HOURS: Block[] = [
-  { from: 16, to: 19, place: "cafe", spot: "out", status: "on a cafe shift, earning it" },
-];
-const SHIFT_OFF: Block[] = [
-  { from: 16, to: 18, place: "park", spot: "out", status: "in the park, keeping to the path" },
-  { from: 18, to: 19, place: "townhouses", spot: "home", status: "home on the row, lamp low" },
-];
-
-function aboutWork(text: string): boolean {
-  return /\b(?:shift|job|wage)\b|\b(?:earn|work)\b/i.test(text);
-}
-
-function acceptsWork(text: string): boolean {
-  return /\bi(?:'ll| will) (?:take|work|do) (?:the |a )?(?:cafe )?shift\b|\bi accept\b.*\bshift\b|\bi(?:'ll| will) take the job\b/i.test(
-    text,
-  );
-}
-
-const LOAF = "A loaf from Baba. It can be eaten.";
 
 function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
   ensureLists(town);
@@ -592,61 +614,36 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
   } else if (!town.notices.length && agent.id === "arwyn") {
     reply = `${reply} If you can switch a mind on, do. Until then I am only this place, this hour, and what I already retrieved.`;
   }
-  const namesFood = /\b(?:bread|apples?)\b/i.test(text);
-  const takesFood =
-    /\bi(?:'ll| will) take\b|\bi(?:'ll| will) buy\b|\bgive me\b|\bon a tab\b/i.test(text);
-  const wantsBread =
-    agent.id === "baba" && namesFood && takesFood && !declined(text) && !inquiring(text);
   const debt = town.favors.find((f) => f.from === "player" && f.to === id && f.status === "owed");
-  const mentionsPay = /\b(?:repay|settle|pay)\b/i.test(text);
-  const aboutTab = /\b(?:tab|debt|bread|you|money)\b/i.test(text);
-  const repaying =
-    mentionsPay &&
-    aboutTab &&
-    !declined(text) &&
-    !inquiring(text) &&
-    !/\b(?:tomorrow|later)\b/i.test(text);
-  const inspecting =
-    /\b(?:what|how much)\b.*\b(?:owe|tab|debt)\b|\b(?:inspect|check|show)\b.*\b(?:tab|debt)\b|^\s*(?:my )?(?:tab|debt)\s*\??\s*$/i.test(
-      text,
+  const carrying = (player.projects ?? []).find(
+    (p) =>
+      p.owner === "player" && p.kind === "other" && p.status === "open" && p.text === BABA_LOAF,
+  );
+  const ateLoaf = (player.projects ?? []).some(
+    (p) =>
+      p.owner === "player" && p.kind === "other" && p.status === "done" && p.text === BABA_LOAF,
+  );
+  const asksAboutEating = /\b(?:eat|eating|loaf)\b/i.test(text);
+  const workTalk =
+    agent.id === "kevin" && /\b(?:shift|job|wage|earn|work|quit|cancel)\b/i.test(text);
+  if (asksAboutEating) {
+    reply = carrying
+      ? "You are carrying a loaf. Choose Eat loaf below when you want to eat it. The tab stays open until paid; talking does not consume the loaf."
+      : "You are not carrying a loaf.";
+  } else if (workTalk) {
+    const shift = (player.projects ?? []).find(
+      (p) => p.owner === "player" && p.kind === "shift" && p.status === "open",
     );
-  const introducing =
-    /\bintroduc/i.test(text) &&
-    ((id === "kevin" && /\bnorthern\b/i.test(text)) ||
-      (id === "northern" && /\bkevin\b/i.test(text)));
-  const openShift = (player.projects ?? []).find((p) => p.owner === "player" && p.status === "open" && p.kind === "shift");
-  const leavingShift = Boolean(openShift) && (declined(text) || /\b(?:quit|cancel|leave)\b/i.test(text));
-  const workTalk = agent.id === "kevin" && (aboutWork(text) || leavingShift);
-  let project: import("./types").ProjectEdit | null = null;
-  let replan: { id: AgentId; blocks: Block[] }[] | undefined;
-  let workThread: ThreadEdit | null = null;
-  if (workTalk) {
-    if (leavingShift && openShift) {
-      reply = "Then you are off the floor. Hours you did not work are not paid.";
-      project = { owner: "player", action: "drop", kind: "shift", text: openShift.text };
-      replan = [{ id: "player", blocks: SHIFT_OFF }];
-    } else if (openShift) {
-      reply = "You already have it. Sixteen hundred to nineteen hundred, on the cafe floor. Three hours, then 5 from the till if it can pay.";
-    } else if (acceptsWork(text) && !declined(text) && !inquiring(text)) {
-      const till = town.tills?.cafe ?? 0;
-      reply =
-        till >= 5
-          ? "The shift is yours. Sixteen hundred to nineteen hundred, on the cafe floor. Three hours, then the till pays 5. If you leave it, say so."
-          : "The shift is yours. Sixteen hundred to nineteen hundred, on the cafe floor. Three hours. The till cannot pay 5 yet; the hours wait until it can.";
-      project = {
-        owner: "player",
-        action: "start",
-        kind: "shift",
-        place: "cafe",
-        text: "Cafe shift, 16:00 to 19:00, 5 from the till after three hours on the floor.",
-      };
-      replan = [{ id: "player", blocks: SHIFT_HOURS }];
-      workThread = { owner: "player", action: "open", text: "Work the cafe floor from 16:00 to 19:00." };
-    } else if (declined(text)) {
-      reply = "All right. The shift is not yours. Come back if you want it.";
-    } else {
-      reply = "A cafe shift is three hours on the floor, 16:00 to 19:00. The till pays 5 when those hours are real. Say that you will take the shift, or leave it.";
-    }
+    reply = shift
+      ? "Your shift is still open. Talking does not cancel it. Use the quoted action below if you want to cancel. Three game hours on the floor earn the full wage only if the till can pay; unpaid hours reset at midnight."
+      : "The cafe shift is 16:00–19:00 each day until cancelled, for 5 after three game hours on the floor if the till can pay. Read the terms below and choose Accept to take it. Talking alone commits you to nothing.";
+  } else if (
+    agent.id === "baba" &&
+    /\b(?:bread|apples?|food|tab|debt|pay|repay|settle|owe)\b/i.test(text)
+  ) {
+    reply = debt
+      ? `Your tab is still ${debt.amount}: ${debt.text} Talking does not pay it. Use the quoted payment action when you choose.`
+      : "Bread is 2 on a tab, with one loaf to eat. Read the terms below and choose Accept if you want it. Asking or refusing does not buy anything.";
   } else if (agent.id === "kevin" && !probing) {
     const paid = (player.memories ?? []).some(
       (m) =>
@@ -654,70 +651,12 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
         m.text.includes("paid me 5") &&
         (m.day === town.day || m.day === town.day - 1),
     );
-    if (paid) reply = `${reply} You worked the floor. The till paid you 5. I have not forgotten that.`;
+    if (paid)
+      reply = `${reply} You worked the floor. The till paid you 5. I have not forgotten that.`;
   }
-  const canPay =
-    debt &&
-    Number.isInteger(debt.amount) &&
-    debt.amount >= 0 &&
-    debt.amount <= 30 &&
-    Number.isInteger(player.money) &&
-    player.money >= debt.amount &&
-    player.money <= 999 &&
-    Number.isInteger(agent.money) &&
-    agent.money >= 0 &&
-    agent.money + debt.amount <= 999;
-  const carrying = (player.projects ?? []).find((p) => p.status === "open" && p.text === LOAF);
-  const ateLoaf = (player.projects ?? []).some((p) => p.status === "done" && p.text === LOAF);
-  const eating =
-    /\bi(?:'ll| will) eat\b/i.test(text) &&
-    /\b(?:bread|loaf)\b/i.test(text) &&
-    !declined(text) &&
-    !inquiring(text);
-  let favor: import("./types").FavorEdit | null = null;
-  if (workTalk) {
-    /* The shift answer is the whole action. It must not also open a tab. */
-  } else if (eating) {
-    if (!carrying) reply = "You are not carrying a loaf.";
-    else {
-      reply = "You eat the loaf. It is gone. The tab, if it is still open, stays written down.";
-      project = { owner: "player", action: "done", kind: "other", id: carrying.id, text: carrying.text };
-    }
-  } else if (repaying) {
-    if (!debt) reply = "There is no open tab between us. Nothing to pay again.";
-    else if (!canPay)
-      reply = `The tab is ${debt.amount}. We cannot transfer that in full right now; it stays open.`;
-    else {
-      reply = debt.amount
-        ? `Paid: ${debt.amount}. That tab is closed.`
-        : "That favor is completed. No money changed hands.";
-      favor = {
-        action: "pay",
-        id: debt.id,
-        from: debt.from,
-        to: debt.to,
-        amount: debt.amount,
-        text: debt.text,
-      };
-    }
-  } else if (inspecting) {
-    reply = debt ? `You owe me ${debt.amount}: ${debt.text}` : "There is no open tab between us.";
-  } else if (wantsBread && debt) {
-    reply = "You already owe me for bread. I am not opening a second tab.";
-  } else if (wantsBread) {
-    reply = "Bread is 2. I will write it as a tab. The loaf is yours to eat. Pay the 2 when you have it.";
-    favor = {
-      action: "offer",
-      from: "player",
-      to: "baba",
-      amount: 2,
-      text: "Bread, to be paid back.",
-    };
-    project = { owner: "player", action: "start", kind: "other", place: "grocery", text: LOAF };
-  } else if (introducing) {
-    reply = `${reply} All right. I will remember that you introduced us. That is not the same as knowing him.`;
-  }
-  if (agent.id === "baba" && debt && !eating && !wantsBread && !repaying && !inspecting) {
+  if (!debt && /\b(?:inspect|owe|pay|repay|settle)\b/i.test(text) && !workTalk && !asksAboutEating)
+    reply = "There is no open tab between us. Nothing to pay.";
+  if (agent.id === "baba" && debt && !asksAboutEating) {
     if (carrying) reply = `${reply} You are carrying the loaf. The tab is ${debt.amount}.`;
     else if (ateLoaf) reply = `${reply} You ate the loaf. You still owe ${debt.amount}.`;
   }
@@ -729,18 +668,9 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
     reply,
     delta: 0,
     note: clip(`${player.name} said: ${text}`, 160),
-    favor,
-    project,
-    replan,
-    thread:
-      workThread ??
-      (introducing && !repaying && !inspecting
-        ? {
-            owner: agent.id,
-            action: "open" as const,
-            text: `${player.name} introduced Northern and Kevin. It is not friendship yet.`,
-          }
-        : null),
+    favor: null,
+    project: null,
+    thread: null,
     notice: null,
   };
 }

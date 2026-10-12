@@ -174,14 +174,38 @@
 
 .mind-body {
   flex: 1;
+  min-height: 0;
   overflow: auto;
   padding: 1rem;
 }
 
 .mind-jump {
-  position: sticky;
-  bottom: 0.5rem;
-  margin-top: 0.75rem;
+  flex: none;
+  align-self: flex-start;
+  margin: 0.25rem 1rem;
+}
+
+.mind-actions {
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.mind-actions summary {
+  cursor: pointer;
+}
+.mind-actions ul {
+  max-height: min(10rem, 20dvh);
+  overflow: auto;
+}
+.mind-actions li {
+  padding: 0.5rem 0;
+}
+.mind-actions li + li {
+  border-top: 1px solid var(--color-line);
+}
+.mind-send-note {
+  max-height: 3.5rem;
+  overflow: auto;
 }
 
 .mind-say {
@@ -238,14 +262,30 @@
   font: 700 1.1rem/1 var(--font-sans);
 }
 
-.dpad .u { grid-column: 2; grid-row: 1; }
-.dpad .l { grid-column: 1; grid-row: 2; }
-.dpad .r { grid-column: 3; grid-row: 2; }
-.dpad .d { grid-column: 2; grid-row: 3; }
+.dpad .u {
+  grid-column: 2;
+  grid-row: 1;
+}
+.dpad .l {
+  grid-column: 1;
+  grid-row: 2;
+}
+.dpad .r {
+  grid-column: 3;
+  grid-row: 2;
+}
+.dpad .d {
+  grid-column: 2;
+  grid-row: 3;
+}
 
 @media (max-width: 860px), (pointer: coarse) {
-  .dpad { display: grid; }
-  .town[data-talking="true"] .dpad { display: none; }
+  .dpad {
+    display: grid;
+  }
+  .town[data-talking="true"] .dpad {
+    display: none;
+  }
   .mind {
     top: auto;
     left: 0;
@@ -278,5 +318,9 @@
   border-radius: 2px;
 }
 
-.meter i[data-on="true"] { background: var(--color-moss); }
-.meter i[data-neg="true"] { background: var(--color-primary); }
+.meter i[data-on="true"] {
+  background: var(--color-moss);
+}
+.meter i[data-neg="true"] {
+  background: var(--color-primary);
+}
