@@ -51,15 +51,17 @@ The released tree passed 317 script/app/auth tests, 64 town tests, typecheck, li
 
 These are bounded implementation packets, not parallel permission to edit the same files. The implementation plan owns detailed contracts and stopping points.
 
-| Packet | Scope                                                          | Exit condition                                                                                                                     | Status                               |
-| ------ | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| S0     | Trust repairs and identified publication                       | Explicit choices, recovery, reply visibility and verified live source                                                              | Released; preserve regressions       |
-| S1     | Accounts, reservations and migration                           | Account commands reconcile; funded-work/migration tests pass; all current money paths have an activation adapter plan              | Next                                 |
-| S2     | Three-record library project                                   | A chosen paid contribution produces a working or visibly provisional index through ordinary controls, without a key                | Planned; depends on S1               |
-| S3     | Tomorrow, week-one consequences and responsiveness             | Outcomes, attribution and bounded corrections persist; public knowledge has a source; delayed background AI does not block walking | Planned; depends on S2               |
-| S4     | Purposeful bread and one optional shared meal                  | Inventory use is discoverable; voluntary sharing produces a specific social encounter and remembered outcome                       | Planned; after the project is useful |
-| S5     | Observe players and release the next slice                     | Journey and save checks pass; playtest evidence supports the loop; separately authorised hosted publication is verified            | Planned                              |
-| Later  | Cross-device saves, richer dialogue and additional specialists | Each addition solves an observed problem; account isolation/conflicts and provider budgets are tested                              | Deferred                             |
+| Packet | Scope                                                          | Exit condition                                                                                                                     | Status                                    |
+| ------ | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| S0     | Trust repairs and identified publication                       | Explicit choices, recovery, reply visibility and verified live source                                                              | Released; preserve regressions            |
+| S1     | Accounts, reservations and migration                           | Account commands reconcile; funded-work/migration tests pass; all current money paths have an activation adapter plan              | Implemented, awaiting integration/release |
+| S2     | Three-record library project                                   | A chosen paid contribution produces a working or visibly provisional index through ordinary controls, without a key                | Planned; depends on S1                    |
+| S3     | Tomorrow, week-one consequences and responsiveness             | Outcomes, attribution and bounded corrections persist; public knowledge has a source; delayed background AI does not block walking | Planned; depends on S2                    |
+| S4     | Purposeful bread and one optional shared meal                  | Inventory use is discoverable; voluntary sharing produces a specific social encounter and remembered outcome                       | Planned; after the project is useful      |
+| S5     | Observe players and release the next slice                     | Journey and save checks pass; playtest evidence supports the loop; separately authorised hosted publication is verified            | Planned                                   |
+| Later  | Cross-device saves, richer dialogue and additional specialists | Each addition solves an observed problem; account isolation/conflicts and provider budgets are tested                              | Deferred                                  |
+
+S1 helper implementation and verification are recorded in [Sol’s handoff](handoffs/sol.md) and the [complete activation adapter audit](implementation/s1-economy-integration.md). It remains unactivated pending review and S2 integration; passing tests does not make the feature live.
 
 S1 must prevent new project spending from consuming existing payroll commitments. It must also resolve legacy wage progress without inventing lost earnings or discarding recorded work. There is no blanket approval here for an expanded banking, trading or generic job system.
 
@@ -74,7 +76,7 @@ Run five uncoached 10–15 minute sessions across desktop and phone, then reopen
 Checked on 12 October 2026; recheck before implementation:
 
 - [PR #5](https://github.com/arwyn6969/the-game/pull/5) contains this planning pack and the completed historical Astra review. Plans are not runtime changes.
-- [PR #11](https://github.com/arwyn6969/the-game/pull/11) is an unmerged visual redesign at `971c52ab4a0623a4a6453d1125bbb075e2587fef`. It touches TownApp, render, styles and root assets. Do not overwrite it with an older whole-project export or merge it implicitly into a gameplay packet. Start engine work independently; establish a stable UI baseline before integration.
+- [PR #11](https://github.com/arwyn6969/the-game/pull/11) merged on 12 October 2026; current main at the S1 start was `65d93a905f256abdcdddc21d7612e7d4b8b07d53`. Its visual source is preserved in S1's isolated main merge. S1 adds engine contracts only; establish the agreed UI source again before S2 integration.
 - [PR #9](https://github.com/arwyn6969/the-game/pull/9) is a contributor handoff draft. Reconcile its README edits when integrating documentation.
 - [PR #6](https://github.com/arwyn6969/the-game/pull/6) is an optional technology-memory preference and original Kevin World notes. It is not required for the library's deterministic expertise roles and has not been published.
 
