@@ -16,6 +16,10 @@ The question can travel onto the board and into other people's memories. Ask Bab
 
 The town saves in this browser. A failed save shows a warning and offers a downloadable backup. Download and import keep the debts, notes, and selves, including older version-1 towns. Portable files omit disposable replay frames and use an 8 MiB import limit.
 
+The current development version has seven residents: Kevin, Arwyn, Northern, Baba, Sub, Data and Amelia, plus the player. Data brings a testing and technology perspective; Amelia brings economics and fair terms. Recent conversation turns persist, and characters receive dated memories with a distinction between spoken claims and recorded events. Local replies provide authored perspectives and follow-ups when the AI service is unavailable.
+
+Version-1 towns migrate to version 2 with their original residents and history retained, then add Data and Amelia once. The original browser save remains under its old storage key; new saves use a separate key. Keep a downloaded backup before trying a development version. Older game versions cannot read version-2 exports. See [the seven-resident handoff](docs/handoffs/seven-resident-coherence.md) for checks and limits.
+
 ## What is in this repo
 
 The full app source as of October 2026: the town (`src/game`), the screen (`src/components/town`), the mind call, styles, and the day-two check (`scripts/town-day.test.mjs`).

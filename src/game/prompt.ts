@@ -3,10 +3,11 @@ import { AGENT_IDS, NPC_IDS } from "./types";
 import { openThreadText, playerActions } from "./effects";
 import { agentById } from "./memory";
 import { promptMemories } from "./retrieval";
-import { beatAt } from "./plan";
+import { beatAt, blocksToBeats } from "./plan";
 import { clip, formatClock, periodName, plain } from "./text";
 import { placeTitle, zoneAt } from "./world";
 import { memorySource, pairObligations, recentConversation, sharedMemories } from "./conversation";
+import { characterProfile } from "./characters";
 
 export function planResidents(job: Extract<ThinkJob, { kind: "plan" }>) {
   const requested = (job as typeof job & { agents?: import("./types").AgentId[] }).agents;
@@ -18,6 +19,13 @@ export function planResidents(job: Extract<ThinkJob, { kind: "plan" }>) {
 function packet(town: Town, agent: Agent, job: ThinkJob) {
   const threads = Array.isArray(agent.threads) ? agent.threads : [];
   const memories = promptMemories(town, agent, job);
+  const profile = characterProfile(agent.id);
+  const perspective = {
+    publicInfo: profile.publicInfo,
+    voice: profile.voice,
+    specialties: profile.specialties,
+    limitations: profile.limitations,
+  };
   if (job.kind === "talk") {
     const other = agentById(town, job.a === agent.id ? job.b : job.a);
     const shared = { ...agent, memories: sharedMemories(agent, other) };
@@ -25,6 +33,7 @@ function packet(town: Town, agent: Agent, job: ThinkJob) {
       id: agent.id,
       name: agent.name,
       role: agent.role,
+      perspective,
       place: placeTitle(zoneAt(agent.tile.x, agent.tile.y)),
       status: clip(agent.status, 80),
       memories,
@@ -41,6 +50,7 @@ function packet(town: Town, agent: Agent, job: ThinkJob) {
     id: agent.id,
     name: agent.name,
     role: agent.role,
+    perspective,
     identity: clip(agent.identity, 600),
     selfSentence: clip(agent.selfSentence, 160),
     want: clip(agent.want, 180),
@@ -228,7 +238,7 @@ export function parseMind(job: ThinkJob, text: string): MindResult | null {
           thread: parseThread(row.thread),
         };
       })
-      .filter((p) => p && planResidents(job).includes(p.id));
+      .filter((p) => p && planResidents(job).includes(p.id) && blocksToBeats(p.blocks).length === 24);
     if (!mapped.length) return null;
     return {
       kind: "plan",

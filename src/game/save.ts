@@ -193,7 +193,7 @@ function cleanMemory(memory: Memory, fallbackDay: number): Memory | null {
               turn && isAgentId(turn.speaker) && typeof turn.text === "string" && turn.text.trim(),
           )
           .slice(-6)
-          .map((turn) => ({ speaker: turn.speaker, text: plain(turn.text, 500) }))
+          .map((turn) => ({ speaker: turn.speaker, text: plain(turn.text, 700) }))
       : undefined,
   };
 }

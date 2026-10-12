@@ -1,6 +1,6 @@
 # THE GAME — project instructions
 
-THE GAME is a persistent, open-ended pixel town with five residents and the player. Preserve its cast, tone, existing towns, and the premise that the player is a resident. The next milestone is a reliable, enjoyable first day with consequences that persist into tomorrow.
+THE GAME is a persistent, open-ended pixel town with seven residents and the player. Preserve its cast, tone, existing towns, and the premise that the player is a resident. The current milestone adds coherent conversation, Data and Amelia, and a version-2 save format with version-1 import and migration. See `docs/handoffs/seven-resident-coherence.md` for validation and remaining limits.
 
 ## Start and scope
 

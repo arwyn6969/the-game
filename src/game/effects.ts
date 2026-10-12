@@ -378,7 +378,7 @@ export function applyResult(
         agent.lastTalk[agent.id === a.id ? b.id : a.id] = (town.day - 1) * 1440 + town.minute;
       }
       for (const rel of result.relationships ?? []) {
-        if (rel.owner !== a.id && rel.owner !== b.id) continue;
+        if (!pair.includes(rel.owner) || !pair.includes(rel.about)) continue;
         safely(() => adjustRelation(town, rel.owner, rel.about, rel.delta, rel.note));
       }
       if (result.thread && pair.includes(result.thread.owner))

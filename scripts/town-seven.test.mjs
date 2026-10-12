@@ -15,7 +15,7 @@ const server = await createServer({
 const { createTown, addSpecialists } = await server.ssrLoadModule("/src/game/town.ts");
 const save = await server.ssrLoadModule("/src/game/save.ts");
 const { stepMinute, frameAt, advanceTown } = await server.ssrLoadModule("/src/game/sim.ts");
-const { buildPrompt } = await server.ssrLoadModule("/src/game/prompt.ts");
+const { buildPrompt, parseMind } = await server.ssrLoadModule("/src/game/prompt.ts");
 const { offlineResult } = await server.ssrLoadModule("/src/game/offline.ts");
 const { applyResult } = await server.ssrLoadModule("/src/game/effects.ts");
 const { walkable } = await server.ssrLoadModule("/src/game/world.ts");
@@ -30,7 +30,6 @@ after(async () => {
   await server.close();
 });
 const agent = (town, id) => town.agents.find((resident) => resident.id === id);
-const copy = (value) => JSON.parse(JSON.stringify(value));
 
 test("new towns have seven distinct residents plus the player", () => {
   const town = createTown("Ada");
@@ -226,6 +225,17 @@ test("dawn resumes unapplied plans after a reload, even after the normal batch w
   assert.ok(restored.agents.filter((a) => a.id !== "player").every((a) => a.plan.day === 2));
 });
 
+test("an empty model plan falls back locally and cannot starve the next dawn batch", () => {
+  const town = createTown("Ada");
+  town.day = 2;
+  town.minute = 299;
+  const job = stepMinute(town, true);
+  const malformed = parseMind(job, JSON.stringify({ plans: [{ id: "kevin" }] }));
+  assert.equal(malformed, null);
+  applyResult(town, malformed ?? offlineResult(town, job));
+  assert.deepEqual(stepMinute(town, true).agents, ["northern", "baba"]);
+});
+
 test("specialists remain themselves through a week and a save round trip", () => {
   const town = createTown("Ada");
   advanceTown(town, 7 * 1440);
@@ -238,4 +248,32 @@ test("specialists remain themselves through a week and a save round trip", () =>
     assert.doesNotMatch(resident.selfSentence, /writer|borrowed.*voice/i);
     assert.equal(resident.plan.beats.length, 24);
   }
+});
+
+test("a generated conversation can change trust only between its participants", () => {
+  const town = createTown("Ada");
+  const data = agent(town, "data");
+  const beforePlayer = structuredClone(data.relationships.player);
+  const beforeKevin = structuredClone(data.relationships.kevin);
+  const beforeAmelia = data.relationships.amelia.score;
+  applyResult(town, {
+    kind: "talk",
+    mind: "grok",
+    a: "data",
+    b: "amelia",
+    lines: [{ speaker: "data", text: "We can compare the options." }],
+    relationships: [
+      { owner: "data", about: "player", delta: 1, note: "Unsupported claim about an absent person." },
+      { owner: "data", about: "kevin", delta: 1, note: "Another absent person." },
+      { owner: "data", about: "amelia", delta: 1, note: "We compared the options." },
+    ],
+    favor: null,
+    thread: null,
+    notice: null,
+    project: null,
+    replan: [],
+  });
+  assert.deepEqual(data.relationships.player, beforePlayer);
+  assert.deepEqual(data.relationships.kevin, beforeKevin);
+  assert.equal(data.relationships.amelia.score, beforeAmelia + 1);
 });

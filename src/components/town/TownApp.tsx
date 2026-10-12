@@ -1705,7 +1705,14 @@ function Mind({
               </li>
             )}
             {heard.slice(-8).map((m) => {
-              const turns = spokenTurns(m.text);
+              const turns = m.turns?.length
+                ? m.turns.map((turn) => ({
+                    who:
+                      town.agents.find((person) => person.id === turn.speaker)?.name ??
+                      turn.speaker,
+                    line: turn.text,
+                  }))
+                : spokenTurns(m.text);
               return (
                 <li key={m.id} ref={m.id === newest ? latestRef : undefined}>
                   <p className="text-muted">
