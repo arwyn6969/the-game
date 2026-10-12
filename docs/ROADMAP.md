@@ -14,7 +14,7 @@ Updated 12 October 2026. This is the current planning entry point. The dated rev
 
 ## Verified starting point
 
-The current main source is [the consolidation](CONSOLIDATION.md) plus the later publish fix and Pin Kevin removal, at `15bd20835dc5a6ff4a5e0fbd1d1b2feaef07e587`. It preserves the published graphics and adds the seven-resident version-2 runtime, conversation work, provider pool and Kevin's memory interest. The seven-resident town was already on the public site before the button removal; publish again before treating `15bd208` as live. The trust-release details below describe the earlier reviewed baseline; [RELEASE.md](RELEASE.md) also records the later graphics publication.
+The current main source is [the consolidation](CONSOLIDATION.md) plus visible conversations from [PR #23](https://github.com/arwyn6969/the-game/pull/23), at `8a35f3c877297b7a588aa8d38d6590e486f917cd`. It preserves the published graphics and the seven-resident version-2 runtime. Publish that commit before treating it as the live site. The trust-release details below describe the earlier reviewed baseline; [RELEASE.md](RELEASE.md) also records the later graphics publication.
 
 The trust-repair game was published to https://thegame.grok.me on 12 October 2026. Runtime source is `4e7786c30431e6701c8477d6ddb0b5ffa8ba8ca1`; `900015b2a3bba0a0826ea6d814f72af2f47dc7f0` adds its release record. This planning branch includes that main revision. Future implementation must fetch and report its actual base; these SHAs identify the reviewed baseline, not a command to discard newer work.
 
@@ -73,7 +73,7 @@ Run five uncoached 10–15 minute sessions across desktop and phone, then reopen
 
 ## Coordination and open branches
 
-Current branch decisions are recorded in [the consolidation](CONSOLIDATION.md). PRs #5, #6, #9, #13 and #14 are integrated. Open drafts are [PR #16](https://github.com/arwyn6969/the-game/pull/16), the inactive funded-accounts work, and [PR #23](https://github.com/arwyn6969/the-game/pull/23), visible conversations. The neon interface from PR #11 is already on main. The following list records the earlier planning snapshot and is historical:
+Current branch decisions are recorded in [the consolidation](CONSOLIDATION.md). PRs #5, #6, #9, #13, #14 and #23 are integrated. The open draft is [PR #16](https://github.com/arwyn6969/the-game/pull/16), the inactive funded-accounts work. The neon interface from PR #11 is already on main. The following list records the earlier planning snapshot and is historical:
 
 - [PR #5](https://github.com/arwyn6969/the-game/pull/5) contains this planning pack and the completed historical Astra review. Plans are not runtime changes.
 - [PR #11](https://github.com/arwyn6969/the-game/pull/11) was the neon visual redesign. It is merged. Do not restart it or overwrite main with an older export.

@@ -4,7 +4,7 @@ A pixel town. Seven people already have days. You are their new neighbour. There
 
 This is the current web game: `arwyn6969/the-game`. The separate `arwyn6969/THE_GAME` repository is an older Python simulator. New game development belongs here. Publishing the website at https://thegame.grok.me is separate from updating GitHub.
 
-This branch is the character-social draft on top of main `15bd20835dc5a6ff4a5e0fbd1d1b2feaef07e587`. It keeps the released town, seven residents, and the Vercel publish fix. Pin keeps one resident at the front of the strip so you can find them again. It does not send other people's messages to that resident. [PR #16](https://github.com/arwyn6969/the-game/pull/16) stays outside this build.
+Main is `8a35f3c877297b7a588aa8d38d6590e486f917cd`: the seven-resident town, visible conversations, character cards, and a Pin that keeps one resident at the front of the strip. Pin does not redirect other people's messages. [PR #16](https://github.com/arwyn6969/the-game/pull/16) stays outside this build. Publishing https://thegame.grok.me is still a separate step.
 
 ## Play
 
