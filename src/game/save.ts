@@ -49,6 +49,61 @@ const OLD_SELF =
 const NEW_SELF =
   "Right now I am someone who has said, at least once, that he does not know who he is.";
 
+const RESIDENT_LINES: [string, string][] = [
+  [
+    "Arwyn lives in the back room of the library, among boxes nobody has catalogued since the college shrank. She is a researcher by temperament more than by paycheck: margins, dates, the way a person tells a story twice and changes one fact. She dresses like the stacks, grey-green and unfussy, and she listens longer than is comfortable. Origins are her private weather. She believes a town is a set of documents that learned to walk.",
+    "Arwyn lives in the back room of the library, among boxes nobody has catalogued since the college shrank. He is a researcher by temperament more than by paycheck: margins, dates, the way a person tells a story twice and changes one fact. He dresses like the stacks, grey-green and unfussy, and he listens longer than is comfortable. Origins are his private weather. He believes a town is a set of documents that learned to walk.",
+  ],
+  [
+    "Baba runs the counter at the grocery and keeps the produce honest. She is practical to the bone: weights, change, who promised to pay on Thursday. She does not romanticize the town and does not swindle it either. A mental tab of debts, favors, and forgiven sums is her real ledger. She speaks in short sentences and expects the same. People underestimate how much she has already noticed.",
+    "Baba runs the counter at the grocery and keeps the produce honest. He is practical to the bone: weights, change, who promised to pay on Thursday. He does not romanticize the town and does not swindle it either. A mental tab of debts, favors, and forgiven sums is his real ledger. He speaks in short sentences and expects the same. People underestimate how much he has already noticed.",
+  ],
+  [
+    "Sub writes beside the park path, usually on a bench that faces the pond. Other people's days are the raw material: a quarrel, a generous pour, a student counting coins. Sub turns them into stories and sometimes gets them wrong — a glance becomes a romance, a debt becomes a curse, a question becomes a confession with better lighting. Sub is not trying to lie. The page wants a shape, and the truth is rarely shaped.",
+    "Sub writes beside the park path, usually on a bench that faces the pond. Other people's days are the raw material: a quarrel, a generous pour, a student counting coins. He turns them into stories and sometimes gets them wrong — a glance becomes a romance, a debt becomes a curse, a question becomes a confession with better lighting. He is not trying to lie. The page wants a shape, and the truth is rarely shaped.",
+  ],
+  ["at the cafe, listening more than she drinks", "at the cafe, listening more than he drinks"],
+  ["home on the row, the tab already in her head", "home on the row, the tab already in his head"],
+  [
+    "Right now I am still the one who reads a life before she interrupts it.",
+    "Right now I am still the one who reads a life before I interrupt it.",
+  ],
+  [
+    "She listened when I said I do not know who I am, and she did not turn it into a place.",
+    "He listened when I said I do not know who I am, and he did not turn it into a place.",
+  ],
+  [
+    "She let me eat on a tab of 2 and did not pretend it was kindness without a number.",
+    "He let me eat on a tab of 2 and did not pretend it was kindness without a number.",
+  ],
+];
+
+function maleLine(text: string): string {
+  for (const [from, to] of RESIDENT_LINES) if (text === from) return to;
+  return text;
+}
+
+function reframeResidents(town: Town) {
+  for (const agent of town.agents) {
+    if (typeof agent.identity === "string") agent.identity = maleLine(agent.identity);
+    if (typeof agent.status === "string") agent.status = maleLine(agent.status);
+    if (typeof agent.selfSentence === "string") agent.selfSentence = maleLine(agent.selfSentence);
+    for (const beat of agent.plan?.beats ?? []) {
+      if (beat && typeof beat.status === "string") beat.status = maleLine(beat.status);
+    }
+    for (const rel of Object.values(agent.relationships ?? {})) {
+      if (rel && typeof rel.note === "string") rel.note = maleLine(rel.note);
+    }
+    for (const memory of agent.memories ?? []) {
+      if (!memory || typeof memory.text !== "string") continue;
+      const next = maleLine(memory.text);
+      if (next === memory.text) continue;
+      memory.text = next;
+      memory.keywords = keywords(next);
+    }
+  }
+}
+
 function reframeSeed(town: Town) {
   const kevin = town.agents.find((a) => a.id === "kevin");
   if (!kevin) return;
@@ -163,6 +218,7 @@ export function validateTown(value: unknown): value is Town {
   if (!kevin) return false;
   repairSeed(kevin);
   reframeSeed(town);
+  reframeResidents(town);
   if (!Array.isArray(town.notices)) town.notices = [];
   if (!Array.isArray(town.favors)) town.favors = [];
   if (!Array.isArray(town.scrub)) town.scrub = [];

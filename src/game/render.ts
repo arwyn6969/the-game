@@ -361,10 +361,7 @@ function drawPerson(
   g.fillStyle = p.skin;
   g.fillRect(-5, -32, 10, 10);
   g.fillStyle = p.hair;
-  if (id === "arwyn" || id === "baba") {
-    g.fillRect(-6, -36, 12, 6);
-    g.fillRect(-2, -40, 6, 5);
-  } else if (id === "sub") {
+  if (id === "sub") {
     g.fillRect(-6, -35, 13, 8);
     g.fillRect(4, -30, 3, 8);
   } else if (id === "kevin") {

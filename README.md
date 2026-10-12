@@ -12,7 +12,7 @@ Name yourself. The clock starts paused on the row.
 2. Click Kevin.
 3. Ask him who he is.
 
-The question can travel onto the board and into other people's memories. Ask Baba for bread and she writes a tab of 2. Ask what you owe, then pay it when you have the money. Wages require an agreed shift and real attendance; visiting a counter does not earn a wage.
+The question can travel onto the board and into other people's memories. Ask Baba for bread and he writes a tab of 2. Ask what you owe, then pay it when you have the money. Wages require an agreed shift and real attendance; visiting a counter does not earn a wage.
 
 The town saves in this browser. A failed save shows a warning and offers a downloadable backup. Download and import keep the debts, notes, and selves, including older version-1 towns. Portable files omit disposable replay frames and use an 8 MiB import limit.
 
