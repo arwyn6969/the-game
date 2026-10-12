@@ -3,6 +3,7 @@ dist
 .output
 .env
 .env.*
+config/mind-pool.local.json
 .vercel
 .grok
 screenshots
