@@ -7,7 +7,7 @@ Welcome to THE GAME and The Freeman Show. The consolidation candidate is a brows
 ## Start here
 
 - Code: [arwyn6969/the-game](https://github.com/arwyn6969/the-game). The uppercase `THE_GAME` repository is an older Python simulator.
-- Live reference: [thegame.grok.me](https://thegame.grok.me/). [The release record](../RELEASE.md) identifies the published graphics source and verification limits. The consolidation candidate has not been published; use Git for development.
+- Live reference: [thegame.grok.me](https://thegame.grok.me/). [The release record](../RELEASE.md) identifies the published graphics source and verification limits. Current main is the seven-resident town plus the later publish fix and Pin Kevin removal, at `15bd20835dc5a6ff4a5e0fbd1d1b2feaef07e587`. Publish that commit before calling it the live site. Use Git for development.
 - Read [AGENTS.md](../../AGENTS.md), then this task. [COLLABORATION.md](../COLLABORATION.md) describes the existing ownership lanes; its initial setup branches and prompts are historical.
 - Current source and cleanup: [consolidation record](../CONSOLIDATION.md). Product direction: [roadmap](../ROADMAP.md).
 

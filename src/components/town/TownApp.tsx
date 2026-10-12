@@ -464,9 +464,7 @@ export function TownApp() {
     const down = (event: KeyboardEvent) => {
       if (event.code === "Escape") {
         setSocialOpen(false);
-        if (panelRef.current) {
-          setPanel(null);
-        }
+        if (panelRef.current) setPanel(null);
         setCrowd(null);
         if (boardRef.current) setBoard(false);
         return;

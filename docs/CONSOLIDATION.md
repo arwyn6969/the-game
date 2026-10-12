@@ -1,8 +1,8 @@
 # Product consolidation — 12 October 2026
 
-The consolidation is merged into main through [PR #19](https://github.com/arwyn6969/the-game/pull/19), merge commit `8d15a722b61c09a7dca198ccf49ea8dd0b3f8125`, at 20:14 BST on 12 October 2026 (19:14 UTC). The local working checkout is `product/` within THE GAME workspace. The existing published site is described separately in [RELEASE.md](RELEASE.md); this consolidated source has not been published to that site.
+The consolidation is merged into main through [PR #19](https://github.com/arwyn6969/the-game/pull/19), merge commit `8d15a722b61c09a7dca198ccf49ea8dd0b3f8125`, at 20:14 BST on 12 October 2026 (19:14 UTC). Later the same day, [PR #22](https://github.com/arwyn6969/the-game/pull/22) restored the Vercel build output at `88dfcaeac9f44e7c9a5e2a0132b1e1478d86433f`, and [PR #24](https://github.com/arwyn6969/the-game/pull/24) removed the Pin Kevin shortcut. Current main is `15bd20835dc5a6ff4a5e0fbd1d1b2feaef07e587`. The seven-resident town was already on https://thegame.grok.me before that button removal. Publishing `15bd208` is still a separate action; a GitHub merge is not a live release.
 
-The merge preserves the exact tested tree, `363f3de46f3c40e4981331de494e84354d8139e4`. [Main CI passed](https://github.com/arwyn6969/the-game/actions/runs/38296308695). The five incorporated PRs were automatically marked merged; PR #16 remains the sole open draft, now based on main.
+The merge preserves the exact tested tree, `363f3de46f3c40e4981331de494e84354d8139e4`. [Main CI passed](https://github.com/arwyn6969/the-game/actions/runs/38296308695). The five incorporated PRs were automatically marked merged. [PR #16](https://github.com/arwyn6969/the-game/pull/16) remains the inactive funded-accounts draft. [PR #23](https://github.com/arwyn6969/the-game/pull/23) is a separate draft for visible conversations and relationships. Neither is part of this runtime.
 
 ## What the candidate contains
 
@@ -66,7 +66,7 @@ The normal development contract remains port 8080. Port 8090 is this isolated re
 
 ## Branch cleanup
 
-GitHub started with 19 branches including main, six open drafts, eleven merged PRs and two closed predecessor PRs. The [original branch manifest](review/consolidation/branches.json) pins every original remote head. The [completed cleanup receipt](review/consolidation/cleanup.json) records the merge, incorporated PRs and all 17 deleted refs. Three remote branches remain: main, the preserved economy foundation and the consolidation checkpoint.
+GitHub started with 19 branches including main, six open drafts, eleven merged PRs and two closed predecessor PRs. The [original branch manifest](review/consolidation/branches.json) pins every original remote head. The [completed cleanup receipt](review/consolidation/cleanup.json) records the merge, incorporated PRs and all 17 deleted refs. That cleanup left main, the economy foundation and the consolidation checkpoint. Later publish and button branches were merged and then removed; the current remote branches are listed below.
 
 After the user's release approval, PR #19 was merged with a **merge commit**, preserving source ancestry. Every retired branch's head matched the manifest, was unprotected and was reachable from merged main. No open PR still needed those heads or bases. One atomic push deleted the 17 refs, with an expected-head lease for each deletion so an advanced branch would cause rejection. PR #16 was retargeted from `codex/playability-review` to main before retiring that base; its v2 reconciliation remains outstanding.
 
@@ -92,12 +92,12 @@ codex/town-graphics
 codex/trust-repair-followup
 ```
 
-`main`, `codex/funded-project-accounts` and the consolidation checkpoint remain. A local Git bundle at `artifacts/consolidation/pre-cleanup.bundle` preserves all refs in this checkout. This bundle does not include uncommitted work, ignored credentials or personal saves.
+`main`, `codex/funded-project-accounts`, `codex/character-social-ui` and the consolidation checkpoint remain. After PR #24, the already-merged `codex/vercel-tanstack-preset`, `codex/vercel-output-config` and `codex/remove-pin-kevin` branches were deleted. A local Git bundle at `artifacts/consolidation/pre-cleanup.bundle` preserves the earlier refs in that checkout. This bundle does not include uncommitted work, ignored credentials or personal saves.
 
 ## Workspace cleanup and next work
 
 Use the isolated `product/` checkout on main. Existing checkouts were not moved or deleted. In particular, `character-social-ui/` has a pre-existing unresolved merge, staged assets and ongoing uncommitted social/UI work; its linked `intelligence-ui/` repository must remain in place. The three coherence checkouts point to that repository too. The older review export is not a standalone Git checkout.
 
-The next active implementation is the v2/eight-actor reconciliation of PR #16, then complete funded-project activation and its ordinary-controls journey. Retire or archive old local checkouts only after their owning work is finished and uncommitted/private files are preserved. A clean root entry point replaces guessing which copy to run; it does not erase another chat's working directory.
+The next product step is one result that is still visible tomorrow. Do not merge PR #16 until its six-actor ledger is reconciled with eight actors and a fresh total of 90. Do not merge PR #23 without reviewing the pin shortcut it adds back; main removed that shortcut in PR #24. Retire or archive old local checkouts only after their owning work is finished and uncommitted/private files are preserved.
 
 The user explicitly authorized the main merge and branch cleanup on 12 October 2026. Both are complete. Hosted publication remains a separate release action under [AGENTS.md](../AGENTS.md).
