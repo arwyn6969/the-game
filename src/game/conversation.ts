@@ -2,6 +2,7 @@ import type { Agent, AgentId, Memory, Town } from "./types";
 import { AGENT_IDS } from "./types";
 import { clip } from "./text";
 import { placeTitle } from "./world";
+import { formatClock } from "./text";
 
 // Optional additions preserve older memories. The save boundary validates them.
 export type RecordedMemory = Memory & {
@@ -98,7 +99,12 @@ export function pairObligations(town: Town, a: AgentId, b: AgentId) {
  * This does not claim to verify arbitrary prose; evidence instructions and evals
  * cover the broader dialogue, while authoritative action rules remain separate.
  */
-export function groundPlayerReply(town: Town, resident: Agent, reply: string): string {
+export function groundPlayerReply(
+  town: Town,
+  resident: Agent,
+  reply: string,
+  playerText = "",
+): string {
   const text = reply.replace(/[’‘]/g, "'");
   if (/\b(?:i|we)(?:'ve| have)? (?:completed|finished|repaired|fixed)\b/i.test(text))
     return "I can discuss the next step, but I have no verified completion to report.";
@@ -137,11 +143,12 @@ export function groundPlayerReply(town: Town, resident: Agent, reply: string): s
       : "There is no accepted shift in your agreements. Read the terms and choose explicitly if you want to take one.";
   }
   if (
-    /\b(?:i(?:'ve| have)? (?:paid|credited) you|your wage (?:is |has been )?(?:paid|credited))\b/i.test(
+    /\b(?:i(?:'ve| have)? (?:paid|credited) you|your wages? (?:is |are |has been |have been )?(?:paid|credited))\b/i.test(
       text,
     )
   ) {
     const workplace = resident.id === "kevin" ? "cafe" : resident.id === "baba" ? "grocery" : null;
+    const requestedDay = /\byesterday\b/i.test(playerText) ? town.day - 1 : town.day;
     const receipt =
       workplace &&
       [...player.memories]
@@ -150,11 +157,13 @@ export function groundPlayerReply(town: Town, resident: Agent, reply: string): s
           (memory) =>
             memory.type === "favor" &&
             memorySource(memory) === "event" &&
-            memory.day === town.day &&
-            memory.text.startsWith(`${placeTitle(workplace)} paid me `),
+            memory.day === requestedDay &&
+            (memory.day < town.day || memory.minute <= town.minute) &&
+            memory.text ===
+              `${placeTitle(workplace)} paid me ${workplace === "cafe" ? 5 : 4} for a shift I actually worked.`,
         );
     return receipt
-      ? `The wage record says: ${receipt.text}`
+      ? `The wage record from day ${receipt.day}, ${formatClock(receipt.minute)} says: ${receipt.text}`
       : "I have no wage receipt to confirm that. Talking does not pay a wage; your agreement and recorded work decide it.";
   }
   return reply;

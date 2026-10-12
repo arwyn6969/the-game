@@ -1,6 +1,6 @@
 import type { Agent, MindResult, ThinkJob, Town } from "./types";
 import { AGENT_IDS, NPC_IDS } from "./types";
-import { openThreadText, playerActions } from "./effects";
+import { playerActions } from "./effects";
 import { agentById } from "./memory";
 import { promptMemories } from "./retrieval";
 import { beatAt, blocksToBeats } from "./plan";
@@ -212,7 +212,7 @@ B: ${JSON.stringify(b)}`;
   const agent = agentById(town, job.agentId);
   const body = packet(town, agent, job);
   const said = plain(job.text, 400);
-  return `${clock} The player, ${plain(town.playerName, 18)}, says to ${clip(agent.name, 40)}: "${said}". Answer their actual question in character, usually one to three sentences. Use recentConversation for follow-ups such as "why?" or "that" before searching older memories. You may use a retrieved memory and an open thread (${clip(openThreadText(agent), 180)}), but do not force every answer back to it. Memory source "statement" records words spoken, not verified facts; "reflection" records a belief or intention. Dates are game dates: resolve yesterday/tomorrow relative to the original event, not now. Current facts and receipts outrank remembered claims. Admit missing knowledge and ask one concrete clarification rather than inventing an answer. You may ask for help with work inside this town. You may start or drop one project of your own, never claim its completion without a verified event. JSON: {"reply":"","delta":0,"note":"","favor":null,"thread":null,"notice":null,"project":null}
+  return `${clock} The player, ${plain(town.playerName, 18)}, says to ${clip(agent.name, 40)}: "${said}". Answer their actual question in character, usually one to three sentences. Use recentConversation for follow-ups such as "why?" or "that" before searching older memories. Use retrieved memories and ongoing concerns only when relevant to this message. Discuss their subject naturally, without naming internal retrieval or open threads. Memory source "statement" records words spoken, not verified facts; "reflection" records a belief or intention. Dates are game dates: resolve yesterday/tomorrow relative to the original event, not now. Current facts and receipts outrank remembered claims. Admit missing knowledge and ask one concrete clarification rather than inventing an answer. You may ask for help with work inside this town. You may start or drop one project of your own, never claim its completion without a verified event. JSON: {"reply":"","delta":0,"note":"","favor":null,"thread":null,"notice":null,"project":null}
 Speech cannot buy, pay, accept or cancel work, or edit the player's projects, threads or schedule. Those require the player's separate quoted action button. Keep favor null and never claim an action completed because of text alone.
 Resident: ${JSON.stringify(body)}
 Current beat: ${clip(beatAt(agent, town.minute).status, 110)}`;

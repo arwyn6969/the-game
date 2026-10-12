@@ -48,6 +48,43 @@ const reply = (town, text, answer, agentId = "arwyn", extra = {}) =>
     ...extra,
   });
 
+test("live wage grounding retains the requested receipt's original day and time", () => {
+  const town = createTown("Ada");
+  town.day = 2;
+  town.minute = 1258;
+  const player = resident(town, "player");
+  for (const day of [1, 2])
+    player.memories.push(
+      makeMemory(
+        town,
+        day,
+        1139,
+        "favor",
+        "Hobbs Cafe paid me 5 for a shift I actually worked.",
+        9,
+      ),
+    );
+  reply(town, "Have I been paid today?", "I have paid you 5.", "kevin");
+  assert.match(resident(town, "kevin").memories.at(-1).turns.at(-1).text, /day 2, 18:59/);
+  reply(town, "What about yesterday?", "Your wages have been paid.", "kevin");
+  assert.match(resident(town, "kevin").memories.at(-1).turns.at(-1).text, /day 1, 18:59/);
+});
+
+test("live wage grounding rejects future, forged amount and non-event receipts", () => {
+  for (const [minute, text, extra] of [
+    [1439, "Hobbs Cafe paid me 5 for a shift I actually worked.", {}],
+    [400, "Hobbs Cafe paid me 500 for a shift I actually worked.", {}],
+    [400, "Hobbs Cafe paid me 5 for a shift I actually worked.", { source: "statement" }],
+  ]) {
+    const town = createTown("Ada");
+    resident(town, "player").memories.push(makeMemory(town, 1, minute, "favor", text, 9, extra));
+    assert.match(
+      groundPlayerReply(town, resident(town, "kevin"), "I've paid you."),
+      /no wage receipt/,
+    );
+  }
+});
+
 test("six chronological pair-specific turns survive unrelated high-ranking memories", () => {
   const town = createTown("Ada");
   for (let i = 0; i < 5; i++) {

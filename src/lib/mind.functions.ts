@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requestMind, validateMindRequest } from "./mind.gateway";
+import { MIND_SYSTEM, requestMind, validateMindRequest } from "./mind.gateway";
 
 const recent: number[] = [];
 
@@ -12,6 +12,13 @@ function allowCall(): boolean {
 }
 
 export const mindAvailability = createServerFn({ method: "GET" }).handler(async () => {
+  if (process.env.MIND_PROVIDER_MODE === "pool") {
+    const { poolAvailable } = await import("./mind-pool/server");
+    const configured = await poolAvailable();
+    return { online: configured, configured };
+  }
+  if (process.env.MIND_PROVIDER_MODE && process.env.MIND_PROVIDER_MODE !== "legacy")
+    return { online: false, configured: false };
   const configured = Boolean(process.env.XAI_API_KEY);
   return { online: configured, configured };
 });
@@ -19,6 +26,12 @@ export const mindAvailability = createServerFn({ method: "GET" }).handler(async 
 export const thinkTown = createServerFn({ method: "POST" })
   .validator((data: { kind: string; user: string }) => validateMindRequest(data))
   .handler(async ({ data }) => {
+    if (process.env.MIND_PROVIDER_MODE === "pool") {
+      const { thinkWithPool } = await import("./mind-pool/server");
+      return thinkWithPool(data.kind, data.user, MIND_SYSTEM);
+    }
+    if (process.env.MIND_PROVIDER_MODE && process.env.MIND_PROVIDER_MODE !== "legacy")
+      return { ok: false as const, error: "offline" };
     const apiKey = process.env.XAI_API_KEY;
     return requestMind(data, { apiKey, allowed: !apiKey || allowCall() });
   });

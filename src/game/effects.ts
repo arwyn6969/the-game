@@ -414,7 +414,7 @@ export function applyResult(
       : unsupportedCompletion
         ? "I have no verified completion to report. The project's recorded state has not changed."
         : result.mind === "grok"
-          ? groundPlayerReply(town, agent, result.reply)
+          ? groundPlayerReply(town, agent, result.reply, result.playerText)
           : result.reply;
     const place = placeTitle(zoneAt(agent.tile.x, agent.tile.y));
     const exchange = `In ${place} at ${formatClock(town.minute)}, ${player.name} said: "${clip(result.playerText, 180)}" ${agent.name} answered: "${clip(reply, 320)}"`;
