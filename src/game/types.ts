@@ -1,3 +1,5 @@
+import type { EconomyState } from "./economy-types";
+
 export const AGENT_IDS = [
   "kevin",
   "arwyn",
@@ -164,6 +166,8 @@ export type ScrubFrame = { d?: number; m: number; p: number[] };
 
 export type Town = {
   version: 1;
+  /** Opt-in funded economy. S2 must activate its adapters and matching UI together. */
+  economy?: EconomyState;
   day: number;
   minute: number;
   playerName: string;
