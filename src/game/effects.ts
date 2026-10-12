@@ -14,7 +14,8 @@ import type {
 } from "./types";
 import { AGENT_IDS } from "./types";
 import { makeMemory, pushMemory } from "./memory";
-import { beatAt, blocksToBeats, isPlace, planFromBlocks } from "./plan";
+import { blocksToBeats, isPlace, planFromBlocks } from "./plan";
+import { refreshResidentStatus } from "./navigation";
 import { clip, mentionsSeed, purse } from "./text";
 import { formatClock } from "./text";
 import { placeTitle, zoneAt } from "./world";
@@ -812,9 +813,7 @@ function applyPlanDraft(town: Town, draft: PlanDraft, mind: "grok" | "offline", 
   if (draft.project && !(mind === "grok" && draft.project.action === "done"))
     applyProject(town, { ...draft.project, owner: agent.id });
   if (draft.thread) safely(() => applyThread(town, { ...draft.thread!, owner: agent.id }));
-  agent.status = beatAt(agent, town.minute).status;
-  if (agent.id === "kevin" && mentionsSeed(agent.status))
-    agent.status = "on the floor, not saying much";
+  refreshResidentStatus(town, agent);
 }
 
 export function spreadView(town: Town) {

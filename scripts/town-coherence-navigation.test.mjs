@@ -17,6 +17,8 @@ const { stepMinute } = await server.ssrLoadModule("/src/game/sim.ts");
 const { refreshResidentStatus } = await server.ssrLoadModule("/src/game/navigation.ts");
 const { planFromBlocks, beatAt, goalFor } = await server.ssrLoadModule("/src/game/plan.ts");
 const { walkable, placeOfZone, zoneAt } = await server.ssrLoadModule("/src/game/world.ts");
+const { exportTown, parseTownFile } = await server.ssrLoadModule("/src/game/save.ts");
+const { applyResult } = await server.ssrLoadModule("/src/game/effects.ts");
 const resident = (town, id) => town.agents.find((a) => a.id === id);
 
 function scenario() {
@@ -165,7 +167,6 @@ test("a new town can refresh arrival labels without moving any resident", () => 
   const town = createTown("Test resident");
   const before = town.agents.map((a) => ({ ...a.tile }));
   for (const agent of town.agents) {
-    refreshResidentStatus(town, agent);
     if (agent.id === "player") continue;
     const beat = beatAt(agent, town.minute);
     const goal = goalFor(agent, beat);
@@ -177,4 +178,54 @@ test("a new town can refresh arrival labels without moving any resident", () => 
     town.agents.map((a) => a.tile),
     before,
   );
+});
+
+test("a paused save refreshes stale arrival claims without changing positions or receipts", () => {
+  const town = scenario();
+  town.paused = true;
+  resident(town, "baba").tile = { x: 16, y: 20 };
+  resident(town, "baba").status = "Baba has arrived home";
+  resident(town, "player").tile = { x: 17, y: 20 };
+  const stable = (value) => ({
+    day: value.day,
+    minute: value.minute,
+    paused: value.paused,
+    tills: value.tills,
+    favors: value.favors,
+    residents: value.agents.map(({ id, tile, money, memories, plan }) => ({
+      id,
+      tile,
+      money,
+      memories: memories.map((memory) => ({
+        ...memory,
+        seed: memory.seed === true,
+        turns: memory.turns ?? [],
+      })),
+      plan,
+    })),
+  });
+  const restored = parseTownFile(exportTown(town));
+  assert.ok(restored);
+  assert.match(resident(restored, "baba").status, /waiting for a clear path home/);
+  assert.deepEqual(stable(restored), stable(town));
+});
+
+test("applying a new plan does not claim the resident has already arrived", () => {
+  const town = scenario();
+  resident(town, "baba").tile = { x: 16, y: 20 };
+  resident(town, "player").tile = { x: 17, y: 20 };
+  const before = { ...resident(town, "baba").tile };
+  applyResult(town, {
+    kind: "plan",
+    mind: "offline",
+    plans: [
+      {
+        id: "baba",
+        summary: "A quiet evening",
+        blocks: [{ from: 0, to: 24, place: "townhouses", spot: "home", status: "already home" }],
+      },
+    ],
+  });
+  assert.match(resident(town, "baba").status, /waiting for a clear path home/);
+  assert.deepEqual(resident(town, "baba").tile, before);
 });

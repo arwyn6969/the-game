@@ -1,7 +1,8 @@
 import type { Agent, AgentId, Block, Memory, Relationship, Town } from "./types";
 import { AGENT_IDS } from "./types";
 import { makeMemory } from "./memory";
-import { beatAt, planFromBlocks } from "./plan";
+import { planFromBlocks } from "./plan";
+import { refreshResidentStatus } from "./navigation";
 import { plain } from "./text";
 import { HOMES } from "./world";
 
@@ -310,6 +311,7 @@ export function createTown(playerName: string): Town {
   }
 
   addSpecialists(town);
+  for (const agent of town.agents) refreshResidentStatus(town, agent);
   return town;
 }
 
@@ -392,7 +394,6 @@ export function addSpecialists(town: Town): void {
       status: "new in town",
       lastTalk: {},
     };
-    agent.status = beatAt(agent, town.minute).status;
     agent.memories.push(
       makeMemory(
         town,
@@ -405,6 +406,7 @@ export function addSpecialists(town: Town): void {
       ),
     );
     town.agents.push(agent);
+    refreshResidentStatus(town, agent);
   }
 }
 

@@ -4,6 +4,7 @@ import { compressDialogue, compressObservations, keywords } from "./memory";
 import { addSpecialists, SEED_TEXT } from "./town";
 import { mentionsSeed, plain, purse } from "./text";
 import { nearestWalkable } from "./world";
+import { refreshResidentStatus } from "./navigation";
 
 export const TOWN_STORAGE_KEY = "the-game-town-v2";
 export const LEGACY_TOWN_STORAGE_KEY = "the-game-town-v1";
@@ -369,6 +370,7 @@ export function validateTown(value: unknown): value is Town {
     town.version = 2;
     addSpecialists(town);
   }
+  for (const agent of town.agents) refreshResidentStatus(town, agent);
   return true;
 }
 
