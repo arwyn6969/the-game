@@ -1,15 +1,15 @@
 # Technical contributor handoff
 
-Welcome to THE GAME and The Freeman Show. THE GAME is a browser-based pixel town with five residents and the player. The Freeman Show is the openly documented story of building and living in that world. The next product proof is a meaningful contribution that is remembered tomorrow; the next operational need is knowing what the AI actually costs.
+Welcome to THE GAME and The Freeman Show. The consolidation candidate is a browser-based pixel town with seven residents and the player. The Freeman Show is the openly documented story of building and living in that world. The next product proof is a meaningful contribution that is remembered tomorrow; the next operational need is knowing what the AI actually costs.
 
 **Your recommended first contribution: one draft PR adding server-side AI usage accounting and a testable budget guard interface.** Start with mocked responses. You need Node 24 and Git, but no API key, paid service, GPU or Spark.
 
 ## Start here
 
 - Code: [arwyn6969/the-game](https://github.com/arwyn6969/the-game). The uppercase `THE_GAME` repository is an older Python simulator.
-- Live reference: [thegame.grok.me](https://thegame.grok.me/). Its exact deployed source revision is unverified; use Git for your development baseline.
+- Live reference: [thegame.grok.me](https://thegame.grok.me/). [The release record](../RELEASE.md) identifies the published graphics source and verification limits. The consolidation candidate has not been published; use Git for development.
 - Read [AGENTS.md](../../AGENTS.md), then this task. [COLLABORATION.md](../COLLABORATION.md) describes the existing ownership lanes; its initial setup branches and prompts are historical.
-- Product direction: [the reviewed roadmap on its working branch](https://github.com/arwyn6969/the-game/blob/codex/playability-review/docs/ROADMAP.md). That document is not merged into every checkout.
+- Current source and cleanup: [consolidation record](../CONSOLIDATION.md). Product direction: [roadmap](../ROADMAP.md).
 
 The first pilot month has a **£100 total cloud/content ceiling**, including applicable fees and tax. That is not £100 just for AI. The working AI allocation is £40; the account bill must be checked before configuration. This task spends nothing and does not by itself activate a financial cap.
 
@@ -17,17 +17,16 @@ Before substantial work, agree credit, any payment and delivery expectations wit
 
 ## Current source snapshot
 
-Checked against GitHub on 11 October 2026:
+Updated 12 October 2026 after branch consolidation:
 
-| Work | State | What it means for you |
-| --- | --- | --- |
-| `main` at `88f5039ab5743c3b6370a64b2e6d88a7de128da0` | Merged first-day release | Starting baseline for this independent backend task |
-| [PR #5](https://github.com/arwyn6969/the-game/pull/5) | Draft product review/roadmap | Read for direction; do not assume its documents exist on main |
-| [PR #6](https://github.com/arwyn6969/the-game/pull/6) | Draft Kevin memory work | Separate workstream |
-| [PR #7](https://github.com/arwyn6969/the-game/pull/7) | Open gameplay repairs | Avoid its UI, economy and save files |
-| [PR #8](https://github.com/arwyn6969/the-game/pull/8), head `cd05ec3` | Draft follow-up targeting #7's branch | More gameplay/recovery fixes; not merged main or verified live |
+| Work                                                    | State                             | What it means for you                                                                            |
+| ------------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `main` at `a45410376274ac0dd385029ef80e2ef1e56d2309`    | Graphics and trust repairs merged | Published-source baseline; five-resident runtime                                                 |
+| `codex/product-consolidation`                           | Review candidate                  | Seven residents, conversation fixes, provider routing, Kevin interests and current planning/docs |
+| PRs #5, #6, #9, #13 and #14                             | Incorporated into the candidate   | Historical source PRs; do not repeat their work                                                  |
+| [PR #16](https://github.com/arwyn6969/the-game/pull/16) | Separate inactive S1 foundation   | Needs v2/eight-actor account reconciliation and full S2/UI activation                            |
 
-The gateway file is unchanged between the inspected main and #8. Branch from the current `origin/main` for this task; record your actual base if main has advanced. Do not merge the other open PRs into your work merely to get the newest screen.
+Start from current `origin/main` after consolidation is accepted. Until then, agree whether the maintainer wants work based on the candidate; do not independently recreate its integration. Record the actual base SHA. The gateway now delegates legacy transport to `mind.gateway.ts`; opt-in pool routing uses `mind-pool/server.ts` and `router.ts`.
 
 ## Set up your own checkout
 
@@ -60,14 +59,15 @@ Do not copy production `.env`, `.grok`, keys or database credentials into the ch
 
 ## How the game is wired
 
-| Area | Relevant path | Current behaviour |
-| --- | --- | --- |
-| Browser and orchestration | `src/components/town/TownApp.tsx` | Owns the town, clock, input and pending AI work |
-| Rules and saves | `src/game/` | Validates consequences and saves to browser localStorage |
-| Pixel rendering | `src/game/render.ts` | Canvas rendering; no cloud GPU requirement |
-| AI gateway | `src/lib/mind.functions.ts` | Server-side xAI `grok-4.5`, validation, limiter, request and retry |
-| Database abstraction | `src/lib/db.ts` | PostgreSQL option; local PGLite fallback is in-memory |
-| Build | `vite.config.ts`, `scripts/` | TanStack Start/Nitro; Vercel preset and migration-aware build |
+| Area                      | Relevant path                                          | Current behaviour                                                                                    |
+| ------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| Browser and orchestration | `src/components/town/TownApp.tsx`                      | Owns the town, clock, input and pending AI work                                                      |
+| Rules and saves           | `src/game/`                                            | Validates consequences and saves to browser localStorage                                             |
+| Pixel rendering           | `src/game/render.ts`                                   | Canvas rendering; no cloud GPU requirement                                                           |
+| AI gateway                | `src/lib/mind.functions.ts`, `src/lib/mind.gateway.ts` | Legacy Grok validation/transport; opt-in pool delegation                                             |
+| Provider pool             | `src/lib/mind-pool/`                                   | Per-attempt request/token quota reservations, fallback and diagnostic usage; no durable monetary cap |
+| Database abstraction      | `src/lib/db.ts`                                        | PostgreSQL option; local PGLite fallback is in-memory                                                |
+| Build                     | `vite.config.ts`, `scripts/`                           | TanStack Start/Nitro; Vercel preset and migration-aware build                                        |
 
 The town is not yet an always-running shared server world. The in-memory limiter and PGLite fallback are not durable monthly budget enforcement.
 
@@ -75,11 +75,11 @@ The town is not yet an always-running shared server world. The in-memory limiter
 
 **Outcome:** an operator or a later durable ledger can account for every actual provider attempt, and a test can deny an attempt before money could be spent.
 
-The current gateway discards provider usage. Its process-local 12-call/minute limiter can admit one logical request that makes two upstream attempts. Capture both; logging only the final successful response undercounts activity.
+The legacy gateway does not account for provider cost. Its process-local limiter can admit one logical request that makes two upstream attempts. The pool already records request/token reservations and per-attempt outcomes, then returns summary diagnostics; that is not a monetary budget ledger. Reuse those interfaces and account for every actual attempt, including legacy retries and unknown billing, without duplicating pool requests.
 
 Proposed contributor ownership for this task:
 
-- `src/lib/mind.functions.ts`: narrow gateway integration.
+- `src/lib/mind.functions.ts`, `src/lib/mind.gateway.ts` and narrowly justified `src/lib/mind-pool/` adapters: gateway integration on the agreed baseline.
 - New server-only helper modules alongside it, with injectable transport, accounting sink and pre-attempt guard.
 - New focused tests in `scripts/*.test.mjs`, following the repository's existing test patterns; `npm test` discovers that directory.
 - `docs/handoffs/ai-usage-metering.md`: results and remaining work.

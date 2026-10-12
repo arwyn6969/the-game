@@ -74,6 +74,8 @@ A 429 honours `Retry-After` across the whole provider account. Authentication/pa
 
 ## Shared quota tracking and diagnostics
 
+Recognizable Gemini, Groq, NVIDIA and OpenRouter credential prefixes are rejected for a foreign API host before quota reservation or transmission. `status` reports the match as a boolean, never the key. The consolidation retains this guard from PR #13 alongside the newer seven-resident prompt and gateway integration from PR #14.
+
 Private local development can use the game's existing in-memory PGLite. That ledger resets when the server restarts and only coordinates that process. For persistent limits and multiple instances, use `DATABASE_URL` for an existing shared Postgres database and apply `migrations/20261012_mind_pool.sql` through the normal migration workflow. Pool mode refuses to run in Grok/Vercel deployment environments without a shared database. Other hosting environments must also supply shared Postgres; they cannot be automatically identified.
 
 The new root migration means `npm run build` will migrate when a database URL is provided. Review the migration before deploying. Never validate against a production database unintentionally. Local validation uses:

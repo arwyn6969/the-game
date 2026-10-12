@@ -29,7 +29,7 @@ The press-release fragment frames Kevin World as a diverse AI think tank. That i
 
 ## What is playable now
 
-The current application is `arwyn6969/the-game`, the web game. It has Kevin, Arwyn, Northern, Baba, Sub and the player. Kevin currently runs Hobbs Cafe. The separate `arwyn6969/THE_GAME` repository is the older Python simulator.
+The consolidation candidate for `arwyn6969/the-game` has Kevin, Arwyn, Northern, Baba, Sub, Data and Amelia, plus the player. Kevin runs Hobbs Cafe. The separate `arwyn6969/THE_GAME` repository is the older Python simulator. See [the consolidation record](CONSOLIDATION.md) for candidate and published-source distinctions.
 
 Keep the current identities, personal history, persistent consequences and useful play without a model key. The immediate gameplay priority remains a first day where the player can make an agreement, act on it, earn money and return to a remembered consequence. The broader cast and research projects are future work, not a reason to postpone fixing that day. This retrieval change does not implement player shift agreements, account saves, outside internet access, autonomous publishing or token trading.
 
@@ -43,9 +43,9 @@ The retrieval score becomes:
 
 A technology-related memory gets a single **0.25 bonus for Kevin**. Repeating keywords cannot increase it. The original components remain in effect, ordinary memories stay eligible, and a relevant answer or important commitment can outrank a technology memory. This is a small preference for what he pays attention to, not a filter that removes the rest of his life or a change to his café identity.
 
-The same preference reaches model prompt selection, retrieval diagnostics and the existing offline memory quotes. It uses only Kevin's own stored memories. It cannot retrieve another resident's private event unless Kevin already has a witnessed or communicated copy. Protected identity memories retain their existing selection safeguards.
+The same preference reaches prompt selection and retrieval diagnostics, including preparation for offline jobs. Joint resident conversations first restrict the stream to mutually known records, then apply the preference. It cannot retrieve another resident's private event unless Kevin already has a witnessed or communicated copy. Protected identity memories retain their existing selection safeguards. The newer authored offline replies answer the current intent; they do not quote an unrelated technical memory in every greeting.
 
-The interest configuration lives in code rather than the town save. Older version-1 towns gain the preference when loaded without migration, replacement memories or a new API key. Other residents retain their current ranking; future interests can be added after their playable roles are agreed. The bonus is a tunable starting value, not a measured improvement in conversation quality.
+The interest configuration lives in code rather than the town save. Original memories survive version-1 loading into the version-2 runtime; the interest needs no extra save field or API key. Other residents retain their current ranking. The bonus is a tunable starting value, not a measured improvement in conversation quality.
 
 ## How to assess it
 
@@ -54,6 +54,6 @@ The interest configuration lives in code rather than the town save. Older versio
 - Everyday “it”, embedded word fragments and repeated keywords do not create a larger bonus.
 - NPC privacy, protected memories, old saves and the other residents' rankings still work.
 - Prompt diagnostics describe the same selected memories and ordering sent to the model.
-- The preference works without a key through the existing offline quoting path. The quality and variety of those replies still need the separate playability improvements.
+- Offline job preparation uses the same ranked stream without a key, while authored replies preserve the current conversational intent.
 
 These cases are exercised by the town regressions. A draft PR and passing checks establish a reviewable source change; they do not establish publication to `thegame.grok.me` or provider-backed dialogue quality.

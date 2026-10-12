@@ -45,7 +45,7 @@ try {
         northernMoney: long.agents.find((a) => a.id === "northern").money,
         northernWages: long.agents
           .find((a) => a.id === "northern")
-          .memories.filter((m) => m.text.includes("paid me")).length,
+          .memories.filter((m) => m.type === "favor" && m.text.includes("paid me")).length,
       });
     }
   }

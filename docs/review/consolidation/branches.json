@@ -1,0 +1,123 @@
+{
+  "date": "2026-10-12",
+  "repository": "arwyn6969/the-game",
+  "base": "a45410376274ac0dd385029ef80e2ef1e56d2309",
+  "candidateBranch": "codex/product-consolidation",
+  "retireCount": 17,
+  "branches": [
+    {
+      "name": "codex/agent-collaboration-setup",
+      "protected": false,
+      "sha": "b8d6c97ebe5d88b2f97a56e5e5edc82287554ad1",
+      "action": "retire after consolidation reaches main"
+    },
+    {
+      "name": "codex/developer-handoff",
+      "protected": false,
+      "sha": "bd24550f215260b740518d17e217a5bb0bee7ded",
+      "action": "retire after consolidation reaches main"
+    },
+    {
+      "name": "codex/first-day-integration",
+      "protected": false,
+      "sha": "8c691142e452c251c563ac37a1cfd880d98c9936",
+      "action": "retire after consolidation reaches main"
+    },
+    {
+      "name": "codex/free-api-pool",
+      "protected": false,
+      "sha": "19920725eda43dba1103c0290d4fecdd93afdc98",
+      "action": "retire after consolidation reaches main"
+    },
+    {
+      "name": "codex/funded-project-accounts",
+      "protected": false,
+      "sha": "53bd9ac5b4354ac00195685cca429d7ca0681944",
+      "action": "preserve"
+    },
+    {
+      "name": "codex/graphics-release-evidence",
+      "protected": false,
+      "sha": "787f06e37f71c5a6ef0d58c0ff662cfe920f3b6e",
+      "action": "retire after consolidation reaches main"
+    },
+    {
+      "name": "codex/grok-player-experience",
+      "protected": false,
+      "sha": "46e7e369929e8fc0234ff73393b48bb0660d6e2e",
+      "action": "retire after consolidation reaches main"
+    },
+    {
+      "name": "codex/grok-trustworthy-talk",
+      "protected": false,
+      "sha": "339995af5a93e51358a63c03d45dcfbb676c2ffd",
+      "action": "retire after consolidation reaches main"
+    },
+    {
+      "name": "codex/kevin-technology-retrieval",
+      "protected": false,
+      "sha": "12e8358d0d869f8a7c25387ee39cbc815d9bf284",
+      "action": "retire after consolidation reaches main"
+    },
+    {
+      "name": "codex/live-release-evidence",
+      "protected": false,
+      "sha": "5c03290def9bc5db69c87cb4c234aadb824e5df7",
+      "action": "retire after consolidation reaches main"
+    },
+    {
+      "name": "codex/male-residents",
+      "protected": false,
+      "sha": "f9757ac9fdcfbba48ebc2f858ba6bf9e98dac877",
+      "action": "retire after consolidation reaches main"
+    },
+    {
+      "name": "codex/neon-arcade-ui",
+      "protected": false,
+      "sha": "971c52ab4a0623a4a6453d1125bbb075e2587fef",
+      "action": "retire after consolidation reaches main"
+    },
+    {
+      "name": "codex/neon-share-cards",
+      "protected": false,
+      "sha": "15745a8426dac69cf0971c5516bb298958b73624",
+      "action": "retire after consolidation reaches main"
+    },
+    {
+      "name": "codex/playability-review",
+      "protected": false,
+      "sha": "a8e9098c4d0be76e96138fc0db7f34b662661d01",
+      "action": "retire after consolidation reaches main"
+    },
+    {
+      "name": "codex/seven-resident-coherence",
+      "protected": false,
+      "sha": "578ab313d8679aab80a9badef058dbd36f51be30",
+      "action": "retire after consolidation reaches main"
+    },
+    {
+      "name": "codex/sol-foundation",
+      "protected": false,
+      "sha": "df95ee6da39c9ad0519c8742a880ec48381e5edd",
+      "action": "retire after consolidation reaches main"
+    },
+    {
+      "name": "codex/town-graphics",
+      "protected": false,
+      "sha": "70ff38f1db170631ee8c0ad073158de321f9c36e",
+      "action": "retire after consolidation reaches main"
+    },
+    {
+      "name": "codex/trust-repair-followup",
+      "protected": false,
+      "sha": "cd05ec331c2d8d2138fd0b838ef03fb90e855219",
+      "action": "retire after consolidation reaches main"
+    },
+    {
+      "name": "main",
+      "protected": false,
+      "sha": "a45410376274ac0dd385029ef80e2ef1e56d2309",
+      "action": "preserve"
+    }
+  ]
+}

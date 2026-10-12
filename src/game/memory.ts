@@ -112,11 +112,7 @@ export function retrieveResident(
   return scoreResidentMemories(agent, query, nowAbs).slice(0, k);
 }
 
-export function logRetrieval(
-  town: Town,
-  agent: Agent,
-  question: string,
-): RetrievalLog {
+export function logRetrieval(town: Town, agent: Agent, question: string): RetrievalLog {
   const now = absMinute(town.day, town.minute);
   const ranked = scoreResidentMemories(agent, question, now);
   const top = ranked.slice(0, 8);

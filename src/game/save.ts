@@ -201,6 +201,9 @@ function cleanMemory(memory: Memory, fallbackDay: number): Memory | null {
 
 export function validateTown(value: unknown): value is Town {
   if (!value || typeof value !== "object") return false;
+  // The separate S1 ledger cannot be maintained by this runtime. Reject it
+  // before migration or balance normalization so recovery retains its books.
+  if (Object.hasOwn(value, "economy")) return false;
   const town = value as Town;
   const version = (value as { version?: unknown }).version;
   if (version !== 1 && version !== 2) return false;

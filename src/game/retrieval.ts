@@ -25,7 +25,9 @@ export function promptMemories(town: Town, agent: Agent, job: ThinkJob) {
     .map((t) => t.text)
     .join(" ")} ${other ? "" : (agent.want ?? "")}`;
   const ranked = scoreResidentMemories(
-    { id: agent.id, memories: stream }, query, absMinute(town.day, town.minute),
+    { id: agent.id, memories: stream },
+    query,
+    absMinute(town.day, town.minute),
   );
   const selected = ranked.slice(0, 4);
   const keptMemory = !other && stream.find((m) => m.seed || (m.protected && m.type === "favor"));

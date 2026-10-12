@@ -2,7 +2,7 @@
 
 Updated 12 October 2026. This is the current planning entry point. The dated reviews are historical evidence; proposed features below are not shipped features.
 
-**Product promise: “I come back because of what I did yesterday.”** Build a small community where chosen work produces a useful result, payment is explainable, and people remember the player's actual contribution. Keep the existing five residents and the player. The original Kevin World think-tank vision becomes playable through their different contributions to a shared problem; the proposed larger cast comes later.
+**Product promise: “I come back because of what I did yesterday.”** Build a small community where chosen work produces a useful result, payment is explainable, and people remember the player's actual contribution. The consolidation candidate has seven residents and the player. The original Kevin World think-tank vision becomes playable through their different contributions to a shared problem; further expansion comes later.
 
 ## Read and build
 
@@ -14,19 +14,21 @@ Updated 12 October 2026. This is the current planning entry point. The dated rev
 
 ## Verified starting point
 
+The current source candidate is [the consolidation](CONSOLIDATION.md), based on main `a45410376274ac0dd385029ef80e2ef1e56d2309`. It preserves the published graphics and adds the seven-resident version-2 runtime, conversation work, provider pool and Kevin's memory interest. It has not been published. The trust-release details below describe the earlier reviewed baseline; [RELEASE.md](RELEASE.md) also records the later graphics publication.
+
 The trust-repair game was published to https://thegame.grok.me on 12 October 2026. Runtime source is `4e7786c30431e6701c8477d6ddb0b5ffa8ba8ca1`; `900015b2a3bba0a0826ea6d814f72af2f47dc7f0` adds its release record. This planning branch includes that main revision. Future implementation must fetch and report its actual base; these SHAs identify the reviewed baseline, not a command to discard newer work.
 
 The released tree passed 317 script/app/auth tests, 64 town tests, typecheck, lint with one inherited warning, diagnostics and a production build. Hosted checks confirmed the new bundles, explicit shift choices, desktop/phone movement and saved progress after reload. Hosted import/recovery was not reverified because Chrome file-upload access was unavailable. See the release record for the remaining limits.
 
 | Capability         | Current state                                                                           | Next gap                                                                               |
 | ------------------ | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Town and residents | Five residents, places, routines, movement, time controls and replay                    | Make residents' different knowledge useful in an activity                              |
+| Town and residents | Seven residents in the candidate, places, routines, movement, time controls and replay  | Make residents' different knowledge useful in an activity                              |
 | Talk and memory    | Online dialogue, offline fallback, notices, stored exchanges and retrieval              | Make public consequences understandable; keep private knowledge private                |
 | Player consent     | Explicit Choices for bread, eating, payment and shifts; stale/repeated actions rejected | Reuse this authority boundary for funded tasks                                         |
 | Work               | Cafe shift 16:00–19:00; full attendance can earn 5 from its till                        | Useful output, reserved pay, employer-specific progress and durable unpaid obligations |
 | Bread              | Receive one loaf with a tab of 2; eat it; repay Baba separately                         | Eating has no health, energy or work benefit; sharing is unbuilt                       |
 | Economy            | Personal purses, business tills, debts and wage transfers                               | Unexplained nightly funding, till caps and incomplete accounts; no project ledger      |
-| Persistence        | Browser saves, v1 import/export, recovery and save warnings                             | Account-based cross-device saves and conflict handling                                 |
+| Persistence        | Browser saves, v2 export, v1 import/migration, recovery and save warnings               | Account-based cross-device saves and conflict handling                                 |
 | Community project  | Design only                                                                             | Funded library index, observable use, corrections and attribution                      |
 
 ## Current design assessment
@@ -51,17 +53,17 @@ The released tree passed 317 script/app/auth tests, 64 town tests, typecheck, li
 
 These are bounded implementation packets, not parallel permission to edit the same files. The implementation plan owns detailed contracts and stopping points.
 
-| Packet | Scope                                                          | Exit condition                                                                                                                     | Status                               |
-| ------ | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| S0     | Trust repairs and identified publication                       | Explicit choices, recovery, reply visibility and verified live source                                                              | Released; preserve regressions       |
-| S1     | Accounts, reservations and migration                           | Account commands reconcile; funded-work/migration tests pass; all current money paths have an activation adapter plan              | Next                                 |
-| S2     | Three-record library project                                   | A chosen paid contribution produces a working or visibly provisional index through ordinary controls, without a key                | Planned; depends on S1               |
-| S3     | Tomorrow, week-one consequences and responsiveness             | Outcomes, attribution and bounded corrections persist; public knowledge has a source; delayed background AI does not block walking | Planned; depends on S2               |
-| S4     | Purposeful bread and one optional shared meal                  | Inventory use is discoverable; voluntary sharing produces a specific social encounter and remembered outcome                       | Planned; after the project is useful |
-| S5     | Observe players and release the next slice                     | Journey and save checks pass; playtest evidence supports the loop; separately authorised hosted publication is verified            | Planned                              |
-| Later  | Cross-device saves, richer dialogue and additional specialists | Each addition solves an observed problem; account isolation/conflicts and provider budgets are tested                              | Deferred                             |
+| Packet | Scope                                                          | Exit condition                                                                                                                     | Status                                             |
+| ------ | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| S0     | Trust repairs and identified publication                       | Explicit choices, recovery, reply visibility and verified live source                                                              | Released; preserve regressions                     |
+| S1     | Accounts, reservations and migration                           | Account commands reconcile; funded-work/migration tests pass; all current money paths have an activation adapter plan              | PR #16 foundation; reconcile v2 before integration |
+| S2     | Three-record library project                                   | A chosen paid contribution produces a working or visibly provisional index through ordinary controls, without a key                | Planned; depends on S1                             |
+| S3     | Tomorrow, week-one consequences and responsiveness             | Outcomes, attribution and bounded corrections persist; public knowledge has a source; delayed background AI does not block walking | Planned; depends on S2                             |
+| S4     | Purposeful bread and one optional shared meal                  | Inventory use is discoverable; voluntary sharing produces a specific social encounter and remembered outcome                       | Planned; after the project is useful               |
+| S5     | Observe players and release the next slice                     | Journey and save checks pass; playtest evidence supports the loop; separately authorised hosted publication is verified            | Planned                                            |
+| Later  | Cross-device saves, richer dialogue and additional specialists | Each addition solves an observed problem; account isolation/conflicts and provider budgets are tested                              | Deferred                                           |
 
-S1 must prevent new project spending from consuming existing payroll commitments. It must also resolve legacy wage progress without inventing lost earnings or discarding recorded work. There is no blanket approval here for an expanded banking, trading or generic job system.
+S1 must prevent new project spending from consuming existing payroll commitments. It must also resolve legacy wage progress without inventing lost earnings or discarding recorded work. Its prototype uses six actors and an opening total of 77; the seven-resident fresh town totals 90. Define and test new resident accounts and migration accounting before activation. Do not copy the old ledger over version-2 saves. There is no blanket approval here for an expanded banking, trading or generic job system.
 
 ## First-session and first-week proof
 
@@ -71,7 +73,7 @@ Run five uncoached 10–15 minute sessions across desktop and phone, then reopen
 
 ## Coordination and open branches
 
-Checked on 12 October 2026; recheck before implementation:
+Current branch decisions are recorded in [the consolidation](CONSOLIDATION.md). PRs #5, #6, #9, #13 and #14 are integrated into that candidate; PR #16 remains separate. The graphics, neon UI and resident corrections have already merged to main. The following list records the earlier planning snapshot and is historical:
 
 - [PR #5](https://github.com/arwyn6969/the-game/pull/5) contains this planning pack and the completed historical Astra review. Plans are not runtime changes.
 - [PR #11](https://github.com/arwyn6969/the-game/pull/11) is an unmerged visual redesign at `971c52ab4a0623a4a6453d1125bbb075e2587fef`. It touches TownApp, render, styles and root assets. Do not overwrite it with an older whole-project export or merge it implicitly into a gameplay packet. Start engine work independently; establish a stable UI baseline before integration.

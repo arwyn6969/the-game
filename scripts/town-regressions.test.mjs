@@ -18,9 +18,8 @@ const { applyResult, playerActions, applyPlayerAction, BABA_LOAF } =
 const { offlineResult, prepareRetrievals } = await server.ssrLoadModule("/src/game/offline.ts");
 const save = await server.ssrLoadModule("/src/game/save.ts");
 const { buildPrompt, parseMind } = await server.ssrLoadModule("/src/game/prompt.ts");
-const { makeMemory, scoreMemories, scoreResidentMemories } = await server.ssrLoadModule(
-  "/src/game/memory.ts",
-);
+const { makeMemory, scoreMemories, scoreResidentMemories } =
+  await server.ssrLoadModule("/src/game/memory.ts");
 const { memoryInterestScore } = await server.ssrLoadModule("/src/game/interests.ts");
 const { ANCHORS } = await server.ssrLoadModule("/src/game/world.ts");
 const { plain, mentionsSeed } = await server.ssrLoadModule("/src/game/text.ts");
@@ -1336,6 +1335,29 @@ test("technology interests stay inside each resident's witnessed memory stream",
   assert.ok(witnessed.memories.some((m) => m.text.includes("private network password")));
 });
 
+test("Kevin's technology bonus cannot expose a private technical memory in joint dialogue", () => {
+  const town = createTown("Ada");
+  agent(town, "kevin").memories.push(
+    makeMemory(town, 1, 420, "chat", "PRIVATE_SOFTWARE_PASSWORD", 10, { with: "baba" }),
+  );
+  applyResult(town, {
+    kind: "talk",
+    mind: "offline",
+    a: "kevin",
+    b: "arwyn",
+    lines: [{ speaker: "kevin", text: "The public network report is ready." }],
+    relationships: [],
+  });
+  const prompt = buildPrompt(town, { kind: "talk", a: "kevin", b: "arwyn", day: 1, minute: 420 });
+  assert.match(prompt, /public network report/);
+  assert.doesNotMatch(prompt, /PRIVATE_SOFTWARE_PASSWORD/);
+  assert.ok(
+    town.retrievals.every((log) =>
+      log.top.every((hit) => !hit.text.includes("PRIVATE_SOFTWARE_PASSWORD")),
+    ),
+  );
+});
+
 test("offline retrieval uses Kevin's interest and current towns retain identity and history", () => {
   const town = createTown("Ada");
   town.minute = 480;
@@ -1376,6 +1398,6 @@ test("offline retrieval uses Kevin's interest and current towns retain identity 
   );
   assert.deepEqual(
     agent(loaded, "kevin").memories.filter((m) => before.some((old) => old.id === m.id)),
-    before.map((m) => ({ ...m, protected: false, seed: false })),
+    before.map((m) => ({ ...m, protected: false, seed: false, turns: undefined })),
   );
 });
