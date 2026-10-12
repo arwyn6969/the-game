@@ -14,7 +14,7 @@ Updated 12 October 2026. This is the current planning entry point. The dated rev
 
 ## Verified starting point
 
-The current source candidate is [the consolidation](CONSOLIDATION.md), based on main `a45410376274ac0dd385029ef80e2ef1e56d2309`. It preserves the published graphics and adds the seven-resident version-2 runtime, conversation work, provider pool and Kevin's memory interest. It has not been published. The trust-release details below describe the earlier reviewed baseline; [RELEASE.md](RELEASE.md) also records the later graphics publication.
+The current main source is [the consolidation](CONSOLIDATION.md), merged in PR #19 at `8d15a722b61c09a7dca198ccf49ea8dd0b3f8125`. It preserves the published graphics and adds the seven-resident version-2 runtime, conversation work, provider pool and Kevin's memory interest. It has not been published. The trust-release details below describe the earlier reviewed baseline; [RELEASE.md](RELEASE.md) also records the later graphics publication.
 
 The trust-repair game was published to https://thegame.grok.me on 12 October 2026. Runtime source is `4e7786c30431e6701c8477d6ddb0b5ffa8ba8ca1`; `900015b2a3bba0a0826ea6d814f72af2f47dc7f0` adds its release record. This planning branch includes that main revision. Future implementation must fetch and report its actual base; these SHAs identify the reviewed baseline, not a command to discard newer work.
 

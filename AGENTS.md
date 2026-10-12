@@ -1,6 +1,6 @@
 # THE GAME — project instructions
 
-THE GAME is a persistent, open-ended pixel town with seven residents and the player. Preserve its cast, tone, existing towns, and the premise that the player is a resident. The consolidation candidate combines released art, coherent conversation, Data and Amelia, opt-in provider routing and version-2 saves with version-1 import. Start with `docs/CONSOLIDATION.md` for current source status and `docs/ROADMAP.md` for the next milestone.
+THE GAME is a persistent, open-ended pixel town with seven residents and the player. Preserve its cast, tone, existing towns, and the premise that the player is a resident. The consolidated main combines released art, coherent conversation, Data and Amelia, opt-in provider routing and version-2 saves with version-1 import. Start with `docs/CONSOLIDATION.md` for current source status and `docs/ROADMAP.md` for the next milestone.
 
 ## Start and scope
 
