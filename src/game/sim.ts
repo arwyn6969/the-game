@@ -3,6 +3,7 @@ import { NPC_IDS } from "./types";
 import { applyResult, PLAYER_CAFE_SHIFT } from "./effects";
 import { absMinute, agentById, makeMemory, pushMemory } from "./memory";
 import { offlineResult } from "./offline";
+import { rememberPaidWork } from "./social";
 import { beatAt } from "./plan";
 import { moveResidents } from "./navigation";
 import { formatClock, mentionsSeed, purse } from "./text";
@@ -169,6 +170,7 @@ function wages(town: Town) {
         { protected: true },
       ),
     );
+    rememberPaidWork(town, agent.id, where, wage);
   }
   const player = town.agents.find((a) => a.id === "player");
   if (town.minute === 12 * 60 && player && zoneAt(player.tile.x, player.tile.y) !== "cafe") {

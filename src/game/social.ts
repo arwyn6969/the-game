@@ -145,6 +145,50 @@ export function recordSocial(
   append(event);
 }
 
+/** A paid shift is a witnessed fact, not a model proposal. The employer keeps it. */
+export function rememberPaidWork(
+  town: Town,
+  workerId: AgentId,
+  workplace: "cafe" | "grocery",
+  wage: number,
+) {
+  if (workerId !== "player") return;
+  const employerId: AgentId = workplace === "cafe" ? "kevin" : "baba";
+  const employer = town.agents.find((agent) => agent.id === employerId);
+  const player = town.agents.find((agent) => agent.id === "player");
+  if (!employer || !player) return;
+  const line =
+    workplace === "cafe"
+      ? `${player.name} worked the Hobbs shift. The till paid ${wage}.`
+      : `${player.name} worked the grocery shift. The till paid ${wage}.`;
+  if (employer.memories.some((memory) => memory.day === town.day && memory.text === line)) return;
+  const memory = makeMemory(town, town.day, town.minute, "chat", line, 7, {
+    with: "player",
+    mind: "offline",
+    protected: true,
+    source: "event",
+    turns: [{ speaker: employerId, text: line }],
+  });
+  pushMemory(employer, memory);
+  (town.social ??= []).push({
+    id: `s${town.nextId++}`,
+    kind: "conversation",
+    day: town.day,
+    minute: town.minute,
+    participants: ["player", employerId],
+    place: placeTitle(workplace),
+    turns: [{ speaker: employerId, text: line }],
+    text: line,
+    changes: [],
+    intentions: [],
+    memories: [{ agentId: employerId, memoryId: memory.id }],
+    witnessed: true,
+    secret: false,
+    mind: "offline",
+  });
+  town.social = town.social.slice(-MAX_SOCIAL_EVENTS);
+}
+
 /** Old histories retain their recorded words, with no invented past relationship values. */
 function legacyConversations(town: Town): SocialEvent[] {
   const recorded = new Set(

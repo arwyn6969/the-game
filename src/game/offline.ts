@@ -2,7 +2,7 @@ import type { Agent, AgentId, Block, MindResult, ThinkJob, ThreadEdit, Town } fr
 import { BABA_LOAF } from "./effects";
 import { agentById, absMinute } from "./memory";
 import { characterProfile, type DiscussionTopic } from "./characters";
-import { everydayReply, recentCafePaymentGreeting } from "./local-dialogue";
+import { everydayReply, recentBreadGreeting, recentCafePaymentGreeting } from "./local-dialogue";
 import { promptMemories } from "./retrieval";
 import { beatAt } from "./plan";
 import { localReflections } from "./reflections";
@@ -736,6 +736,14 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
   ) {
     const paid = recentCafePaymentGreeting(town);
     if (paid) reply = `${reply} ${paid}`;
+  } else if (
+    agent.id === "baba" &&
+    !probing &&
+    !topic &&
+    /^(?:hello|hi|hey|good morning|good afternoon|good evening)[!.\s]*$/i.test(text.trim())
+  ) {
+    const bread = recentBreadGreeting(town);
+    if (bread && !/tab|owe|loaf|paid/i.test(reply)) reply = `${reply} ${bread}`;
   }
   if (
     !topic &&
