@@ -2,7 +2,7 @@
 
 ## Current graphics pass — 12 October 2026
 
-Branch: `codex/town-graphics`. Base: released `main` at `65d93a905f256abdcdddc21d7612e7d4b8b07d53`. Code/art head: `fadefc2ce34189b567908be9386966c4e0386b63`. Draft PR: [#15](https://github.com/arwyn6969/the-game/pull/15). Subsequent documentation commits record delivery metadata.
+Branch: `codex/town-graphics`. Base: released `main` at `65d93a905f256abdcdddc21d7612e7d4b8b07d53`. Code/art head: `fadefc2ce34189b567908be9386966c4e0386b63`. Merged PR: [#15](https://github.com/arwyn6969/the-game/pull/15). Subsequent documentation commits record delivery metadata.
 
 - `src/components/town/WorldArt.ts`: cached ground art, distinct room materials/rugs, furniture sprites, tree canopies, food/books, shoreline/lily details and light gradients. Raised art follows existing collision cells.
 - `src/game/render.ts`: shared furniture/resident depth order, stronger resident silhouettes, four facing views, walking based on movement distance, public-activity poses, shadows, night light pools, steam/ripples/leaves/fireflies and collision-free name/speech placement. Pause, replay and reduced motion freeze animation; rendering leaves saves untouched.
@@ -11,7 +11,7 @@ Branch: `codex/town-graphics`. Base: released `main` at `65d93a905f256abdcdddc21
 
 Clean locked install, typecheck, lint (one inherited warning), 65 town regressions, 263 script tests, 55 app/auth tests, diagnostics and a production build with database/model credentials unset passed. Desktop 1280×800 and phone 390×844 verified movement, touch controls, Pause, conversation, offline reply, download/import and reload. Pixel checks verified animation stability, tree occlusion and save immutability. Browser checks ended with zero console or page errors. See the design record for reproduction commands and limits.
 
-No engine/schema contract changes are required. Existing camera and picking signatures are preserved. Publishing remains a separate release step; physical phone keyboards and hosted/real-provider conversation were not tested in this pass.
+No engine/schema contract changes are required. Existing camera and picking signatures are preserved. This release was subsequently published to the existing thegame.grok.me project after user authorization. The source and hosted layout/save evidence are in [docs/RELEASE.md](../RELEASE.md). Physical phone keyboards and real-provider conversation quality were not tested in this pass.
 
 ## Earlier first-day handoff
 
