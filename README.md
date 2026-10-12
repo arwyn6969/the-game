@@ -4,7 +4,7 @@ A pixel town. Seven people already have days. You are their new neighbour. There
 
 This is the current web game: `arwyn6969/the-game`. The separate `arwyn6969/THE_GAME` repository is an older Python simulator. New game development belongs here. Publishing the website at https://thegame.grok.me is separate from updating GitHub.
 
-The current consolidation candidate combines the released town graphics, seven-resident conversation work, provider routing, Kevin's memory preference and product documentation. Start with [the consolidation record](docs/CONSOLIDATION.md) for source provenance, validation and branch cleanup. [The release record](docs/RELEASE.md) describes the previously published five-resident build.
+Main combines the released town graphics, seven-resident conversation work, provider routing, Kevin's memory preference and product documentation, merged in [PR #19](https://github.com/arwyn6969/the-game/pull/19). Start with [the consolidation record](docs/CONSOLIDATION.md) for source provenance, validation and branch cleanup. [The release record](docs/RELEASE.md) describes the previously published five-resident build.
 
 ## Play
 
@@ -40,7 +40,7 @@ Start with the [technical contributor handoff](docs/handoffs/new-developer.md): 
 
 Use Node 24 (`.nvmrc`), then `npm ci` and `npm run dev`. The development server uses port 8080. AI dialogue requires a server-side `XAI_API_KEY`; without it the town uses offline dialogue. Do not put the key in browser code or a `VITE_` variable.
 
-Start new work from current `origin/main` after consolidation is merged. Until then, the review candidate is `codex/product-consolidation`. Read [AGENTS.md](AGENTS.md), [the consolidation record](docs/CONSOLIDATION.md), and [the collaboration workflow](docs/COLLABORATION.md). Older prompts and [the baseline](docs/BASELINE.md) are historical; they are not instructions to restart a completed branch.
+Start new work from current `origin/main`. The consolidation checkpoint remains available in `codex/product-consolidation`. Read [AGENTS.md](AGENTS.md), [the consolidation record](docs/CONSOLIDATION.md), and [the collaboration workflow](docs/COLLABORATION.md). Older prompts and [the baseline](docs/BASELINE.md) are historical; they are not instructions to restart a completed branch.
 
 Run `npm run test:town` for game regressions and `npm run diagnose:town` for longer review scenarios. Diagnostics report observations; the regression tests assert the required behavior. The integrated release and publishing handoff are recorded in [docs/RELEASE.md](docs/RELEASE.md).
 

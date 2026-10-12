@@ -1,6 +1,8 @@
 # Product consolidation — 12 October 2026
 
-One candidate, `codex/product-consolidation`, combines the reviewed branches with current main. The local working checkout is `product/` within THE GAME workspace. The existing published site is described separately in [RELEASE.md](RELEASE.md); this candidate has not been published or merged to main.
+The consolidation is merged into main through [PR #19](https://github.com/arwyn6969/the-game/pull/19), merge commit `8d15a722b61c09a7dca198ccf49ea8dd0b3f8125`, at 20:14 BST on 12 October 2026 (19:14 UTC). The local working checkout is `product/` within THE GAME workspace. The existing published site is described separately in [RELEASE.md](RELEASE.md); this consolidated source has not been published to that site.
+
+The merge preserves the exact tested tree, `363f3de46f3c40e4981331de494e84354d8139e4`. [Main CI passed](https://github.com/arwyn6969/the-game/actions/runs/38296308695). The five incorporated PRs were automatically marked merged; PR #16 remains the sole open draft, now based on main.
 
 ## What the candidate contains
 
@@ -64,11 +66,11 @@ The normal development contract remains port 8080. Port 8090 is this isolated re
 
 ## Branch cleanup
 
-GitHub started with 19 branches including main, six open drafts, eleven merged PRs and two closed predecessor PRs. The [branch manifest](review/consolidation/branches.json) pins every original remote head. Every branch proposed for retirement is an ancestor of this candidate; the unfinished economy branch is not.
+GitHub started with 19 branches including main, six open drafts, eleven merged PRs and two closed predecessor PRs. The [original branch manifest](review/consolidation/branches.json) pins every original remote head. The [completed cleanup receipt](review/consolidation/cleanup.json) records the merge, incorporated PRs and all 17 deleted refs. Three remote branches remain: main, the preserved economy foundation and the consolidation checkpoint.
 
-After approval, merge the consolidation with a **merge commit**, preserving ancestry. A squash would make the branch ancestry checks less useful. Re-fetch and verify that each pinned head is still current and reachable from main before deleting its branch. Recheck the five source PRs and close any still-open incorporated draft as superseded. Retarget the retained PR #16 from `codex/playability-review` to main before retiring that base branch; its v2 reconciliation remains outstanding. Never delete a ref that has advanced beyond the manifest without another review.
+After the user's release approval, PR #19 was merged with a **merge commit**, preserving source ancestry. Every retired branch's head matched the manifest, was unprotected and was reachable from merged main. No open PR still needed those heads or bases. One atomic push deleted the 17 refs, with an expected-head lease for each deletion so an advanced branch would cause rejection. PR #16 was retargeted from `codex/playability-review` to main before retiring that base; its v2 reconciliation remains outstanding.
 
-Retire these 17 remote branches after that verification:
+The following 17 remote branches were retired:
 
 ```text
 codex/agent-collaboration-setup
@@ -90,12 +92,12 @@ codex/town-graphics
 codex/trust-repair-followup
 ```
 
-Keep `main`, `codex/funded-project-accounts` and the consolidation branch until its release is verified. A local Git bundle at `artifacts/consolidation/pre-cleanup.bundle` preserves all refs in this checkout. This bundle does not include uncommitted work, ignored credentials or personal saves.
+`main`, `codex/funded-project-accounts` and the consolidation checkpoint remain. A local Git bundle at `artifacts/consolidation/pre-cleanup.bundle` preserves all refs in this checkout. This bundle does not include uncommitted work, ignored credentials or personal saves.
 
 ## Workspace cleanup and next work
 
-Use the isolated `product/` checkout for this candidate. Existing checkouts were not moved or deleted. In particular, `character-social-ui/` has a pre-existing unresolved merge, staged assets and uncommitted render work; its linked `intelligence-ui/` repository must remain in place. The three coherence checkouts point to that repository too. The older review export is not a standalone Git checkout.
+Use the isolated `product/` checkout on main. Existing checkouts were not moved or deleted. In particular, `character-social-ui/` has a pre-existing unresolved merge, staged assets and ongoing uncommitted social/UI work; its linked `intelligence-ui/` repository must remain in place. The three coherence checkouts point to that repository too. The older review export is not a standalone Git checkout.
 
 The next active implementation is the v2/eight-actor reconciliation of PR #16, then complete funded-project activation and its ordinary-controls journey. Retire or archive old local checkouts only after their owning work is finished and uncommitted/private files are preserved. A clean root entry point replaces guessing which copy to run; it does not erase another chat's working directory.
 
-The project instructions require a separate release decision: “Do not merge to `main`, publish the Grok app … as part of these implementation prompts.” See [AGENTS.md](../AGENTS.md). This candidate makes the merge and 17-branch retirement concrete and reviewable; merge, deletion and hosted publication have not been performed.
+The user explicitly authorized the main merge and branch cleanup on 12 October 2026. Both are complete. Hosted publication remains a separate release action under [AGENTS.md](../AGENTS.md).

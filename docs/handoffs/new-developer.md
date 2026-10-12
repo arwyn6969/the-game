@@ -19,14 +19,14 @@ Before substantial work, agree credit, any payment and delivery expectations wit
 
 Updated 12 October 2026 after branch consolidation:
 
-| Work                                                    | State                             | What it means for you                                                                            |
-| ------------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `main` at `a45410376274ac0dd385029ef80e2ef1e56d2309`    | Graphics and trust repairs merged | Published-source baseline; five-resident runtime                                                 |
-| `codex/product-consolidation`                           | Review candidate                  | Seven residents, conversation fixes, provider routing, Kevin interests and current planning/docs |
-| PRs #5, #6, #9, #13 and #14                             | Incorporated into the candidate   | Historical source PRs; do not repeat their work                                                  |
-| [PR #16](https://github.com/arwyn6969/the-game/pull/16) | Separate inactive S1 foundation   | Needs v2/eight-actor account reconciliation and full S2/UI activation                            |
+| Work                                                    | State                           | What it means for you                                                                            |
+| ------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `main` at `8d15a722b61c09a7dca198ccf49ea8dd0b3f8125`    | PR #19 consolidation merged     | Seven residents, conversation fixes, provider routing, Kevin interests and current planning/docs |
+| `codex/product-consolidation`                           | Retained source checkpoint      | Main merge and 17-branch retirement are complete; hosted publication remains separate            |
+| PRs #5, #6, #9, #13 and #14                             | Incorporated into the candidate | Historical source PRs; do not repeat their work                                                  |
+| [PR #16](https://github.com/arwyn6969/the-game/pull/16) | Separate inactive S1 foundation | Needs v2/eight-actor account reconciliation and full S2/UI activation                            |
 
-Start from current `origin/main` after consolidation is accepted. Until then, agree whether the maintainer wants work based on the candidate; do not independently recreate its integration. Record the actual base SHA. The gateway now delegates legacy transport to `mind.gateway.ts`; opt-in pool routing uses `mind-pool/server.ts` and `router.ts`.
+Start from current `origin/main`. Do not independently recreate the completed integration. Record the actual base SHA. The gateway now delegates legacy transport to `mind.gateway.ts`; opt-in pool routing uses `mind-pool/server.ts` and `router.ts`.
 
 ## Set up your own checkout
 
