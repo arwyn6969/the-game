@@ -238,6 +238,8 @@ export function TownApp() {
   const watchingRef = useRef<AgentId | null>(null);
   watchingRef.current = watching;
   const [socialOpen, setSocialOpen] = useState(false);
+  const [dismissedCaption, setDismissedCaption] = useState<string | null>(null);
+  const captionEventRef = useRef<string | null>(null);
   const [startTalking, setStartTalking] = useState(false);
   const [board, setBoard] = useState(false);
   const [thinking, setThinking] = useState("");
@@ -463,6 +465,7 @@ export function TownApp() {
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
       if (event.code === "Escape") {
+        setDismissedCaption(captionEventRef.current);
         setSocialOpen(false);
         if (panelRef.current) setPanel(null);
         setCrowd(null);
@@ -1159,6 +1162,7 @@ export function TownApp() {
   const localReplies = !online || lastMind === "offline";
   const events = visibleSocialEvents(town, watchTown, { day: clockDay, minute: clockMinute });
   const conversations = events.filter((event) => event.kind === "conversation");
+  captionEventRef.current = conversations[0]?.id ?? null;
   const followCharacter = (id: AgentId) => {
     setWatchTown(true);
     setWatching(id);
@@ -1360,11 +1364,12 @@ export function TownApp() {
         <div className="world-caption" aria-hidden>
           {town.agents.length} residents · endless possibilities
         </div>
-        {!shown && !board && !socialOpen && (
+        {!shown && !board && !socialOpen && conversations[0]?.id !== dismissedCaption && (
           <ConversationCaption
             town={town}
             event={conversations[0]}
             onOpen={() => setSocialOpen(true)}
+            onClose={() => setDismissedCaption(conversations[0]?.id ?? null)}
           />
         )}
         {!shown && !board && socialOpen && (

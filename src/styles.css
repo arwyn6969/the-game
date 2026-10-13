@@ -1420,6 +1420,13 @@ textarea.field {
   padding: 0.7rem 0.85rem;
   box-shadow: 4px 4px 0 #10091c99;
 }
+.caption-close {
+  align-self: flex-end;
+  flex: none;
+  min-height: 44px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.7rem;
+}
 .caption-pair {
   display: flex;
   align-items: center;
