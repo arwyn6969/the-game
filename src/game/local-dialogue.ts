@@ -1,6 +1,6 @@
 import type { Agent, Memory, Town } from "./types";
 import { memorySource } from "./conversation";
-import { PLAYER_CAFE_SHIFT, playerActions } from "./effects";
+import { BABA_LOAF, PLAYER_CAFE_SHIFT, playerActions } from "./effects";
 import { absMinute, agentById } from "./memory";
 import { formatClock, mentionsSeed } from "./text";
 import { placeTitle } from "./world";
@@ -265,6 +265,22 @@ function wageReceipts(town: Town, workplace: "cafe" | "grocery"): Memory[] {
     .sort((a, b) => a.day - b.day || a.minute - b.minute);
 }
 
+function settledWageTransfers(town: Town, workplace: "cafe" | "grocery") {
+  const work = fundedPlayerWork(town);
+  const economy = (town as FundedTown).economy;
+  if (!work || !economy) return [];
+  return work.payables
+    .filter((payable) => payable.payer === `till:${workplace}` && payable.status === "settled")
+    .flatMap((payable) => {
+      const transfer = economy.transactions.find((item) => item.id === payable.transactionId);
+      return transfer &&
+        absMinute(transfer.day, transfer.minute) <= absMinute(town.day, town.minute)
+        ? [transfer]
+        : [];
+    })
+    .sort((a, b) => absMinute(a.day, a.minute) - absMinute(b.day, b.minute));
+}
+
 /** Wage evidence comes from the worker's engine receipts, never conversational claims. */
 function wageReply(town: Town, agent: Agent, text: string): string {
   const workplace = agent.id === "kevin" ? "cafe" : agent.id === "baba" ? "grocery" : null;
@@ -276,15 +292,7 @@ function wageReply(town: Town, agent: Agent, text: string): string {
   if (work && economy) {
     const payer = `till:${workplace}`;
     const requestedDay = /\byesterday\b/i.test(text) ? town.day - 1 : town.day;
-    const settlements = work.payables
-      .filter((payable) => payable.payer === payer && payable.status === "settled")
-      .flatMap((payable) => {
-        const transfer = economy.transactions.find((item) => item.id === payable.transactionId);
-        return transfer &&
-          absMinute(transfer.day, transfer.minute) <= absMinute(town.day, town.minute)
-          ? [transfer]
-          : [];
-      });
+    const settlements = settledWageTransfers(town, workplace);
     const paid = [...settlements].reverse().find((item) => item.day === requestedDay);
     const historical = [...wageReceipts(town, workplace)]
       .reverse()
@@ -433,7 +441,56 @@ export function everydayReply(town: Town, agent: Agent, text: string): string | 
 /** Preserve the useful greeting acknowledgment, now with a dated, employer-bound receipt. */
 export function recentCafePaymentGreeting(town: Town): string | null {
   const receipt = wageReceipts(town, "cafe").at(-1);
+  const settlement = settledWageTransfers(town, "cafe").at(-1);
+  if (
+    settlement &&
+    (!receipt ||
+      absMinute(settlement.day, settlement.minute) >= absMinute(receipt.day, receipt.minute))
+  )
+    return settlement.day >= town.day - 1
+      ? `Hobbs Cafe paid you ${settlement.amount} on day ${settlement.day} at ${formatClock(settlement.minute)} for your shift.`
+      : null;
   return receipt && receipt.day >= town.day - 1
     ? `Hobbs Cafe paid you 5 on day ${receipt.day} at ${formatClock(receipt.minute)} for your shift.`
     : null;
+}
+
+/** An open bread tab stays mentionable. A closed one is mentioned only while it is recent. */
+export function recentBreadGreeting(town: Town): string | null {
+  const player = agentById(town, "player");
+  const debt = (town.favors ?? []).find(
+    (favor) =>
+      favor.from === "player" &&
+      favor.to === "baba" &&
+      favor.status === "owed" &&
+      /bread/i.test(favor.text),
+  );
+  const carrying = (player.projects ?? []).some(
+    (project) =>
+      project.owner === "player" && project.status === "open" && project.text === BABA_LOAF,
+  );
+  if (debt) return null;
+  const notes: string[] = [];
+  if (carrying) notes.push("You are carrying the loaf.");
+  const paid = [...(agentById(town, "baba").memories ?? [])]
+    .reverse()
+    .find(
+      (memory) =>
+        memory.type === "favor" &&
+        memorySource(memory) === "event" &&
+        town.favors.some(
+          (favor) =>
+            favor.from === "player" &&
+            favor.to === "baba" &&
+            favor.status === "paid" &&
+            favor.amount > 0 &&
+            /bread/i.test(favor.text) &&
+            memory.text ===
+              `${player.name} → ${agentById(town, "baba").name}: ${favor.text} is paid.`,
+        ) &&
+        memory.day >= town.day - 1 &&
+        absMinute(memory.day, memory.minute) <= absMinute(town.day, town.minute),
+    );
+  if (paid) notes.push("You paid the bread tab. That one is closed.");
+  return notes.join(" ") || null;
 }

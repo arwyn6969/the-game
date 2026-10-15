@@ -13,6 +13,7 @@ import {
 } from "./funded-work";
 import { makeMemory, pushMemory } from "./memory";
 import { zoneAt, placeTitle } from "./world";
+import { rememberPaidWork } from "./social";
 
 export const runtimeCommand = (
   _town: Town,
@@ -144,6 +145,19 @@ export function advanceFundedPayroll(town: Town) {
           { protected: true, source: "event" },
         ),
       );
+      if (payable.status === "settled") {
+        const transaction = funded.economy!.transactions.find(
+          (item) => item.id === payable.transactionId,
+        );
+        rememberPaidWork(
+          town,
+          resident.id,
+          current.payer === "till:cafe" ? "cafe" : "grocery",
+          current.fee,
+          payable.transactionId ?? payable.id,
+          transaction && { day: transaction.day, minute: transaction.minute },
+        );
+      }
     }
   }
   for (const payable of [...funded.economy!.work!.payables]) {
@@ -151,7 +165,7 @@ export function advanceFundedPayroll(town: Town) {
     const worker = town.agents.find((agent) => agent.id === payable.worker);
     if (!worker || worker.money + payable.amount > 999) continue;
     const actor: AgentId = payable.payer === "till:grocery" ? "baba" : "kevin";
-    settleWorkPayable(
+    const settled = settleWorkPayable(
       funded,
       runtimeCommand(
         town,
@@ -162,5 +176,32 @@ export function advanceFundedPayroll(town: Town) {
       ),
       payable.id,
     );
+    if (settled.ok && settled.value.status === "settled" && payable.payer.startsWith("till:")) {
+      const resident = town.agents.find((agent) => agent.id === payable.worker)!;
+      resident.paidToday = true;
+      pushMemory(
+        resident,
+        makeMemory(
+          town,
+          town.day,
+          town.minute,
+          "favor",
+          `${placeTitle(payable.payer === "till:cafe" ? "cafe" : "grocery")} paid me ${payable.amount} for a shift I actually worked.`,
+          7,
+          { protected: true, source: "event" },
+        ),
+      );
+      const transaction = funded.economy!.transactions.find(
+        (item) => item.id === settled.value.transactionId,
+      );
+      rememberPaidWork(
+        town,
+        resident.id,
+        payable.payer === "till:cafe" ? "cafe" : "grocery",
+        payable.amount,
+        settled.value.transactionId ?? payable.id,
+        transaction && { day: transaction.day, minute: transaction.minute },
+      );
+    }
   }
 }

@@ -9,7 +9,6 @@ import {
 } from "./community";
 import { absMinute, agentById, makeMemory, pushMemory } from "./memory";
 import { offlineResult } from "./offline";
-import { beatAt } from "./plan";
 import { moveResidents } from "./navigation";
 import { formatClock, mentionsSeed } from "./text";
 import { canConverse, placeTitle, walkable, zoneAt } from "./world";

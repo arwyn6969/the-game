@@ -31,6 +31,7 @@ const {
 const { ANCHORS } = await server.ssrLoadModule("/src/game/world.ts");
 const { libraryActions, applyLibraryAction } = await server.ssrLoadModule("/src/game/community.ts");
 const { applyResult } = await server.ssrLoadModule("/src/game/effects.ts");
+const { recentCafePaymentGreeting } = await server.ssrLoadModule("/src/game/local-dialogue.ts");
 const person = (town, id) => town.agents.find((agent) => agent.id === id);
 const ask = (town, id, text) =>
   offlineResult(town, { kind: "player", agentId: id, text, day: town.day, minute: town.minute });
@@ -392,6 +393,18 @@ test("authored wage answers distinguish completed work from delayed payment", ()
     { money: person(town, "player").money, tills: town.tills, work: town.economy.work },
     before,
   );
+});
+
+test("a wage greeting can read an actual settled transfer without a legacy prose receipt", () => {
+  const { town, id } = fundedCafe();
+  attend(town, id, 960, 180);
+  assert.equal(
+    person(town, "player").memories.some(
+      (memory) => memory.type === "favor" && /paid me 5/.test(memory.text),
+    ),
+    false,
+  );
+  assert.match(recentCafePaymentGreeting(town), /paid you 5 on day 1 at 18:59/);
 });
 
 test("Northern's authored discussion cannot create a shift or promise unreserved wages", () => {

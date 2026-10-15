@@ -161,6 +161,31 @@ export type Agent = {
 
 export type ScrubFrame = { d?: number; m: number; p: number[]; ids?: AgentId[] };
 
+export type SocialChange = {
+  owner: AgentId;
+  about: AgentId;
+  before: number;
+  after: number;
+  note: string;
+};
+
+export type SocialEvent = {
+  id: string;
+  kind: "conversation" | "reflection";
+  day: number;
+  minute: number;
+  participants: AgentId[];
+  place: string;
+  turns: { speaker: AgentId; text: string }[];
+  text: string;
+  changes: SocialChange[];
+  intentions?: { agentId: AgentId; fromHour: number; place: string; activity: string }[];
+  memories: { agentId: AgentId; memoryId: string }[];
+  witnessed: boolean;
+  secret: boolean;
+  mind?: "grok" | "offline";
+};
+
 export type Town = {
   version: 2;
   day: number;
@@ -180,6 +205,8 @@ export type Town = {
   guide: number;
   /** Validated funded-work extension; absent older towns gain an opening snapshot. */
   economy?: import("./economy-types").EconomyState;
+  /** Optional bounded presentation history; older version-2 saves remain valid. */
+  social?: SocialEvent[];
 };
 
 export type ThinkKind = "plan" | "reflect" | "talk" | "player";

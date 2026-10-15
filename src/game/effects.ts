@@ -36,6 +36,7 @@ import {
   type PayrollApproval,
   type LegacyWageClaim,
 } from "./funded-work";
+import { captureSocial, recordSocial, rememberPaidWork } from "./social";
 
 const KINDS = new Set<ProjectKind>([
   "shift",
@@ -313,6 +314,7 @@ export function applyResult(
   if (!Number.isFinite(town.minute)) town.minute = 0;
   if (!Number.isFinite(town.day) || town.day < 1) town.day = 1;
   if (!Number.isFinite(town.nextId)) town.nextId = 1;
+  const socialBefore = captureSocial(town);
   try {
     const until = (town.day - 1) * 1440 + town.minute + 20;
     if (result.kind === "plan") {
@@ -481,6 +483,8 @@ export function applyResult(
     }
   } catch {
     /* A partial hour is kept. The clock still moves. */
+  } finally {
+    safely(() => recordSocial(town, result, socialBefore));
   }
 }
 
@@ -1032,7 +1036,7 @@ export function applyPlayerAction(
       )!;
       if (!payable) throw new Error("That earned payable no longer exists.");
       const issuer = payable.payer === "till:grocery" ? "baba" : "kevin";
-      mustWork(
+      const settled = mustWork(
         settleWorkPayable(
           draft,
           runtimeCommand(
@@ -1044,6 +1048,34 @@ export function applyPlayerAction(
           ),
           payable.id,
         ),
+      );
+      if (settled.status !== "settled")
+        throw new Error(settled.reason ?? "The earned wage remains reserved and payable.");
+      player = maybeAgent(draft, "player")!;
+      player.paidToday = true;
+      const workplace = payable.payer === "till:grocery" ? "grocery" : "cafe";
+      pushMemory(
+        player,
+        makeMemory(
+          draft,
+          draft.day,
+          draft.minute,
+          "favor",
+          `${placeTitle(workplace)} paid me ${payable.amount} for a shift I actually worked.`,
+          7,
+          { protected: true, source: "event" },
+        ),
+      );
+      const transaction = draft.economy!.transactions.find(
+        (item) => item.id === settled.transactionId,
+      );
+      rememberPaidWork(
+        draft,
+        "player",
+        workplace,
+        payable.amount,
+        settled.transactionId ?? payable.id,
+        transaction && { day: transaction.day, minute: transaction.minute },
       );
       reply = `The recorded earned wage of ${payable.amount} is settled once from its reserved funds.`;
     } else {

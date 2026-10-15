@@ -191,7 +191,7 @@ export function requireEconomy(town: Town): EconomyState {
   return town.economy;
 }
 
-/** Explicit S1 opt-in only: ordinary gameplay continues to use the released economy. */
+/** Record one opening snapshot; later money changes must use ledger commands. */
 export function initializeEconomy(town: Town): EconomyState {
   if (Object.hasOwn(town, "economy")) {
     const issues = auditEconomy(town);

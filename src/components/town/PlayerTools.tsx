@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { ActionCards } from "./ActionCards";
 import { LibraryProject } from "./LibraryProject";
+import { GAME_BUILD_ID } from "@/game/build";
 import { X } from "lucide-react";
 import type { PlaceId, Town } from "@/game/types";
 import { PLACE_IDS } from "@/game/types";
@@ -220,6 +221,7 @@ export function PlayerTools({
                 ordinary play.
               </p>
             </details>
+            <p className="text-muted">Build {GAME_BUILD_ID}</p>
           </>
         )}
         {page === "journal" && (

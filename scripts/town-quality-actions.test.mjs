@@ -311,3 +311,28 @@ test("a non-shift project with the legacy shift identity cannot masquerade as a 
   assert.equal(applyPlayerAction(town, "kevin", quote.id).ok, false);
   assert.equal(JSON.stringify(town), before);
 });
+
+test("explicit earned settlement preserves the employer's remembered deed and town-life receipt", () => {
+  const town = createTown("Ada");
+  legacy(town);
+  agent(town, "player").shiftHours = 3;
+  near(town, "kevin");
+  const quote = playerActions(town, "kevin").find((a) => a.label.startsWith("Receive earned wage"));
+  assert.ok(quote);
+  assert.equal(applyPlayerAction(town, "kevin", quote.id).ok, true);
+  assert.equal(agent(town, "player").money, 9);
+  assert.ok(
+    agent(town, "kevin").memories.some(
+      (m) => m.source === "event" && m.text.includes("worked the Hobbs shift"),
+    ),
+  );
+  assert.ok(town.social.some((event) => event.text.includes("worked the Hobbs shift")));
+  assert.ok(
+    agent(town, "player").memories.some(
+      (m) =>
+        m.source === "event" && m.text === "Hobbs Cafe paid me 5 for a shift I actually worked.",
+    ),
+  );
+  assert.equal(applyPlayerAction(town, "kevin", quote.id).ok, false);
+  assert.equal(agent(town, "player").money, 9);
+});

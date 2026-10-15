@@ -14,7 +14,7 @@ Updated 12 October 2026. This is the current planning entry point. The dated rev
 
 ## Verified starting point
 
-The current main source is [the consolidation](CONSOLIDATION.md), merged in PR #19 at `8d15a722b61c09a7dca198ccf49ea8dd0b3f8125`. It preserves the published graphics and adds the seven-resident version-2 runtime, conversation work, provider pool and Kevin's memory interest. It has not been published. The trust-release details below describe the earlier reviewed baseline; [RELEASE.md](RELEASE.md) also records the later graphics publication.
+The current main source is [the consolidation](CONSOLIDATION.md) plus visible conversations from [PR #23](https://github.com/arwyn6969/the-game/pull/23), at `8a35f3c877297b7a588aa8d38d6590e486f917cd`. It preserves the published graphics and the seven-resident version-2 runtime. Publish that commit before treating it as the live site. The trust-release details below describe the earlier reviewed baseline; [RELEASE.md](RELEASE.md) also records the later graphics publication.
 
 The trust-repair game was published to https://thegame.grok.me on 12 October 2026. Runtime source is `4e7786c30431e6701c8477d6ddb0b5ffa8ba8ca1`; `900015b2a3bba0a0826ea6d814f72af2f47dc7f0` adds its release record. This planning branch includes that main revision. Future implementation must fetch and report its actual base; these SHAs identify the reviewed baseline, not a command to discard newer work.
 
@@ -73,10 +73,10 @@ Run five uncoached 10–15 minute sessions across desktop and phone, then reopen
 
 ## Coordination and open branches
 
-Current branch decisions are recorded in [the consolidation](CONSOLIDATION.md). PRs #5, #6, #9, #13 and #14 are integrated into that candidate; PR #16 remains separate. The graphics, neon UI and resident corrections have already merged to main. The following list records the earlier planning snapshot and is historical:
+Current branch decisions are recorded in [the consolidation](CONSOLIDATION.md). PRs #5, #6, #9, #13, #14 and #23 are integrated. The open draft is [PR #16](https://github.com/arwyn6969/the-game/pull/16), the inactive funded-accounts work. The neon interface from PR #11 is already on main. The following list records the earlier planning snapshot and is historical:
 
 - [PR #5](https://github.com/arwyn6969/the-game/pull/5) contains this planning pack and the completed historical Astra review. Plans are not runtime changes.
-- [PR #11](https://github.com/arwyn6969/the-game/pull/11) is an unmerged visual redesign at `971c52ab4a0623a4a6453d1125bbb075e2587fef`. It touches TownApp, render, styles and root assets. Do not overwrite it with an older whole-project export or merge it implicitly into a gameplay packet. Start engine work independently; establish a stable UI baseline before integration.
+- [PR #11](https://github.com/arwyn6969/the-game/pull/11) was the neon visual redesign. It is merged. Do not restart it or overwrite main with an older export.
 - [PR #9](https://github.com/arwyn6969/the-game/pull/9) is a contributor handoff draft. Reconcile its README edits when integrating documentation.
 - [PR #6](https://github.com/arwyn6969/the-game/pull/6) is an optional technology-memory preference and original Kevin World notes. It is not required for the library's deterministic expertise roles and has not been published.
 

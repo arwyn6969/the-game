@@ -8,6 +8,7 @@ import { refreshResidentStatus } from "./navigation";
 import { auditEconomy, initializeEconomy } from "./economy";
 import { validateLibraryState } from "./community";
 import type { FundedTown } from "./economy-types";
+import { cleanSocial } from "./social";
 
 export const TOWN_STORAGE_KEY = "the-game-town-v2";
 export const LEGACY_TOWN_STORAGE_KEY = "the-game-town-v1";
@@ -375,6 +376,10 @@ export function validateTown(value: unknown): value is Town {
     .filter((r) => r && isAgentId(r.agentId) && typeof r.question === "string")
     .slice(-36);
   for (const row of town.retrievals) bump(row.id);
+  if (town.social !== undefined) {
+    town.social = cleanSocial(town.social);
+    for (const event of town.social) bump(event.id);
+  }
   for (const note of town.notices) bump(note.id);
   const financialIds = hasEconomy
     ? [

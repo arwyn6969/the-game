@@ -1,4 +1,4 @@
-/** S1 contracts only. Ordinary play does not call these until the S2 activation boundary. */
+/** Authoritative funded-work commands used by the integrated town runtime. */
 import type { AgentId, Project } from "./types";
 import type { FundedTown as Town } from "./economy-types";
 import type { AccountId, EconomyCommand, EconomyContext, EconomyState } from "./economy-types";

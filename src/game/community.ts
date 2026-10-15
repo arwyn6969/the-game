@@ -1,4 +1,5 @@
 import type { AgentId, Plan, Town } from "./types";
+import { PLACE_IDS } from "./types";
 import type { PlayerAction } from "./effects";
 import type { FundedTown, JSONValue } from "./economy-types";
 import { activateFundedTown, runtimeCommand } from "./payroll-runtime";
@@ -303,6 +304,8 @@ function start(town: LibraryTown, role: Role) {
     nextDayRecorded: 0,
   };
   setState(town, state);
+  town.guide = 3;
+  town.sawHint = true;
   event(
     town,
     state,
@@ -554,7 +557,7 @@ export function libraryView(town: Town) {
     custody: funding?.balance ?? 0,
     reserved: funding?.holds.reduce((sum, item) => sum + item.remaining, 0) ?? 0,
     spent: funding?.paid ?? 0,
-    progress: `${state?.reports.filter(item=>item.role!=="correction").length ?? 0}/2 preparation reports; ${state?.lookup?.status === "done" ? 1 : 0}/1 independent lookup`,
+    progress: `${state?.reports.filter((item) => item.role !== "correction").length ?? 0}/2 preparation reports; ${state?.lookup?.status === "done" ? 1 : 0}/1 independent lookup`,
     entries: latestEntries(state),
     evidence: FIXTURE.map((item) => ({
       ...item,
@@ -661,7 +664,7 @@ export function libraryActions(town: Town): LibraryAction[] {
       "report",
       role,
       `Submit ${role} check · earn 2`,
-      `Submit your report after these observations: ${REQUIRED[role].map(key=>FIXTURE.find(item=>item.id===key)!.label).join("; ")}. Completing these observations earns the agreed 2; this does not verify an untested index or invent a historical date.`,
+      `Submit your report after these observations: ${REQUIRED[role].map((key) => FIXTURE.find((item) => item.id === key)!.label).join("; ")}. Completing these observations earns the agreed 2; this does not verify an untested index or invent a historical date.`,
       "report",
       location ??
         (REQUIRED[role].every((key) => state.observations.some((item) => item.key === key))
@@ -722,12 +725,21 @@ export function libraryActions(town: Town): LibraryAction[] {
       "lookup",
       location,
     );
-  if (state.revisions.length) for(const mode of ["verified","marked"] as const) {
-    const revision=state.revisions.at(-1)!;
-    if(state.notice?.revision===revision.id&&state.notice.mode===mode) continue;
-    add("publish",mode,mode==="verified"?"Ask Sub to post verified entries":"Ask Sub to mark provisional entries",
-      "Request one optional, voluntary public notice from Sub using this submitted revision. Show only verified entries, or clearly label provisional and unresolved entries. The notice cannot change the index, claim ownership or overrule evidence.","manage",location);
-  }
+  if (state.revisions.length)
+    for (const mode of ["verified", "marked"] as const) {
+      const revision = state.revisions.at(-1)!;
+      if (state.notice?.revision === revision.id && state.notice.mode === mode) continue;
+      add(
+        "publish",
+        mode,
+        mode === "verified"
+          ? "Ask Sub to post verified entries"
+          : "Ask Sub to mark provisional entries",
+        "Request one optional, voluntary public notice from Sub using this submitted revision. Show only verified entries, or clearly label provisional and unresolved entries. The notice cannot change the index, claim ownership or overrule evidence.",
+        "manage",
+        location,
+      );
+    }
   const preview = libraryView(town).waitPreview;
   if (preview)
     add(
@@ -819,18 +831,23 @@ export function applyLibraryAction(town: Town, actionId: string): { ok: boolean;
             ? `Found ${record.label} in ${box} using revision ${revision.id}. Source: the submitted index and this direct box search.`
             : `Revision ${revision.id} points to ${box ?? "no box"}; that reference did not locate ${record.label}. The mapping remains ${box ? "provisional" : "unresolved"}.`;
         state.finds ??= [];
-        state.finds = state.finds.filter(item=>item.record!==record.id||item.revision!==revision.id);
+        state.finds = state.finds.filter(
+          (item) => item.record !== record.id || item.revision !== revision.id,
+        );
         state.finds.push({ record: record.id, revision: revision.id, result: reply });
         pushMemory(
           agentById(draft, "player"),
           makeMemory(draft, draft.day, draft.minute, "observe", reply, 6, { source: "event" }),
         );
-      } else if(kind === "publish") {
-        const revision=state.revisions.at(-1)!;const mode=arg as "verified"|"marked";
-        const entries=latestEntries(state).filter(item=>mode==="marked"||item.status==="verified");
-        state.notice={revision:revision.id,mode};
-        reply=`Sub's notice, revision ${revision.id}: ${entries.length?entries.map(item=>`${item.label}: ${item.box??"unresolved"} (${item.status})`).join("; "):"No verified entries yet"}. Credit: ${agentById(draft,revision.author).name} submitted the index; the town owns it.`;
-        event(draft,state,`library:notice:${revision.id}:${mode}`,reply,["player","sub"]);
+      } else if (kind === "publish") {
+        const revision = state.revisions.at(-1)!;
+        const mode = arg as "verified" | "marked";
+        const entries = latestEntries(state).filter(
+          (item) => mode === "marked" || item.status === "verified",
+        );
+        state.notice = { revision: revision.id, mode };
+        reply = `Sub's notice, revision ${revision.id}: ${entries.length ? entries.map((item) => `${item.label}: ${item.box ?? "unresolved"} (${item.status})`).join("; ") : "No verified entries yet"}. Credit: ${agentById(draft, revision.author).name} submitted the index; the town owns it.`;
+        event(draft, state, `library:notice:${revision.id}:${mode}`, reply, ["player", "sub"]);
       } else if (kind === "wait") {
         advanceTown(draft, Number(arg));
         state = getState(draft);
@@ -1075,7 +1092,7 @@ export function advanceLibraryProject(town: Town) {
       town,
       current,
       "library:delivery",
-      "Baba published her dated delivery note: Cedar received the community-room access document before the shelf labels changed. The historical date is now corroborated; the direct current box inspection still stands.",
+      "Baba published his dated delivery note: Cedar received the community-room access document before the shelf labels changed. The historical date is now corroborated; the direct current box inspection still stands.",
       ["baba"],
     );
     current.actionRevision++;
@@ -1239,11 +1256,46 @@ export function validateLibraryState(town: Town): string[] {
     )
       errors.push("The lookup appointment has invalid revision, route or work ownership.");
     if (
+      Array.isArray(state.lookup.originalPlan?.beats) &&
+      state.lookup.originalPlan.beats.some(
+        (beat, index) =>
+          !beat ||
+          beat.hour !== index ||
+          !PLACE_IDS.includes(beat.place) ||
+          !["home", "out"].includes(beat.spot) ||
+          typeof beat.status !== "string",
+      )
+    )
+      errors.push("The lookup's original timetable is malformed.");
+    if (
       state.lookup.status === "done" &&
       revision &&
       state.lookup.result !== (revision.mappings["room-access"] === "Cedar" ? "success" : "failure")
     )
       errors.push("The lookup result contradicts the actual submitted reference.");
+  }
+  if (
+    state.notice &&
+    (!state.revisions.some((revision) => revision.id === state.notice!.revision) ||
+      !["verified", "marked"].includes(state.notice.mode))
+  )
+    errors.push("The public notice has no valid submitted revision or confidence policy.");
+  if (state.finds !== undefined) {
+    if (!Array.isArray(state.finds)) errors.push("Invalid common index search history.");
+    else {
+      const seen = new Set<string>();
+      for (const find of state.finds) {
+        const key = `${find.record}:${find.revision}`;
+        if (
+          !RECORD_IDS.includes(find.record) ||
+          !state.revisions.some((revision) => revision.id === find.revision) ||
+          typeof find.result !== "string" ||
+          seen.has(key)
+        )
+          errors.push("A common index search lacks its unique record and revision.");
+        seen.add(key);
+      }
+    }
   }
   const eventIds = new Set<string>();
   for (const item of state.events) {

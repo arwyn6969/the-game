@@ -29,7 +29,7 @@ function adoptMigration(town: Town, draft: Town) {
 }
 
 /**
- * The single opt-in boundary for S2. S1 never calls this from ordinary play.
+ * Activate funded work after loading or at the first authoritative action.
  * Opening balances are a migration snapshot, not income or historical earnings.
  * A malformed existing extension is never replaced with new books.
  */

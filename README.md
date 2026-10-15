@@ -4,7 +4,7 @@ A pixel town. Seven people already have days. You are their new neighbour. There
 
 This is the current web game: `arwyn6969/the-game`. The separate `arwyn6969/THE_GAME` repository is an older Python simulator. New game development belongs here. Publishing the website at https://thegame.grok.me is separate from updating GitHub.
 
-Main combines the released town graphics, seven-resident conversation work, provider routing, Kevin's memory preference and product documentation, merged in [PR #19](https://github.com/arwyn6969/the-game/pull/19). Start with [the consolidation record](docs/CONSOLIDATION.md) for source provenance, validation and branch cleanup. [The release record](docs/RELEASE.md) describes the previously published five-resident build.
+Main is `8a35f3c877297b7a588aa8d38d6590e486f917cd`: the seven-resident town, visible conversations, character cards, and a Pin that keeps one resident at the front of the strip. Pin does not redirect other people's messages. [PR #16](https://github.com/arwyn6969/the-game/pull/16) stays outside this build. Publishing https://thegame.grok.me is still a separate step.
 
 ## Play
 
@@ -23,6 +23,8 @@ The current development version has seven residents: Kevin, Arwyn, Northern, Bab
 Version-1 towns migrate to version 2 with their original residents and history retained, then add Data and Amelia once. The original browser save remains under its old storage key; new saves use a separate key. Keep a downloaded backup before trying a development version. Older game versions cannot read version-2 exports. See [the seven-resident handoff](docs/handoffs/seven-resident-coherence.md) for checks and limits.
 
 ## What is in this repo
+
+The character UI development build adds portrait cards with Overview, Strengths, Together and Progress tabs. Open **Town life** for readable NPC exchanges, recorded relationship changes and updated plans. **Watch town conversations** follows non-secret public dialogue without adding player knowledge; dated reflections are an optional separate view. Character drafts, pinning and camera following work for every resident. See [the character UI design and browser checks](docs/design/character-social-ui.md).
 
 An opt-in [AI provider pool](docs/AI_PROVIDER_POOL.md) routes each game job to its preferred available model, reserves configured quotas, and falls back to offline play. Local quota records reset on restart; recognized deployments require shared Postgres. Start with `npm run ai:pool -- init`; the guide covers private setup, provider keys and model preferences. Every provider starts disabled. Ordinary development uses the existing Grok path when a server key is configured.
 
