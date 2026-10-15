@@ -1,0 +1,319 @@
+{
+  "url": "http://127.0.0.1:8198/",
+  "node": "v24.19.0",
+  "builtPreview": true,
+  "mockedStampchainGetOnly": true,
+  "liveWalletRequests": 0,
+  "liveExternalNetwork": 0,
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "externalBrowserRequests": [
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        }
+      ],
+      "walletCalls": [
+        "getAddresses",
+        "signMessage",
+        "getAddresses",
+        "signMessage",
+        "getAddresses",
+        "signMessage"
+      ],
+      "expectedAbortedRequests": [
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "assertions": [
+        "optional entry works without a wallet",
+        "declining a message leaves the town and appearance intact",
+        "cancelled wallet responses cannot connect or apply a late result",
+        "real server proof verifies a disposable BIP322 signature",
+        "holdings paginate and exclude unsupported artwork",
+        "safe raster preview and keyboard crop controls work",
+        "selected head and toolbar portrait display",
+        "portrait mode restores the authored canvas head while keeping its portrait",
+        "Original clears cosmetics while preserving verified wallet and draft",
+        "reload rechecks server-held selection without wallet proofs or pixels in the town save",
+        "the same saved identity in a new browser session cannot inherit wallet proof or appearance",
+        "a fork and its reload cannot inherit a cosmetic link, while restoring the source retains its original scope",
+        "disconnect clears draft, display and server link, including on reopen",
+        "failed disconnect stays hidden after close and reload until explicit retry succeeds"
+      ],
+      "cookie": {
+        "httpOnly": true,
+        "secure": true,
+        "sameSite": "Strict",
+        "scriptReadable": false
+      },
+      "headPixels": {
+        "active": {
+          "pinkPixels": 87,
+          "pixels": 182
+        },
+        "portraitOnly": {
+          "pinkPixels": 0,
+          "pixels": 182
+        }
+      },
+      "walletMethods": [
+        "getAddresses",
+        "signMessage"
+      ]
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "externalBrowserRequests": [
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        }
+      ],
+      "walletCalls": [
+        "getAddresses",
+        "signMessage",
+        "getAddresses",
+        "signMessage",
+        "getAddresses",
+        "signMessage"
+      ],
+      "expectedAbortedRequests": [
+        "Failed to load resource: net::ERR_FAILED"
+      ],
+      "assertions": [
+        "optional entry works without a wallet",
+        "declining a message leaves the town and appearance intact",
+        "cancelled wallet responses cannot connect or apply a late result",
+        "real server proof verifies a disposable BIP322 signature",
+        "holdings paginate and exclude unsupported artwork",
+        "safe raster preview and keyboard crop controls work",
+        "selected head and toolbar portrait display",
+        "portrait mode restores the authored canvas head while keeping its portrait",
+        "Original clears cosmetics while preserving verified wallet and draft",
+        "reload rechecks server-held selection without wallet proofs or pixels in the town save",
+        "the same saved identity in a new browser session cannot inherit wallet proof or appearance",
+        "a fork and its reload cannot inherit a cosmetic link, while restoring the source retains its original scope",
+        "disconnect clears draft, display and server link, including on reopen",
+        "failed disconnect stays hidden after close and reload until explicit retry succeeds"
+      ],
+      "cookie": {
+        "httpOnly": true,
+        "secure": true,
+        "sameSite": "Strict",
+        "scriptReadable": false
+      },
+      "headPixels": {
+        "active": {
+          "pinkPixels": 87,
+          "pixels": 182
+        },
+        "portraitOnly": {
+          "pinkPixels": 0,
+          "pixels": 182
+        }
+      },
+      "walletMethods": [
+        "getAddresses",
+        "signMessage"
+      ]
+    }
+  ],
+  "fixtureRequests": [
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/stamps/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/stamps/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.png",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1q573shp9w8lm0gqvef0c3q3zcez6sxtsc79g56h",
+      "method": "GET"
+    }
+  ],
+  "failures": []
+}
