@@ -53,7 +53,7 @@ export function inTalkRange(ax: number, ay: number, bx: number, by: number): boo
 /** The schedule status is only true when the player is actually in that place. */
 export function activityStatus(zone: string, plannedPlace: string, plannedStatus: string): string {
   if (zone === plannedPlace) return plannedStatus;
-  return "on foot, not where that hour planned";
+  return "exploring the town";
 }
 
 export function spokenTurns(text: string): { who: string; line: string }[] {

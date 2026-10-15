@@ -20,6 +20,22 @@ import { clip, mentionsSeed, purse } from "./text";
 import { formatClock } from "./text";
 import { placeTitle, zoneAt } from "./world";
 import { groundPlayerReply, groundSharedLine } from "./conversation";
+import { settleLegacyDebt, availableFunds } from "./economy";
+import type { FundedTown } from "./economy-types";
+import { libraryView } from "./community";
+import { activateFundedTown, runtimeCommand } from "./payroll-runtime";
+import {
+  approvePayrollAgreement,
+  createFundedCafeAgreement,
+  cafeAgreementTerms,
+  CAFE_CANCELLATION,
+  suspendWorkAgreement,
+  fundedWorkSummary,
+  recogniseLegacyClaim,
+  settleWorkPayable,
+  type PayrollApproval,
+  type LegacyWageClaim,
+} from "./funded-work";
 
 const KINDS = new Set<ProjectKind>([
   "shift",
@@ -168,6 +184,7 @@ function applyFavor(town: Town, edit: FavorEdit | null | undefined, allowed?: Ag
   if (!edit) return;
   if (allowed && (!allowed.includes(edit.from) || !allowed.includes(edit.to))) return;
   if (edit.from === edit.to) return;
+  if (edit.action === "pay" && !activateFundedTown(town).ok) return;
   const from = maybeAgent(town, edit.from);
   const to = maybeAgent(town, edit.to);
   if (!from || !to) return;
@@ -206,9 +223,9 @@ function applyFavor(town: Town, edit: FavorEdit | null | undefined, allowed?: Ag
   if (!favor || favor.from !== from.id || favor.to !== to.id) return;
   if (edit.action === "pay") {
     const amount = favor.amount;
-    if (!Number.isInteger(amount) || amount < 0 || amount > 30) return;
-    if (!Number.isInteger(from.money) || from.money < 0 || from.money > 999) return;
-    if (!Number.isInteger(to.money) || to.money < 0 || to.money > 999) return;
+    if (!Number.isSafeInteger(amount) || amount < 0) return;
+    if (!Number.isSafeInteger(from.money) || from.money < 0) return;
+    if (!Number.isSafeInteger(to.money) || to.money < 0) return;
     if (from.money < amount || to.money + amount > 999) {
       pushMemory(
         from,
@@ -226,9 +243,12 @@ function applyFavor(town: Town, edit: FavorEdit | null | undefined, allowed?: Ag
       );
       return;
     }
-    from.money -= amount;
-    to.money += amount;
-    favor.status = "paid";
+    const paid = settleLegacyDebt(
+      town,
+      runtimeCommand(town, "debt.settle", from.id, { debtId: favor.id }, favor.id),
+      favor.id,
+    );
+    if (!paid.ok) return;
   } else if (edit.action === "forgive") {
     favor.status = "forgiven";
   } else if (edit.action === "break") {
@@ -320,6 +340,7 @@ export function applyResult(
       return;
     }
     if (result.kind === "talk") {
+      if (result.favor?.action === "pay" && !activateFundedTown(town).ok) return;
       const a = maybeAgent(town, result.a);
       const b = maybeAgent(town, result.b);
       if (!a || !b || a.id === b.id || a.id === "player" || b.id === "player") return;
@@ -471,19 +492,78 @@ export type PlayerAction = {
 };
 
 type QuotedAction = PlayerAction & {
-  kind: "bread" | "eat-loaf" | "pay" | "shift-start" | "shift-stop";
+  kind:
+    | "bread"
+    | "eat-loaf"
+    | "share-loaf"
+    | "pay"
+    | "shift-start"
+    | "shift-stop"
+    | "shift-resume"
+    | "recognise-work"
+    | "settle-wage";
   reference?: string;
 };
 
-// Shared contract identity while retaining the existing v1 Project schema.
 export const PLAYER_CAFE_SHIFT =
-  "Cafe shift, 16:00 to 19:00 each day until cancelled; 5 after three hours if the till can pay.";
+  "Funded cafe attendance, 16:00 to 19:00; 5 reserved for 180 eligible minutes. Progress and earned wages survive midnight; no fractional wage.";
 export const BABA_LOAF = "A loaf from Baba. It can be eaten.";
 
+function adoptActionDraft(town: Town, draft: Town) {
+  const agents = draft.agents.map((next) => {
+    const existing = town.agents.find((agent) => agent.id === next.id);
+    if (!existing) return next;
+    const projects = next.projects.map((project) => {
+      const prior = existing.projects.find((item) => item.id === project.id);
+      if (!prior) return project;
+      Object.assign(prior, project);
+      return prior;
+    });
+    Object.assign(existing, next, { projects });
+    return existing;
+  });
+  const favors = draft.favors.map((next) => {
+    const existing = town.favors.find((favor) => favor.id === next.id);
+    if (!existing) return next;
+    Object.assign(existing, next);
+    return existing;
+  });
+  Object.assign(town, draft, { agents, favors });
+}
+
+function hasLoaf(player: Agent) {
+  return player.projects.find(
+    (project) =>
+      project.owner === "player" &&
+      project.kind === "other" &&
+      project.status === "open" &&
+      project.text === BABA_LOAF,
+  );
+}
+function nearbyTogether(town: Town, id: AgentId): boolean {
+  const player = maybeAgent(town, "player");
+  const other = maybeAgent(town, id);
+  return Boolean(
+    player &&
+    other &&
+    zoneAt(player.tile.x, player.tile.y) === zoneAt(other.tile.x, other.tile.y) &&
+    Math.abs(player.tile.x - other.tile.x) + Math.abs(player.tile.y - other.tile.y) <= 2,
+  );
+}
+function payrollPreview(town: Town) {
+  const staged = structuredClone(town) as FundedTown;
+  const result = activateFundedTown(staged);
+  return { staged, result, work: result.ok ? fundedWorkSummary(staged, "player") : null };
+}
+function confirmedLegacyMinutes(claim: LegacyWageClaim): number {
+  return claim.classification === "ambiguous" || !claim.payer
+    ? 0
+    : Math.min(180, Math.round(claim.evidence.shiftHours * 60));
+}
 function quotedPlayerActions(town: Town, target: AgentId): QuotedAction[] {
   const player = maybeAgent(town, "player");
   const other = maybeAgent(town, target);
-  if (!player || !other || target === "player") return [];
+  if (!player || !other) return [];
   const actions: QuotedAction[] = [];
   const add = (
     kind: QuotedAction["kind"],
@@ -492,21 +572,19 @@ function quotedPlayerActions(town: Town, target: AgentId): QuotedAction[] {
     reference?: string,
     disabledReason?: string,
   ) => {
-    // The existing nextId is a save-compatible revision. A used quote cannot be
-    // replayed after its debt has been paid. The UI also checks town identity.
-    const id = JSON.stringify([kind, target, town.day, town.nextId, reference ?? "", terms]);
+    const revision = (town as FundedTown).economy?.revision ?? 0;
+    const id = JSON.stringify([
+      kind,
+      target,
+      town.day,
+      town.nextId,
+      revision,
+      reference ?? "",
+      terms,
+    ]);
     actions.push({ id, kind, label, terms, reference, disabledReason });
   };
-  const debts = (town.favors ?? []).filter(
-    (f) => f.from === "player" && f.to === target && f.status === "owed",
-  );
-  const loaf = (player.projects ?? []).find(
-    (project) =>
-      project.owner === "player" &&
-      project.kind === "other" &&
-      project.status === "open" &&
-      project.text === BABA_LOAF,
-  );
+  const loaf = hasLoaf(player);
   if (loaf) {
     add(
       "eat-loaf",
@@ -514,97 +592,182 @@ function quotedPlayerActions(town: Town, target: AgentId): QuotedAction[] {
       "Eat your held loaf once. It will be gone; any unpaid tab stays open. Eating does not move money.",
       loaf.id,
     );
+    const library = libraryView(town);
+    if (library.progress.includes("1/1 independent lookup")) {
+      for (const invitee of ["baba", "northern"] as const)
+        if (nearbyTogether(town, invitee)) {
+          const name = maybeAgent(town, invitee)!.name;
+          add(
+            "share-loaf",
+            `Share loaf with ${name}`,
+            `${name} is here and accepts a short shared meal. Share this held loaf once with ${name}, instead of eating it alone. Any unpaid tab stays open. Show the public library result at the meal: ${library.outcome} No affection, work or future visit is promised.`,
+            `${loaf.id}|${invitee}`,
+          );
+        }
+    }
   }
+  if (target === "player") return actions;
+  const debts = town.favors.filter(
+    (favor) => favor.from === "player" && favor.to === target && favor.status === "owed",
+  );
   for (const debt of debts) {
-    const validAmount = Number.isInteger(debt.amount) && debt.amount >= 0 && debt.amount <= 30;
+    const valid = Number.isSafeInteger(debt.amount) && debt.amount > 0;
     const canPay =
-      validAmount &&
-      Number.isInteger(player.money) &&
+      valid &&
+      Number.isSafeInteger(player.money) &&
       player.money >= debt.amount &&
-      player.money <= 999 &&
-      Number.isInteger(other.money) &&
-      other.money >= 0 &&
+      Number.isSafeInteger(other.money) &&
       other.money + debt.amount <= 999;
     add(
       "pay",
       debt.amount === 0 ? "Complete this favor" : `Pay ${debt.amount}`,
       `Pay ${other.name} ${debt.amount} to close this exact tab: ${debt.text}`,
       debt.id,
-      !validAmount
-        ? "This tab's amount is invalid. It has been preserved for recovery."
-        : debt.amount === 0
+      !valid
+        ? debt.amount === 0
           ? "This favor needs a recorded completion before it can be closed."
-          : !canPay
-            ? "The full payment cannot be transferred now. The tab stays open."
-            : undefined,
+          : "This tab's amount is invalid. It has been preserved for recovery."
+        : !canPay
+          ? "The full payment cannot be transferred now. The tab stays open."
+          : undefined,
     );
   }
-  if (target === "baba" && debts.length === 0) {
-    const conflictingLoaf = (player.projects ?? []).some(
-      (project) => project.status === "open" && project.text === BABA_LOAF,
-    );
+  if (target === "baba" && debts.length === 0)
     add(
       "bread",
       "Accept bread tab · 2",
-      "Receive one loaf from Baba and owe Baba 2. No money moves until you choose to pay. You can eat the loaf once; eating does not pay the tab.",
+      "Receive one loaf from Baba and owe Baba 2. No money moves until you choose to pay. You can eat or share the loaf once; either leaves the tab open.",
       undefined,
-      conflictingLoaf
-        ? "You already have a loaf or a conflicting item. Finish it before taking another."
-        : (player.projects ?? []).filter((project) => project.status === "open").length >= 4
+      loaf
+        ? "You already carry a loaf. Finish it before taking another."
+        : player.projects.filter((p) => p.status === "open").length >= 4
           ? "There is no room to carry a loaf. Finish an open item or project first."
-          : (town.favors ?? []).filter((f) => f.status === "owed").length >= 24
+          : town.favors.filter((f) => f.status === "owed").length >= 24
             ? "The town cannot record another open tab yet."
             : undefined,
     );
-  }
-  if (target === "kevin") {
-    const shifts = (player.projects ?? []).filter(
-      (p) => p.owner === "player" && p.kind === "shift" && p.status === "open",
+  if (target === "kevin" || target === "baba") {
+    const preview = payrollPreview(town);
+    const payer = target === "kevin" ? ("till:cafe" as const) : ("till:grocery" as const);
+    const work = preview.work;
+    if (!work) {
+      if (target === "kevin")
+        add(
+          "shift-start",
+          "Accept cafe shift · 5",
+          PLAYER_CAFE_SHIFT,
+          undefined,
+          preview.result.reason ?? "The financial records need recovery before work can be funded.",
+        );
+      return actions;
+    }
+    const current = work.agreements.find(
+      (a) =>
+        a.kind === "cafe-shift" &&
+        a.payer === payer &&
+        (a.status === "active" || a.status === "suspended"),
     );
-    const shift = shifts.find((p) => (p.place ?? "cafe") === "cafe");
-    if (shift) {
+    if (current)
       add(
-        "shift-stop",
-        "Cancel cafe shift",
-        `End the cafe shift now. This pays no wage and keeps money already earned. Today's ${Math.round(player.shiftHours * 60)} worked minutes remain until midnight; cancelled hours earn nothing.`,
-        shift.id,
+        current.status === "active" ? "shift-stop" : "shift-resume",
+        `${current.status === "active" ? "Suspend" : "Resume"} ${payer === "till:cafe" ? "cafe" : "grocery"} shift`,
+        `${current.status === "active" ? "Suspend" : "Resume"} future attendance for this ${payer === "till:cafe" ? "cafe" : "grocery"} agreement. ${current.eligibleMinutes} of ${current.requiredMinutes} minutes and the full ${current.fee}-coin reservation remain across midnight. ${CAFE_CANCELLATION}`,
+        current.id,
       );
-    } else {
+    for (const payable of work.payables.filter(
+      (item) => item.status === "earned" && item.payer === payer,
+    ))
+      add(
+        "settle-wage",
+        `Receive earned wage · ${payable.amount}`,
+        `Settle the recorded earned wage of ${payable.amount} from ${other.name}'s reserved funds. This does not earn a second wage.`,
+        payable.id,
+        player.money + payable.amount > 999
+          ? "Your purse cannot receive the full wage yet; the earned claim stays reserved."
+          : undefined,
+      );
+    const claims = work.legacyClaims.filter(
+      (claim) =>
+        ["unresolved", "underfunded", "protected"].includes(claim.resolution) &&
+        claim.classification !== "completed-unpaid" &&
+        (claim.payer === payer || (claim.payer === null && target === "kevin")),
+    );
+    for (const claim of claims) {
+      const minutes = confirmedLegacyMinutes(claim);
+      const workplace = payer === "till:cafe" ? "cafe" : "grocery";
+      const hours = claim.payer
+        ? claim.evidence.plan.beats
+            .filter((beat) => beat.place === workplace && beat.spot === "out")
+            .map((beat) => `${String(beat.hour).padStart(2, "0")}:00`)
+            .join(", ")
+        : "16:00–19:00";
+      const protectedAmount =
+        preview.staged.economy!.holds.find((hold) => hold.id === claim.holdId)?.remaining ?? 0;
+      add(
+        "recognise-work",
+        `Recognise ${payer === "till:cafe" ? "cafe" : "grocery"} work · ${minutes} minutes`,
+        `${other.name} explicitly offers a funded replacement for preserved day ${claim.evidence.day} work. Original evidence records ${Math.round(claim.evidence.shiftHours * 60)} aggregate minutes (${claim.classification}); it remains unchanged. Confirm ${minutes} employer-bound minutes with ${other.name}, reserve the full ${payer === "till:cafe" ? 5 : 4}, and keep the agreement suspended until you choose Resume. ${minutes === 0 ? "Ambiguous old minutes earn no inferred payment." : "Only these disclosed preserved minutes count."} Attendance follows ${claim.payer ? "the preserved workplace hours" : "new replacement hours"}: ${hours}. Progress survives midnight; no fractional wage.`,
+        claim.id,
+        availableFunds(preview.staged, payer) + protectedAmount < (payer === "till:cafe" ? 5 : 4)
+          ? "The employer cannot reserve the full wage yet. Your preserved evidence stays unchanged."
+          : claim.resolution === "underfunded"
+            ? "The prior wage must first be fully protected. Its evidence remains unchanged."
+            : undefined,
+      );
+    }
+    if (target === "kevin" && !current && claims.length === 0) {
+      const pending = work.legacyClaims.some(
+        (claim) => !["paid", "settled"].includes(claim.resolution),
+      );
+      const completedToday = work.agreements.some(
+        (a) =>
+          a.kind === "cafe-shift" &&
+          a.status === "completed" &&
+          work.receipts.some(
+            (receipt) => receipt.agreementId === a.id && receipt.at.day === town.day,
+          ),
+      );
+      const conflictingProject = player.projects.some(
+        (project) =>
+          project.status === "open" &&
+          project.kind !== "shift" &&
+          (project.text === PLAYER_CAFE_SHIFT ||
+            project.text ===
+              "Cafe shift, 16:00 to 19:00 each day until cancelled; 5 after three hours if the till can pay."),
+      );
       const hasTimetable =
-        Array.isArray(player.plan?.beats) &&
         player.plan.beats.length === 24 &&
-        player.plan.beats.every((beat, hour) => beat?.hour === hour);
-      const conflictingProject = (player.projects ?? []).some(
-        (project) => project.status === "open" && project.text === PLAYER_CAFE_SHIFT,
-      );
-      const disabledReason = !hasTimetable
-        ? "Your saved timetable needs repair before you can take this shift."
-        : conflictingProject
-          ? "An existing project conflicts with this shift. Resolve it before accepting."
-          : shifts.length
-            ? "You already have an open shift elsewhere."
-            : town.minute > 16 * 60
-              ? "Come back before 16:00 to take a full shift."
-              : player.paidToday
-                ? "You have already received today's wage."
-                : (town.tills?.cafe ?? 0) < 5
-                  ? "The cafe till cannot fund a wage of 5 now."
-                  : (player.projects ?? []).filter((p) => p.status === "open").length >= 4
-                    ? "Finish or drop an open project before taking a shift."
-                    : undefined;
+        player.plan.beats.every((beat, hour) => beat.hour === hour);
       add(
         "shift-start",
         "Accept cafe shift · 5",
-        "Work at Hobbs Cafe, 16:00–19:00 each day until cancelled. Three game hours on the floor earn 5 if the till can pay in full. No advance or part-payment. Worked minutes and unpaid wages do not carry past midnight.",
+        "Accept one funded cafe work unit: 5 coins reserved before you start, for 180 eligible minutes at Hobbs, 16:00–19:00. Missed or suspended minutes, and earned unpaid wages, survive midnight. You may resume later. No advance or fractional wage. A further unit needs a new offer on a later game day.",
         undefined,
-        disabledReason,
+        !hasTimetable
+          ? "Your saved timetable needs repair first."
+          : conflictingProject
+            ? "An existing project conflicts with this shift. Resolve it before accepting."
+            : pending
+              ? "Your preserved prior work needs explicit recognition or settlement first."
+              : completedToday || player.paidToday
+                ? "Today's cafe unit has already been paid or completed. Read a new offer on a later game day."
+                : work.agreements.some(
+                      (a) => a.kind === "cafe-shift" && ["active", "suspended"].includes(a.status),
+                    )
+                  ? "You have another funded workplace agreement open."
+                  : town.minute > 16 * 60
+                    ? "Come back before 16:00 to begin the next work unit."
+                    : availableFunds(preview.staged, "till:cafe") < 5
+                      ? "The cafe cannot reserve the full wage of 5 now."
+                      : player.projects.filter((p) => p.status === "open").length >= 4
+                        ? "Finish or drop an open project before taking work."
+                        : undefined,
       );
     }
   }
   return actions;
 }
 
-/** Read-only quotes: showing or discussing an offer does not accept it. */
 export function playerActions(town: Town, target: AgentId): PlayerAction[] {
   return quotedPlayerActions(town, target).map(({ id, label, terms, disabledReason }) => ({
     id,
@@ -613,19 +776,46 @@ export function playerActions(town: Town, target: AgentId): PlayerAction[] {
     disabledReason,
   }));
 }
-
-/** Only explicit UI actions enter here; model output cannot call this boundary. */
+function mustWork<T>(result: { ok: true; value: T } | { ok: false; reason: string }): T {
+  if (!result.ok) throw new Error(result.reason);
+  return result.value;
+}
+function workerCommand(
+  town: Town,
+  kind: string,
+  terms: Parameters<typeof runtimeCommand>[3],
+  suffix: string,
+) {
+  return { ...runtimeCommand(town, kind, "player", terms, suffix), authority: "ui" as const };
+}
+function recordPlayerEvent(town: Town, text: string, recipients: AgentId[]) {
+  for (const id of new Set(recipients)) {
+    const resident = maybeAgent(town, id);
+    if (resident)
+      pushMemory(
+        resident,
+        makeMemory(town, town.day, town.minute, "observe", text, 6, { source: "event" }),
+      );
+  }
+}
+/** Current explicit quotes are validated before an atomic staged action. */
 export function applyPlayerAction(
   town: Town,
   target: AgentId,
   actionId: string,
 ): { ok: boolean; reply: string } {
-  const player = maybeAgent(town, "player");
-  const other = maybeAgent(town, target);
-  if (!player || !other || target === "player")
+  if (!maybeAgent(town, "player") || !maybeAgent(town, target))
     return { ok: false, reply: "That resident is not here." };
-  if (Math.abs(player.tile.x - other.tile.x) + Math.abs(player.tile.y - other.tile.y) > 2)
-    return { ok: false, reply: `${other.name} is too far away. Walk closer before choosing.` };
+  if (
+    target !== "player" &&
+    Math.abs(maybeAgent(town, "player")!.tile.x - maybeAgent(town, target)!.tile.x) +
+      Math.abs(maybeAgent(town, "player")!.tile.y - maybeAgent(town, target)!.tile.y) >
+      2
+  )
+    return {
+      ok: false,
+      reply: `${maybeAgent(town, target)!.name} is too far away. Walk closer before choosing.`,
+    };
   const action = quotedPlayerActions(town, target).find((candidate) => candidate.id === actionId);
   if (!action)
     return {
@@ -633,158 +823,297 @@ export function applyPlayerAction(
       reply: "That offer has changed. Read the current terms before choosing again.",
     };
   if (action.disabledReason) return { ok: false, reply: action.disabledReason };
-  let reply: string;
-  if (action.kind === "bread") {
-    // Stage both effects before adopting either: a refused item must never
-    // leave the player owing for a loaf they did not receive.
-    try {
-      const staged = structuredClone(town);
-      const stagedPlayer = maybeAgent(staged, "player")!;
-      const stagedBaba = maybeAgent(staged, "baba")!;
-      const previousFavors = staged.favors.length;
+  try {
+    const draft = structuredClone(town) as FundedTown;
+    const financial = [
+      "pay",
+      "shift-start",
+      "shift-stop",
+      "shift-resume",
+      "recognise-work",
+      "settle-wage",
+    ].includes(action.kind);
+    if (financial) {
+      const result = activateFundedTown(draft);
+      if (!result.ok) throw new Error(result.reason);
+    }
+    let player = maybeAgent(draft, "player")!;
+    let reply: string;
+    if (action.kind === "bread") {
       applyFavor(
-        staged,
+        draft,
         { action: "offer", from: "player", to: "baba", amount: 2, text: "Bread, to be paid back." },
         ["player", "baba"],
       );
-      applyProject(staged, {
+      applyProject(draft, {
         owner: "player",
         action: "start",
         kind: "other",
         place: "grocery",
         text: BABA_LOAF,
       });
-      const received = stagedPlayer.projects.some(
-        (project) =>
-          project.owner === "player" &&
-          project.kind === "other" &&
-          project.text === BABA_LOAF &&
-          project.status === "open",
-      );
-      const debt = staged.favors.at(-1);
       if (
-        !received ||
-        staged.favors.length !== previousFavors + 1 ||
-        debt?.from !== "player" ||
-        debt.to !== "baba" ||
-        debt.amount !== 2 ||
-        debt.status !== "owed"
-      ) {
-        return {
-          ok: false,
-          reply:
-            "The loaf and its tab could not both be recorded. You received no loaf and owe nothing new.",
-        };
-      }
-      town.favors = staged.favors;
-      town.nextId = staged.nextId;
-      player.projects = stagedPlayer.projects;
-      player.memories = stagedPlayer.memories;
-      player.newMemories = stagedPlayer.newMemories;
-      other.memories = stagedBaba.memories;
-      other.newMemories = stagedBaba.newMemories;
-    } catch {
-      return {
-        ok: false,
-        reply:
-          "The loaf and its tab could not both be recorded. You received no loaf and owe nothing new.",
-      };
-    }
-    reply =
-      "You received one loaf and accepted a tab of 2 with Baba. No money has moved. You can choose Eat loaf when you want it.";
-  } else if (action.kind === "eat-loaf") {
-    const loaf = player.projects.find(
-      (project) =>
-        project.id === action.reference &&
-        project.owner === "player" &&
-        project.kind === "other" &&
-        project.text === BABA_LOAF &&
-        project.status === "open",
-    );
-    if (!loaf) return { ok: false, reply: "You are not carrying that loaf anymore." };
-    loaf.status = "done";
-    reply = "You eat the loaf. It is gone. Any unpaid tab stays open; no money moved.";
-  } else if (action.kind === "pay") {
-    const debt = town.favors.find(
-      (f) =>
-        f.id === action.reference && f.from === "player" && f.to === target && f.status === "owed",
-    );
-    if (!debt) return { ok: false, reply: "That tab is no longer open." };
-    applyFavor(
-      town,
-      {
-        action: "pay",
-        id: debt.id,
-        from: debt.from,
-        to: debt.to,
-        amount: debt.amount,
-        text: debt.text,
-      },
-      ["player", target],
-    );
-    if (debt.status !== "paid")
-      return { ok: false, reply: "The payment could not be completed. The tab stays open." };
-    reply = debt.amount
-      ? `Paid ${other.name} ${debt.amount}. That tab is closed.`
-      : "That favor is complete. No money moved.";
-  } else if (action.kind === "shift-start") {
-    applyProject(town, {
-      owner: "player",
-      action: "start",
-      kind: "shift",
-      place: "cafe",
-      text: PLAYER_CAFE_SHIFT,
-    });
-    if (
-      !player.projects.some(
-        (project) =>
-          project.owner === "player" &&
-          project.kind === "shift" &&
-          project.place === "cafe" &&
-          project.status === "open" &&
-          project.text === PLAYER_CAFE_SHIFT,
+        !hasLoaf(player) ||
+        !draft.favors.some(
+          (f) => f.from === "player" && f.to === "baba" && f.status === "owed" && f.amount === 2,
+        )
       )
-    ) {
-      return {
-        ok: false,
-        reply: "The shift could not be recorded. Your timetable has not changed.",
+        throw new Error("The loaf and tab could not both be recorded; nothing changed.");
+      reply =
+        "You received one loaf and accepted a tab of 2 with Baba. No money moved. Inventory lets you eat or share the loaf once.";
+    } else if (action.kind === "eat-loaf" || action.kind === "share-loaf") {
+      const [loafId, inviteeId] = (action.reference ?? "").split("|");
+      const loaf = hasLoaf(player);
+      if (!loaf || loaf.id !== loafId) throw new Error("You are not carrying that loaf anymore.");
+      if (action.kind === "eat-loaf") {
+        loaf.status = "done";
+        reply = "You eat the loaf. It is gone. Any unpaid tab stays open; no money moved.";
+        recordPlayerEvent(draft, reply, ["player"]);
+      } else {
+        if ((inviteeId !== "baba" && inviteeId !== "northern") || !nearbyTogether(draft, inviteeId))
+          throw new Error("The invited resident is no longer here; your loaf is untouched.");
+        const view = libraryView(draft);
+        if (!view.progress.includes("1/1 independent lookup"))
+          throw new Error(
+            "The meal needs a completed public library result; your loaf is untouched.",
+          );
+        loaf.status = "done";
+        const invitee = maybeAgent(draft, inviteeId)!;
+        reply = `You and ${invitee.name} share the loaf after ${invitee.name} accepts. You show the public library result: ${view.outcome} The loaf is gone; any unpaid tab stays open. No future meeting or affection was promised.`;
+        const witnesses = draft.agents
+          .filter((a) => a.id !== "player" && a.id !== inviteeId && nearbyTogether(draft, a.id))
+          .map((a) => a.id);
+        recordPlayerEvent(
+          draft,
+          `${player.name} and ${invitee.name} shared the offered loaf after both accepted. The public library result was shown: ${view.outcome} The loaf was consumed once; any unpaid tab remains open.`,
+          ["player", inviteeId, ...witnesses],
+        );
+      }
+    } else if (action.kind === "pay") {
+      const debt = draft.favors.find(
+        (f) =>
+          f.id === action.reference &&
+          f.from === "player" &&
+          f.to === target &&
+          f.status === "owed",
+      );
+      if (!debt) throw new Error("That tab is no longer open.");
+      applyFavor(
+        draft,
+        {
+          action: "pay",
+          id: debt.id,
+          from: "player",
+          to: target,
+          amount: debt.amount,
+          text: debt.text,
+        },
+        ["player", target],
+      );
+      if (draft.favors.find((f) => f.id === debt.id)?.status !== "paid")
+        throw new Error("The payment could not be completed. The tab stays open.");
+      reply = `Paid ${maybeAgent(draft, target)!.name} ${debt.amount}. That tab is closed.`;
+    } else if (action.kind === "shift-start") {
+      const id = `cafe:player:${draft.day}:${draft.nextId}`;
+      const approvalId = `approval:${id}`;
+      const approval: Omit<PayrollApproval, "consumed"> = {
+        id: approvalId,
+        kind: "cafe-replacement",
+        worker: "player",
+        payer: "till:cafe",
+        issuer: "kevin",
+        claimId: null,
+        confirmedMinutes: 0,
+        fee: 5,
+        requiredMinutes: 180,
+        expires: { day: draft.day, minute: 1439 },
+        cancellation: CAFE_CANCELLATION,
       };
+      mustWork(
+        approvePayrollAgreement(
+          draft,
+          runtimeCommand(draft, "approve-payroll-agreement", "kevin", approval, approvalId),
+          approval,
+        ),
+      );
+      mustWork(
+        createFundedCafeAgreement(
+          draft,
+          workerCommand(
+            draft,
+            "accept-funded-cafe-shift",
+            cafeAgreementTerms(id, "player", approvalId),
+            id,
+          ),
+          id,
+          "player",
+          approvalId,
+        ),
+      );
+      player = maybeAgent(draft, "player")!;
+      for (const project of player.projects)
+        if (project.kind === "shift" && project.status === "open") project.status = "done";
+      applyProject(draft, {
+        owner: "player",
+        action: "start",
+        kind: "shift",
+        place: "cafe",
+        text: PLAYER_CAFE_SHIFT,
+      });
+      paintHours(player, [
+        { from: 16, to: 19, place: "cafe", spot: "out", status: "on a funded cafe shift" },
+      ]);
+      player.shiftHours = 0;
+      reply =
+        "Cafe unit accepted: 5 coins reserved for 180 eligible minutes, 16:00–19:00. Your minutes and any earned unpaid wage survive midnight. Nothing paid in advance.";
+    } else if (action.kind === "recognise-work") {
+      const claim = draft.economy!.work!.legacyClaims.find(
+        (c) => c.id === action.reference && c.worker === "player",
+      )!;
+      if (!claim) throw new Error("That preserved work record is no longer available.");
+      const payer = target === "baba" ? ("till:grocery" as const) : ("till:cafe" as const);
+      const issuer = target === "baba" ? "baba" : "kevin";
+      const minutes = confirmedLegacyMinutes(claim);
+      const approvalId = `approval:player:${claim.id}`;
+      const approval: Omit<PayrollApproval, "consumed"> = {
+        id: approvalId,
+        kind: "legacy-recognition",
+        worker: "player",
+        payer,
+        issuer,
+        claimId: claim.id,
+        confirmedMinutes: minutes,
+        fee: payer === "till:cafe" ? 5 : 4,
+        requiredMinutes: 180,
+        expires: { day: draft.day, minute: 1439 },
+        cancellation: CAFE_CANCELLATION,
+      };
+      mustWork(
+        approvePayrollAgreement(
+          draft,
+          runtimeCommand(draft, "approve-payroll-agreement", issuer, approval, approvalId),
+          approval,
+        ),
+      );
+      const terms = {
+        claimId: claim.id,
+        payer,
+        confirmedMinutes: minutes,
+        approvalId,
+        fee: approval.fee,
+        requiredMinutes: 180,
+        cancellation: CAFE_CANCELLATION,
+      };
+      mustWork(
+        recogniseLegacyClaim(
+          draft,
+          workerCommand(draft, "recognise-legacy-payroll", terms, claim.id),
+          claim.id,
+          payer,
+          minutes,
+          approvalId,
+        ),
+      );
+      player = maybeAgent(draft, "player")!;
+      if (claim.payer === null)
+        paintHours(player, [
+          {
+            from: 16,
+            to: 19,
+            place: payer === "till:grocery" ? "grocery" : "cafe",
+            spot: "out",
+            status: "on an explicitly replaced workplace shift",
+          },
+        ]);
+      reply = `Explicit funded recognition recorded: ${minutes} minutes with ${maybeAgent(draft, issuer)!.name}. Original legacy evidence remains unchanged. The funded agreement is suspended; read Resume before working.`;
+    } else if (action.kind === "settle-wage") {
+      const payable = draft.economy!.work!.payables.find(
+        (p) => p.id === action.reference && p.worker === "player",
+      )!;
+      if (!payable) throw new Error("That earned payable no longer exists.");
+      const issuer = payable.payer === "till:grocery" ? "baba" : "kevin";
+      mustWork(
+        settleWorkPayable(
+          draft,
+          runtimeCommand(
+            draft,
+            "settle-work-payable",
+            issuer,
+            { payableId: payable.id },
+            `${payable.id}:${draft.day}:${draft.nextId}`,
+          ),
+          payable.id,
+        ),
+      );
+      reply = `The recorded earned wage of ${payable.amount} is settled once from its reserved funds.`;
+    } else {
+      const agreement = draft.economy!.work!.agreements.find(
+        (a) => a.id === action.reference && a.worker === "player",
+      )!;
+      if (!agreement) throw new Error("That work agreement is no longer available.");
+      const resume = action.kind === "shift-resume";
+      mustWork(
+        suspendWorkAgreement(
+          draft,
+          workerCommand(
+            draft,
+            resume ? "resume-work" : "suspend-work",
+            { agreementId: agreement.id },
+            `${agreement.id}:${draft.nextId}`,
+          ),
+          agreement.id,
+          resume,
+        ),
+      );
+      player = maybeAgent(draft, "player")!;
+      if (resume) {
+        const legacyClaim = draft.economy!.work!.legacyClaims.find(
+          (claim) => claim.agreementId === agreement.id,
+        );
+        if (legacyClaim?.payer && legacyClaim.classification !== "ambiguous") {
+          player.plan = structuredClone(legacyClaim.evidence.plan);
+          player.plan.day = draft.day;
+        } else
+          paintHours(player, [
+            {
+              from: 16,
+              to: 19,
+              place: agreement.payer === "till:grocery" ? "grocery" : "cafe",
+              spot: "out",
+              status: "on a funded workplace shift",
+            },
+          ]);
+      }
+      reply = `${resume ? "Resumed" : "Suspended"} workplace attendance. ${agreement.eligibleMinutes} minutes and the full ${agreement.fee}-coin reservation remain. No money moved and no accrued work was lost.`;
     }
-    paintHours(player, [
-      { from: 16, to: 19, place: "cafe", spot: "out", status: "on a cafe shift, earning it" },
-    ]);
-    reply =
-      "Cafe shift accepted: 16:00–19:00 each day until cancelled. Three game hours on the floor, then 5 if the till can pay. Nothing paid in advance.";
-  } else {
-    applyProject(town, {
-      owner: "player",
-      action: "drop",
-      id: action.reference,
-      kind: "shift",
-      text: "",
-    });
-    paintHours(player, [
-      { from: 16, to: 18, place: "park", spot: "out", status: "in the park, keeping to the path" },
-      { from: 18, to: 19, place: "townhouses", spot: "home", status: "home on the row, lamp low" },
-    ]);
-    reply =
-      "Cafe shift cancelled. No wage was paid by cancelling; money already earned stays yours.";
+    if (target !== "player" && action.kind !== "share-loaf")
+      applyResult(
+        draft,
+        {
+          kind: "player",
+          mind: "offline",
+          agentId: target,
+          playerText: action.label,
+          reply,
+          delta: 0,
+          note: "",
+          favor: null,
+        },
+        "event",
+      );
+    else if (action.kind !== "eat-loaf" && action.kind !== "share-loaf")
+      recordPlayerEvent(draft, reply, ["player"]);
+    adoptActionDraft(town, draft);
+    return { ok: true, reply };
+  } catch (error) {
+    return {
+      ok: false,
+      reply:
+        error instanceof Error
+          ? error.message
+          : "The action could not be recorded; nothing changed.",
+    };
   }
-  applyResult(
-    town,
-    {
-      kind: "player",
-      mind: "offline",
-      agentId: target,
-      playerText: action.label,
-      reply,
-      delta: 0,
-      note: "",
-      favor: null,
-    },
-    "event",
-  );
-  return { ok: true, reply };
 }
 
 function applyPlanDraft(town: Town, draft: PlanDraft, mind: "grok" | "offline", weekly: boolean) {

@@ -62,7 +62,10 @@ test("an experimental funded ledger is retained for recovery rather than migrate
       configurable: true,
       value: { getItem: () => raw },
     });
-    assert.deepEqual(save.readTownSave(), { status: "unreadable", raw });
+    const recovery = save.readTownSave();
+    assert.equal(recovery.status, "unreadable");
+    assert.equal(recovery.raw, raw, "every original byte remains recoverable");
+    assert.match(recovery.reason, /financial|econom|account|unsupported|invalid/i);
   }
 });
 

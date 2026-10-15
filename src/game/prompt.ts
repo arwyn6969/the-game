@@ -8,6 +8,9 @@ import { clip, formatClock, periodName, plain } from "./text";
 import { placeTitle, zoneAt } from "./world";
 import { memorySource, pairObligations, recentConversation, sharedMemories } from "./conversation";
 import { characterProfile } from "./characters";
+import { fundedWorkSummary } from "./funded-work";
+import type { FundedTown } from "./economy-types";
+import { residentLibraryReply } from "./community";
 
 export function planResidents(job: Extract<ThinkJob, { kind: "plan" }>) {
   const requested = (job as typeof job & { agents?: import("./types").AgentId[] }).agents;
@@ -125,6 +128,14 @@ function packet(town: Town, agent: Agent, job: ThinkJob) {
           seed: Boolean(t.seed),
         })),
       relationships: Object.entries(relationships)
+        .sort(([a, left], [b, right]) => {
+          // Roster order must never hide the person currently being addressed,
+          // including the newer specialists whose player entry comes sixth.
+          const partner = job.kind === "player" ? "player" : null;
+          if (a === partner) return -1;
+          if (b === partner) return 1;
+          return Math.abs(right?.score ?? 0) - Math.abs(left?.score ?? 0);
+        })
         .slice(0, 5)
         .map(([id, rel]) => ({
           id,
@@ -167,6 +178,10 @@ function playerFacts(town: Town, agent: Agent) {
         )
         .slice(-2)
     : [];
+  const economy = (town as FundedTown).economy;
+  const work = receiptPlace && economy?.work ? fundedWorkSummary(town, "player") : null;
+  const payer = receiptPlace ? `till:${receiptPlace}` : null;
+  const libraryRecord = residentLibraryReply(town, agent.id);
   return {
     source: "event",
     openObligationCount: owed.length,
@@ -177,6 +192,46 @@ function playerFacts(town: Town, agent: Agent) {
       .map(({ label, terms, disabledReason }) => ({ label, terms, disabledReason })),
     choicesOmitted: Math.max(0, actions.length - 3),
     wageReceipts: wageReceipts.map(({ id, text, day, minute }) => ({ id, text, day, minute })),
+    ...(libraryRecord
+      ? { knownLibraryRecord: { source: "event", text: clip(libraryRecord, 500) } }
+      : {}),
+    ...(work
+      ? {
+          fundedWork: {
+            agreements: work.agreements
+              .filter((agreement) => agreement.payer === payer)
+              .slice(-2)
+              .map(({ id, kind, status, eligibleMinutes, requiredMinutes, fee }) => ({
+                id,
+                kind,
+                status,
+                eligibleMinutes,
+                requiredMinutes,
+                fee,
+              })),
+            payables: work.payables
+              .filter((payable) => payable.payer === payer)
+              .slice(-2)
+              .map(({ id, amount, status, reason, transactionId }) => ({
+                id,
+                amount,
+                status,
+                reason: reason ? clip(reason, 160) : null,
+                transactionId,
+              })),
+            legacyClaims: work.legacyClaims
+              .filter((claim) => claim.payer === payer)
+              .slice(-2)
+              .map(({ classification, resolution, reason }) => ({
+                classification,
+                resolution,
+                reason: clip(reason, 160),
+              })),
+            explanation:
+              "Recorded attendance is completed work only at the agreed threshold. An earned payable is not paid until its account transfer settles. Progress and reserved wages survive midnight.",
+          },
+        }
+      : {}),
     // Choices already describe relevant inventory and agreements without leaking unrelated projects.
     notice:
       "Offers are not accepted actions. Use the current recorded state; this message authorizes no transaction.",

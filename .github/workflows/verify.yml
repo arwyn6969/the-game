@@ -25,3 +25,11 @@ jobs:
       - run: npm test
       - run: npm run diagnose:town
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/quality-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: game-browser-quality
+          path: artifacts/quality-browser
+          if-no-files-found: ignore

@@ -13,8 +13,11 @@ import {
   X,
 } from "lucide-react";
 import { ArcadeMark, PixelUniverse } from "./ArcadeArt";
-import type { Agent, AgentId, Face, ThinkJob, Town } from "@/game/types";
+import type { Agent, AgentId, Face, PlaceId, ThinkJob, Town } from "@/game/types";
 import { NPC_IDS } from "@/game/types";
+import { applyLibraryAction } from "@/game/community";
+import { findPath } from "@/game/path";
+import { PlayerTools, type ToolPage } from "./PlayerTools";
 import {
   applyPlayerAction,
   applyResult,
@@ -41,7 +44,10 @@ import {
   MAX_TOWN_FILE_BYTES,
   parseTownFile,
   readTownSave,
-  saveTownWithStatus,
+  readTownConflicts,
+  initializeTownSave,
+  persistTownSave,
+  replaceTownSave,
   type SaveResult,
 } from "@/game/save";
 import { advanceTown, frameAt, stepMinute } from "@/game/sim";
@@ -90,6 +96,15 @@ declare global {
 }
 
 type Replay = { d: number; m: number };
+const LOCAL_DIALOGUE_KEY = "the-game-local-dialogue-only";
+
+function savedLocalPreference(): boolean {
+  try {
+    return localStorage.getItem(LOCAL_DIALOGUE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
 
 function previewDay(text: string): { day: number; version: number | null } | null {
   try {
@@ -196,6 +211,16 @@ export function TownApp() {
   const onlineRef = useRef(true);
   const replayRef = useRef<Replay | null>(null);
   const pendingRef = useRef(false);
+  const foregroundPendingRef = useRef(false);
+  const requestSerial = useRef(0);
+  const activeJobRef = useRef<{ town: Town; job: ThinkJob } | null>(null);
+  const localOnlyRef = useRef(savedLocalPreference());
+  const routeRef = useRef<{ title: string; target: { x: number; y: number } } | null>(null);
+  const stepInputRef = useRef<string | null>(null);
+  const movementSaveRef = useRef<number | undefined>(undefined);
+  const movementDirtyRef = useRef(false);
+  const startOverRef = useRef(false);
+  const toolOpenerRef = useRef<HTMLElement | null>(null);
   const hourLock = useRef(false);
   const mounted = useRef(true);
   const runMindRef = useRef<(live: Town, job: ThinkJob) => Promise<void>>(async () => {});
@@ -221,7 +246,12 @@ export function TownApp() {
   const [speed, setSpeed] = useState<0 | 1 | 4>(speedRef.current);
   const [replay, setReplay] = useState<Replay | null>(null);
   const [panel, setPanel] = useState<AgentId | null>(null);
-  const [pinned, setPinned] = useState(false);
+  const [pinned, setPinned] = useState<AgentId | null>(null);
+  const [tools, setTools] = useState<ToolPage | null>(null);
+  const [browserBackups, setBrowserBackups] = useState<{ key: string; raw: string }[]>([]);
+  const [localOnly, setLocalOnly] = useState(localOnlyRef.current);
+  const [preferenceNote, setPreferenceNote] = useState("");
+  const [inspectorEnabled, setInspectorEnabled] = useState(false);
   const [board, setBoard] = useState(false);
   const [thinking, setThinking] = useState("");
   const [hiccup, setHiccup] = useState(false);
@@ -238,11 +268,44 @@ export function TownApp() {
   const boardRef = useRef(false);
 
   function persistTown(live: Town) {
-    const result = saveTownWithStatus(live);
-    if (mounted.current) setSaveStatus(result);
+    void persistTownSave(live).then((result) => {
+      if (mounted.current && townRef.current === live) {
+        setSaveStatus(result);
+        if (!result.ok && result.reason === "conflict") {
+          speedRef.current = 0;
+          live.paused = true;
+          routeRef.current = null;
+          setSpeed(0);
+        }
+      }
+    });
   }
 
-  function acceptImportedTown(next: Town) {
+  async function acceptImportedTown(next: Town, intent: "replace" | "load" = "replace") {
+    if (intent === "replace") {
+      const result = await replaceTownSave(next);
+      if (!result.ok) {
+        setImportError(
+          "The saved town could not be safely replaced. Download the current copy and try again.",
+        );
+        setRecoverNote(
+          "The saved town could not be safely replaced. Its original bytes have been kept.",
+        );
+        return;
+      }
+      setSaveStatus(result);
+    } else setSaveStatus(null);
+    requestSerial.current += 1;
+    pendingRef.current = false;
+    foregroundPendingRef.current = false;
+    activeJobRef.current = null;
+    if (movementSaveRef.current !== undefined) window.clearTimeout(movementSaveRef.current);
+    movementSaveRef.current = undefined;
+    movementDirtyRef.current = false;
+    routeRef.current = null;
+    stepInputRef.current = null;
+    setThinking("");
+    setTools(null);
     townRef.current = next;
     keysRef.current.clear();
     speedRef.current = next.paused ? 0 : 1;
@@ -258,7 +321,7 @@ export function TownApp() {
     setRecoverNote("");
     panelRef.current = null;
     setPanel(null);
-    setPinned(false);
+    setPinned(null);
     boardRef.current = false;
     setBoard(false);
     setCrowd(null);
@@ -266,7 +329,6 @@ export function TownApp() {
     setExportNote("");
     replayRef.current = null;
     setReplay(null);
-    persistTown(next);
     setPhase("play");
     setTick((n) => n + 1);
   }
@@ -274,8 +336,8 @@ export function TownApp() {
   function chooseAction(expectedTown: Town, target: AgentId, actionId: string) {
     if (
       townRef.current !== expectedTown ||
-      panelRef.current !== target ||
-      pendingRef.current ||
+      (target !== "player" && panelRef.current !== target) ||
+      foregroundPendingRef.current ||
       replayRef.current !== null
     )
       return;
@@ -285,11 +347,111 @@ export function TownApp() {
     setTick((n) => n + 1);
   }
 
+  function chooseLibrary(expectedTown: Town, actionId: string) {
+    if (townRef.current !== expectedTown || foregroundPendingRef.current || replayRef.current)
+      return;
+    const result = applyLibraryAction(expectedTown, actionId);
+    if (result.ok) {
+      persistTown(expectedTown);
+      resetGlide(expectedTown);
+    }
+    setSendNote(result.reply);
+    setTick((n) => n + 1);
+  }
+
+  function openTools(page: ToolPage) {
+    routeRef.current = null;
+    stepInputRef.current = null;
+    if (page === "help") setBrowserBackups(readTownConflicts());
+    toolOpenerRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    keysRef.current.clear();
+    setTools(page);
+  }
+
+  function closeTools() {
+    setTools(null);
+    requestAnimationFrame(() => {
+      if (toolOpenerRef.current?.isConnected) toolOpenerRef.current.focus();
+      else canvasRef.current?.focus();
+    });
+  }
+
+  function localReplyNow() {
+    const current = activeJobRef.current;
+    requestSerial.current += 1;
+    activeJobRef.current = null;
+    pendingRef.current = false;
+    foregroundPendingRef.current = false;
+    setThinking("");
+    if (!current || townRef.current !== current.town || current.job.kind !== "player") return;
+    const player = agentById(current.town, "player");
+    const resident = agentById(current.town, current.job.agentId);
+    if (!inTalkRange(player.tile.x, player.tile.y, resident.tile.x, resident.tile.y)) {
+      setSendNote(
+        "You walked out of earshot. Walk closer to send your line again; your draft is still here.",
+      );
+      return;
+    }
+    const job = current.job;
+    try {
+      const before = playerChatIds(agentById(current.town, job.agentId).memories ?? []);
+      applyResult(current.town, offlineResult(current.town, job));
+      const landed = exchangeLanded(
+        before,
+        playerChatIds(agentById(current.town, job.agentId).memories ?? []),
+      );
+      setDraft((text) => nextDraft(text, job.text, panelRef.current === job.agentId, landed));
+      setSendNote(
+        landed
+          ? "They answered with local dialogue."
+          : "That did not land. Your line is still here.",
+      );
+      if (landed) {
+        current.town.guide = 3;
+        current.town.sawHint = true;
+        setHint(false);
+      }
+      setLastMind("offline");
+      persistTown(current.town);
+      setTick((n) => n + 1);
+    } catch {
+      setSendNote("That did not land. Your line is still here.");
+    }
+  }
+
+  function setLocalPreference(value: boolean) {
+    localOnlyRef.current = value;
+    setLocalOnly(value);
+    if (value) localReplyNow();
+    try {
+      localStorage.setItem(LOCAL_DIALOGUE_KEY, String(value));
+      setPreferenceNote("Dialogue preference saved in this browser.");
+    } catch {
+      setPreferenceNote("The preference applies now, but this browser could not save it.");
+    }
+  }
+
+  function goTo(place: PlaceId) {
+    const live = townRef.current;
+    if (!live || replayRef.current) return;
+    const target = ANCHORS[place];
+    routeRef.current = { title: placeTitle(place), target };
+    keysRef.current.clear();
+    setFarNote(`Walking to ${placeTitle(place)}. Use a direction or Escape to stop.`);
+    closeTools();
+  }
+
   useEffect(() => {
     onlineRef.current = online;
   }, [online]);
   useEffect(() => {
     replayRef.current = replay;
+    if (replay) {
+      routeRef.current = null;
+      keysRef.current.clear();
+      stepInputRef.current = null;
+    }
   }, [replay]);
 
   useEffect(() => {
@@ -343,7 +505,39 @@ export function TownApp() {
 
   runMindRef.current = async (live, job) => {
     if (townRef.current !== live || pendingRef.current) return;
+    if (localOnlyRef.current) return;
     pendingRef.current = true;
+    foregroundPendingRef.current = job.kind === "player";
+    activeJobRef.current = { town: live, job };
+    const serial = ++requestSerial.current;
+    const playerAtStart = agentById(live, "player").tile;
+    let snapshot = {
+      day: live.day,
+      minute: live.minute,
+      nextId: live.nextId,
+      x: playerAtStart.x,
+      y: playerAtStart.y,
+    };
+    const current = () =>
+      mounted.current &&
+      townRef.current === live &&
+      requestSerial.current === serial &&
+      !localOnlyRef.current;
+    const fresh = () =>
+      current() &&
+      replayRef.current === null &&
+      live.day === snapshot.day &&
+      live.minute === snapshot.minute &&
+      live.nextId === snapshot.nextId &&
+      (job.kind === "player"
+        ? inTalkRange(
+            agentById(live, "player").tile.x,
+            agentById(live, "player").tile.y,
+            agentById(live, job.agentId).tile.x,
+            agentById(live, job.agentId).tile.y,
+          )
+        : agentById(live, "player").tile.x === snapshot.x &&
+          agentById(live, "player").tile.y === snapshot.y);
     if (mounted.current) setThinking(job.kind);
     let timed: number | undefined;
     let applied = false;
@@ -353,11 +547,20 @@ export function TownApp() {
       job.kind === "player" ? playerChatIds(agentById(live, job.agentId).memories ?? []) : [];
     try {
       prepareRetrievals(live, job);
+      const prompt = buildPrompt(live, job);
+      const playerBeforeRequest = agentById(live, "player").tile;
+      snapshot = {
+        day: live.day,
+        minute: live.minute,
+        nextId: live.nextId,
+        x: playerBeforeRequest.x,
+        y: playerBeforeRequest.y,
+      };
       const res = await new Promise<Awaited<ReturnType<typeof thinkTown>>>((resolve, reject) => {
-        timed = window.setTimeout(() => reject(new Error("timeout")), 45_000);
-        thinkTown({ data: { kind: job.kind, user: buildPrompt(live, job) } }).then(resolve, reject);
+        timed = window.setTimeout(() => reject(new Error("timeout")), 15_000);
+        thinkTown({ data: { kind: job.kind, user: prompt } }).then(resolve, reject);
       });
-      if (townRef.current !== live) return;
+      if (!fresh()) return;
       if (!res.ok) throw new Error(res.error);
       if (res.text.length > 20_000) throw new Error("huge");
       const parsed = parseMind(job, res.text);
@@ -382,7 +585,7 @@ export function TownApp() {
         }
       }
     } catch {
-      if (townRef.current === live && !applied) {
+      if (fresh() && !applied) {
         try {
           const before = mark();
           usedLocalReply = true;
@@ -398,28 +601,32 @@ export function TownApp() {
       }
     } finally {
       if (timed) window.clearTimeout(timed);
-      pendingRef.current = false;
-      if (townRef.current === live) persistTown(live);
-      if (mounted.current) {
-        setThinking("");
-        setTick((n) => n + 1);
-        if (job.kind === "player") {
-          const same = townRef.current === live && panelRef.current === job.agentId;
-          setDraft((current) => nextDraft(current, job.text, same, landed));
-          if (townRef.current === live) {
-            setSendNote(
-              landed
-                ? usedLocalReply
-                  ? "They answered with local dialogue."
-                  : "They heard you."
-                : "That did not land. Your line is still here.",
-            );
-          }
-          if (landed && townRef.current === live && (live.guide ?? 0) < 3) {
-            live.guide = 3;
-            live.sawHint = true;
-            setHint(false);
-            persistTown(live);
+      if (requestSerial.current === serial) {
+        activeJobRef.current = null;
+        foregroundPendingRef.current = false;
+        pendingRef.current = false;
+        if (townRef.current === live) persistTown(live);
+        if (mounted.current) {
+          setThinking("");
+          setTick((n) => n + 1);
+          if (job.kind === "player" && current()) {
+            const same = townRef.current === live && panelRef.current === job.agentId;
+            setDraft((current) => nextDraft(current, job.text, same, landed));
+            if (townRef.current === live) {
+              setSendNote(
+                landed
+                  ? usedLocalReply
+                    ? "They answered with local dialogue."
+                    : "They heard you."
+                  : "That did not land. Your line is still here.",
+              );
+            }
+            if (landed && townRef.current === live && (live.guide ?? 0) < 3) {
+              live.guide = 3;
+              live.sawHint = true;
+              setHint(false);
+              persistTown(live);
+            }
           }
         }
       }
@@ -429,8 +636,14 @@ export function TownApp() {
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
       if (event.code === "Escape") {
+        if (routeRef.current) {
+          routeRef.current = null;
+          setFarNote("Destination walk stopped.");
+        }
+        stepInputRef.current = null;
+        setTools(null);
         if (panelRef.current) {
-          setPinned(false);
+          setPinned(null);
           setPanel(null);
         }
         setCrowd(null);
@@ -487,7 +700,8 @@ export function TownApp() {
     const takeJob = (job: ThinkJob | null) => {
       const live = townRef.current;
       if (!live || !job) return false;
-      const minds = onlineRef.current && document.visibilityState === "visible";
+      const minds =
+        onlineRef.current && !localOnlyRef.current && document.visibilityState === "visible";
       if (minds && !pendingRef.current) {
         void runMindRef.current(live, job);
         return true;
@@ -502,10 +716,49 @@ export function TownApp() {
 
     const stepPlayer = () => {
       const live = townRef.current;
-      if (!live || replayRef.current !== null || pendingRef.current) return;
-      const { x, y } = axis(keysRef.current);
+      if (!live || replayRef.current !== null) return;
+      let { x, y } = axis(keysRef.current);
+      const stepCode = stepInputRef.current;
+      if (!x && !y && (routeRef.current || stepCode) && moveCool > 0) return;
+      if (stepCode && moveCool <= 0) {
+        ({ x, y } = axis(new Set([stepCode])));
+        stepInputRef.current = null;
+      }
+      if (x || y) routeRef.current = null;
+      if (!x && !y && routeRef.current && moveCool <= 0) {
+        const route = routeRef.current;
+        const player = agentById(live, "player");
+        if (
+          Math.abs(player.tile.x - route.target.x) + Math.abs(player.tile.y - route.target.y) <=
+          1
+        ) {
+          routeRef.current = null;
+          persistTown(live);
+          setFarNote(`You reached ${route.title}.`);
+        } else {
+          const blocked = new Set(
+            live.agents.filter((a) => a.id !== "player").map((a) => `${a.tile.x},${a.tile.y}`),
+          );
+          const next = findPath(player.tile, route.target, blocked)[0];
+          if (next) {
+            x = next.x - player.tile.x;
+            y = next.y - player.tile.y;
+          } else {
+            routeRef.current = null;
+            setFarNote(
+              `The way to ${route.title} is blocked. Try a direction or another destination.`,
+            );
+          }
+        }
+      }
       if (!x && !y) {
         moveCool = 0;
+        if (movementDirtyRef.current) {
+          movementDirtyRef.current = false;
+          if (movementSaveRef.current !== undefined) window.clearTimeout(movementSaveRef.current);
+          movementSaveRef.current = undefined;
+          persistTown(live);
+        }
         const player = agentById(live, "player");
         const beat = beatAt(player, live.minute);
         if (!player.status.startsWith("walking")) player.status = beat.status;
@@ -524,11 +777,38 @@ export function TownApp() {
         )
       ) {
         moveCool = 0.16;
+        if (stepCode) setFarNote("The way is blocked. Try another direction.");
         return;
       }
       player.face = x > 0 ? "e" : x < 0 ? "w" : y > 0 ? "s" : "n";
       player.tile = { x: nx, y: ny };
+      const pending = activeJobRef.current;
+      if (pending?.job.kind === "player") {
+        const other = agentById(live, pending.job.agentId);
+        if (!inTalkRange(nx, ny, other.tile.x, other.tile.y)) {
+          requestSerial.current += 1;
+          activeJobRef.current = null;
+          pendingRef.current = false;
+          foregroundPendingRef.current = false;
+          setThinking("");
+          setSendNote(
+            "You walked out of earshot. Walk closer to send your line again; your draft is still here.",
+          );
+        }
+      }
+      movementDirtyRef.current = true;
+      if (movementSaveRef.current === undefined)
+        movementSaveRef.current = window.setTimeout(() => {
+          movementSaveRef.current = undefined;
+          movementDirtyRef.current = false;
+          if (townRef.current === live) persistTown(live);
+        }, 1000);
       player.status = `walking ${placeTitle(zoneAt(nx, ny))}`;
+      if (stepCode)
+        setFarNote(
+          `Moved ${stepCode === "ArrowUp" ? "north" : stepCode === "ArrowDown" ? "south" : stepCode === "ArrowLeft" ? "west" : "east"}. ${placeTitle(zoneAt(nx, ny))}, tile ${nx}, ${ny}.`,
+        );
+      setTick((n) => n + 1);
       if ((live.guide ?? 0) < 1 && zoneAt(nx, ny) === "cafe") {
         live.guide = 1;
         persistTown(live);
@@ -554,7 +834,7 @@ export function TownApp() {
             replayRef.current === null &&
             speedRef.current > 0 &&
             !hourLock.current &&
-            !pendingRef.current
+            !foregroundPendingRef.current
           ) {
             clock += dt * 1000;
             const span = 1000 / speedRef.current;
@@ -562,7 +842,10 @@ export function TownApp() {
             let advanced = false;
             while (clock >= span && guard++ < 6) {
               clock -= span;
-              const minds = onlineRef.current && document.visibilityState === "visible";
+              const minds =
+                onlineRef.current &&
+                !localOnlyRef.current &&
+                document.visibilityState === "visible";
               let job: ThinkJob | null = null;
               try {
                 job = stepMinute(live, minds);
@@ -684,6 +967,9 @@ export function TownApp() {
 
     return () => {
       cancelAnimationFrame(raf);
+      if (movementSaveRef.current !== undefined) window.clearTimeout(movementSaveRef.current);
+      movementSaveRef.current = undefined;
+      movementDirtyRef.current = false;
       window.removeEventListener("pagehide", onLeave);
       document.removeEventListener("visibilitychange", onHide);
       delete window.__controlsTest;
@@ -691,13 +977,28 @@ export function TownApp() {
     };
   }, [phase]);
 
-  function enter(event: React.FormEvent) {
+  async function enter(event: React.FormEvent) {
     event.preventDefault();
     if (hold) return;
     const town = createTown(name);
     town.paused = true;
+    const result = startOverRef.current
+      ? await replaceTownSave(town)
+      : await initializeTownSave(town);
+    if (!result.ok && result.reason === "conflict") {
+      setSaveStatus(result);
+      setRecoverNote(
+        "Another tab created a saved town while you were choosing a name. Open that saved town to continue; your new copy has been preserved when browser storage allows it.",
+      );
+      return;
+    }
+    if (startOverRef.current && !result.ok) {
+      setRecoverNote("The saved town could not be safely replaced. Import a backup or try again.");
+      return;
+    }
+    startOverRef.current = false;
     townRef.current = town;
-    persistTown(town);
+    setSaveStatus(result);
     speedRef.current = 0;
     setSpeed(0);
     setHint(true);
@@ -715,12 +1016,13 @@ export function TownApp() {
 
   function nextHour() {
     const live = townRef.current;
-    if (!live || pendingRef.current || hourLock.current) return;
+    if (!live || foregroundPendingRef.current || hourLock.current) return;
     hourLock.current = true;
     replayRef.current = null;
     setReplay(null);
     try {
-      const minds = onlineRef.current && document.visibilityState === "visible";
+      const minds =
+        onlineRef.current && !localOnlyRef.current && document.visibilityState === "visible";
       let job: ThinkJob | null = null;
       for (let i = 0; i < 60; i++) {
         try {
@@ -736,7 +1038,7 @@ export function TownApp() {
         /* keep the hour */
       }
       resetGlide(live);
-      if (job && minds) void runMindRef.current(live, job);
+      if (job && minds && !pendingRef.current) void runMindRef.current(live, job);
       else if (job) {
         try {
           applyResult(live, offlineResult(live, job));
@@ -754,8 +1056,13 @@ export function TownApp() {
   function approach(id: AgentId) {
     const live = townRef.current;
     if (!live) return;
-    const target: AgentId = pinned && id !== "player" ? "kevin" : id;
-    if (target !== "player") {
+    const target: AgentId = id;
+    if (target === "player") {
+      openTools("journal");
+      return;
+    }
+    if (pinned && pinned !== target) setPinned(null);
+    {
       const player = agentById(live, "player");
       const other = agentById(live, target);
       if (!inTalkRange(player.tile.x, player.tile.y, other.tile.x, other.tile.y)) {
@@ -807,8 +1114,14 @@ export function TownApp() {
 
   async function sendLine() {
     const live = townRef.current;
-    const who = pinned ? "kevin" : panel;
-    if (!live || !who || who === "player" || pendingRef.current || replayRef.current !== null)
+    const who = pinned ?? panel;
+    if (
+      !live ||
+      !who ||
+      who === "player" ||
+      foregroundPendingRef.current ||
+      replayRef.current !== null
+    )
       return;
     const text = draft.trim().slice(0, 400);
     if (!text) return;
@@ -837,7 +1150,11 @@ export function TownApp() {
       agentId: who,
       text,
     };
-    const minds = onlineRef.current && document.visibilityState === "visible";
+    const minds =
+      onlineRef.current &&
+      !localOnlyRef.current &&
+      !pendingRef.current &&
+      document.visibilityState === "visible";
     if (!minds) {
       try {
         const before = playerChatIds(agentById(live, who).memories ?? []);
@@ -879,7 +1196,7 @@ export function TownApp() {
             type="button"
             onClick={() => {
               const report = readTownSave();
-              if (report.status === "ready") acceptImportedTown(report.town);
+              if (report.status === "ready") void acceptImportedTown(report.town, "load");
               else if (report.status === "unreadable") {
                 setHold(report.raw);
                 setRecoverNote("");
@@ -973,6 +1290,7 @@ export function TownApp() {
               className="btn"
               type="button"
               onClick={() => {
+                startOverRef.current = true;
                 setHold(null);
                 setPhase("name");
               }}
@@ -1005,7 +1323,7 @@ export function TownApp() {
                   setRecoverNote("That file is not a town this page can live in.");
                   return;
                 }
-                acceptImportedTown(next);
+                void acceptImportedTown(next);
               } catch {
                 setRecoverNote("That file could not be read.");
               }
@@ -1064,12 +1382,42 @@ export function TownApp() {
               value={name}
               onChange={(event) => setName(event.target.value)}
             />
+            <label className="tool-option gate-dialogue-option">
+              <input
+                type="checkbox"
+                checked={localOnly}
+                onChange={(event) => setLocalPreference(event.target.checked)}
+              />{" "}
+              Use local dialogue only
+            </label>
+            <p className="gate-privacy-note">
+              With AI enabled, your words and relevant town context are sent to the configured AI
+              service. Local mode sends no AI requests.
+            </p>
+            {preferenceNote && <p role="status">{preferenceNote}</p>}
             <button className="btn" data-on="true" type="submit" disabled={!name.trim()}>
               Walk in <ArrowRight className="size-4" aria-hidden />
             </button>
             <p className="gate-save-note">
               <Save className="size-3" aria-hidden /> Your town saves in this browser.
             </p>
+            {recoverNote && <p role="alert">{recoverNote}</p>}
+            {saveStatus && !saveStatus.ok && saveStatus.reason === "conflict" && (
+              <button
+                className="btn"
+                type="button"
+                onClick={() => {
+                  const report = readTownSave();
+                  if (report.status === "ready") void acceptImportedTown(report.town, "load");
+                  else
+                    setRecoverNote(
+                      "The saved town could not be read. Its original bytes have been kept.",
+                    );
+                }}
+              >
+                Open saved town
+              </button>
+            )}
           </form>
         </div>
         <div className="gate-bottom">
@@ -1083,7 +1431,7 @@ export function TownApp() {
   const town = townRef.current;
   void tick;
   const player = agentById(town, "player");
-  const shown = pinned ? "kevin" : panel;
+  const shown = pinned ?? panel;
   panelRef.current = shown;
   boardRef.current = board;
   const near = onBoard(player.tile.x, player.tile.y);
@@ -1111,10 +1459,10 @@ export function TownApp() {
     )
     .map((agent) => agent.id);
   const talkChoices = crowd && crowd.length > 1 ? crowd : nearby;
-  const localReplies = !online || lastMind === "offline";
+  const localReplies = localOnly || !online || lastMind === "offline";
 
   return (
-    <main className="town" data-talking={shown || board ? "true" : "false"}>
+    <main className="town" data-talking={shown || board || tools ? "true" : "false"}>
       <header className="hud">
         <div className="brand">
           <ArcadeMark className="brand-icon" />
@@ -1159,7 +1507,7 @@ export function TownApp() {
           >
             4×
           </button>
-          <button className="btn" type="button" onClick={nextHour} disabled={thinking !== ""}>
+          <button className="btn" type="button" onClick={nextHour} disabled={thinking === "player"}>
             <SkipForward className="inline size-4" aria-hidden /> Hour
           </button>
         </div>
@@ -1171,7 +1519,7 @@ export function TownApp() {
         </p>
         <p className="status-activity">{activityStatus(here, planned.place, planned.status)}</p>
         {farNote && (
-          <p className="status-message" role="status">
+          <p className="status-message" role="status" aria-live="polite">
             {farNote}
           </p>
         )}
@@ -1196,8 +1544,13 @@ export function TownApp() {
         )}
         {thinking && (
           <span className="status-message" role="status">
-            Waiting for a reply
+            {thinking === "player" ? "Waiting for your reply" : "Residents are thinking"}
           </span>
+        )}
+        {thinking === "player" && (
+          <button className="btn" type="button" onClick={localReplyNow}>
+            Use local reply now
+          </button>
         )}
         {hiccup && (
           <span className="status-message" role="status">
@@ -1213,9 +1566,43 @@ export function TownApp() {
           </span>
         </div>
       </div>
+      <nav className="town-tools" aria-label="Your town tools">
+        <button className="btn" type="button" onClick={() => openTools("journal")}>
+          Journal
+        </button>
+        <button className="btn" type="button" onClick={() => openTools("inventory")}>
+          Inventory
+        </button>
+        <button
+          className="btn"
+          type="button"
+          aria-label="Go somewhere"
+          onClick={() => openTools("map")}
+        >
+          Go to
+        </button>
+        <button
+          className="btn"
+          type="button"
+          aria-label="Library project"
+          onClick={() => openTools("library")}
+        >
+          Library
+        </button>
+        <button
+          className="btn"
+          type="button"
+          aria-label="Help & privacy"
+          onClick={() => openTools("help")}
+        >
+          Help
+        </button>
+      </nav>
       {saveStatus && !saveStatus.ok && (
         <p className="warn" role="alert">
-          This town has not saved in this browser. Download a copy before closing the page.{" "}
+          {saveStatus.reason === "conflict"
+            ? "Another tab changed the saved town. This copy has not replaced it. Download this copy before switching or closing the page."
+            : "This town has not saved in this browser. Download a copy before closing the page."}{" "}
           <button
             className="btn"
             type="button"
@@ -1223,34 +1610,52 @@ export function TownApp() {
               void saveCopy(town).then(setExportNote);
             }}
           >
-            Download a copy
+            Download this copy
           </button>
+          {saveStatus.reason === "conflict" && (
+            <button
+              className="btn"
+              type="button"
+              onClick={() => {
+                const report = readTownSave();
+                if (report.status === "ready") void acceptImportedTown(report.town, "load");
+                else
+                  setExportNote(
+                    "The saved town could not be read. Keep a downloaded copy of this town.",
+                  );
+              }}
+            >
+              Load saved town
+            </button>
+          )}
         </p>
       )}
-      {checked && !online && !shown && (
+      {checked && (localOnly || !online) && !shown && !tools && (
         <p className="warn offline-note" role="status">
-          AI is offline. Residents use limited local dialogue and remember your conversations.
+          {localOnly ? "Local dialogue only is on." : "AI is offline."} Residents use authored local
+          dialogue and remember your conversations.
         </p>
       )}
-      {hint && (town.guide ?? 0) < 3 && !shown && (
+      {hint && (town.guide ?? 0) < 3 && !shown && !tools && (
         <div className="welcome-tip">
           <Sparkles className="welcome-icon size-5" aria-hidden />
           <div>
-            <strong>Next stop: Hobbs Cafe.</strong>
+            <strong>A useful first step: the library index.</strong>
             <p>
-              Say hello to Kevin, or see where the day takes you.{" "}
-              {speed === 0
-                ? "Press 1× to start the clock."
-                : hobbsWay(player.tile.x, player.tile.y)}
+              Northern cannot find a record. Choose a funded contribution, decline, or explore. The
+              library is east of the plaza. You can walk while the clock is paused.
             </p>
           </div>
+          <button className="btn" type="button" onClick={() => openTools("library")}>
+            Library project
+          </button>
           <details>
             <summary>How to play</summary>
             <p>{guideLine}</p>
           </details>
         </div>
       )}
-      {yourOpenDebts.length > 0 && !shown && (
+      {yourOpenDebts.length > 0 && !shown && !tools && (
         <p className="warn" role="status">
           {yourOpenDebts.length} open{" "}
           {yourOpenDebts.length === 1 ? "tab or favor" : "tabs or favors"} involving you.{" "}
@@ -1263,6 +1668,7 @@ export function TownApp() {
         <canvas
           ref={canvasRef}
           className="town-canvas h-full"
+          tabIndex={0}
           onClick={onCanvasClick}
           aria-label={`The town, home to ${town.agents.length - 1} neighbors and you. Use the nearby conversation buttons or press Enter to talk.`}
         />
@@ -1277,7 +1683,7 @@ export function TownApp() {
         <div className="world-caption" aria-hidden>
           {town.agents.length} residents · endless possibilities
         </div>
-        {!shown && !board && replay === null && talkChoices.length > 0 && (
+        {!shown && !board && !tools && replay === null && talkChoices.length > 0 && (
           <div className="crowd" role="group" aria-label={crowd ? "Who is here" : "Talk nearby"}>
             <span className="crowd-label">{crowd ? "Who is here" : "Talk nearby"}</span>
             {talkChoices.map((id) => {
@@ -1299,42 +1705,116 @@ export function TownApp() {
             })}
           </div>
         )}
+        {!tools && !shown && here === "library" && replay === null && (
+          <button className="btn library-board" type="button" onClick={() => openTools("library")}>
+            Library board
+          </button>
+        )}
         <div className="dpad" aria-hidden={false}>
-          <Pad code="ArrowUp" keys={keysRef} className="u" label="North">
+          <Pad
+            code="ArrowUp"
+            keys={keysRef}
+            onStep={(code) => {
+              stepInputRef.current = code;
+            }}
+            className="u"
+            label="North"
+          >
             N
           </Pad>
-          <Pad code="ArrowLeft" keys={keysRef} className="l" label="West">
+          <Pad
+            code="ArrowLeft"
+            keys={keysRef}
+            onStep={(code) => {
+              stepInputRef.current = code;
+            }}
+            className="l"
+            label="West"
+          >
             W
           </Pad>
-          <Pad code="ArrowRight" keys={keysRef} className="r" label="East">
+          <Pad
+            code="ArrowRight"
+            keys={keysRef}
+            onStep={(code) => {
+              stepInputRef.current = code;
+            }}
+            className="r"
+            label="East"
+          >
             E
           </Pad>
-          <Pad code="ArrowDown" keys={keysRef} className="d" label="South">
+          <Pad
+            code="ArrowDown"
+            keys={keysRef}
+            onStep={(code) => {
+              stepInputRef.current = code;
+            }}
+            className="d"
+            label="South"
+          >
             S
           </Pad>
         </div>
-        {shown && (
+        {shown && !tools && (
           <Mind
             town={town}
             agent={agentById(town, shown)}
-            pinned={pinned}
+            pinned={pinned === shown}
             draft={draft}
             setDraft={setDraft}
-            busy={thinking !== "" || replay !== null}
-            inspect={inspect}
+            busy={thinking === "player" || replay !== null}
+            inspect={inspectorEnabled && inspect}
             sendNote={sendNote}
             localDialogue={checked && localReplies}
+            inspectorEnabled={inspectorEnabled}
             onInspect={setInspect}
             onClose={() => {
-              setPinned(false);
+              setPinned(null);
               setPanel(null);
+              requestAnimationFrame(() => canvasRef.current?.focus());
             }}
             onPin={() => {
-              setPinned((v) => !v);
-              setPanel("kevin");
+              setPinned((v) => (v === shown ? null : shown));
+              setPanel(shown);
             }}
             onSend={() => void sendLine()}
             onAction={(id) => chooseAction(town, shown, id)}
+            onLibrary={() => openTools("library")}
+          />
+        )}
+        {tools && (
+          <PlayerTools
+            page={tools}
+            town={town}
+            localOnly={localOnly}
+            preferenceNote={preferenceNote}
+            inspectorEnabled={inspectorEnabled}
+            inventoryActions={playerActions(town, "player")}
+            busy={thinking === "player" || replay !== null}
+            actionNote={sendNote}
+            onClose={closeTools}
+            onLocalOnly={setLocalPreference}
+            onInspector={(value) => {
+              setInspectorEnabled(value);
+              setInspect(value);
+            }}
+            onGo={goTo}
+            onStep={(code) => {
+              stepInputRef.current = code;
+            }}
+            onAction={(id) => chooseAction(town, "player", id)}
+            onLibrary={() => setTools("library")}
+            onLibraryAction={(id) => chooseLibrary(town, id)}
+            backups={browserBackups}
+            onBackup={(backup) => {
+              try {
+                downloadText(backup.raw, "the-game-preserved-town.json", "application/json");
+                setPreferenceNote("Preserved copy download requested.");
+              } catch {
+                setPreferenceNote("The download could not start. This browser copy has been kept.");
+              }
+            }}
           />
         )}
       </div>
@@ -1477,7 +1957,7 @@ export function TownApp() {
                 setImportError("That file is not a town this page can live in.");
                 return;
               }
-              acceptImportedTown(next);
+              void acceptImportedTown(next);
             }}
           >
             <h2 className="font-display text-2xl">Replace the live town?</h2>
@@ -1546,7 +2026,14 @@ function downloadText(text: string, filename: string, mime: string) {
 }
 
 async function saveCopy(town: Town) {
-  const text = exportTown(town);
+  let text: string;
+  try {
+    text = exportTown(town);
+  } catch (error) {
+    return error instanceof Error
+      ? error.message
+      : "This town could not be exported. The saved copy has been kept.";
+  }
   const framed = (() => {
     try {
       return window.self !== window.top;
@@ -1554,16 +2041,28 @@ async function saveCopy(town: Town) {
       return true;
     }
   })();
+  let downloaded = false;
   if (!framed) {
-    downloadText(text, `the-game-day-${town.day}.json`, "application/json");
+    try {
+      downloadText(text, `the-game-day-${town.day}.json`, "application/json");
+      downloaded = true;
+    } catch {
+      /* Clipboard can still preserve a copy. */
+    }
   }
   try {
     await navigator.clipboard.writeText(text);
-    return framed ? "Copied. This preview cannot save a file." : "Copied. File download requested.";
+    return framed
+      ? "Copied. This preview cannot save a file."
+      : downloaded
+        ? "Copied. File download requested."
+        : "Copied. The file download could not start.";
   } catch {
     return framed
       ? "This preview cannot save a file or use the clipboard."
-      : "File download requested.";
+      : downloaded
+        ? "File download requested."
+        : "The file download and clipboard could not save a copy. Try again before closing this page.";
   }
 }
 
@@ -1573,18 +2072,23 @@ function Pad({
   className,
   label,
   children,
+  onStep,
 }: {
   code: string;
   keys: React.RefObject<Set<string>>;
   className: string;
   label: string;
   children: string;
+  onStep: (code: string) => void;
 }) {
   return (
     <button
       type="button"
       className={className}
       aria-label={label}
+      onClick={(event) => {
+        if (event.detail === 0) onStep(code);
+      }}
       onPointerDown={(event) => {
         event.preventDefault();
         event.currentTarget.setPointerCapture(event.pointerId);
@@ -1610,10 +2114,12 @@ function Mind({
   sendNote,
   localDialogue,
   onInspect,
+  inspectorEnabled,
   onClose,
   onPin,
   onSend,
   onAction,
+  onLibrary,
 }: {
   town: Town;
   agent: Agent;
@@ -1625,10 +2131,12 @@ function Mind({
   sendNote: string;
   localDialogue: boolean;
   onInspect: (value: boolean) => void;
+  inspectorEnabled: boolean;
   onClose: () => void;
   onPin: () => void;
   onSend: () => void;
   onAction: (id: string) => void;
+  onLibrary: () => void;
 }) {
   const lineRef = useRef<HTMLTextAreaElement | null>(null);
   const logRef = useRef<HTMLDivElement | null>(null);
@@ -1675,7 +2183,7 @@ function Mind({
         </div>
         <div className="flex gap-2">
           <button className="btn" type="button" data-on={pinned ? "true" : "false"} onClick={onPin}>
-            <Pin className="inline size-4" aria-hidden /> {pinned ? "Unpin" : "Pin Kevin"}
+            <Pin className="inline size-4" aria-hidden /> {pinned ? "Unpin" : `Pin ${agent.name}`}
           </button>
           <button className="btn" type="button" onClick={onClose} aria-label="Close conversation">
             <X className="size-4" />
@@ -1766,16 +2274,18 @@ function Mind({
             ))}
           </ul>
         </section>
-        <label className="mt-4 flex items-center gap-2 text-sm text-muted" htmlFor="mind-inspect">
-          <input
-            id="mind-inspect"
-            name="inspect"
-            type="checkbox"
-            checked={inspect}
-            onChange={(event) => onInspect(event.target.checked)}
-          />
-          Developer inspector. Not part of the town.
-        </label>
+        {inspectorEnabled && (
+          <label className="mt-4 flex items-center gap-2 text-sm text-muted" htmlFor="mind-inspect">
+            <input
+              id="mind-inspect"
+              name="inspect"
+              type="checkbox"
+              checked={inspect}
+              onChange={(event) => onInspect(event.target.checked)}
+            />
+            Developer inspector. Not part of the town.
+          </label>
+        )}
         {inspect && <Inspector town={town} agent={agent} />}
       </div>
       {behind && (
@@ -1801,6 +2311,11 @@ function Mind({
             onSend();
           }}
         >
+          {agent.id === "kevin" && (
+            <button className="btn mb-2" type="button" onClick={onLibrary}>
+              Library project
+            </button>
+          )}
           {actions.length > 0 && (
             <details
               className="mind-actions"

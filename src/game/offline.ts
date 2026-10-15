@@ -8,6 +8,9 @@ import { beatAt } from "./plan";
 import { localReflections } from "./reflections";
 import { clip, formatClock, mentionsSeed } from "./text";
 import { placeTitle, placeTitleOf, zoneAt } from "./world";
+import { residentLibraryReply } from "./community";
+import { fundedWorkSummary } from "./funded-work";
+import type { FundedTown } from "./economy-types";
 
 export function prepareRetrievals(town: Town, job: ThinkJob) {
   const ids: AgentId[] =
@@ -199,7 +202,10 @@ function offlineTalk(town: Town, aId: AgentId, bId: AgentId): MindResult {
   if (
     pair.has("kevin") &&
     pair.has("northern") &&
-    !agentById(town, "northern").projects.some((p) => p.kind === "shift" && p.status === "open")
+    !agentById(town, "northern").projects.some((p) => p.kind === "shift" && p.status === "open") &&
+    !agentById(town, "northern").threads.some(
+      (thread) => thread.open && thread.text.startsWith("Cafe work is pending a funded agreement"),
+    )
   ) {
     return talkNorthern(town);
   }
@@ -408,6 +414,14 @@ function talkSub(town: Town, a: Agent, b: Agent): MindResult {
 function talkNorthern(town: Town): MindResult {
   const kevin = agentById(town, "kevin");
   const northern = agentById(town, "northern");
+  const work = (town as FundedTown).economy?.work ? fundedWorkSummary(town, "northern") : null;
+  const agreement = work?.agreements.find(
+    (item) =>
+      item.payer === "till:cafe" &&
+      item.kind === "cafe-shift" &&
+      item.status === "active" &&
+      work.holds.some((hold) => hold.id === item.holdId && hold.remaining >= item.fee),
+  );
   return {
     kind: "talk",
     mind: "offline",
@@ -418,56 +432,27 @@ function talkNorthern(town: Town): MindResult {
       { speaker: "northern", text: cite(town, northern, kevin) },
       {
         speaker: "kevin",
-        text: "I need help, and I need to make some money. If you can hold a shift on the floor, the cafe till will pay you. Who I am — that is the same question as where I came from, and it stays off the menu.",
+        text: `I need help with who I am, and I still have to earn a living. ${agreement ? `Your existing cafe agreement reserves ${agreement.fee} for ${agreement.requiredMinutes} eligible minutes; ${agreement.eligibleMinutes} are recorded.` : "A paying shift needs a funded agreement first. We have not made one by talking."}`,
       },
       {
         speaker: "northern",
-        text: "A shift is a plan. I am in. Pay me when the hours are real, not in stories.",
+        text: agreement
+          ? "I will rely on the recorded agreement and attendance, not count a wage before it is paid."
+          : "Then leave the work pending. I am interested, but I have not taken a shift or earned a promised wage.",
       },
     ],
-    relationships: [
-      {
-        owner: "kevin",
-        about: "northern",
-        delta: 1,
-        note: "He said yes to the work without asking me to perform a past.",
-      },
-      {
-        owner: "northern",
-        about: "kevin",
-        delta: 1,
-        note: "Kevin needs help and a wage. I took the shift. I did not get his whole story, and I did not push.",
-      },
-    ],
+    relationships: [],
     favor: null,
-    thread: {
-      owner: "northern",
-      action: "open",
-      text: "Work the cafe shift Kevin offered and get paid from the till.",
-    },
     notice: null,
-    project: {
-      owner: "northern",
-      action: "start",
-      kind: "shift",
-      place: "cafe",
-      text: "Work a shift at Hobbs Cafe for a wage from the till.",
-    },
-    replan: [
-      {
-        id: "northern",
-        blocks: [
-          { from: 16, to: 20, place: "cafe", spot: "out", status: "on a cafe shift, earning it" },
-          {
-            from: 20,
-            to: 24,
-            place: "dorms",
-            spot: "home",
-            status: "back in the dorms, the shift still in his shoulders",
-          },
-        ],
-      },
-    ],
+    project: null,
+    replan: [],
+    thread: agreement
+      ? null
+      : {
+          owner: "northern",
+          action: "open",
+          text: "Cafe work is pending a funded agreement; no shift or wage is accepted by this discussion.",
+        },
   };
 }
 
@@ -713,7 +698,9 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
     (p) =>
       p.owner === "player" && p.kind === "other" && p.status === "done" && p.text === BABA_LOAF,
   );
-  const asksAboutEating = !topic && /\b(?:eat|eating|loaf)\b/i.test(text);
+  const wantsLoaf =
+    /\b(?:buy|purchase|get|receive|take|want|need|like|sell)\b.*\b(?:loaf|bread)\b/i.test(text);
+  const asksAboutEating = !topic && /\b(?:eat|eating|consume|loaf)\b/i.test(text) && !wantsLoaf;
   if (asksAboutEating) {
     reply = carrying
       ? "You are carrying a loaf. Choose Eat loaf below when you want to eat it. The tab stays open until paid; talking does not consume the loaf."
@@ -723,7 +710,7 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
   } else if (
     agent.id === "baba" &&
     !topic &&
-    /\b(?:bread|apples?|food|tab|debt|pay|repay|settle|owe)\b/i.test(text)
+    /\b(?:bread|loaf|apples?|food|tab|debt|pay|repay|settle|owe)\b/i.test(text)
   ) {
     reply = debt
       ? `Your tab is still ${debt.amount}: ${debt.text} Talking does not pay it. Use the quoted payment action when you choose.`
@@ -750,6 +737,21 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
   if (agent.id === "baba" && debt && !asksAboutEating && !topic && !everyday) {
     if (carrying) reply = `${reply} You are carrying the loaf. The tab is ${debt.amount}.`;
     else if (ateLoaf) reply = `${reply} You ate the loaf. You still owe ${debt.amount}.`;
+  }
+  const asksProject =
+    /\b(?:library (?:project|index|check|result)|index|catalogue|catalog|my (?:contribution|check)|what changed since yesterday|what happened (?:with|at|to) (?:the )?library)\b/i.test(
+      text,
+    );
+  if (!topic && !everyday && asksProject)
+    reply =
+      residentLibraryReply(town, id) ??
+      "I have not learned what happened with the library project. The public project board has its recorded progress and terms.";
+  else if (
+    !topic &&
+    /^(?:hello|hi|hey|good morning|good afternoon|good evening)[!.\s]*$/i.test(text.trim())
+  ) {
+    const known = residentLibraryReply(town, id);
+    if (known) reply = `${reply} ${known}`;
   }
   return {
     kind: "player",

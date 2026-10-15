@@ -5,6 +5,9 @@ import { addSpecialists, SEED_TEXT } from "./town";
 import { mentionsSeed, plain, purse } from "./text";
 import { nearestWalkable } from "./world";
 import { refreshResidentStatus } from "./navigation";
+import { auditEconomy, initializeEconomy } from "./economy";
+import { validateLibraryState } from "./community";
+import type { FundedTown } from "./economy-types";
 
 export const TOWN_STORAGE_KEY = "the-game-town-v2";
 export const LEGACY_TOWN_STORAGE_KEY = "the-game-town-v1";
@@ -13,7 +16,19 @@ export const MAX_TOWN_FILE_BYTES = 8 * 1024 * 1024;
 
 export type SaveResult =
   | { ok: true; bytes: number; replayOmitted: boolean }
-  | { ok: false; reason: "unavailable" | "serialization" | "quota" | "storage" };
+  | {
+      ok: false;
+      reason: "unavailable" | "serialization" | "quota" | "storage";
+      explanation?: string;
+    }
+  | { ok: false; reason: "conflict"; localRaw: string; storedRaw: string; backupKey?: string };
+
+// Storage coordination is deliberately outside the Town schema. A downloaded
+// town is portable and cannot authorize overwriting a browser's existing town.
+const origins = new WeakMap<Town, { box: Storage; raw: string | null }>();
+const conflictBackups = new WeakMap<Town, { raw: string; key: string }>();
+const SAVE_LOCK = "the-game-town-save";
+export const TOWN_BACKUP_PREFIX = "the-game-town-backup-v1:";
 
 let lastSaveResult: SaveResult | null = null;
 
@@ -26,6 +41,13 @@ const FAVOR_STATUS = new Set(["owed", "paid", "forgiven", "broken"]);
 
 function isAgentId(value: unknown): value is AgentId {
   return typeof value === "string" && (AGENT_IDS as readonly string[]).includes(value);
+}
+
+function legacyCash(value: unknown, repairCap = 999): number {
+  // A legitimate old balance is an import snapshot, not a new runtime cap.
+  return Number.isSafeInteger(value) && Number(value) >= 0
+    ? Number(value)
+    : purse(value, repairCap);
 }
 
 function store(): Storage | null {
@@ -201,12 +223,13 @@ function cleanMemory(memory: Memory, fallbackDay: number): Memory | null {
 
 export function validateTown(value: unknown): value is Town {
   if (!value || typeof value !== "object") return false;
-  // The separate S1 ledger cannot be maintained by this runtime. Reject it
-  // before migration or balance normalization so recovery retains its books.
-  if (Object.hasOwn(value, "economy")) return false;
   const town = value as Town;
   const version = (value as { version?: unknown }).version;
   if (version !== 1 && version !== 2) return false;
+  const hasEconomy = Object.hasOwn(value, "economy");
+  // Six-actor experimental books require their own explicit migration. Current
+  // v2 books are audited before any legacy normalization can conceal damage.
+  if (hasEconomy && (version !== 2 || economyProblem(town))) return false;
   const expectedIds = version === 1 ? LEGACY_IDS : AGENT_IDS;
   if (!Array.isArray(town.agents) || town.agents.length !== expectedIds.length) return false;
   const ids = new Set(town.agents.map((a) => a?.id));
@@ -227,8 +250,10 @@ export function validateTown(value: unknown): value is Town {
   if (!Array.isArray(town.favors)) town.favors = [];
   if (!Array.isArray(town.scrub)) town.scrub = [];
   if (!town.tills || typeof town.tills !== "object") town.tills = { cafe: 0, grocery: 0 };
-  town.tills.cafe = purse(town.tills.cafe, 999);
-  town.tills.grocery = purse(town.tills.grocery, 999);
+  if (!hasEconomy) {
+    town.tills.cafe = legacyCash(town.tills.cafe);
+    town.tills.grocery = legacyCash(town.tills.grocery);
+  }
   town.colocation = town.colocation && typeof town.colocation === "object" ? town.colocation : {};
   town.retrievals = Array.isArray(town.retrievals) ? town.retrievals : [];
   town.paused = Boolean(town.paused);
@@ -249,7 +274,7 @@ export function validateTown(value: unknown): value is Town {
     agent.tile = nearestWalkable(Number(agent.tile?.x), Number(agent.tile?.y));
     agent.home = nearestWalkable(Number(agent.home?.x), Number(agent.home?.y));
     if (!FACES.has(agent.face)) agent.face = "s";
-    agent.money = purse(agent.money);
+    if (!hasEconomy) agent.money = legacyCash(agent.money);
     agent.name =
       typeof agent.name === "string" && agent.name.trim() ? plain(agent.name, 18) : agent.id;
     if (agent.id === "player") agent.name = town.playerName;
@@ -323,7 +348,7 @@ export function validateTown(value: unknown): value is Town {
       typeof f.text === "string",
   );
   for (const favor of town.favors) {
-    favor.amount = purse(favor.amount, 30);
+    if (!hasEconomy) favor.amount = legacyCash(favor.amount, 30);
     bump(favor.id);
   }
   town.scrub = town.scrub.filter(
@@ -351,7 +376,13 @@ export function validateTown(value: unknown): value is Town {
     .slice(-36);
   for (const row of town.retrievals) bump(row.id);
   for (const note of town.notices) bump(note.id);
-  const seen = new Set<string>();
+  const financialIds = hasEconomy
+    ? [
+        ...town.favors.map((favor) => favor.id),
+        ...town.agents.flatMap((agent) => agent.projects.map((project) => project.id)),
+      ]
+    : [];
+  const seen = new Set<string>(financialIds);
   const unique = (id: string | undefined, prefix: string) => {
     if (!id || seen.has(id)) {
       const next = `${prefix}${maxId++}`;
@@ -361,11 +392,12 @@ export function validateTown(value: unknown): value is Town {
     seen.add(id);
     return id;
   };
-  for (const favor of town.favors) favor.id = unique(favor.id, "f");
+  if (!hasEconomy) for (const favor of town.favors) favor.id = unique(favor.id, "f");
   for (const note of town.notices) note.id = unique(note.id, "n");
   for (const agent of town.agents) {
     for (const thread of agent.threads ?? []) thread.id = unique(thread.id, "th");
-    for (const project of agent.projects ?? []) project.id = unique(project.id, "p");
+    if (!hasEconomy)
+      for (const project of agent.projects ?? []) project.id = unique(project.id, "p");
     for (const memory of agent.memories ?? []) memory.id = unique(memory.id, "m");
   }
   town.nextId = Math.max(maxId, Number.isFinite(town.nextId) ? Math.floor(town.nextId) : 1);
@@ -374,7 +406,79 @@ export function validateTown(value: unknown): value is Town {
     addSpecialists(town);
   }
   for (const agent of town.agents) refreshResidentStatus(town, agent);
-  return true;
+  if (!hasEconomy) {
+    try {
+      initializeEconomy(town);
+    } catch {
+      return false;
+    }
+  }
+  return !economyProblem(town);
+}
+
+function economyProblem(town: Town): string | null {
+  try {
+    const accountErrors = auditEconomy(town);
+    if (accountErrors.length)
+      return `The saved accounts cannot be reconciled: ${accountErrors.join("; ")}. Keep the original backup for recovery.`;
+    const projects = (town as FundedTown).economy?.projects;
+    if (
+      projects &&
+      Object.hasOwn(projects, "library") &&
+      (!projects.library || typeof projects.library !== "object" || Array.isArray(projects.library))
+    )
+      return "The saved library project has an invalid structure. Keep the original backup for recovery.";
+    const libraryErrors = validateLibraryState(town);
+    if (libraryErrors.length)
+      return `The saved library project is invalid: ${libraryErrors.join("; ")}. Keep the original backup for recovery.`;
+    if (
+      town.agents.some(
+        (agent) =>
+          !Number.isFinite(agent.shiftHours) ||
+          agent.shiftHours < 0 ||
+          typeof agent.paidToday !== "boolean",
+      )
+    )
+      return "A saved work or payment record is invalid. Keep the original progress and payment flag for recovery.";
+    if (
+      !Array.isArray(town.favors) ||
+      town.favors.some(
+        (favor) =>
+          !favor ||
+          !isAgentId(favor.from) ||
+          !isAgentId(favor.to) ||
+          favor.from === favor.to ||
+          !FAVOR_STATUS.has(favor.status) ||
+          typeof favor.text !== "string" ||
+          !Number.isSafeInteger(favor.amount) ||
+          favor.amount < 0,
+      )
+    )
+      return "A saved debt is invalid. Its creditor, amount and original bytes have not been changed.";
+    if (
+      town.agents.some(
+        (agent) =>
+          !Array.isArray(agent.projects) ||
+          agent.projects.some(
+            (project) =>
+              !project ||
+              typeof project.id !== "string" ||
+              !project.id ||
+              typeof project.text !== "string",
+          ),
+      )
+    )
+      return "A saved work or item record is invalid. Keep the original backup for recovery.";
+    const ids = [
+      ...town.favors.map((favor) => favor.id),
+      ...town.agents.flatMap((agent) => agent.projects.map((project) => project.id)),
+    ];
+    if (ids.some((id) => typeof id !== "string" || !id) || new Set(ids).size !== ids.length)
+      return "Saved debt or work IDs are missing or duplicated. Keep the original records for recovery.";
+    return null;
+  } catch {
+    return "The saved account or library extension is malformed. Keep the original backup for recovery.";
+  }
 }
 
 function serialize(town: Town, omitReplay = false): string {
@@ -398,7 +502,7 @@ export function loadTown(): Town | null {
 export type LoadReport =
   | { status: "missing" }
   | { status: "ready"; town: Town }
-  | { status: "unreadable"; raw: string }
+  | { status: "unreadable"; raw: string; reason?: string }
   | { status: "unavailable" };
 
 /** Distinguishes an empty browser from a save that must not be overwritten. */
@@ -421,15 +525,54 @@ export function readTownSave(): LoadReport {
   if (raw === null) return { status: "missing" };
   try {
     const town = parseTownFile(raw);
-    if (!town) return { status: "unreadable", raw };
+    if (!town) {
+      const reason = financialFileProblem(raw);
+      return { status: "unreadable", raw, ...(reason ? { reason } : {}) };
+    }
+    origins.set(town, { box, raw });
     return { status: "ready", town };
   } catch {
     return { status: "unreadable", raw };
   }
 }
 
-export function saveTownWithStatus(town: Town): SaveResult {
+function currentRaw(box: Storage): string | null {
+  if (typeof box.getItem !== "function") return null;
+  return box.getItem(TOWN_STORAGE_KEY) ?? box.getItem(LEGACY_TOWN_STORAGE_KEY) ?? null;
+}
+
+function backupRaw(box: Storage, raw: string, label: "conflict" | "replaced"): string {
+  const id =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const key = `${TOWN_BACKUP_PREFIX}${label}:${id}`;
+  box.setItem(key, raw);
+  return key;
+}
+
+/** Conflict copies remain raw, even if an older runtime cannot parse them. */
+export function readTownConflicts(): { key: string; raw: string }[] {
+  const box = store();
+  if (!box) return [];
+  try {
+    const copies: { key: string; raw: string }[] = [];
+    for (let index = 0; index < box.length; index++) {
+      const key = box.key(index);
+      if (!key?.startsWith(TOWN_BACKUP_PREFIX)) continue;
+      const raw = box.getItem(key);
+      if (raw !== null) copies.push({ key, raw });
+    }
+    return copies;
+  } catch {
+    return [];
+  }
+}
+
+function writeTown(town: Town, intent: "save" | "initialize" | "replace"): SaveResult {
   const done = (result: SaveResult) => (lastSaveResult = result);
+  const explanation = Object.hasOwn(town, "economy") ? economyProblem(town) : null;
+  if (explanation) return done({ ok: false, reason: "serialization", explanation });
   const box = store();
   if (!box) return done({ ok: false, reason: "unavailable" });
   let raw: string;
@@ -438,8 +581,45 @@ export function saveTownWithStatus(town: Town): SaveResult {
   } catch {
     return done({ ok: false, reason: "serialization" });
   }
+  let previous: string | null;
+  try {
+    previous = currentRaw(box);
+  } catch {
+    return done({ ok: false, reason: "storage" });
+  }
+  const origin = origins.get(town);
+  const expected = origin?.box === box ? origin.raw : null;
+  if (intent !== "replace" && previous !== (intent === "initialize" ? null : expected)) {
+    let backupKey: string | undefined;
+    const priorBackup = conflictBackups.get(town);
+    if (priorBackup?.raw === raw) backupKey = priorBackup.key;
+    else {
+      try {
+        backupKey = backupRaw(box, raw, "conflict");
+        conflictBackups.set(town, { raw, key: backupKey });
+      } catch {
+        // The result still contains both complete snapshots for download. Never
+        // replace the current town simply because its conflict backup is full.
+      }
+    }
+    return done({
+      ok: false,
+      reason: "conflict",
+      localRaw: raw,
+      storedRaw: previous ?? "",
+      ...(backupKey ? { backupKey } : {}),
+    });
+  }
+  if (intent === "replace" && previous !== null && previous !== raw) {
+    try {
+      backupRaw(box, previous, "replaced");
+    } catch (error) {
+      return done({ ok: false, reason: isQuota(error) ? "quota" : "storage" });
+    }
+  }
   try {
     box.setItem(TOWN_STORAGE_KEY, raw);
+    origins.set(town, { box, raw });
     return done({
       ok: true,
       bytes: new TextEncoder().encode(raw).byteLength,
@@ -452,6 +632,7 @@ export function saveTownWithStatus(town: Town): SaveResult {
     try {
       raw = serialize(town, true);
       box.setItem(TOWN_STORAGE_KEY, raw);
+      origins.set(town, { box, raw });
       return done({
         ok: true,
         bytes: new TextEncoder().encode(raw).byteLength,
@@ -463,12 +644,51 @@ export function saveTownWithStatus(town: Town): SaveResult {
   }
 }
 
+/** Synchronous compatibility path; browser callers should use persistTownSave. */
+export function saveTownWithStatus(town: Town): SaveResult {
+  return writeTown(town, "save");
+}
+
+async function coordinatedSave(
+  town: Town,
+  intent: "save" | "initialize" | "replace",
+): Promise<SaveResult> {
+  try {
+    // Web Locks serialize the compare-and-write section across real browser
+    // tabs. Older/private browsers retain revision detection as a fallback.
+    if (typeof navigator !== "undefined" && navigator.locks?.request)
+      return await navigator.locks.request(SAVE_LOCK, () => writeTown(town, intent));
+    return writeTown(town, intent);
+  } catch {
+    return (lastSaveResult = { ok: false, reason: "storage" });
+  }
+}
+
+export function persistTownSave(town: Town): Promise<SaveResult> {
+  return coordinatedSave(town, "save");
+}
+
+/** Fresh entry cannot replace a town created in another tab during naming. */
+export function initializeTownSave(town: Town): Promise<SaveResult> {
+  return coordinatedSave(town, "initialize");
+}
+
+/** Only explicit player-confirmed import/recovery may replace existing bytes. */
+export function replaceTownSave(town: Town): Promise<SaveResult> {
+  return coordinatedSave(town, "replace");
+}
+
 export function saveTown(town: Town): void {
   saveTownWithStatus(town);
 }
 
 export function exportTown(town: Town): string {
-  return serialize(town, true);
+  const raw = serialize(town, true);
+  if (new TextEncoder().encode(raw).byteLength > MAX_TOWN_FILE_BYTES)
+    throw new Error(
+      "This town exceeds the import size limit. Its history has not been truncated; keep the browser copy and request archival recovery.",
+    );
+  return raw;
 }
 
 export function parseTownFile(text: string): Town | null {
@@ -493,4 +713,37 @@ export function parseTownFile(text: string): Town | null {
   } catch {
     return null;
   }
+}
+
+export type TownFileReport =
+  { status: "ready"; town: Town } | { status: "unreadable"; raw: string; reason: string };
+
+function financialFileProblem(text: string): string | null {
+  try {
+    const data = JSON.parse(text);
+    const town = data && typeof data === "object" && "town" in data ? data.town : data;
+    if (!town || typeof town !== "object" || !Object.hasOwn(town, "economy")) return null;
+    if (town.version !== 2)
+      return "These experimental version-1 accounts need explicit migration; their original books have been retained for recovery.";
+    return economyProblem(town as Town);
+  } catch {
+    return null;
+  }
+}
+
+/** Additive detailed import contract; failed imports retain every input byte. */
+export function readTownFile(text: string): TownFileReport {
+  const town = parseTownFile(text);
+  if (town) return { status: "ready", town };
+  const tooLarge =
+    text.length > MAX_TOWN_FILE_BYTES ||
+    new TextEncoder().encode(text).byteLength > MAX_TOWN_FILE_BYTES;
+  return {
+    status: "unreadable",
+    raw: text,
+    reason: tooLarge
+      ? "The town file exceeds the 8 MiB import limit. Its history has not been truncated."
+      : (financialFileProblem(text) ??
+        "This file is not a supported, consistent town. Keep its original bytes for recovery."),
+  };
 }

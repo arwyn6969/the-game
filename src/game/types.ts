@@ -178,6 +178,8 @@ export type Town = {
   paused: boolean;
   sawHint: boolean;
   guide: number;
+  /** Validated funded-work extension; absent older towns gain an opening snapshot. */
+  economy?: import("./economy-types").EconomyState;
 };
 
 export type ThinkKind = "plan" | "reflect" | "talk" | "player";

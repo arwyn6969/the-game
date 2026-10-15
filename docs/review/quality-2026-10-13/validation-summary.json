@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-13",
+  "source": "221ad79",
+  "node": "24.19.0",
+  "providerCalls": false,
+  "personalSavesAccessed": false,
+  "typecheck": "pass",
+  "lint": {
+    "errors": 0,
+    "warnings": 1
+  },
+  "tests": {
+    "passed": 425,
+    "failed": 0,
+    "skipped": 0
+  },
+  "build": "pass; database migration skipped",
+  "diagnostics": "world audit clean; six day1–30 roundtrips pass",
+  "browser": {
+    "desktop": "player journey passed",
+    "phoneEmulation": "player journey passed",
+    "ordinaryKeyboardJourney": "passed",
+    "fullGraphicsScript": "failed: separate renderer page navigation timeout",
+    "separatePausedRenderer": "pause and state immutability passed"
+  },
+  "liveProviders": "unverified",
+  "hostedParity": "unverified",
+  "physicalDevices": "unverified"
+}

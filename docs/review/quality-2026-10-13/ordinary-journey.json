@@ -1,0 +1,19 @@
+{
+  "mode": "offline synthetic town, ordinary keyboard and UI actions",
+  "errors": [],
+  "walkedStepsToKevin": 18,
+  "kevinFirstReply": "WHAT YOU HEARD\n\nDay 1 07:00 · Local reply\n\nReview neighbour. Who are you?\n\nKevin. I run Hobbs, but I still want to find out who I am — the man under the apron, not a place I came from. I am willing to talk about it, if you mean to listen.\n\nWHAT IS STILL OPEN\nNothing written down between you.\nDeveloper inspector. Not part of the town.",
+  "shiftTerms": "Choices with Kevin · 1\n\nWork at Hobbs Cafe, 16:00–19:00 each day until cancelled. Three game hours on the floor earn 5 if the till can pay in full. No advance or part-payment. Worked minutes and unpaid wages do not carry past midnight.\n\nAccept cafe shift · 5\n\nLocal dialogue is active. Open-ended conversation needs a live AI connection.\n\nYour line to Kevin\nSay it\n\nThey answered with local dialogue.",
+  "shiftReceipt": "WHAT YOU HEARD\n\nDay 1 07:00 · Local reply\n\nReview neighbour. Who are you?\n\nKevin. I run Hobbs, but I still want to find out who I am — the man under the apron, not a place I came from. I am willing to talk about it, if you mean to listen.\n\nDay 1 07:00 · Local reply\n\nReview neighbour. Accept cafe shift · 5\n\nKevin. Cafe shift accepted: 16:00–19:00 each day until cancelled. Three game hours on the floor, then 5 if the till can pay. Nothing paid in advance.\n\nWHAT IS STILL OPEN\nCommitment: Cafe shift, 16:00 to 19:00 each day until cancelled; 5 after three hours if the till can pay.\nDeveloper inspector. Not part of the town.",
+  "helpVisibleAfterFirstReply": false,
+  "journalButtonsAfterShift": 0,
+  "renderer": {
+    "pauseFreezesArt": true,
+    "saveUnchanged": true,
+    "renderMs": {
+      "median": 0.09999999403953552,
+      "p95": 0.10000000894069672,
+      "samples": 100
+    }
+  }
+}

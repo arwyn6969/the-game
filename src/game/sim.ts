@@ -1,11 +1,17 @@
 import type { Agent, AgentId, ThinkJob, Town } from "./types";
 import { NPC_IDS } from "./types";
-import { applyResult, PLAYER_CAFE_SHIFT } from "./effects";
+import { applyResult } from "./effects";
+import { advanceFundedPayroll } from "./payroll-runtime";
+import {
+  prepareLibraryAppointment,
+  advanceLibraryProject,
+  libraryMovementGoals,
+} from "./community";
 import { absMinute, agentById, makeMemory, pushMemory } from "./memory";
 import { offlineResult } from "./offline";
 import { beatAt } from "./plan";
 import { moveResidents } from "./navigation";
-import { formatClock, mentionsSeed, purse } from "./text";
+import { formatClock, mentionsSeed } from "./text";
 import { canConverse, placeTitle, walkable, zoneAt } from "./world";
 
 const MEET = 4;
@@ -100,97 +106,6 @@ function observe(town: Town) {
   }
 }
 
-function tillsOf(town: Town) {
-  if (!town.tills || typeof town.tills !== "object") town.tills = { cafe: 0, grocery: 0 };
-  return town.tills;
-}
-
-function working(agent: Agent, zone: string, minute: number): "cafe" | "grocery" | null {
-  const beat = beatAt(agent, minute);
-  // A commitment, the current planned interval and physical attendance are all required.
-  // Status prose is never proof of work; approved shifts may run after the shop's usual hours.
-  if (beat.spot !== "out" || beat.place !== zone) return null;
-  const hour = Math.floor(minute / 60);
-  if (agent.id === "kevin" && zone === "cafe" && hour >= 8 && hour < 17) return "cafe";
-  if (agent.id === "baba" && zone === "grocery" && hour >= 8 && hour < 18) return "grocery";
-  const shift = (agent.projects ?? []).find(
-    (p) =>
-      p.owner === agent.id &&
-      p.status === "open" &&
-      p.kind === "shift" &&
-      (p.place ?? "cafe") === zone &&
-      // The new quoted contract excludes lunch; imported legacy contracts keep
-      // their own planned hours instead of inheriting this new restriction.
-      (agent.id !== "player" || p.text !== PLAYER_CAFE_SHIFT || (hour >= 16 && hour < 19)),
-  );
-  return shift && (zone === "cafe" || zone === "grocery") ? zone : null;
-}
-
-function wages(town: Town) {
-  for (const agent of town.agents) {
-    if (agent.paidToday) continue;
-    if (!Number.isFinite(agent.shiftHours) || agent.shiftHours < 0) agent.shiftHours = 0;
-    const where = working(agent, zoneAt(agent.tile.x, agent.tile.y), town.minute);
-    if (!where) continue;
-    // Credit the minute being completed, rather than sampling attendance once an hour.
-    agent.shiftHours = (Math.round(agent.shiftHours * 60) + 1) / 60;
-    if (agent.shiftHours < 3) continue;
-    const wage = where === "cafe" ? 5 : 4;
-    if (!Number.isInteger(agent.money) || agent.money < 0 || agent.money > 999) continue;
-    const tills = tillsOf(town);
-    const till = purse(tills[where], 999);
-    if (till < wage || agent.money + wage > 999) {
-      const line =
-        till < wage
-          ? `I worked a shift at ${placeTitle(where)}, but the till cannot pay the full ${wage} yet.`
-          : `I worked a shift at ${placeTitle(where)}, but my purse cannot hold the wage yet.`;
-      if (
-        !agent.memories.some((m) => m.day === town.day && m.type === "favor" && m.text === line)
-      ) {
-        pushMemory(
-          agent,
-          makeMemory(town, town.day, town.minute, "favor", line, 6, { protected: true }),
-        );
-      }
-      continue;
-    }
-    tills[where] = till - wage;
-    agent.money += wage;
-    agent.paidToday = true;
-    pushMemory(
-      agent,
-      makeMemory(
-        town,
-        town.day,
-        town.minute,
-        "favor",
-        `${placeTitle(where)} paid me ${wage} for a shift I actually worked.`,
-        6,
-        { protected: true },
-      ),
-    );
-  }
-  const player = town.agents.find((a) => a.id === "player");
-  if (town.minute === 12 * 60 && player && zoneAt(player.tile.x, player.tile.y) !== "cafe") {
-    const already = player.memories?.some(
-      (m) => m.day === town.day && m.text.includes("missed Hobbs"),
-    );
-    if (!already) {
-      pushMemory(
-        player,
-        makeMemory(
-          town,
-          town.day,
-          town.minute,
-          "observe",
-          "I missed Hobbs at noon. The day I wrote for myself went on without me.",
-          4,
-        ),
-      );
-    }
-  }
-}
-
 function updateColocation(town: Town) {
   if (!town.colocation || typeof town.colocation !== "object") town.colocation = {};
   const agents = town.agents;
@@ -265,19 +180,14 @@ export function stepMinute(town: Town, online: boolean): ThinkJob | null {
   if (!Array.isArray(town.agents) || town.agents.length === 0) return null;
   if (!Number.isFinite(town.day) || town.day < 1) town.day = 1;
   if (!Number.isFinite(town.minute)) town.minute = 0;
-  wages(town);
+  advanceFundedPayroll(town);
   town.minute += 1;
   if (town.minute >= 1440) {
     town.minute = 0;
     town.day += 1;
     for (const agent of town.agents) {
-      agent.shiftHours = 0;
       agent.paidToday = false;
-      agent.money = purse(agent.money);
     }
-    town.tills = tillsOf(town);
-    town.tills.cafe = Math.min(40, purse(town.tills.cafe) + 12);
-    town.tills.grocery = Math.min(32, purse(town.tills.grocery) + 8);
   }
   const hourStart = town.minute % 60 === 0;
   let job: ThinkJob | null = null;
@@ -310,8 +220,10 @@ export function stepMinute(town: Town, online: boolean): ThinkJob | null {
     for (const id of agents) agentById(town, id).callUsed = true;
     job = { kind: "plan", day: town.day, minute: town.minute, weekly: town.day % 7 === 0, agents };
   }
+  prepareLibraryAppointment(town);
   nudgeApart(town);
-  moveResidents(town, hourStart);
+  moveResidents(town, hourStart, libraryMovementGoals(town));
+  advanceLibraryProject(town);
   if (hourStart) observe(town);
   updateColocation(town);
   if (!job) {

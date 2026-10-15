@@ -4,8 +4,13 @@ import { PLAYER_CAFE_SHIFT, playerActions } from "./effects";
 import { absMinute, agentById } from "./memory";
 import { formatClock, mentionsSeed } from "./text";
 import { placeTitle } from "./world";
+import { characterProfile } from "./characters";
+import { beatAt } from "./plan";
+import { fundedWorkSummary } from "./funded-work";
+import type { FundedTown } from "./economy-types";
 
-type Intent = "wages" | "work" | "money" | "stock" | "help" | "invitation";
+type Intent =
+  "wages" | "work" | "money" | "stock" | "help" | "invitation" | "day" | "time" | "role";
 type Exchange = { question: string; answer: string };
 
 const normalize = (text: string) => text.toLowerCase().replace(/[’‘]/g, "'").trim();
@@ -30,7 +35,25 @@ function intentOf(raw: string): Intent | null {
   // asking for help or having enough money. Discussing a payment never makes it.
   if (/\b(?:tab|debt|repay|settle|owe (?:you|me)|pay you)\b/.test(text)) return null;
   if (
-    /\b(?:help (?:you|me|out)|give you (?:a |some )?help|(?:need|want|use) (?:some |any |your |a )?(?:help|hand)|(?:can|could|would|may|will) (?:i|you) help|anything i can do|what can i do for you|how can i help)\b/.test(
+    /\b(?:what(?:'s| is) (?:the )?time|what time is it|tell me the time|what(?:'s| is) (?:the )?(?:game )?day|what day (?:is it|are we on)|which day (?:is it|are we on))\b/.test(
+      text,
+    )
+  )
+    return "time";
+  if (
+    /\b(?:tell me (?:a (?:bit|little) )?about yourself|what (?:do you do|is your (?:job|role))|what(?:'s| is) your (?:job|role)|what brings you here)\b/.test(
+      text,
+    )
+  )
+    return "role";
+  if (
+    /\b(?:what (?:are you|have you been|were you) (?:up to|doing)|what did you do (?:today|yesterday)|any plans (?:for )?(?:today|tomorrow)|what do you have planned|what (?:are|were) your plans|what have you got on|how(?:'s| is|has|was) (?:your|the) day|how are (?:things|you doing)|how(?:'s| is) life|are you (?:okay|ok)|how are you feeling)\b/.test(
+      text,
+    )
+  )
+    return "day";
+  if (
+    /\b(?:help (?:you|me|out)|give you (?:a |some )?help|lend (?:you |me )?(?:a |some )?hand|pitch in|(?:need|want|use|get|have|like) (?:some |any |your |a )?(?:help|hand)|(?:can|could|would|may|will) (?:i|you) help|anything i can do|can i do anything useful|anything that needs doing|what can i do for you|how can i help)\b/.test(
       text,
     )
   )
@@ -44,7 +67,7 @@ function intentOf(raw: string): Intent | null {
     return "invitation";
   if (
     !/\byour (?:job|role)\b/.test(text) &&
-    (/\b(?:shifts?|jobs?|earn|(?:need|want|find|offer|some|for|i|to|paid) work|work (?:here|for|at)|(?:quit|cancel|stop|leave) (?:my |the |this )?work)\b/.test(
+    (/\b(?:shifts?|jobs?|earn|hiring|paid opportunity|(?:need|want|find|offer|some|for|i|to|paid) work|work (?:here|for|at)|(?:quit|cancel|stop|leave) (?:my |the |this )?work)\b/.test(
       text,
     ) ||
       /^(?:please )?(?:i )?(?:quit|cancel)[!.\s]*$/.test(text))
@@ -58,11 +81,43 @@ function intentOf(raw: string): Intent | null {
   )
     return "stock";
   if (
-    /\b(?:money|coins?|broke|income|afford)\b/.test(text) &&
+    /\b(?:money|coins?|broke|income|afford|my balance|my purse)\b/.test(text) &&
     !/\b(?:tab|debt|owe|repay|settle)\b/.test(text)
   )
     return "money";
   return null;
+}
+
+function dayReply(town: Town, agent: Agent, text: string): string {
+  if (/\btomorrow\b/i.test(text))
+    return "Tomorrow's timetable is not settled yet. Ask me when the new game day starts; I can tell you the plan then.";
+  if (/\b(?:yesterday|did you do|have you been|were you|was your day)\b/i.test(text)) {
+    const day = /\byesterday\b/i.test(text) ? town.day - 1 : town.day;
+    const receipt = [...agent.memories]
+      .reverse()
+      .find(
+        (memory) =>
+          memory.day === day &&
+          absMinute(memory.day, memory.minute) <= absMinute(town.day, town.minute) &&
+          memory.type === "favor" &&
+          memorySource(memory) === "event" &&
+          /^(?:Hobbs Cafe|Grocery) paid me \d+ for a shift I actually worked\.$/.test(memory.text),
+      );
+    return receipt
+      ? `My completed-work record on day ${receipt.day}, ${formatClock(receipt.minute)} says: ${receipt.text}`
+      : `I do not have a completed-activity record for day ${day}. My timetable tells us my intentions; it cannot prove what I finished.`;
+  }
+  const status = mentionsSeed(agent.status) ? "keeping my ordinary routine" : agent.status;
+  const current = beatAt(agent, town.minute);
+  const next = agent.plan.beats.find(
+    (beat) =>
+      beat.hour > Math.floor(town.minute / 60) &&
+      (beat.place !== current.place || beat.spot !== current.spot),
+  );
+  const plan = next
+    ? ` I plan to ${next.spot === "home" ? "go home" : `visit ${placeTitle(next.place)}`} at ${formatClock(next.hour * 60)}.`
+    : "";
+  return `Right now I am ${status}.${plan}`;
 }
 
 function isFollowup(text: string): boolean {
@@ -131,7 +186,44 @@ function cafeShift(town: Town) {
   );
 }
 
+function fundedPlayerWork(town: Town) {
+  return (town as FundedTown).economy?.work ? fundedWorkSummary(town, "player") : null;
+}
+
+function fundedShiftReply(town: Town, agent: Agent): string | null {
+  const work = fundedPlayerWork(town);
+  if (!work) return null;
+  if (agent.id !== "kevin")
+    return "Ask Kevin at Hobbs about the cafe shift. Its fee is reserved before acceptance, and only your eligible cafe attendance counts; I cannot give you a paid job through this conversation.";
+  const agreement = [...work.agreements]
+    .reverse()
+    .find((item) => item.kind === "cafe-shift" && ["active", "suspended"].includes(item.status));
+  const choices = playerActions(town, "kevin");
+  if (agreement) {
+    const paused = agreement.status === "suspended";
+    const choice = choices.find((item) =>
+      (paused ? /resume/i : /cancel|pause|suspend/i).test(item.label),
+    );
+    return `Your cafe shift is ${paused ? "paused" : "open"}. You have ${agreement.eligibleMinutes} eligible cafe minutes recorded toward ${agreement.requiredMinutes}; the full fee is ${agreement.fee}. Accrued progress and reserved pay survive midnight and interruption.${choice ? ` Use ${choice.label} below when you choose.` : " Read the current choices for its available next step."} Talking does not change the agreement.`;
+  }
+  const unresolved = work.legacyClaims.find(
+    (claim) =>
+      claim.payer === "till:cafe" && ["unresolved", "underfunded"].includes(claim.resolution),
+  );
+  if (unresolved)
+    return `Your saved cafe work remains labelled legacy evidence: ${unresolved.reason} It has not been erased or turned into an invented payment. Read the current choices for any funded recognition or replacement.`;
+  const offer = choices.find((item) => /Accept cafe shift/i.test(item.label));
+  return offer
+    ? `${offer.terms}${offer.disabledReason ? ` ${offer.disabledReason}` : ""} Read the terms below and choose explicitly; asking does not accept work.`
+    : "There is no available cafe shift offer in the current choices. No agreement was made by this conversation.";
+}
+
 function shiftReply(town: Town, agent: Agent, text: string): string {
+  const funded = fundedShiftReply(town, agent);
+  if (funded)
+    return refusing(text)
+      ? `Understood; I will not treat that as accepting or cancelling work. ${funded}`
+      : funded;
   const shift = cafeShift(town);
   const keeping =
     /\b(?:don't|do not|won't|will not) (?:want to )?(?:quit|cancel|stop|leave)\b/i.test(text);
@@ -179,6 +271,50 @@ function wageReply(town: Town, agent: Agent, text: string): string {
   if (!workplace)
     return "Ask Kevin about cafe wages, or Baba about grocery wages. The employer and your recorded work determine payment; I cannot pay you through a conversation.";
   const player = agentById(town, "player");
+  const work = fundedPlayerWork(town);
+  const economy = (town as FundedTown).economy;
+  if (work && economy) {
+    const payer = `till:${workplace}`;
+    const requestedDay = /\byesterday\b/i.test(text) ? town.day - 1 : town.day;
+    const settlements = work.payables
+      .filter((payable) => payable.payer === payer && payable.status === "settled")
+      .flatMap((payable) => {
+        const transfer = economy.transactions.find((item) => item.id === payable.transactionId);
+        return transfer &&
+          absMinute(transfer.day, transfer.minute) <= absMinute(town.day, town.minute)
+          ? [transfer]
+          : [];
+      });
+    const paid = [...settlements].reverse().find((item) => item.day === requestedDay);
+    const historical = [...wageReceipts(town, workplace)]
+      .reverse()
+      .find((memory) => memory.day === requestedDay);
+    const evidence = paid
+      ? `${placeTitle(workplace)} paid you ${paid.amount} on day ${paid.day} at ${formatClock(paid.minute)}; the accounts record the transfer.`
+      : historical
+        ? `${placeTitle(workplace)} paid you ${workplace === "cafe" ? 5 : 4} on day ${historical.day} at ${formatClock(historical.minute)} for a completed shift; that is a retained historical receipt.`
+        : `I have no ${placeTitle(workplace)} wage receipt for day ${requestedDay}.`;
+    const pending = work.payables.filter(
+      (payable) => payable.payer === payer && payable.status === "earned",
+    );
+    const agreement = [...work.agreements]
+      .reverse()
+      .find(
+        (item) =>
+          item.payer === payer &&
+          item.kind === "cafe-shift" &&
+          ["active", "suspended"].includes(item.status),
+      );
+    const status = pending.length
+      ? ` ${pending.reduce((sum, payable) => sum + payable.amount, 0)} is earned and still payable; its reservation remains.${pending[0].reason ? ` ${pending[0].reason}` : ""}`
+      : agreement
+        ? ` Your ${workplace} shift is ${agreement.status === "active" ? "still open" : "paused"}: ${agreement.eligibleMinutes} worked minutes of ${agreement.requiredMinutes}; the reserved fee is ${agreement.fee}. Progress and earned pay do not reset at midnight.`
+        : ` You have no open ${workplace} funded shift agreement.`;
+    const legacy = work.legacyClaims.find(
+      (claim) => claim.payer === payer && ["unresolved", "underfunded"].includes(claim.resolution),
+    );
+    return `${evidence}${status}${legacy ? ` Earlier work is preserved as legacy evidence: ${legacy.reason}` : ""} Asking does not pay a second wage.`;
+  }
   const receipts = wageReceipts(town, workplace);
   const requestedDay = /\byesterday\b/i.test(text) ? town.day - 1 : town.day;
   const receipt = [...receipts].reverse().find((memory) => memory.day === requestedDay);
@@ -218,7 +354,7 @@ function wageReply(town: Town, agent: Agent, text: string): string {
 
 function helpReply(agent: Agent, text: string, continuation: boolean): string {
   const requestingHelp =
-    /\b(?:help me|i (?:don't |do not )?(?:need|want) (?:some |any |your |a )?help|i need a hand)\b/i.test(
+    /\b(?:help me|lend me (?:a |some )?hand|i (?:don't |do not )?(?:need|want|could use|would like|get|have) (?:some |any |your |a )?(?:help|hand)|(?:could|can|may) i (?:get|have) (?:some |any |your |a )?(?:help|hand))\b/i.test(
       normalize(text),
     );
   if (refusing(text))
@@ -243,6 +379,12 @@ export function everydayReply(town: Town, agent: Agent, text: string): string | 
   const previous = continuation ? latestExchange(town, agent) : null;
   const intent = direct ?? (continuation ? previousIntent(previous) : null);
   switch (intent) {
+    case "time":
+      return `It is ${formatClock(town.minute)} on day ${town.day}.`;
+    case "role":
+      return characterProfile(agent.id).publicInfo;
+    case "day":
+      return dayReply(town, agent, text);
     case "wages":
       return wageReply(
         town,
@@ -254,6 +396,20 @@ export function everydayReply(town: Town, agent: Agent, text: string): string | 
     case "work":
       return shiftReply(town, agent, text);
     case "money":
+      if (
+        /\b(?:my (?:money|coins?|balance|purse)|(?:money|coins?|balance).*i (?:have|hold)|how (?:many coins|much money) (?:do )?i)\b/i.test(
+          text,
+        )
+      )
+        return `Your purse shows ${agentById(town, "player").money} coins. An unpaid wage or a promise is separate from that spendable balance.`;
+      if (
+        /\bwhere\b.*\b(?:money|coins?)\b.*\b(?:come|go)|\bwhere\b.*\b(?:come|go)\b.*\b(?:money|coins?)\b/i.test(
+          text,
+        )
+      )
+        return (town as FundedTown).economy
+          ? "The accounts begin with recorded opening balances. Wages and payments move those existing coins between accounts; a reservation earmarks money without creating it. The current town does not add unexplained coins at midnight."
+          : "This older town has personal purses and shop tills, but it does not yet have a complete account journal. I would not claim that every source and use of money is accounted for.";
       return `A cafe shift is one way to earn coins. ${shiftReply(town, agent, text)}`;
     case "stock":
       return agent.id === "baba"

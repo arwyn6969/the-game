@@ -1079,3 +1079,159 @@ textarea.field {
     transition: none !important;
   }
 }
+
+.town-tools {
+  display: flex;
+  flex: none;
+  gap: 0.4rem;
+  padding: 0.4rem 1.5rem;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-line);
+}
+.town-tools .btn {
+  padding: 0.45rem 0.7rem;
+}
+.tool-body {
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+.tool-body section + section,
+.tool-body details {
+  margin-top: 1.25rem;
+}
+.tool-body h3 {
+  margin-bottom: 0.4rem;
+}
+.tool-body p + p {
+  margin-top: 0.5rem;
+}
+.tool-body ul {
+  list-style: none;
+  padding: 0;
+}
+.tool-body li + li {
+  margin-top: 0.75rem;
+}
+.tool-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  color: var(--color-primary);
+  margin: 0.5rem 0;
+}
+.tool-option input {
+  flex: none;
+  margin-top: 0.4rem;
+}
+.tool-body progress {
+  width: 100%;
+  accent-color: var(--color-primary);
+}
+.tool-destinations,
+.tool-directions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0.6rem 0;
+}
+.tool-actions li,
+.tool-events li {
+  padding: 0.75rem;
+  border: 1px solid var(--color-line);
+  background: var(--color-raised);
+}
+.tool-actions .btn {
+  margin-top: 0.5rem;
+}
+@media (max-width: 680px) {
+  .town-tools {
+    padding: 0.35rem 0.75rem;
+    gap: 0.3rem;
+    overflow-x: auto;
+  }
+  .town-tools .btn {
+    flex: none;
+    font-size: 0.7rem;
+    padding: 0.4rem 0.55rem;
+  }
+}
+.library-accounts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+.library-accounts > div {
+  padding: 0.65rem;
+  background: var(--color-raised);
+  border: 1px solid var(--color-line);
+}
+.library-accounts dt {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+}
+.library-accounts dd {
+  color: var(--color-primary);
+  font-size: 1.15rem;
+}
+.library-choice-group {
+  margin-top: 0.75rem !important;
+}
+.library-choice-group summary {
+  color: var(--color-primary);
+  cursor: pointer;
+}
+.library-choice-group .tool-actions {
+  margin-top: 0.6rem;
+}
+.tool-next-step,
+.tool-action-note {
+  padding: 0.7rem;
+  border-left: 2px solid var(--color-primary);
+  background: var(--color-raised);
+}
+.library-board {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+}
+@media (max-width: 360px) {
+  .town-tools .btn {
+    padding: 0.4rem;
+    font-size: 0.65rem;
+  }
+  .welcome-tip {
+    flex-wrap: wrap;
+  }
+}
+.gate-dialogue-option {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+}
+.gate-home form .gate-privacy-note {
+  margin-top: 0.35rem;
+  color: var(--color-muted);
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+@media (max-height: 680px) and (max-width: 680px) {
+  .welcome-tip > div > p,
+  .welcome-tip > details,
+  .offline-note {
+    display: none;
+  }
+  .welcome-tip > div {
+    flex: 1;
+    min-width: 0;
+  }
+  .welcome-tip {
+    flex-wrap: nowrap;
+    gap: 0.45rem;
+    padding: 0.4rem 0.75rem;
+  }
+  .welcome-tip > .btn {
+    flex: none;
+    font-size: 0.7rem;
+    padding: 0.4rem;
+  }
+}

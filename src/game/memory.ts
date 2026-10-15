@@ -144,43 +144,66 @@ export function logRetrieval(town: Town, agent: Agent, question: string): Retrie
   return log;
 }
 
-function foldId(kind: string, oldest: Memory[], extra: number) {
-  return `${kind}-${oldest[0]?.id ?? "x"}-${oldest[oldest.length - 1]?.id ?? "y"}-${extra}`;
-}
+const ARCHIVE_PREFIX = "archive-";
+const ARCHIVE_LIMITS = { chat: 40, observe: 16, plan: 8 } as const;
+const PAIR_ARCHIVE_LIMIT = 8;
+type ArchiveKind = keyof typeof ARCHIVE_LIMITS;
 
-function foldText(prefix: string, oldest: Memory[]) {
-  const summary = oldest
-    .map((m) => `[${memorySource(m)}, day ${m.day}] ${m.text.replace(/\.$/, "")}`)
-    .join("; ")
-    .slice(0, 380);
-  const carried = oldest.some((m) => m.seed || mentionsSeed(m.text));
-  return {
-    text: carried ? `${prefix} ${summary}. Who he is stayed in the fold.` : `${prefix} ${summary}.`,
-    seed: carried,
-  };
+/**
+ * Keep a bounded set of complete older records. Concatenating eight records and
+ * truncating the result silently discarded all but the first one, along with
+ * the parties and speakers. An archive retains the original evidence source;
+ * archiving a statement does not make it a verified event or a new reflection.
+ * Existing protected identity, seed and transaction memories never enter here.
+ */
+function archiveMemories(agent: Agent, kind: ArchiveKind, memories: Memory[]) {
+  if (!memories.length) return;
+  const drop = new Set(memories.map((memory) => memory.id));
+  // Preserve insertion order, including exchanges within the same game minute.
+  // Appending old archives would make reverse readers mistake them for new chat.
+  agent.memories = agent.memories.map((memory) =>
+    drop.has(memory.id)
+      ? {
+          ...memory,
+          id: `${ARCHIVE_PREFIX}${kind}-${memory.id}`,
+          source: memorySource(memory),
+          protected: true,
+        }
+      : memory,
+  );
+  const prefix = `${ARCHIVE_PREFIX}${kind}-`;
+  const archives = agent.memories
+    .filter(
+      (memory) =>
+        typeof memory.id === "string" &&
+        memory.id.startsWith(prefix) &&
+        !memory.seed &&
+        !mentionsSeed(memory.text),
+    )
+    .sort(
+      (a, b) =>
+        b.importance - a.importance || absMinute(b.day, b.minute) - absMinute(a.day, a.minute),
+    );
+  const keep = new Set<string>();
+  const pairCounts = new Map<string, number>();
+  for (const memory of archives) {
+    const pair = memory.with ?? "legacy-unattributed";
+    if (keep.size >= ARCHIVE_LIMITS[kind]) break;
+    if (kind === "chat" && (pairCounts.get(pair) ?? 0) >= PAIR_ARCHIVE_LIMIT) continue;
+    keep.add(memory.id);
+    pairCounts.set(pair, (pairCounts.get(pair) ?? 0) + 1);
+  }
+  const remove = new Set(
+    archives.filter((memory) => !keep.has(memory.id)).map((memory) => memory.id),
+  );
+  agent.memories = agent.memories.filter((memory) => !remove.has(memory.id));
 }
 function compressPlans(agent: Agent) {
   const plans = agent.memories.filter(
     (m) => m.type === "plan" && !m.protected && !m.seed && !mentionsSeed(m.text),
   );
   if (plans.length <= 6) return;
-  const oldest = plans.slice(0, plans.length - 4);
-  const folded = foldText("Older days, folded so the plan is not lost:", oldest);
-  const reflect: Memory = {
-    id: foldId("plan", oldest, agent.memories.length),
-    day: oldest[oldest.length - 1]?.day ?? 1,
-    minute: oldest[oldest.length - 1]?.minute ?? 0,
-    type: "reflect",
-    text: folded.text,
-    importance: 5,
-    keywords: keywords(folded.text),
-    protected: true,
-    seed: folded.seed,
-    mind: "offline",
-  };
-  const drop = new Set(oldest.map((m) => m.id));
-  agent.memories = agent.memories.filter((m) => !drop.has(m.id));
-  agent.memories.push(reflect);
+  archiveMemories(agent, "plan", plans.slice(0, plans.length - 4));
 }
 
 export function pushMemory(agent: Agent, memory: Memory) {
@@ -195,7 +218,7 @@ export function pushMemory(agent: Agent, memory: Memory) {
 
 export function compressDialogue(agent: Agent) {
   const bulky = (m: Memory) =>
-    (m.type === "chat" || m.type === "plan") && !m.protected && !m.seed && !mentionsSeed(m.text);
+    m.type === "chat" && !m.protected && !m.seed && !mentionsSeed(m.text);
   let guard = 0;
   while (agent.memories.filter(bulky).length > 40 && guard++ < 4) {
     const oldest = agent.memories
@@ -203,25 +226,7 @@ export function compressDialogue(agent: Agent) {
       .sort((a, b) => absMinute(a.day, a.minute) - absMinute(b.day, b.minute))
       .slice(0, 8);
     if (oldest.length < 8) break;
-    const folded = foldText("What was said, folded so it is not lost:", oldest);
-    const reflect: Memory = {
-      id: foldId("said", oldest, agent.memories.length),
-      day: oldest[oldest.length - 1]?.day ?? 1,
-      minute: oldest[oldest.length - 1]?.minute ?? 0,
-      type: "reflect",
-      text: folded.text,
-      importance: Math.max(
-        5,
-        ...oldest.map((m) => (Number.isFinite(m.importance) ? m.importance : 5)),
-      ),
-      keywords: keywords(folded.text),
-      protected: true,
-      seed: folded.seed,
-      mind: "offline",
-    };
-    const drop = new Set(oldest.map((m) => m.id));
-    agent.memories = agent.memories.filter((m) => !drop.has(m.id));
-    agent.memories.push(reflect);
+    archiveMemories(agent, "chat", oldest);
   }
 }
 
@@ -235,25 +240,7 @@ export function compressObservations(agent: Agent) {
       .sort((a, b) => absMinute(a.day, a.minute) - absMinute(b.day, b.minute))
       .slice(0, 8);
     if (oldest.length < 8 && agent.memories.filter(isObs).length <= 48) break;
-    const folded = foldText("Looking back, the ordinary minutes fold together:", oldest);
-    const reflect: Memory = {
-      id: foldId("fold", oldest, agent.memories.length),
-      day: oldest[oldest.length - 1]?.day ?? agent.memories[0]?.day ?? 1,
-      minute: oldest[oldest.length - 1]?.minute ?? 0,
-      type: "reflect",
-      text: folded.text,
-      importance: Math.max(
-        5,
-        ...oldest.map((m) => (Number.isFinite(m.importance) ? m.importance : 5)),
-      ),
-      keywords: keywords(folded.text),
-      protected: true,
-      seed: folded.seed,
-      mind: "offline",
-    };
-    const drop = new Set(oldest.map((m) => m.id));
-    agent.memories = agent.memories.filter((m) => !drop.has(m.id));
-    agent.memories.push(reflect);
+    archiveMemories(agent, "observe", oldest);
   }
 }
 
