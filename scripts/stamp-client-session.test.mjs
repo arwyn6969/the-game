@@ -106,3 +106,49 @@ test("server rendering never retains client suppression state", async () => {
   storageFixture();
   assert.equal(client.isStampSuppressed(scope()), false);
 });
+
+test("a session polling hint starts absent and persists only the opted-in scope across reload", async () => {
+  const { data } = storageFixture();
+  const client = await fresh();
+  assert.equal(client.hasStampSession(scope()), false);
+  client.rememberStampSession(scope(), true);
+  assert.equal(client.hasStampSession(scope()), true);
+  assert.equal(client.hasStampSession(scope(2)), false);
+  assert.equal(client.hasStampSession({ ...scope(), worldId: `world_${"b".repeat(64)}` }), false);
+  const reloaded = await fresh();
+  assert.equal(reloaded.hasStampSession(scope()), true);
+  assert.deepEqual(JSON.parse(data.get("the-game-stamp-sessions-v1")), [
+    `${scope().worldId}:${scope().characterId}`,
+  ]);
+  for (const value of JSON.parse(data.get("the-game-stamp-sessions-v1")))
+    assert.match(value, /^world_[0-9a-f]{64}:character_[0-9a-f]{64}$/);
+  assert.equal(data.get("the-game-stamp-sessions-v1").includes("address"), false);
+  assert.equal(data.get("the-game-stamp-sessions-v1").includes("proof"), false);
+  assert.equal(data.get("the-game-stamp-sessions-v1").includes("data:image"), false);
+});
+
+test("forgetting a disconnected session hint does not undo local appearance suppression", async () => {
+  storageFixture();
+  const client = await fresh();
+  client.rememberStampSession(scope(), true);
+  client.rememberStampSession(scope(2), true);
+  client.setStampSuppressed(scope(), true);
+  client.rememberStampSession(scope(), false);
+  assert.equal(client.hasStampSession(scope()), false);
+  assert.equal(client.hasStampSession(scope(2)), true);
+  assert.equal(client.isStampSuppressed(scope()), true);
+});
+
+test("session polling hints are bounded to the most recent 64 scopes independently of suppression", async () => {
+  const { data } = storageFixture();
+  const client = await fresh();
+  client.setStampSuppressed(scope(2), true);
+  for (let n = 1; n <= 64; n++) client.rememberStampSession(scope(n), true);
+  client.rememberStampSession(scope(1), true);
+  client.rememberStampSession(scope(65), true);
+  assert.equal(client.hasStampSession(scope(1)), true);
+  assert.equal(client.hasStampSession(scope(2)), false);
+  assert.equal(client.hasStampSession(scope(65)), true);
+  assert.equal(client.isStampSuppressed(scope(2)), true);
+  assert.equal(JSON.parse(data.get("the-game-stamp-sessions-v1")).length, 64);
+});

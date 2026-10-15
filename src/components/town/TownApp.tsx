@@ -33,7 +33,11 @@ import { PlayerTools, type ToolPage } from "./PlayerTools";
 import { StampIdentityPanel } from "./StampIdentityPanel";
 import { getStampIdentity } from "@/lib/stamps.functions";
 import { isStampAppearance } from "@/lib/stamps/validation";
-import { isStampSuppressed } from "@/lib/stamps/client-session";
+import {
+  hasStampSession,
+  isStampSuppressed,
+  rememberStampSession,
+} from "@/lib/stamps/client-session";
 import type { StampAppearance } from "@/lib/stamps/types";
 import {
   applyPlayerAction,
@@ -291,19 +295,26 @@ export function TownApp() {
     let alive = true;
     const scope = { worldId: stampWorldId, characterId: stampCharacterId };
     async function refresh() {
-      if (isStampSuppressed(scope)) {
+      if (isStampSuppressed(scope) || !hasStampSession(scope)) {
         if (alive) acceptStampAppearance(null);
         return;
       }
       const generation = stampGeneration.current;
       let next: StampAppearance | null = null;
+      let connected: boolean | null = null;
       try {
         const result = await getStampIdentity({ data: { scope } });
-        if (result.ok && result.value.connected) next = result.value.appearance;
+        if (result.ok) {
+          connected = result.value.connected;
+          if (connected) next = result.value.appearance;
+        }
       } catch {
         /* Wallet tools are optional; keep local play available. */
       }
-      if (alive && generation === stampGeneration.current) acceptStampAppearance(next);
+      if (alive && generation === stampGeneration.current) {
+        if (connected !== null) rememberStampSession(scope, connected);
+        acceptStampAppearance(next);
+      }
     }
     void refresh();
     const timer = window.setInterval(() => void refresh(), 60_000);

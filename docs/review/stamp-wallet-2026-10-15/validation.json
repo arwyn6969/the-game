@@ -25,9 +25,9 @@
       "failed": 0
     },
     "fullTests": {
-      "scriptPassed": 587,
+      "scriptPassed": 590,
       "appAuthPassed": 55,
-      "totalPassed": 642,
+      "totalPassed": 645,
       "failed": 0,
       "skipped": 0
     },
@@ -37,8 +37,8 @@
       "stampchainAndMedia": 19,
       "leatherConnector": 12,
       "rendererArt": 4,
-      "localDisconnectIntent": 6,
-      "total": 83
+      "localDisconnectIntent": 9,
+      "total": 86
     },
     "diagnostics": {
       "worldAuditIssues": 0,
@@ -66,6 +66,14 @@
       "mockedLeatherProvider": true,
       "mockedStampchainGetOnly": true,
       "unexpectedConsoleOrPageErrors": 0
+    },
+    "delayedAiBrowser": {
+      "passed": true,
+      "evidence": "ai/results.json",
+      "unchangedAssertions": true,
+      "liveProviderCalls": 0,
+      "unexpectedServerRequests": 0,
+      "viewports": ["1280x800", "390x844"]
     }
   },
   "externalEffects": {
@@ -81,5 +89,11 @@
     "Custody, recovery and protocol-aware reconciliation before deposits"
   ],
   "implementationCommit": "6638071",
-  "draftPR": "https://github.com/arwyn6969/the-game/pull/32"
+  "draftPR": "https://github.com/arwyn6969/the-game/pull/32",
+  "reviewFixes": [
+    "post-await challenge/proof expiry",
+    "appearance revision CAS for delayed clear/select/disconnect",
+    "disconnect intent retained across network failure and reload",
+    "background wallet requests require explicit per-scope opt-in; unchanged AI privacy assertions retained"
+  ]
 }

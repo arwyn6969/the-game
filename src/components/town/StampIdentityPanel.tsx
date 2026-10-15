@@ -10,7 +10,11 @@ import {
   previewStampImage,
 } from "@/lib/stamps.functions";
 import { getLeatherAddress, LeatherWalletError, signLeatherChallenge } from "@/lib/stamps/leather";
-import { isStampSuppressed, setStampSuppressed } from "@/lib/stamps/client-session";
+import {
+  isStampSuppressed,
+  rememberStampSession,
+  setStampSuppressed,
+} from "@/lib/stamps/client-session";
 import type {
   StampAppearance,
   StampCrop,
@@ -170,6 +174,7 @@ export function StampIdentityPanel({
 
   function acceptView(next: StampIdentityView, operation: Operation, resetDraft = false): void {
     if (!isCurrent(operation)) return;
+    rememberStampSession(scope, next.connected);
     const appearance = next.connected ? currentAppearance(next.appearance, scope) : null;
     setView({ ...next, appearance });
     callbacks.current.onAppearance(appearance);
@@ -377,6 +382,7 @@ export function StampIdentityPanel({
     setMode("original");
     setCrop({ ...DEFAULT_CROP });
     setStampSuppressed(scope, true);
+    rememberStampSession(scope, false);
     callbacks.current.onAppearance(null);
     setNote("Disconnecting the wallet check…");
     try {
