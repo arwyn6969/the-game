@@ -1,19 +1,5 @@
 @import "tailwindcss";
 
-.library-draft .tool-option {
-  display: grid;
-  gap: 0.45rem;
-  margin-block: 0.8rem;
-}
-.library-draft select {
-  min-height: 44px;
-  width: 100%;
-  border: 1px solid var(--color-line);
-  background: var(--color-bg);
-  color: var(--color-fg);
-  padding: 0.5rem;
-}
-
 @theme {
   --color-bg: #10091c;
   --color-surface: #1b102d;
@@ -1108,6 +1094,7 @@ textarea.field {
 .tool-body {
   font-size: 0.875rem;
   line-height: 1.65;
+  overflow-wrap: anywhere;
 }
 .tool-body section + section,
 .tool-body details {
@@ -1115,6 +1102,13 @@ textarea.field {
 }
 .tool-body h3 {
   margin-bottom: 0.4rem;
+  font: 600 0.9rem/1.5 var(--font-sans);
+  color: var(--color-fg);
+}
+.tool-body h4 {
+  margin-top: 1rem;
+  color: var(--color-fg);
+  font-weight: 600;
 }
 .tool-body p + p {
   margin-top: 0.5rem;
@@ -1156,6 +1150,20 @@ textarea.field {
 }
 .tool-actions .btn {
   margin-top: 0.5rem;
+  min-height: 44px;
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
+}
+.tool-action-reason {
+  margin-top: 0.5rem;
+  color: var(--color-muted);
+  border-left: 2px solid var(--color-line);
+  padding-left: 0.6rem;
+}
+.tool-action-note:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
 }
 @media (max-width: 680px) {
   .town-tools {
@@ -1194,9 +1202,60 @@ textarea.field {
 .library-choice-group summary {
   color: var(--color-primary);
   cursor: pointer;
+  padding-block: 0.65rem;
+  min-height: 44px;
 }
 .library-choice-group .tool-actions {
   margin-top: 0.6rem;
+}
+.library-current-step {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid var(--color-line);
+  color: var(--color-muted);
+  font-size: 0.7rem;
+}
+.library-player-task,
+.inventory-summary {
+  padding: 0.8rem;
+  border: 1px solid var(--color-line);
+  margin-top: 1rem;
+}
+.library-fee {
+  color: var(--color-primary);
+}
+.library-checklist {
+  margin-top: 0.6rem;
+}
+.library-checklist li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.library-checklist [data-done="true"] > span:first-child {
+  color: var(--color-primary);
+}
+.library-draft .tool-option {
+  display: grid;
+  gap: 0.45rem;
+  margin-block: 0.8rem;
+}
+.library-draft select {
+  min-height: 44px;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--color-line);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  padding: 0.5rem;
+  font: inherit;
+}
+.library-funding summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding-block: 0.6rem;
+  color: var(--color-primary);
 }
 .tool-next-step,
 .tool-action-note {

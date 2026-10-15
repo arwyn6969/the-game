@@ -1,6 +1,6 @@
 import type { Agent, Memory, Town } from "./types";
 import { memorySource } from "./conversation";
-import { BABA_LOAF, PLAYER_CAFE_SHIFT, playerActions } from "./effects";
+import { BABA_LOAF, playerActions } from "./effects";
 import { absMinute, agentById } from "./memory";
 import { formatClock, mentionsSeed } from "./text";
 import { placeTitle } from "./world";
@@ -176,80 +176,62 @@ function refusing(raw: string): boolean {
   );
 }
 
-function cafeShift(town: Town) {
-  return agentById(town, "player").projects.find(
-    (project) =>
-      project.owner === "player" &&
-      project.kind === "shift" &&
-      project.status === "open" &&
-      (project.place ?? "cafe") === "cafe",
-  );
-}
-
 function fundedPlayerWork(town: Town) {
   return (town as FundedTown).economy?.work ? fundedWorkSummary(town, "player") : null;
 }
 
-function fundedShiftReply(town: Town, agent: Agent): string | null {
+function fundedShiftReply(town: Town, agent: Agent): string {
+  const workplace = agent.id === "kevin" ? "cafe" : agent.id === "baba" ? "grocery" : null;
+  if (!workplace)
+    return "Ask Kevin at Hobbs about the cafe shift: 16:00–19:00, with 5 reserved before you accept. Ask Baba about any preserved grocery work. Only eligible attendance counts; I cannot give you a paid job through this conversation.";
   const work = fundedPlayerWork(town);
-  if (!work) return null;
-  if (agent.id !== "kevin")
-    return "Ask Kevin at Hobbs about the cafe shift. Its fee is reserved before acceptance, and only your eligible cafe attendance counts; I cannot give you a paid job through this conversation.";
-  const agreement = [...work.agreements]
+  const payer = `till:${workplace}`;
+  const agreement = [...(work?.agreements ?? [])]
     .reverse()
-    .find((item) => item.kind === "cafe-shift" && ["active", "suspended"].includes(item.status));
-  const choices = playerActions(town, "kevin");
+    .find(
+      (item) =>
+        item.payer === payer &&
+        item.kind === "cafe-shift" &&
+        ["active", "suspended"].includes(item.status),
+    );
+  const choices = playerActions(town, agent.id);
   if (agreement) {
     const paused = agreement.status === "suspended";
     const choice = choices.find((item) =>
       (paused ? /resume/i : /cancel|pause|suspend/i).test(item.label),
     );
-    return `Your cafe shift is ${paused ? "paused" : "open"}. You have ${agreement.eligibleMinutes} eligible cafe minutes recorded toward ${agreement.requiredMinutes}; the full fee is ${agreement.fee}. Accrued progress and reserved pay survive midnight and interruption.${choice ? ` Use ${choice.label} below when you choose.` : " Read the current choices for its available next step."} Talking does not change the agreement.`;
+    return `Your ${workplace} shift is ${paused ? "paused" : "open"}. You have ${agreement.eligibleMinutes} eligible ${workplace} minutes recorded toward ${agreement.requiredMinutes}; the full fee is ${agreement.fee}. Accrued progress and reserved pay survive midnight and interruption.${choice ? ` Use ${choice.label} below when you choose.` : " Read the current choices for its available next step."} Talking does not change the agreement.`;
   }
-  const unresolved = work.legacyClaims.find(
+  const recognition = choices.find((item) => /^Recognise .* work/.test(item.label));
+  if (recognition)
+    return `${recognition.terms}${recognition.disabledReason ? ` ${recognition.disabledReason}` : ""} Read ${recognition.label} below and choose explicitly. Talking does not recognise or accept work.`;
+  const settlement = choices.find((item) => /^Receive earned wage/.test(item.label));
+  if (settlement)
+    return `Your ${workplace} work is complete and its earned wage is still payable. ${settlement.terms}${settlement.disabledReason ? ` ${settlement.disabledReason}` : ""} Read ${settlement.label} below; talking does not transfer money.`;
+  const unresolved = work?.legacyClaims.find(
     (claim) =>
-      claim.payer === "till:cafe" && ["unresolved", "underfunded"].includes(claim.resolution),
+      (claim.payer === payer || (claim.payer === null && workplace === "cafe")) &&
+      ["unresolved", "underfunded", "protected"].includes(claim.resolution),
   );
   if (unresolved)
-    return `Your saved cafe work remains labelled legacy evidence: ${unresolved.reason} It has not been erased or turned into an invented payment. Read the current choices for any funded recognition or replacement.`;
+    return `Your saved ${workplace} work remains labelled legacy evidence: ${unresolved.reason} It has not been erased or turned into an invented payment. Read the current choices for any funded recognition or replacement.`;
   const offer = choices.find((item) => /Accept cafe shift/i.test(item.label));
   return offer
     ? `${offer.terms}${offer.disabledReason ? ` ${offer.disabledReason}` : ""} Read the terms below and choose explicitly; asking does not accept work.`
-    : "There is no available cafe shift offer in the current choices. No agreement was made by this conversation.";
+    : workplace === "grocery"
+      ? "You have no open grocery funded shift agreement, and I have no new grocery shift offer. Ask Kevin at Hobbs about the cafe shift: 16:00–19:00, with 5 reserved before acceptance. No agreement was made by this conversation."
+      : "There is no available cafe shift offer in the current choices. No agreement was made by this conversation.";
 }
 
 function shiftReply(town: Town, agent: Agent, text: string): string {
-  const funded = fundedShiftReply(town, agent);
-  if (funded)
-    return refusing(text)
-      ? `Understood; I will not treat that as accepting or cancelling work. ${funded}`
-      : funded;
-  const shift = cafeShift(town);
   const keeping =
     /\b(?:don't|do not|won't|will not) (?:want to )?(?:quit|cancel|stop|leave)\b/i.test(text);
-  const declining = refusing(text) && !keeping;
   const prefix = keeping
-    ? shift
-      ? "Understood; you want to keep your agreement. "
-      : "You have no cafe shift to cancel. "
-    : declining
+    ? "Understood; you want to keep your agreement. Talking does not cancel work. "
+    : refusing(text)
       ? "Understood; I will not treat that as accepting or cancelling work. "
       : "";
-  if (agent.id !== "kevin")
-    return `${prefix}Ask Kevin at Hobbs about the cafe shift: 16:00–19:00 each day, 5 after three game hours on the floor if the till can pay. He has the current terms and availability; I cannot offer you a paid job here.`;
-  if (shift) {
-    const hours =
-      shift.text === PLAYER_CAFE_SHIFT
-        ? "Your cafe shift is open, 16:00–19:00 each day until cancelled."
-        : "Your cafe shift is open; its agreed hours are in your timetable.";
-    return `${prefix}${hours} Today you have ${Math.round(agentById(town, "player").shiftHours * 60)} worked minutes recorded. Three game hours earn 5 if the till can pay. Unpaid hours reset at midnight. Use Cancel cafe shift below to end the agreement; talking does not change it.`;
-  }
-  if (/\b(?:quit|cancel|stop|leave)\b/i.test(text))
-    return "You have no open cafe shift to cancel. This conversation has not changed any agreement.";
-  const offer = playerActions(town, "kevin").find((action) =>
-    action.label.startsWith("Accept cafe shift"),
-  );
-  return `${prefix}The cafe shift is 16:00–19:00 each day until cancelled, for 5 after three game hours on the floor if the till can pay. ${offer?.disabledReason ? `${offer.disabledReason} ` : ""}Read the terms below and choose Accept to take it. Talking alone commits you to nothing.`;
+  return `${prefix}${fundedShiftReply(town, agent)}`;
 }
 
 function wageReceipts(town: Town, workplace: "cafe" | "grocery"): Memory[] {
@@ -341,22 +323,15 @@ function wageReply(town: Town, agent: Agent, text: string): string {
       (project.place ?? "cafe") === workplace,
   );
   let status = shift
-    ? `Your ${workplace} shift is still open${shift.text === PLAYER_CAFE_SHIFT ? ", 16:00–19:00 daily" : "; check its hours in your timetable"}.`
+    ? `Your saved ${workplace} shift remains legacy evidence; its timetable and ${Math.round(player.shiftHours * 60)} aggregate minutes are preserved. It is not an active funded agreement.`
     : `You have no open ${workplace} shift agreement.`;
-  if (requestedDay === town.day && !receipt && shift) {
-    const minutes = Math.round(player.shiftHours * 60);
-    status += ` Today has ${minutes} worked minutes recorded; the full wage of ${amount} needs 180.`;
-    if (player.paidToday)
-      status +=
-        " Today's wage is already marked paid, but I cannot verify this employer's receipt.";
-    else if ((town.tills[workplace] ?? 0) < amount)
-      status += " The till cannot fund the full wage now.";
-    else if (player.money + amount > 999) status += " Your purse cannot hold the full wage now.";
-    else if (minutes >= 180)
-      status +=
-        " Recorded hours alone do not confirm payment; the work rules still have to issue a receipt.";
-    status += " Unpaid hours reset at midnight.";
-  }
+  const choice = playerActions(town, agent.id).find((action) =>
+    /^(?:Recognise .* work|Receive earned wage)/.test(action.label),
+  );
+  if (choice)
+    status += ` ${choice.terms}${choice.disabledReason ? ` ${choice.disabledReason}` : ""} Read ${choice.label} below; this conversation does not apply it.`;
+  else if (player.paidToday)
+    status += " The saved record is already marked paid; that cannot create another wage.";
   return `${evidence} ${status} Asking does not pay a second wage.`;
 }
 

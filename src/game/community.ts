@@ -14,6 +14,7 @@ import {
   completeWorkUnit,
   closeFundedProject,
   projectFundingSummary,
+  wageInterval,
 } from "./funded-work";
 import { availableFunds, runEconomyCommand, reserveFunds, releaseFunds } from "./economy";
 import { agentById, makeMemory, pushMemory } from "./memory";
@@ -98,6 +99,7 @@ const BOX_TILES: Record<BoxId, { x: number; y: number }> = {
   Alder: { x: 44, y: 16 },
   Cedar: { x: 50, y: 16 },
 };
+const LOOKUP_STATUS = "walking to the library for the funded index lookup";
 type LibraryState = {
   schemaVersion: 1;
   actionRevision: number;
@@ -146,6 +148,45 @@ const must = <T>(result: { ok: true; value: T } | { ok: false; reason: string })
   if (!result.ok) throw new Error(result.reason);
   return result.value;
 };
+function withoutLookupRoute(plan: Plan, state: LibraryState): Plan {
+  return {
+    ...plan,
+    beats: plan.beats.map((beat) =>
+      beat.place === "library" && beat.status === LOOKUP_STATUS
+        ? (state.lookup?.originalPlan.beats.find((original) => original.hour === beat.hour) ?? beat)
+        : beat,
+    ),
+  };
+}
+function lookupCommitment(town: Town, state: LibraryState, minute = town.minute): boolean {
+  const northern = agentById(town, "northern");
+  const scheduledTown = {
+    ...town,
+    minute,
+    agents: town.agents.map((agent) =>
+      agent.id === "northern"
+        ? { ...northern, plan: withoutLookupRoute(northern.plan, state) }
+        : agent,
+    ),
+  };
+  return Boolean(
+    town.economy?.work?.agreements.some(
+      (agreement) =>
+        agreement.worker === "northern" &&
+        agreement.kind === "cafe-shift" &&
+        agreement.status === "active" &&
+        wageInterval(scheduledTown, agreement),
+    ),
+  );
+}
+function restoreLookupRoute(town: Town, state: LibraryState) {
+  const northern = agentById(town, "northern");
+  const restored = withoutLookupRoute(northern.plan, state);
+  if (restored.beats.some((beat, index) => beat !== northern.plan.beats[index])) {
+    northern.plan = structuredClone(restored);
+    northern.path = [];
+  }
+}
 function event(town: Town, state: LibraryState, id: string, text: string, participants: AgentId[]) {
   if (state.events.some((item) => item.id === id)) return;
   const present = town.agents
@@ -360,12 +401,12 @@ function report(
 ) {
   let assignment = state.assignments[role];
   if (request) {
-    if (
-      role === "reference" &&
-      !BOX_IDS.every((box) => state.observations.some((item) => item.key === `box:${box}`))
-    )
+    const boxes = role === "reference" ? BOX_IDS : (["Cedar"] as const);
+    if (!boxes.every((box) => state.observations.some((item) => item.key === `box:${box}`)))
       throw new Error(
-        "Kevin needs your three recorded box inspections before he can check the references.",
+        role === "reference"
+          ? "Kevin needs your three recorded box inspections before he can check the references."
+          : "Arwyn needs your recorded Cedar inspection before she can check the access note's source.",
       );
     releasePending(town, role);
     const agreement = accept(town, `${LIBRARY_PROJECT}:${role}`, worker);
@@ -471,12 +512,9 @@ function beginLookup(town: LibraryTown, state: LibraryState) {
   if (!revision) throw new Error("Submit an index first.");
   if (state.lookup) throw new Error("The funded independent test has already been booked.");
   const northern = agentById(town, "northern");
-  const wage = town.economy!.work!.agreements.find(
-    (item) => item.worker === "northern" && item.kind === "cafe-shift" && item.status === "active",
-  );
-  if (wage && town.minute >= 960 && town.minute < 1140)
+  if (lookupCommitment(town, state))
     throw new Error(
-      "Northern has an active cafe commitment. Return outside its hours; the lookup remains funded and pending.",
+      "Northern has a paid work commitment now. Return outside its hours; the lookup remains funded and pending.",
     );
   const occupied = new Set(
     town.agents
@@ -527,15 +565,97 @@ export function libraryView(town: Town) {
   const goal = libraryMovementGoals(town)?.northern ?? ANCHORS.library;
   const route =
     state?.lookup?.status === "routing" ? findPath(agentById(town, "northern").tile, goal) : [];
+  let workDelay = 0;
+  if (state?.lookup?.status === "routing")
+    while (workDelay < 1440 && lookupCommitment(town, state, (town.minute + workDelay) % 1440))
+      workDelay += 60 - ((town.minute + workDelay) % 60);
   const minutes =
-    state?.lookup?.status === "routing" ? Math.max(1, Math.ceil(route.length / 3) + 2) : 0;
+    state?.lookup?.status === "routing"
+      ? workDelay + Math.max(1, Math.ceil(route.length / 3) + 2)
+      : 0;
   const outcome =
     state?.lookup?.result === "success"
-      ? `Northern found room-access in Cedar using revision ${state.lookup.revision}.`
+      ? `Northern found the community room access note in Cedar using revision ${state.lookup.revision}.`
       : state?.lookup?.result === "failure"
-        ? `Northern could not find room-access using revision ${state.lookup.revision}. Payment for his completed search remains earned.`
-        : (state?.lookup?.reason ?? "No independent lookup completed yet.");
+        ? `Northern could not find the community room access note using revision ${state.lookup.revision}. Payment for his completed search remains earned.`
+        : (state?.lookup?.reason.replaceAll("room-access", "the community room access note") ??
+          "No independent lookup completed yet.");
   const player = agentById(town, "player");
+  const atLibrary = zoneAt(player.tile.x, player.tile.y) === "library";
+  const role = state?.role === "source" || state?.role === "reference" ? state.role : null;
+  const ownReport = state?.reports.find((item) => item.role === role && item.worker === "player");
+  const otherRole = role === "source" ? "reference" : "source";
+  const otherReport = state?.reports.some((item) => item.role === otherRole);
+  const neededKeys =
+    role && ownReport && !otherReport
+      ? otherRole === "reference"
+        ? BOX_IDS.map((box) => `box:${box}`)
+        : ["box:Cedar"]
+      : role
+        ? REQUIRED[role]
+        : [];
+  const requiredEvidence = neededKeys.map((key) => ({
+    id: key,
+    label: FIXTURE.find((item) => item.id === key)!.label,
+    done: state?.observations.some((item) => item.key === key) ?? false,
+  }));
+  const missing = requiredEvidence.filter((item) => !item.done);
+  const payable = economy?.work?.payables.find(
+    (item) => item.agreementId === (role ? state?.assignments[role]?.agreementId : undefined),
+  );
+  type Stage =
+    | "offer"
+    | "travel"
+    | "inspect"
+    | "report"
+    | "draft"
+    | "lookup"
+    | "waiting"
+    | "aftermath"
+    | "closed";
+  let stage: Stage;
+  let nextStep: string;
+  if (!state || state.phase === "declined") {
+    stage = "offer";
+    nextStep =
+      "Choose a check that pays 2 coins, decline, or walk on. You do not need your own money.";
+  } else if (state.phase === "closed") {
+    stage = "closed";
+    nextStep = state.revisions.length
+      ? "The project is closed. Its index is still free to use at the library."
+      : "The project closed before an index was submitted. Completed work stays recorded and paid.";
+  } else if (!ownReport || !otherReport) {
+    stage = !atLibrary ? "travel" : missing.length ? "inspect" : "report";
+    nextStep = !atLibrary
+      ? "Use Go to → Library. You can walk there while town time is paused."
+      : missing.length
+        ? `${ownReport ? "The other report needs" : "Your check needs"} ${missing.length} more ${missing.length === 1 ? "inspection" : "inspections"}: ${missing.map((item) => item.label).join("; ")}.`
+        : !ownReport
+          ? `Your inspections are complete. Submit your ${role} check to earn 2 coins.`
+          : `Your check is recorded. Request ${otherRole === "source" ? "Arwyn's source" : "Kevin's reference"} report; its 2 coins come from the project budget.`;
+  } else if (!state.revisions.length) {
+    stage = atLibrary ? "draft" : "travel";
+    nextStep = atLibrary
+      ? "Both reports are ready. Choose a box for each record, then submit your index or let Arwyn submit hers."
+      : "Both reports are ready. Return to the library to prepare the index.";
+  } else if (!state.lookup) {
+    stage = atLibrary ? "lookup" : "travel";
+    nextStep = "Test your submitted index with Northern. His 2 coins are already set aside.";
+  } else if (state.lookup.status === "routing") {
+    stage = "waiting";
+    nextStep = workDelay
+      ? "Northern is keeping an earlier paid work commitment. Your lookup stays funded and resumes afterwards; preview the wait before advancing time."
+      : "Northern is on his way. Preview the wait or let town time run; your draft stays unchanged.";
+  } else {
+    stage = "aftermath";
+    nextStep = state.corrected
+      ? `The corrected index is ready for free use. Northern's earlier test still belongs to revision ${state.lookup.revision}.`
+      : state.delivery
+        ? "Baba's dated delivery note is ready. Choose the paid correction, keep using the index, or close the project."
+        : `Your result is saved. Baba's delivery note arrives on town day ${state.started + 2}; use the clock to continue. Town time stops when you leave the game.`;
+  }
+  const earnedUnpaid = funding?.earnedPayables.reduce((sum, item) => sum + item.amount, 0) ?? 0;
+  const reserved = funding?.holds.reduce((sum, item) => sum + item.remaining, 0) ?? 0;
   const warnings = player.projects
     .filter((item) => item.status === "open" && item.kind === "shift")
     .map((item) => item.text);
@@ -543,25 +663,38 @@ export function libraryView(town: Town) {
     title: "The library index",
     status: state?.phase ?? "offered",
     owner: "The town" as const,
-    nextStep:
-      !state || state.phase === "declined"
-        ? "Read the terms; choose a paid check, decline, or walk on."
-        : state.phase === "closed"
-          ? "Use the common index; its funding account is closed."
-          : !state.reports.some((item) => item.worker === "player")
-            ? "Walk to the library. Inspect your required evidence and submit your check."
-            : state.reports.length < 2
-              ? "Request the other funded preparation report."
-              : !state.revisions.length
-                ? "Choose your draft mappings, then submit or delegate authorship."
-                : !state.lookup
-                  ? "Book Northern's independent lookup."
-                  : state.lookup.status === "routing"
-                    ? "Northern is en route. Preview waiting or let town time run."
-                    : "Read the result and tomorrow's aftermath. Correction and closure have separate terms.",
+    nextStep,
+    stage,
+    atLibrary,
+    requiredEvidence,
+    evidenceProgress: {
+      completed: requiredEvidence.length - missing.length,
+      total: requiredEvidence.length,
+    },
+    playerTask: role
+      ? {
+          label: `${role} check`,
+          fee: 2,
+          paid: payable?.status === "settled",
+          earned: Boolean(payable),
+          completed: Boolean(ownReport),
+        }
+      : null,
+    canPrepareDraft:
+      state?.reports.filter((item) => item.role !== "correction").length === 2 &&
+      !state.revisions.length,
+    lookupCompleted: state?.lookup?.status === "done",
+    closePreview:
+      state && state.phase !== "closed" && state.phase !== "declined"
+        ? {
+            refundPerDonor: ((funding?.balance ?? 0) - earnedUnpaid) / 2,
+            earnedUnpaid,
+            reservedUnfinished: reserved - earnedUnpaid,
+          }
+        : null,
     budget: 8,
     custody: funding?.balance ?? 0,
-    reserved: funding?.holds.reduce((sum, item) => sum + item.remaining, 0) ?? 0,
+    reserved,
     spent: funding?.paid ?? 0,
     progress: `${state?.reports.filter((item) => item.role !== "correction").length ?? 0}/2 preparation reports; ${state?.lookup?.status === "done" ? 1 : 0}/1 independent lookup`,
     entries: latestEntries(state),
@@ -580,7 +713,7 @@ export function libraryView(town: Town) {
     waitPreview: minutes
       ? {
           minutes,
-          warning: `Advances ${minutes} game minutes through ordinary movement and work rules. ${warnings.length ? `Existing commitments: ${warnings.join(" ")}` : "You have no recorded cafe shift."} Blocked routes may remain pending.`,
+          warning: `Advances ${minutes} game minutes through ordinary movement and work rules.${workDelay ? ` Includes up to ${workDelay} minutes for Northern's earlier work commitment.` : ""} ${warnings.length ? `Existing commitments: ${warnings.join(" ")}` : "You have no recorded cafe shift."} Blocked routes may remain pending.`,
         }
       : null,
     finds: latestEntries(state).map((item) => ({
@@ -686,9 +819,12 @@ export function libraryActions(town: Town): LibraryAction[] {
       `Commission the other preparation unit from the reserved project budget. ${otherRole === "reference" ? "Kevin reviews your recorded box observations, rather than claiming he visited." : "Arwyn checks the public source cards and the supplied recorded box inspection."} You receive the attributed written report; it does not overwrite your draft.`,
       "report",
       location ??
-        (otherRole === "reference" &&
-        !BOX_IDS.every((box) => state.observations.some((item) => item.key === `box:${box}`))
-          ? "Inspect all three boxes before requesting Kevin's report."
+        (!(otherRole === "reference" ? BOX_IDS : (["Cedar"] as const)).every((box) =>
+          state.observations.some((item) => item.key === `box:${box}`),
+        )
+          ? otherRole === "reference"
+            ? "Inspect all three boxes before requesting Kevin's report."
+            : "Inspect Cedar before requesting Arwyn's source report."
           : undefined),
     );
   if (
@@ -773,7 +909,7 @@ export function libraryActions(town: Town): LibraryAction[] {
     "close",
     "",
     "Close project and refund unspent funds",
-    "Settle earned liabilities, cancel only unearned work, and return all remaining unreserved project coins equally to Kevin and Baba's tills. Completed work and the common index stay accessible; an unpaid earned claim blocks closure.",
+    `Close this project and cancel unfinished tasks. ${libraryView(town).closePreview?.refundPerDonor ?? 0} coins return to each contributing till after earned fees settle. Completed work and any submitted index stay accessible; an unpaid earned claim blocks closure.`,
     "manage",
   );
   return actions;
@@ -871,8 +1007,7 @@ export function applyLibraryAction(town: Town, actionId: string): { ok: boolean;
           ),
         );
         if (state.lookup?.status === "routing") {
-          agentById(draft, "northern").plan = state.lookup.originalPlan;
-          agentById(draft, "northern").path = [];
+          restoreLookupRoute(draft, state);
           state.lookup.status = "cancelled";
         }
         state.phase = "closed";
@@ -970,20 +1105,24 @@ export function prepareLibraryAppointment(town: Town) {
   const state = getState(town);
   if (state?.lookup?.status !== "routing") return;
   const northern = agentById(town, "northern");
-  for (const beat of northern.plan.beats)
-    if (beat.hour >= Math.floor(town.minute / 60))
-      Object.assign(beat, {
-        place: "library",
-        spot: "out",
-        status: "walking to the library for the funded index lookup",
-      });
+  restoreLookupRoute(town, state);
+  if (lookupCommitment(town, state)) {
+    state.lookup.reason =
+      "Northern is keeping an earlier paid work commitment. The funded lookup resumes afterwards.";
+    return;
+  }
+  const beat = northern.plan.beats.find((beat) => beat.hour === Math.floor(town.minute / 60));
+  if (beat) Object.assign(beat, { place: "library", spot: "out", status: LOOKUP_STATUS });
   northern.path = [];
+  state.lookup.reason =
+    "Northern is walking to the library to find the community room access note.";
 }
 export function libraryMovementGoals(
   town: Town,
 ): Partial<Record<AgentId, { x: number; y: number }>> | undefined {
   const state = getState(town);
   if (state?.lookup?.status !== "routing") return undefined;
+  if (lookupCommitment(town, state)) return undefined;
   const revision = state.revisions.find((item) => item.id === state.lookup!.revision);
   const box = revision?.mappings["room-access"];
   return { northern: box ? BOX_TILES[box] : { x: 36, y: 20 } };
@@ -1049,8 +1188,7 @@ export function advanceLibraryProject(town: Town) {
       current.lookup!.result = success ? "success" : "failure";
       current.lookup!.reason = input.detail;
       current.phase = "tested";
-      agentById(draft, "northern").plan = current.lookup!.originalPlan;
-      agentById(draft, "northern").path = [];
+      restoreLookupRoute(draft, current);
       event(
         draft,
         current,

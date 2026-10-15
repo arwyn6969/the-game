@@ -15,6 +15,44 @@ import { makeMemory, pushMemory } from "./memory";
 import { zoneAt, placeTitle } from "./world";
 import { rememberPaidWork } from "./social";
 
+export const FUNDED_CAFE_SHIFT_TEXT =
+  "Funded cafe attendance, 16:00 to 19:00; 5 reserved for 180 eligible minutes. Progress and earned wages survive midnight; no fractional wage.";
+export const fundedWorkProjectId = (agreementId: string) => `work-item:${agreementId}`;
+
+/** Completing work frees its commitment slot even when its wage must wait. */
+export function closeCompletedWorkItems(town: Town, agreementId: string) {
+  const work = town.economy?.work;
+  const agreement = work?.agreements.find((item) => item.id === agreementId);
+  const claim = work?.legacyClaims.find((item) => item.agreementId === agreementId);
+  const completed = agreement?.kind === "cafe-shift" && agreement.status === "completed";
+  const legacyCompleted =
+    claim?.classification === "completed-unpaid" &&
+    work?.payables.some((item) => item.agreementId === agreementId);
+  if (!completed && !legacyCompleted) return;
+  const workerId = agreement?.worker ?? claim!.worker;
+  const payer = agreement?.payer ?? claim!.payer;
+  const worker = town.agents.find((item) => item.id === workerId);
+  if (!worker) return;
+  const workplace = payer === "till:grocery" ? "grocery" : "cafe";
+  const originalIds = new Set(
+    claim?.evidence.projects
+      .filter((item) => (item.place ?? "cafe") === workplace)
+      .map((item) => item.id),
+  );
+  const approval = work?.payrollApprovals.find((item) => item.id === agreement?.payrollApprovalId);
+  for (const project of worker.projects)
+    if (
+      project.owner === workerId &&
+      project.kind === "shift" &&
+      project.status === "open" &&
+      (originalIds.has(project.id) ||
+        (approval?.kind === "cafe-replacement" &&
+          project.id === fundedWorkProjectId(agreement!.id) &&
+          (project.place ?? "cafe") === "cafe"))
+    )
+      project.status = "done";
+}
+
 export const runtimeCommand = (
   _town: Town,
   kind: string,
@@ -127,6 +165,7 @@ export function advanceFundedPayroll(town: Town) {
     const resident = town.agents.find((agent) => agent.id === agreement.worker)!;
     resident.shiftHours = current.eligibleMinutes / 60;
     if (current.status === "completed") {
+      closeCompletedWorkItems(town, current.id);
       const payable = funded.economy!.work!.payables.find(
         (item) => item.agreementId === current.id,
       )!;
@@ -177,6 +216,7 @@ export function advanceFundedPayroll(town: Town) {
       payable.id,
     );
     if (settled.ok && settled.value.status === "settled" && payable.payer.startsWith("till:")) {
+      closeCompletedWorkItems(town, payable.agreementId);
       const resident = town.agents.find((agent) => agent.id === payable.worker)!;
       resident.paidToday = true;
       pushMemory(

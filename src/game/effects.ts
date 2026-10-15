@@ -23,7 +23,13 @@ import { groundPlayerReply, groundSharedLine } from "./conversation";
 import { settleLegacyDebt, availableFunds } from "./economy";
 import type { FundedTown } from "./economy-types";
 import { libraryView } from "./community";
-import { activateFundedTown, runtimeCommand } from "./payroll-runtime";
+import {
+  activateFundedTown,
+  closeCompletedWorkItems,
+  fundedWorkProjectId,
+  FUNDED_CAFE_SHIFT_TEXT,
+  runtimeCommand,
+} from "./payroll-runtime";
 import {
   approvePayrollAgreement,
   createFundedCafeAgreement,
@@ -509,8 +515,7 @@ type QuotedAction = PlayerAction & {
   reference?: string;
 };
 
-export const PLAYER_CAFE_SHIFT =
-  "Funded cafe attendance, 16:00 to 19:00; 5 reserved for 180 eligible minutes. Progress and earned wages survive midnight; no fractional wage.";
+export const PLAYER_CAFE_SHIFT = FUNDED_CAFE_SHIFT_TEXT;
 export const BABA_LOAF = "A loaf from Baba. It can be eaten.";
 
 function adoptActionDraft(town: Town, draft: Town) {
@@ -597,7 +602,7 @@ function quotedPlayerActions(town: Town, target: AgentId): QuotedAction[] {
       loaf.id,
     );
     const library = libraryView(town);
-    if (library.progress.includes("1/1 independent lookup")) {
+    if (library.lookupCompleted) {
       for (const invitee of ["baba", "northern"] as const)
         if (nearbyTogether(town, invitee)) {
           const name = maybeAgent(town, invitee)!.name;
@@ -720,8 +725,8 @@ function quotedPlayerActions(town: Town, target: AgentId): QuotedAction[] {
       );
     }
     if (target === "kevin" && !current && claims.length === 0) {
-      const pending = work.legacyClaims.some(
-        (claim) => !["paid", "settled"].includes(claim.resolution),
+      const pending = work.legacyClaims.some((claim) =>
+        ["unresolved", "underfunded", "protected"].includes(claim.resolution),
       );
       const completedToday = work.agreements.some(
         (a) =>
@@ -877,7 +882,7 @@ export function applyPlayerAction(
         if ((inviteeId !== "baba" && inviteeId !== "northern") || !nearbyTogether(draft, inviteeId))
           throw new Error("The invited resident is no longer here; your loaf is untouched.");
         const view = libraryView(draft);
-        if (!view.progress.includes("1/1 independent lookup"))
+        if (!view.lookupCompleted)
           throw new Error(
             "The meal needs a completed public library result; your loaf is untouched.",
           );
@@ -964,6 +969,15 @@ export function applyPlayerAction(
         place: "cafe",
         text: PLAYER_CAFE_SHIFT,
       });
+      const item = player.projects.find(
+        (project) =>
+          project.owner === "player" &&
+          project.kind === "shift" &&
+          project.status === "open" &&
+          project.text === PLAYER_CAFE_SHIFT,
+      );
+      if (!item) throw new Error("The funded work item could not be recorded; nothing changed.");
+      item.id = fundedWorkProjectId(id);
       paintHours(player, [
         { from: 16, to: 19, place: "cafe", spot: "out", status: "on a funded cafe shift" },
       ]);
@@ -1051,6 +1065,7 @@ export function applyPlayerAction(
       );
       if (settled.status !== "settled")
         throw new Error(settled.reason ?? "The earned wage remains reserved and payable.");
+      closeCompletedWorkItems(draft, payable.agreementId);
       player = maybeAgent(draft, "player")!;
       player.paidToday = true;
       const workplace = payable.payer === "till:grocery" ? "grocery" : "cafe";
@@ -1103,7 +1118,13 @@ export function applyPlayerAction(
           (claim) => claim.agreementId === agreement.id,
         );
         if (legacyClaim?.payer && legacyClaim.classification !== "ambiguous") {
-          player.plan = structuredClone(legacyClaim.evidence.plan);
+          const workplace = agreement.payer === "till:grocery" ? "grocery" : "cafe";
+          paintHours(
+            player,
+            legacyClaim.evidence.plan.beats
+              .filter((beat) => beat.place === workplace && beat.spot === "out")
+              .map((beat) => ({ ...beat, from: beat.hour, to: beat.hour + 1 })),
+          );
           player.plan.day = draft.day;
         } else
           paintHours(player, [

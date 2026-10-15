@@ -19,6 +19,9 @@ const {
   libraryView,
   validateLibraryState,
   residentLibraryReply,
+  prepareLibraryAppointment,
+  libraryMovementGoals,
+  advanceLibraryProject,
 } = await server.ssrLoadModule("/src/game/community.ts");
 const { advanceTown } = await server.ssrLoadModule("/src/game/sim.ts");
 const { exportTown, parseTownFile } = await server.ssrLoadModule("/src/game/save.ts");
@@ -185,7 +188,10 @@ test("a funded correct index changes lookup access, pays actual workers and surv
   town = reload(town);
   const before = person(town, "northern").money;
   finishLookup(town);
-  assert.match(libraryView(town).outcome, /found room-access in Cedar using revision 1/);
+  assert.match(
+    libraryView(town).outcome,
+    /found the community room access note in Cedar using revision 1/,
+  );
   assert.equal(person(town, "northern").money, before + 2);
   assert.equal(libraryView(town).spent, 6);
   assert.equal(libraryView(town).custody, 2);
@@ -211,7 +217,7 @@ test("a wrong frozen reference stays provisional while honest preparation and a 
   finishLookup(town);
   assert.equal(state(town).lookup.revision, 1);
   assert.equal(state(town).revisions[0].mappings["room-access"], "Birch");
-  assert.match(libraryView(town).outcome, /could not find room-access/);
+  assert.match(libraryView(town).outcome, /could not find the community room access note/);
   assert.equal(person(town, "northern").money, before + 2);
   assert.equal(person(town, "player").money, 6);
   assert.equal(libraryView(town).spent, 6);
@@ -473,7 +479,10 @@ test("next-day use, separately paid correction and zero-refund closure preserve 
   act(town, "find", "room-access");
   assert.equal(state(town).finds.length, 2);
   assert.deepEqual(state(town).finds[0], originalFind);
-  assert.match(state(town).finds[1].result, /Found Community room access note in Cedar using revision 2/);
+  assert.match(
+    state(town).finds[1].result,
+    /Found Community room access note in Cedar using revision 2/,
+  );
   assert.equal(libraryView(town).spent, 8);
   const tills = { ...town.tills };
   act(town, "close", "");
@@ -490,4 +499,165 @@ test("a forged self-verifying assignment or false success is rejected on import"
   const forgedResult = JSON.parse(exportTown(town));
   forgedResult.town.economy.projects.library.lookup.result = "success";
   assert.equal(parseTownFile(JSON.stringify(forgedResult)), null);
+});
+
+test("library guidance follows actual inspection, payment and submission progress without changing the town", () => {
+  const town = start();
+  const before = exportTown(town);
+  assert.equal(libraryView(town).stage, "travel");
+  assert.deepEqual(libraryView(town).evidenceProgress, { completed: 0, total: 4 });
+  assert.equal(libraryView(town).playerTask.paid, false);
+  assert.equal(exportTown(town), before, "reading guidance must not alter a save");
+  library(town);
+  assert.equal(libraryView(town).stage, "inspect");
+  act(town, "inspect", "card:kevin");
+  assert.deepEqual(libraryView(town).evidenceProgress, { completed: 1, total: 4 });
+  for (const box of ["Birch", "Alder", "Cedar"]) act(town, "inspect", `box:${box}`);
+  assert.equal(libraryView(town).stage, "report");
+  assert.match(libraryView(town).nextStep, /Submit your reference check/);
+  act(town, "report", "reference");
+  assert.equal(libraryView(town).playerTask.completed, true);
+  assert.equal(libraryView(town).playerTask.earned, true);
+  assert.equal(libraryView(town).playerTask.paid, true);
+  assert.match(libraryView(town).nextStep, /Arwyn's source report/);
+  act(town, "request", "source");
+  assert.equal(libraryView(town).stage, "draft");
+  assert.equal(libraryView(town).canPrepareDraft, true);
+  act(town, "submit", "player");
+  assert.equal(libraryView(town).stage, "lookup");
+  assert.equal(libraryView(town).canPrepareDraft, false);
+  assert.equal(libraryView(town).lookupCompleted, false);
+  finishLookup(town);
+  assert.equal(libraryView(town).lookupCompleted, true);
+  assert.equal(libraryView(town).stage, "aftermath");
+  assert.match(libraryView(town).nextStep, /town day 3/);
+  reload(town);
+});
+
+test("Arwyn cannot report a player box inspection that has not happened", () => {
+  const town = start();
+  library(town);
+  const request = choice(town, "request", "source");
+  assert.match(request.disabledReason, /Inspect Cedar/);
+  const before = exportTown(town);
+  assert.equal(applyLibraryAction(town, request.id).ok, false);
+  assert.equal(exportTown(town), before);
+  assert.equal(state(town).reports.length, 0);
+  act(town, "inspect", "box:Cedar");
+  act(town, "request", "source");
+  const agreement = state(town).assignments.source.agreementId;
+  const observation = town.economy.work.evidence.find(
+    (item) => item.agreementId === agreement && item.key === "box:Cedar",
+  );
+  assert.equal(observation.source, "library-observation:box:Cedar");
+  assert.doesNotMatch(observation.detail, /undefined|public:box/);
+  reload(town);
+});
+
+test("guidance shows the extra box inspections needed for Kevin after a source check", () => {
+  const town = start("source");
+  library(town);
+  for (const key of ["card:equipment", "card:dorm", "box:Cedar"]) act(town, "inspect", key);
+  act(town, "report", "source");
+  assert.equal(libraryView(town).stage, "inspect");
+  assert.deepEqual(libraryView(town).evidenceProgress, { completed: 1, total: 3 });
+  assert.match(libraryView(town).nextStep, /Inspect Birch; Inspect Alder/);
+  assert.ok(choice(town, "request", "reference").disabledReason);
+  for (const box of ["Birch", "Alder"]) act(town, "inspect", `box:${box}`);
+  assert.equal(libraryView(town).stage, "report");
+  act(town, "request", "reference");
+  assert.equal(libraryView(town).stage, "draft");
+});
+
+test("closure guidance separates earned unpaid fees from refundable and unfinished money", () => {
+  const town = start("reference", 999);
+  assert.deepEqual(libraryView(town).closePreview, {
+    refundPerDonor: 4,
+    earnedUnpaid: 0,
+    reservedUnfinished: 6,
+  });
+  inspect(town);
+  act(town, "report", "reference");
+  assert.equal(libraryView(town).playerTask.completed, true);
+  assert.equal(libraryView(town).playerTask.earned, true);
+  assert.equal(libraryView(town).playerTask.paid, false);
+  assert.deepEqual(libraryView(town).closePreview, {
+    refundPerDonor: 3,
+    earnedUnpaid: 2,
+    reservedUnfinished: 4,
+  });
+  assert.match(choice(town, "close").terms, /3 coins return to each/);
+  reload(town);
+});
+
+test("a library appointment respects actual paid work hours and keeps other plans", () => {
+  const town = createTown("Mira");
+  person(town, "northern").projects.push({
+    id: "existing-northern-work",
+    owner: "northern",
+    kind: "shift",
+    text: "An existing agreed cafe shift",
+    place: "cafe",
+    status: "open",
+    day: 1,
+  });
+  act(town, "accept", "reference");
+  inspect(town);
+  act(town, "report", "reference");
+  act(town, "request", "source");
+  for (const [record, box] of [
+    ["hobbs-equipment", "Birch"],
+    ["dorm-repair", "Alder"],
+    ["room-access", "Cedar"],
+  ])
+    act(town, "map", `${record}:${box}`);
+  act(town, "submit", "player");
+  const northern = person(town, "northern");
+  assert.ok(
+    town.economy.work.agreements.some(
+      (item) => item.worker === "northern" && item.status === "active",
+    ),
+  );
+  Object.assign(northern.plan.beats[9], { place: "cafe", spot: "out", status: "my funded work" });
+  town.minute = 9 * 60;
+  const before = exportTown(town);
+  const blocked = applyLibraryAction(town, choice(town, "test").id);
+  assert.equal(blocked.ok, false);
+  assert.match(blocked.reply, /paid work commitment/);
+  assert.equal(exportTown(town), before);
+  town.minute = 8 * 60;
+  Object.assign(northern.plan.beats[8], {
+    place: "plaza",
+    spot: "out",
+    status: "free before work",
+  });
+  act(town, "test", "");
+  prepareLibraryAppointment(town);
+  assert.equal(person(town, "northern").plan.beats[9].place, "cafe");
+  Object.assign(person(town, "northern").plan.beats[17], {
+    place: "park",
+    spot: "out",
+    status: "a new walk chosen while waiting",
+  });
+  town.minute = 9 * 60;
+  prepareLibraryAppointment(town);
+  assert.equal(libraryMovementGoals(town), undefined);
+  assert.equal(person(town, "northern").plan.beats[9].place, "cafe");
+  assert.equal(state(town).lookup.status, "routing");
+  assert.match(libraryView(town).nextStep, /earlier paid work commitment/);
+  assert.equal(libraryView(town).spent, 4);
+  town.minute = 10 * 60;
+  prepareLibraryAppointment(town);
+  assert.deepEqual(libraryMovementGoals(town).northern, { x: 50, y: 16 });
+  person(town, "northern").tile = { x: 50, y: 16 };
+  advanceLibraryProject(town);
+  assert.equal(state(town).lookup.status, "done");
+  assert.equal(person(town, "northern").plan.beats[17].status, "a new walk chosen while waiting");
+  assert.equal(
+    person(town, "northern").plan.beats[10].status,
+    state(town).lookup.originalPlan.beats[10].status,
+  );
+  assert.equal(libraryView(town).spent, 6);
+  assert.deepEqual(auditEconomy(town), []);
+  reload(town);
 });

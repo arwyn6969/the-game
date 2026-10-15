@@ -63,9 +63,18 @@ export function PlayerTools({
   onLibraryAction: (id: string) => void;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
   useEffect(() => {
     closeRef.current?.focus();
   }, [page]);
+  useEffect(() => {
+    if (!actionNote || (page !== "inventory" && page !== "library")) return;
+    // A completed one-use choice can remove its focused button. Keep keyboard
+    // and screen-reader users in this panel instead of dropping focus to the map.
+    if (document.activeElement === document.body) {
+      panelRef.current?.querySelector<HTMLElement>("[data-tool-feedback]")?.focus();
+    }
+  }, [actionNote, page]);
   const player = agentById(town, "player");
   const carried = player.projects.filter((p) => p.status === "open" && p.text === BABA_LOAF);
   const agreements = player.projects.filter((p) => p.status === "open" && p.text !== BABA_LOAF);
@@ -93,7 +102,7 @@ export function PlayerTools({
     { code: "ArrowDown", label: "South" },
   ];
   return (
-    <aside className="mind player-tools" role="dialog" aria-labelledby="tools-title">
+    <aside ref={panelRef} className="mind player-tools" role="dialog" aria-labelledby="tools-title">
       <div className="mind-bar">
         <h2 id="tools-title" className="font-display">
           {TITLES[page]}
@@ -357,18 +366,38 @@ export function PlayerTools({
         )}
         {page === "inventory" && (
           <>
-            <p>
-              {carried.length ? `You carry ${carried.length} loaf.` : "You are carrying no items."}
+            <p
+              className="tool-action-note"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              tabIndex={-1}
+              data-tool-feedback
+              hidden={!actionNote}
+            >
+              {actionNote}
             </p>
-            <p className="text-muted">
-              Eating removes the loaf once. Any unpaid tab stays open; check Journal for your
-              agreements.
-            </p>
-            <ActionCards actions={inventoryActions} busy={busy} onAction={onAction} />
-            {actionNote && (
-              <p role="status" aria-live="polite">
-                {actionNote}
+            <section className="inventory-summary">
+              <h3>{carried.length ? "Baba’s loaf" : "Your bag is empty"}</h3>
+              <p>
+                {carried.length
+                  ? `You carry ${carried.length} ${carried.length === 1 ? "loaf" : "loaves"}. Choose how to use it below.`
+                  : "Accepted items appear here. You can get a loaf from Baba at the grocery."}
               </p>
+              <p className="text-muted">
+                Eating or sharing uses one whole loaf. Any unpaid tab stays open; Journal keeps the
+                payment record.
+              </p>
+            </section>
+            {carried.length > 0 && (
+              <section>
+                <h3>Use your loaf</h3>
+                <p>
+                  You can eat it now. After Northern completes a library test, a nearby Baba or
+                  Northern can accept a shared meal; read their acceptance below before choosing.
+                </p>
+                <ActionCards actions={inventoryActions} busy={busy} onAction={onAction} />
+              </section>
             )}
           </>
         )}

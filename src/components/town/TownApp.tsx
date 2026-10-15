@@ -200,7 +200,7 @@ function focusOf(target: EventTarget | null): FocusLike {
 
 export function TownApp() {
   const boot = useRef<Town | null | undefined>(undefined);
-  const bootHold = useRef<string | null | undefined>(undefined);
+  const bootHold = useRef<string | null>(null);
   const bootUnavailable = useRef(false);
   if (boot.current === undefined) {
     const report = readTownSave();
@@ -243,7 +243,7 @@ export function TownApp() {
       ? "play"
       : bootUnavailable.current
         ? "unavailable"
-        : bootHold.current
+        : bootHold.current !== null
           ? "recover"
           : "name",
   );
@@ -438,10 +438,8 @@ export function TownApp() {
         before,
         playerChatIds(agentById(current.town, job.agentId).memories ?? []),
       );
-      setDraft(
-        (text) => nextDraft(text, job.text, panelRef.current === job.agentId, landed),
-        job.agentId,
-      );
+      // The resident's own draft remains the same context even with their card closed.
+      setDraft((text) => nextDraft(text, job.text, true, landed), job.agentId);
       if (panelRef.current === job.agentId)
         setSendNote(
           landed
@@ -665,7 +663,7 @@ export function TownApp() {
           setTick((n) => n + 1);
           if (job.kind === "player" && current()) {
             const same = townRef.current === live && panelRef.current === job.agentId;
-            setDraft((current) => nextDraft(current, job.text, same, landed), job.agentId);
+            setDraft((current) => nextDraft(current, job.text, true, landed), job.agentId);
             if (same) {
               setSendNote(
                 landed
@@ -1048,7 +1046,7 @@ export function TownApp() {
 
   async function enter(event: React.FormEvent) {
     event.preventDefault();
-    if (hold) return;
+    if (hold !== null) return;
     const town = createTown(name);
     town.paused = true;
     const result = startOverRef.current
@@ -1286,7 +1284,7 @@ export function TownApp() {
     );
   }
 
-  if (phase === "recover" && hold) {
+  if (phase === "recover" && hold !== null) {
     return (
       <main className="gate">
         <form
@@ -1475,7 +1473,11 @@ export function TownApp() {
                 onClick={() => {
                   const report = readTownSave();
                   if (report.status === "ready") void acceptImportedTown(report.town, "load");
-                  else
+                  else if (report.status === "unreadable") {
+                    setHold(report.raw);
+                    setRecoverNote("");
+                    setPhase("recover");
+                  } else
                     setRecoverNote(
                       "The saved town could not be read. Its original bytes have been kept.",
                     );

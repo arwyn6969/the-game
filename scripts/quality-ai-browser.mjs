@@ -177,6 +177,27 @@ try {
       if (message.type() === "error") result.errors.push(message.text());
     });
     await page.goto(target.href, { waitUntil: "domcontentloaded", timeout: 45_000 });
+    // A town can appear in another tab while name entry is already open.
+    await page.getByLabel("What do they call you?", { exact: true }).waitFor();
+    const damaged = "{synthetic unreadable town from a competing tab";
+    await page.evaluate((raw) => localStorage.setItem("the-game-town-v2", raw), damaged);
+    await page.getByLabel("What do they call you?", { exact: true }).fill("Late entry");
+    await page.getByRole("button", { name: "Walk in", exact: true }).click();
+    await page.getByRole("button", { name: "Open saved town", exact: true }).click();
+    assert.equal(
+      await page.getByLabel("Unreadable town save preview", { exact: true }).inputValue(),
+      damaged,
+    );
+    assert.equal(await page.evaluate(() => localStorage.getItem("the-game-town-v2")), damaged);
+    result.namingConflictOffersRecovery = true;
+    // An existing zero-byte value is unreadable, rather than missing.
+    await page.evaluate(() => localStorage.setItem("the-game-town-v2", ""));
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.getByLabel("Unreadable town save preview", { exact: true }).waitFor();
+    assert.equal(await page.getByLabel("What do they call you?", { exact: true }).count(), 0);
+    assert.equal(await page.evaluate(() => localStorage.getItem("the-game-town-v2")), "");
+    await page.getByRole("button", { name: "I have a copy. Start over.", exact: true }).click();
+    result.emptySaveOffersRecovery = true;
     await page.getByLabel("What do they call you?", { exact: true }).fill(`AI QA ${viewport.name}`);
     await page.getByLabel("Use local dialogue only", { exact: true }).uncheck();
     await page.getByRole("button", { name: "Walk in", exact: true }).click();
@@ -188,6 +209,17 @@ try {
       result.moduleReplacements > 0,
       "Development transport replacement must have been used",
     );
+    const initialMove = await step(page, viewport.name === "phone");
+    await page.waitForFunction(({ x, y }) => {
+      const player = JSON.parse(localStorage.getItem("the-game-town-v2")).town.agents.find(
+        (agent) => agent.id === "player",
+      );
+      return player.tile.x === x && player.tile.y === y;
+    }, initialMove.after);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.waitForFunction(() => !!window.__controlsTest && !!window.__qualityMindMock);
+    assert.deepEqual(await position(page), initialMove.after);
+    result.pausedMovementAutosavesWithoutAnotherAction = initialMove;
     const base = await readTown(page);
     const ambient = copy(base);
     ambient.playerName = `Ambient ${viewport.name}`;
@@ -407,10 +439,73 @@ try {
       "Local-only must emit zero foreground think calls",
     );
     result.localOnlyNoBackgroundOrPlayerCalls = true;
+    await page.screenshot({ path: join(out, `${viewport.name}-local-only.png`) });
+    await page.getByRole("button", { name: "Close conversation", exact: true }).click();
+    await page
+      .getByRole("navigation", { name: "Your town tools", exact: true })
+      .getByRole("button", { name: "Help & privacy", exact: true })
+      .click();
+    await page.getByLabel("Use local dialogue only", { exact: true }).uncheck();
+    await page.getByRole("button", { name: "Close Help & privacy", exact: true }).click();
+    await openKevin(page);
+    const acceptedClosed = `Accepted with card closed ${viewport.name}`;
+    const acceptedClosedId = (await calls(page)).length;
+    await send(page, acceptedClosed);
+    await requestCount(page, acceptedClosedId + 1);
+    await page.getByRole("button", { name: "Close conversation", exact: true }).click();
+    await resolveRequest(page, acceptedClosedId, reply("I heard you while the card was closed."));
+    await openKevin(page);
+    assert.equal(await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(), "");
+    assert.equal(chatCount(await readTown(page), acceptedClosed), 1);
+    result.acceptedClosedCardClearsSentDraft = true;
+    const fallbackClosed = `Local with card closed ${viewport.name}`;
+    const fallbackClosedId = (await calls(page)).length;
+    await send(page, fallbackClosed);
+    await requestCount(page, fallbackClosedId + 1);
+    await page.getByRole("button", { name: "Close conversation", exact: true }).click();
+    await page.getByRole("button", { name: "Use local reply now", exact: true }).click();
+    await resolveRequest(page, fallbackClosedId, reply(`LATE-CLOSED-FALLBACK-${viewport.name}`));
+    await openKevin(page);
+    assert.equal(await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(), "");
+    assert.equal(chatCount(await readTown(page), fallbackClosed), 1);
+    assert.equal(
+      JSON.stringify(await readTown(page)).includes(`LATE-CLOSED-FALLBACK-${viewport.name}`),
+      false,
+    );
+    result.localClosedCardClearsSentDraftOnce = true;
+    const acceptedWithNewDraft = `Sent before new draft ${viewport.name}`;
+    const unsent = `Keep my newer words ${viewport.name}`;
+    const newerId = (await calls(page)).length;
+    await send(page, acceptedWithNewDraft);
+    await requestCount(page, newerId + 1);
+    await page.getByLabel("Your line to Kevin", { exact: true }).fill(unsent);
+    await page.getByRole("button", { name: "Close conversation", exact: true }).click();
+    await resolveRequest(page, newerId, reply("The sent line has landed."));
+    await openKevin(page);
+    assert.equal(await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(), unsent);
+    assert.equal(chatCount(await readTown(page), acceptedWithNewDraft), 1);
+    result.acceptedReplyPreservesNewerUnsentDraft = true;
+    const beforeImport = `Pending before replacement ${viewport.name}`;
+    const importId = (await calls(page)).length;
+    await send(page, beforeImport);
+    await requestCount(page, importId + 1);
+    await page.getByRole("button", { name: "Close conversation", exact: true }).click();
+    const replacement = copy(near);
+    replacement.playerName = `Replaced ${viewport.name}`;
+    await importTown(page, replacement);
+    await resolveRequest(page, importId, reply(`LATE-PLAYER-IMPORT-${viewport.name}`));
+    assert.equal(chatCount(await readTown(page), beforeImport), 0);
+    assert.equal(
+      JSON.stringify(await readTown(page)).includes(`LATE-PLAYER-IMPORT-${viewport.name}`),
+      false,
+    );
+    await openKevin(page);
+    assert.equal(await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(), "");
+    result.importCancelsForegroundAndResetsDrafts = true;
     result.transportCalls = (await calls(page)).map(({ id, kind }) => ({ id, kind }));
     assert.deepEqual(result.networkLeaks, []);
     assert.deepEqual(result.errors, []);
-    await page.screenshot({ path: join(out, `${viewport.name}-local-only.png`) });
+    await page.screenshot({ path: join(out, `${viewport.name}-complete.png`) });
     await context.close();
     activePage = undefined;
     console.log(JSON.stringify({ viewport: viewport.name, ok: true, scenarios: result }, null, 2));

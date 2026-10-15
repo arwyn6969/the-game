@@ -12,7 +12,7 @@ const server = await createServer({
 });
 after(() => server.close());
 const { createTown } = await server.ssrLoadModule("/src/game/town.ts");
-const { playerActions, applyPlayerAction, applyResult, BABA_LOAF } =
+const { playerActions, applyPlayerAction, applyResult, BABA_LOAF, PLAYER_CAFE_SHIFT } =
   await server.ssrLoadModule("/src/game/effects.ts");
 const { advanceFundedPayroll } = await server.ssrLoadModule("/src/game/payroll-runtime.ts");
 const { auditEconomy } = await server.ssrLoadModule("/src/game/economy.ts");
@@ -137,6 +137,11 @@ test("funded cafe attendance, suspension and its reservation survive midnight an
     advanceFundedPayroll(town);
   }
   assert.equal(agreement().status, "completed");
+  assert.equal(
+    agent(town, "player").projects.find((project) => project.text === PLAYER_CAFE_SHIFT).status,
+    "done",
+    "the completed unit no longer occupies an open commitment slot",
+  );
   assert.equal(agent(town, "player").money, 9);
   advanceFundedPayroll(town);
   assert.equal(agent(town, "player").money, 9);
@@ -164,6 +169,106 @@ test("legacy partial recognition preserves evidence and ambiguous recognition co
     assert.equal(agent(town, "player").money, 4);
     assert.deepEqual(auditEconomy(town), []);
   }
+});
+
+test("resuming recognised work restores its workplace hours without replacing unrelated plans", () => {
+  const town = createTown("Ada");
+  legacy(town);
+  near(town, "kevin");
+  choose(town, "kevin", "Recognise cafe work");
+  const evidence = structuredClone(
+    town.economy.work.legacyClaims.find((claim) => claim.worker === "player").evidence,
+  );
+  town.day = 2;
+  const player = agent(town, "player");
+  player.plan.day = 2;
+  player.plan.summary = "A current plan with a library visit.";
+  player.plan.beats[10] = {
+    hour: 10,
+    place: "library",
+    spot: "out",
+    status: "checking a public reference this morning",
+  };
+  const morning = structuredClone(player.plan.beats[10]);
+  const balances = town.agents.map(({ money }) => money);
+  choose(town, "kevin", "Resume cafe shift");
+  assert.deepEqual(player.plan.beats[10], morning);
+  assert.equal(player.plan.summary, "A current plan with a library visit.");
+  assert.deepEqual(player.plan.beats.slice(16, 19), evidence.plan.beats.slice(16, 19));
+  assert.deepEqual(
+    town.economy.work.legacyClaims.find((claim) => claim.worker === "player").evidence,
+    evidence,
+  );
+  assert.deepEqual(
+    town.agents.map(({ money }) => money),
+    balances,
+  );
+  assert.deepEqual(auditEconomy(town), []);
+});
+
+test("completed work frees its item while a full purse keeps the wage reserved until later settlement", () => {
+  const town = createTown("Ada");
+  agent(town, "player").money = 999;
+  near(town, "kevin");
+  choose(town, "kevin", "Accept cafe shift");
+  agent(town, "player").projects.push({
+    id: "unrelated-notes",
+    owner: "player",
+    kind: "notes",
+    status: "open",
+    text: "Keep these research notes open.",
+    day: 1,
+  });
+  agent(town, "player").tile = { ...ANCHORS.cafe };
+  for (let minute = 960; minute < 1140; minute++) {
+    town.minute = minute;
+    advanceFundedPayroll(town);
+  }
+  const agreement = town.economy.work.agreements.find((item) => item.worker === "player");
+  const payable = town.economy.work.payables.find((item) => item.agreementId === agreement.id);
+  assert.equal(agreement.status, "completed");
+  assert.equal(payable.status, "earned");
+  assert.equal(town.economy.holds.find((hold) => hold.id === payable.holdId).remaining, 5);
+  assert.equal(
+    agent(town, "player").projects.find((project) => project.text === PLAYER_CAFE_SHIFT).status,
+    "done",
+  );
+  assert.equal(
+    agent(town, "player").projects.find((project) => project.id === "unrelated-notes").status,
+    "open",
+  );
+  assert.equal(
+    town.social.some((event) => /worked the Hobbs shift/.test(event.text)),
+    false,
+  );
+  town.day = 2;
+  town.minute = 420;
+  agent(town, "player").paidToday = false;
+  near(town, "kevin");
+  choose(town, "kevin", "Accept cafe shift");
+  const nextUnit = agent(town, "player").projects.find(
+    (project) => project.text === PLAYER_CAFE_SHIFT && project.day === 2,
+  );
+  assert.equal(nextUnit.status, "open");
+  town.favors.push({
+    id: "capacity-payment",
+    from: "player",
+    to: "baba",
+    amount: 5,
+    status: "owed",
+    text: "A separate recorded five-coin tab.",
+    day: 1,
+  });
+  near(town, "baba");
+  choose(town, "baba", "Pay 5");
+  advanceFundedPayroll(town);
+  assert.equal(town.economy.work.payables.find((item) => item.id === payable.id).status, "settled");
+  assert.equal(agent(town, "player").money, 999);
+  assert.equal(nextUnit.status, "open", "settling an older wage cannot complete the new unit");
+  assert.equal(town.social.filter((event) => /worked the Hobbs shift/.test(event.text)).length, 1);
+  advanceFundedPayroll(town);
+  assert.equal(town.social.filter((event) => /worked the Hobbs shift/.test(event.text)).length, 1);
+  assert.deepEqual(auditEconomy(town), []);
 });
 
 test("NPC debt settlement records the current actors after first financial activation", () => {
@@ -321,6 +426,10 @@ test("explicit earned settlement preserves the employer's remembered deed and to
   assert.ok(quote);
   assert.equal(applyPlayerAction(town, "kevin", quote.id).ok, true);
   assert.equal(agent(town, "player").money, 9);
+  assert.equal(
+    agent(town, "player").projects.find((project) => project.id === "old-shift").status,
+    "done",
+  );
   assert.ok(
     agent(town, "kevin").memories.some(
       (m) => m.source === "event" && m.text.includes("worked the Hobbs shift"),
