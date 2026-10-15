@@ -5,6 +5,7 @@ import { planFromBlocks } from "./plan";
 import { refreshResidentStatus } from "./navigation";
 import { plain } from "./text";
 import { HOMES } from "./world";
+import { createTownIdentity } from "./identity";
 
 const SEED =
   "I want to find out who I am. Where I came from is that same question — not a town, the man under the apron — and I want to know where I am going, and how to make some money. I will need friends and help.";
@@ -312,6 +313,7 @@ export function createTown(playerName: string): Town {
 
   addSpecialists(town);
   for (const agent of town.agents) refreshResidentStatus(town, agent);
+  town.identityRegistry = createTownIdentity(town.agents.map((agent) => agent.id));
   return town;
 }
 

@@ -55,6 +55,7 @@ import {
   exportTown,
   MAX_TOWN_FILE_BYTES,
   parseTownFile,
+  readTownFile,
   readTownSave,
   readTownConflicts,
   initializeTownSave,
@@ -62,6 +63,7 @@ import {
   replaceTownSave,
   type SaveResult,
 } from "@/game/save";
+import { forkTown } from "@/game/identity";
 import { advanceTown, frameAt, stepMinute } from "@/game/sim";
 import { formatClock, periodName } from "@/game/text";
 import { createTown } from "@/game/town";
@@ -275,6 +277,7 @@ export function TownApp() {
   const [thinking, setThinking] = useState("");
   const [hiccup, setHiccup] = useState(false);
   const [importText, setImportText] = useState<string | null>(null);
+  const [importMode, setImportMode] = useState<"restore" | "fork">("restore");
   const [importError, setImportError] = useState("");
   const [drafts, setDrafts] = useState<Partial<Record<AgentId, string>>>({});
   const draft = drafts[panel ?? "player"] ?? "";
@@ -2067,6 +2070,7 @@ export function TownApp() {
               return;
             }
             setImportError("");
+            setImportMode("restore");
             try {
               setImportText(await file.text());
             } catch {
@@ -2087,12 +2091,19 @@ export function TownApp() {
             onSubmit={(event) => {
               event.preventDefault();
               if (!importText.trim()) return;
-              const next = parseTownFile(importText);
-              if (!next) {
-                setImportError("That file is not a town this page can live in.");
+              const report = readTownFile(importText);
+              if (report.status !== "ready") {
+                setImportError(report.reason);
                 return;
               }
-              void acceptImportedTown(next);
+              try {
+                const next = importMode === "fork" ? forkTown(report.town) : report.town;
+                void acceptImportedTown(next);
+              } catch {
+                setImportError(
+                  "A separate town could not be created. The current town has been kept.",
+                );
+              }
             }}
           >
             <h2 className="font-display text-2xl">Replace the live town?</h2>
@@ -2105,12 +2116,36 @@ export function TownApp() {
                   ? `The file is a version ${preview.version} town, day ${preview.day}.`
                   : `The file is day ${preview.day}.`;
               })()}{" "}
-              Debts, notes, and selves in it become the town.
+              Its story, possessions and debts will be loaded. A recovery copy of the current town
+              is kept before replacement.
             </p>
+            <fieldset className="mt-4 grid gap-3">
+              <legend className="mb-2">How should this file be used?</legend>
+              <label>
+                <input
+                  type="radio"
+                  name="town-import-mode"
+                  value="restore"
+                  checked={importMode === "restore"}
+                  onChange={() => setImportMode("restore")}
+                />{" "}
+                Restore this town — keep the same people and world.
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="town-import-mode"
+                  value="fork"
+                  checked={importMode === "fork"}
+                  onChange={() => setImportMode("fork")}
+                />{" "}
+                Create a separate town — new people with copied histories.
+              </label>
+            </fieldset>
             {importError && <p className="mt-3 text-primary">{importError}</p>}
-            <div className="mt-5 flex gap-2">
+            <div className="mt-5 flex flex-wrap gap-2">
               <button className="btn" data-on="true" type="submit">
-                Replace
+                {importMode === "fork" ? "Create separate town" : "Replace"}
               </button>
               <button className="btn" type="button" onClick={() => setImportText(null)}>
                 Keep this town
