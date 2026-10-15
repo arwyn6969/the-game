@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-15",
+  "node": "24.19.0",
+  "baseCommit": "80ee299",
+  "branch": "codex/stamp-identity-tooling",
+  "freshOfflineInstall": "passed; 425 packages",
+  "typecheck": "passed",
+  "lint": "passed; zero errors, one inherited unused auth directive warning",
+  "townTests": {
+    "passed": 267,
+    "failed": 0
+  },
+  "fullTests": {
+    "scriptPassed": 504,
+    "appAuthPassed": 55,
+    "totalPassed": 559,
+    "failed": 0
+  },
+  "newIdentityTests": 20,
+  "diagnostics": {
+    "worldAuditIssues": 0,
+    "measuredExportsImportableThroughDay30": 6
+  },
+  "productionBuild": "passed; DATABASE_URL unset, no production migration",
+  "browser": "built preview, isolated synthetic desktop and touch phone contexts; no console/page errors",
+  "reviewFixes": [
+    "reuse migration raw backup after quota failure and reload",
+    "retain v1 raw key without redundant quota-consuming backup"
+  ],
+  "limitations": [
+    "identity metadata is provenance, not authentication",
+    "fixed eight-actor simulation; dynamic roster/merged worlds not implemented",
+    "wallet/stamp integration and server multiplayer remain later packets",
+    "no real device browser test, live wallet signing, Bitcoin transaction, deployment or publication"
+  ]
+}

@@ -6,6 +6,8 @@ This is the current web game: `arwyn6969/the-game`. The separate `arwyn6969/THE_
 
 The current quality candidate integrates main through `4a39cdf`, including character cards, town conversations, per-resident drafts and remembered deeds. It adds a playable funded library project, durable wage agreements, inventory actions, responsive AI waits, safer saves and shared provider budgets. See the [delivery notes](docs/implementation/game-quality-delivery.md) and [roadmap](docs/ROADMAP.md). Publishing https://thegame.grok.me is a separate step; this branch does not identify the live site's version.
 
+The approved [stamp identity and wallet tooling plan](docs/implementation/stamp-identity-tooling.md) starts from quality candidate `80ee299`: permanent identities first, then verified stamp selection/optional heads, receiving wallets, owner-approved transfers and tested trading. The first additive identity packet is implemented for review: saves retain permanent world/resident IDs, and Import offers restore or a separate town with copied histories. Wallet integration and shared multiplayer/PvP remain later packets.
+
 ## Play
 
 Name yourself. The clock starts paused on the row.

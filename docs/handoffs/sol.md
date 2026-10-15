@@ -1,5 +1,11 @@
 # Sol handoff
 
+## 15 October 2026 — permanent identity tooling
+
+The user approved tooling first, then multiplayer. `codex/stamp-identity-tooling` starts from the committed quality candidate `80ee299` in a separate checkout. [The implementation plan and receipt](../implementation/stamp-identity-tooling.md) document the six-stage sequence and first completed packet: secure world/resident IDs, deterministic legacy migration, strict validation, scoped tooling references, explicit restore/fork imports and original-byte recovery. Existing Town v2, personalities, debts, game accounts and local engine keys remain.
+
+Node 24.19.0 fresh offline install, typecheck, lint (one inherited warning), 267 town regressions, 559 full tests, 30-day diagnostics and a production build passed. Built desktop/phone journeys verified the import choices, fork/reload, corrupt identity rejection, movement, conversation and existing funded library paths. [Evidence](../review/stamp-identity-2026-10-15/validation.json) includes the reviewed storage fixes for reload retries and redundant v1 backups. No wallet operation, paid call, production database migration, merge or publication occurred. The next packet is wallet compatibility, server-verified ownership and read-only stamp selection/optional heads; the old fixed roster still needs a later shared-world migration.
+
 ## 15 October 2026 — current game backlog
 
 Current delivery is `codex/game-quality-review`, integrating main through `4a39cdf`; final game rules and replay/search guard fixes are at `128e1d4`. The [implementation receipt](../reviews/2026-10-15-game-quality-delivery.md) records the 539 passing tests, desktop/phone built and delayed-AI journeys, year-long synthetic checks, evidence and remaining gates. The [delivery guide](../implementation/game-quality-delivery.md) covers the funded library, durable work, inventory, saves and operator budget setup. The [roadmap](../ROADMAP.md) is reconciled with implemented scope. Cross-device saves and a continuously running shared town remain explicitly deferred. Human playtesting, physical accessibility checks, live configuration and separately authorized publication remain open; no production action or paid call was performed.

@@ -9,6 +9,7 @@ import { auditEconomy, initializeEconomy } from "./economy";
 import { validateLibraryState } from "./community";
 import type { FundedTown } from "./economy-types";
 import { cleanSocial } from "./social";
+import { legacyTownIdentity, validateTownIdentity } from "./identity";
 
 export const TOWN_STORAGE_KEY = "the-game-town-v2";
 export const LEGACY_TOWN_STORAGE_KEY = "the-game-town-v1";
@@ -28,6 +29,7 @@ export type SaveResult =
 // town is portable and cannot authorize overwriting a browser's existing town.
 const origins = new WeakMap<Town, { box: Storage; raw: string | null }>();
 const conflictBackups = new WeakMap<Town, { raw: string; key: string }>();
+const identityBackups = new WeakMap<Town, { box: Storage; raw: string; key: string }>();
 const SAVE_LOCK = "the-game-town-save";
 export const TOWN_BACKUP_PREFIX = "the-game-town-backup-v1:";
 
@@ -235,6 +237,21 @@ export function validateTown(value: unknown): value is Town {
   if (!Array.isArray(town.agents) || town.agents.length !== expectedIds.length) return false;
   const ids = new Set(town.agents.map((a) => a?.id));
   if (expectedIds.some((id) => !ids.has(id))) return false;
+  // Check existing identities before any repair. Corruption is recoverable data,
+  // never permission to manufacture a replacement person or world.
+  const hasIdentities = Object.hasOwn(town, "identityRegistry");
+  if (hasIdentities && (version !== 2 || !validateTownIdentity(town.identityRegistry, AGENT_IDS)))
+    return false;
+  // Capture legacy identity from the original input, before seed/roster/economy
+  // migration changes its content. The same old file always restores the same IDs.
+  let identityRegistry = town.identityRegistry;
+  if (!hasIdentities) {
+    try {
+      identityRegistry = legacyTownIdentity(value, AGENT_IDS);
+    } catch {
+      return false;
+    }
+  }
   const originalRoster = town.agents.map((a) => a.id);
   if (typeof town.day !== "number" || !Number.isFinite(town.day) || town.day < 1) return false;
   if (typeof town.minute !== "number" || !Number.isFinite(town.minute)) return false;
@@ -418,7 +435,9 @@ export function validateTown(value: unknown): value is Town {
       return false;
     }
   }
-  return !economyProblem(town);
+  if (economyProblem(town)) return false;
+  town.identityRegistry = identityRegistry;
+  return true;
 }
 
 function economyProblem(town: Town): string | null {
@@ -487,6 +506,12 @@ function economyProblem(town: Town): string | null {
 }
 
 function serialize(town: Town, omitReplay = false): string {
+  if (!Object.hasOwn(town, "identityRegistry"))
+    town.identityRegistry = legacyTownIdentity(town, AGENT_IDS);
+  if (!validateTownIdentity(town.identityRegistry, AGENT_IDS))
+    throw new Error(
+      "This town's permanent identities are invalid. Keep the original save for recovery.",
+    );
   const clone = JSON.parse(JSON.stringify(town)) as Town;
   for (const agent of clone.agents) agent.path = [];
   if (omitReplay) clone.scrub = [];
@@ -531,7 +556,7 @@ export function readTownSave(): LoadReport {
   try {
     const town = parseTownFile(raw);
     if (!town) {
-      const reason = financialFileProblem(raw);
+      const reason = townFileProblem(raw);
       return { status: "unreadable", raw, ...(reason ? { reason } : {}) };
     }
     origins.set(town, { box, raw });
@@ -546,7 +571,7 @@ function currentRaw(box: Storage): string | null {
   return box.getItem(TOWN_STORAGE_KEY) ?? box.getItem(LEGACY_TOWN_STORAGE_KEY) ?? null;
 }
 
-function backupRaw(box: Storage, raw: string, label: "conflict" | "replaced"): string {
+function backupRaw(box: Storage, raw: string, label: "conflict" | "replaced" | "identity"): string {
   const id =
     typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
       ? crypto.randomUUID()
@@ -554,6 +579,18 @@ function backupRaw(box: Storage, raw: string, label: "conflict" | "replaced"): s
   const key = `${TOWN_BACKUP_PREFIX}${label}:${id}`;
   box.setItem(key, raw);
   return key;
+}
+
+function identityBackupRaw(box: Storage, raw: string): string {
+  // A failed primary write can be followed by a page reload. Reuse the exact
+  // original already on disk rather than filling the remaining quota with copies.
+  if (typeof box.key === "function") {
+    for (let index = 0; index < box.length; index++) {
+      const key = box.key(index);
+      if (key?.startsWith(`${TOWN_BACKUP_PREFIX}identity:`) && box.getItem(key) === raw) return key;
+    }
+  }
+  return backupRaw(box, raw, "identity");
 }
 
 /** Conflict copies remain raw, even if an older runtime cannot parse them. */
@@ -618,6 +655,27 @@ function writeTown(town: Town, intent: "save" | "initialize" | "replace"): SaveR
   if (intent === "replace" && previous !== null && previous !== raw) {
     try {
       backupRaw(box, previous, "replaced");
+    } catch (error) {
+      return done({ ok: false, reason: isQuota(error) ? "quota" : "storage" });
+    }
+  }
+  // The first identity migration keeps the exact pre-migration file. Do this
+  // after the stale-tab check and before writing, and retain it across retries.
+  if (intent === "save" && previous !== null && !rawHasIdentities(previous)) {
+    try {
+      // A v1 source already remains under its untouched legacy key. Only the
+      // pre-identity v2 file is about to be replaced and needs another raw copy.
+      if (box.getItem(TOWN_STORAGE_KEY) !== null) {
+        const backup = identityBackups.get(town);
+        if (
+          backup?.box !== box ||
+          backup.raw !== previous ||
+          box.getItem(backup.key) !== previous
+        ) {
+          const key = identityBackupRaw(box, previous);
+          identityBackups.set(town, { box, raw: previous, key });
+        }
+      }
     } catch (error) {
       return done({ ok: false, reason: isQuota(error) ? "quota" : "storage" });
     }
@@ -723,10 +781,27 @@ export function parseTownFile(text: string): Town | null {
 export type TownFileReport =
   { status: "ready"; town: Town } | { status: "unreadable"; raw: string; reason: string };
 
-function financialFileProblem(text: string): string | null {
+function rawHasIdentities(text: string): boolean {
   try {
     const data = JSON.parse(text);
     const town = data && typeof data === "object" && "town" in data ? data.town : data;
+    return Boolean(town && typeof town === "object" && Object.hasOwn(town, "identityRegistry"));
+  } catch {
+    return false;
+  }
+}
+
+function townFileProblem(text: string): string | null {
+  try {
+    const data = JSON.parse(text);
+    const town = data && typeof data === "object" && "town" in data ? data.town : data;
+    if (
+      town &&
+      typeof town === "object" &&
+      Object.hasOwn(town, "identityRegistry") &&
+      (town.version !== 2 || !validateTownIdentity(town.identityRegistry, AGENT_IDS))
+    )
+      return "The saved permanent identities are invalid. The original people, world IDs and complete file have been retained for recovery.";
     if (!town || typeof town !== "object" || !Object.hasOwn(town, "economy")) return null;
     if (town.version !== 2)
       return "These experimental version-1 accounts need explicit migration; their original books have been retained for recovery.";
@@ -748,7 +823,7 @@ export function readTownFile(text: string): TownFileReport {
     raw: text,
     reason: tooLarge
       ? "The town file exceeds the 8 MiB import limit. Its history has not been truncated."
-      : (financialFileProblem(text) ??
+      : (townFileProblem(text) ??
         "This file is not a supported, consistent town. Keep its original bytes for recovery."),
   };
 }

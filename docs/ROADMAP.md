@@ -45,10 +45,13 @@ If players understand the outcome but do not care, improve its stakes before add
 
 ## Deferred by scope
 
-Cross-device saves and a continuously running shared town remain deferred, as confirmed by the user. Map expansion, extra residents, a broad job market, banking, trading, token voting, procedural projects, provider migration and compulsory hunger are also outside this delivery. Existing towns and portable backups remain central while a later persistence milestone is evaluated.
+Cross-device saves and a continuously running shared town remain outside the current quality delivery. The user has now approved the [stamp identity and wallet tooling sequence](implementation/stamp-identity-tooling.md), starting from `codex/game-quality-review` at `80ee299`: permanent identities → verified stamp selection/optional heads → agent receiving wallets → owner-approved outgoing proposals/transfers → tested trading → shared multiplayer/PvP. Packet 1 is implemented for review as an additive Town v2 identity registry with restore/fork imports; its [verification receipt](implementation/stamp-identity-tooling.md#implementation-receipt) records 559 passing tests and desktop/phone built-browser checks. This does not yet provide a dynamic roster, merged worlds, wallet authority or blockchain transfers.
+
+Map expansion, extra residents, a broad job market, banking, token voting, procedural projects, provider migration and compulsory hunger remain outside the quality delivery. Existing towns, valid financial records and portable backups must survive the identity work. No paid services, mainnet transactions or publication are part of the tooling authorization.
 
 ## Reference contracts and history
 
 - [First-week experience](design/consequential-first-week.md), [economic rules](design/economy-and-fair-contribution.md) and [implementation contracts](implementation/community-project.md) describe the bounded loop.
+- [Stamp identity and wallet tooling](implementation/stamp-identity-tooling.md) records the approved order, first-packet acceptance checks, wallet compatibility gate and unresolved stamp/persona transfer rules.
 - [Consolidation](CONSOLIDATION.md) and [earlier release evidence](RELEASE.md) retain their dated source/publication receipts.
 - [Collaboration guidance](COLLABORATION.md) defines ownership and reviewable feature-branch delivery. The original Sol/Grok split is not a reason to leave requested integration unfinished.
