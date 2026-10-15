@@ -1,6 +1,6 @@
 # Read-only stamp selection and optional heads
 
-Packet 2 of the approved [tooling sequence](stamp-identity-tooling.md), implemented on `codex/stamp-wallet-selection` above identity PR 31. This packet is a reviewable preview. It adds wallet proof, classic raster stamp selection and an optional player head. It does not establish account or canonical character ownership. Receiving profiles, signing transactions, trading and multiplayer remain later packets.
+Packet 2 of the approved [tooling sequence](stamp-identity-tooling.md), implemented in commit `6638071` on `codex/stamp-wallet-selection`, in [draft PR 32](https://github.com/arwyn6969/the-game/pull/32) above [identity PR 31](https://github.com/arwyn6969/the-game/pull/31) and gameplay PR 30. Retarget after those dependencies are integrated. This packet is a reviewable preview. It adds wallet proof, classic raster stamp selection and an optional player head. It does not establish account or canonical character ownership. Receiving profiles, signing transactions, trading and multiplayer remain later packets.
 
 ## Player flow
 

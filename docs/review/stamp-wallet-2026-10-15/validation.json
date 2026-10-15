@@ -79,5 +79,7 @@
     "Physical devices and screen reader",
     "Canonical authenticated account/character permission registry before receiving wallets",
     "Custody, recovery and protocol-aware reconciliation before deposits"
-  ]
+  ],
+  "implementationCommit": "6638071",
+  "draftPR": "https://github.com/arwyn6969/the-game/pull/32"
 }
