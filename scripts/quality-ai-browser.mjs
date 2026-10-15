@@ -18,7 +18,7 @@ const report = {
   failures: [],
 };
 const transportModule = `
-const mock = globalThis.__qualityMindMock = {
+const mock = globalThis.__qualityMindMock ??= {
   calls: [], pending: new Map(),
   resolve(id, response) { const pending = this.pending.get(id); if (pending) { this.pending.delete(id); pending.resolve(response); } },
   reject(id) { const pending = this.pending.get(id); if (pending) { this.pending.delete(id); pending.reject(new Error('Synthetic provider unavailable')); } }
@@ -126,6 +126,11 @@ async function openKevin(page) {
 async function send(page, text) {
   await page.getByLabel("Your line to Kevin", { exact: true }).fill(text);
   await page.getByRole("button", { name: "Say it", exact: true }).click();
+}
+async function startReplay(page) {
+  await page.locator("#scrub").focus();
+  await page.keyboard.press("ArrowLeft");
+  await page.getByRole("button", { name: "Back to now", exact: true }).waitFor();
 }
 const reply = (text) => ({
   reply: text,
@@ -310,6 +315,71 @@ try {
       assert.equal(JSON.stringify(await readTown(page)).includes("LATE-TIMEOUT"), false);
       result.missingResultFallsBackExactlyOnce = true;
     }
+    await page.getByRole("button", { name: "Close conversation", exact: true }).click();
+    const replayTown = copy(near);
+    const ids = replayTown.agents.map((agent) => agent.id);
+    const positions = replayTown.agents.flatMap((agent) => [agent.tile.x, agent.tile.y]);
+    replayTown.scrub = [
+      { d: replayTown.day, m: replayTown.minute - 1, ids, p: positions },
+      { d: replayTown.day, m: replayTown.minute, ids, p: positions },
+    ];
+    await importTown(page, replayTown);
+    await openKevin(page);
+    const replayManual = `Replay manual ${viewport.name}`;
+    const replayManualId = (await calls(page)).length;
+    await send(page, replayManual);
+    await requestCount(page, replayManualId + 1);
+    await startReplay(page);
+    await page
+      .getByRole("button", { name: "Use local reply now", exact: true })
+      .waitFor({ state: "hidden" });
+    assert.equal(
+      chatCount(await readTown(page), replayManual),
+      0,
+      "Manual fallback must not apply a new exchange from replay",
+    );
+    await page.getByRole("button", { name: "Back to now", exact: true }).click();
+    await resolveRequest(page, replayManualId, reply(`LATE-REPLAY-MANUAL-${viewport.name}`));
+    await openKevin(page);
+    assert.equal(
+      await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(),
+      replayManual,
+    );
+    assert.equal(
+      chatCount(await readTown(page), replayManual),
+      0,
+      "Leaving replay cannot revive a cancelled response",
+    );
+    result.replayCancelsPendingAndHidesFallback = true;
+    const replayPreference = `Replay preference ${viewport.name}`;
+    const replayPreferenceId = (await calls(page)).length;
+    await send(page, replayPreference);
+    await requestCount(page, replayPreferenceId + 1);
+    await startReplay(page);
+    await page
+      .getByRole("navigation", { name: "Your town tools", exact: true })
+      .getByRole("button", { name: "Help & privacy", exact: true })
+      .click();
+    await page.getByLabel("Use local dialogue only", { exact: true }).check();
+    await page.getByRole("button", { name: "Close Help & privacy", exact: true }).click();
+    assert.equal(
+      chatCount(await readTown(page), replayPreference),
+      0,
+      "Enabling local-only during replay must cancel without applying an exchange",
+    );
+    await page.getByRole("button", { name: "Back to now", exact: true }).click();
+    await resolveRequest(
+      page,
+      replayPreferenceId,
+      reply(`LATE-REPLAY-PREFERENCE-${viewport.name}`),
+    );
+    await openKevin(page);
+    assert.equal(
+      await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(),
+      replayPreference,
+    );
+    assert.equal(chatCount(await readTown(page), replayPreference), 0);
+    result.localOnlyCancelsWithoutApplyingInReplay = true;
     await page.getByRole("button", { name: "Close conversation", exact: true }).click();
     await page
       .getByRole("navigation", { name: "Your town tools", exact: true })

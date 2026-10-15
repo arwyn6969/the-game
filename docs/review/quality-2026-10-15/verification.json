@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-15",
+  "node": "24.19.0",
+  "runtime_commit": "128e1d425a75776d1ef75cf5e0075f6c6891d9c8",
+  "integrated_main": "4a39cdf8ec8c03b79d0e369e99dd7c862c9d8375",
+  "typecheck": "passed",
+  "lint": {
+    "errors": 0,
+    "inherited_warnings": 1,
+    "file": "src/lib/auth/use-current-user.ts:59"
+  },
+  "full_tests": {
+    "script_tests": 484,
+    "app_auth_tests": 55,
+    "passed": 539,
+    "failed": 0,
+    "skipped": 0
+  },
+  "town_tests": {
+    "initial_integrated_pass": 240,
+    "final_community_pass": 19,
+    "additional_community_cases": 7,
+    "all_in_full_suite": true
+  },
+  "diagnose_town": "completed; observations are not a release verdict",
+  "build": {
+    "passed": true,
+    "database_url_unset": true,
+    "migration": "skipped",
+    "vercel_config_version": 3,
+    "server_function": true,
+    "pglite_assets": ["pglite.wasm", "initdb.wasm", "pglite.data"]
+  },
+  "built_browser": "browser.json",
+  "mocked_ai_browser": "delayed-ai-browser.json",
+  "longevity": "longevity.json",
+  "excluded": [
+    "human playtest results",
+    "physical device and screen reader certification",
+    "live provider quality/capacity",
+    "live shared database migration and tariffs",
+    "hosted release",
+    "cross-device saves",
+    "continuously running shared town"
+  ],
+  "privacy": "Synthetic isolated towns only; no personal save files, credentials or live provider responses."
+}

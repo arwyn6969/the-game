@@ -27,9 +27,30 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: node scripts/quality-browser.mjs
+      - name: Delayed AI and replay browser checks
+        run: |
+          node scripts/with-app-env.mjs node node_modules/vite/bin/vite.js dev --host 127.0.0.1 --port 8094 --force > /tmp/game-ai-preview.log 2>&1 &
+          qa_pid=$!
+          trap 'kill "$qa_pid" 2>/dev/null || true' EXIT
+          node --input-type=module <<'JS'
+          let ready = false;
+          for (let attempt = 0; attempt < 120; attempt++) {
+            try {
+              if ((await fetch("http://127.0.0.1:8094/", { signal: AbortSignal.timeout(1000) })).ok) {
+                ready = true;
+                break;
+              }
+            } catch {}
+            await new Promise(resolve => setTimeout(resolve, 250));
+          }
+          if (!ready) throw new Error("AI test preview did not start");
+          JS
+          node scripts/quality-ai-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: game-browser-quality
-          path: artifacts/quality-browser
+          path: |
+            artifacts/quality-browser
+            artifacts/quality-ai-browser
           if-no-files-found: ignore

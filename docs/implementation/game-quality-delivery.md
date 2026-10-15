@@ -30,7 +30,7 @@ Both provider modes use the existing verified authentication boundary and shared
 
 ## Validation and remaining release gates
 
-The final implementation receipt records fresh commands, counts, browser screenshots and exact source revision. The historical review's checks describe the earlier source and must not be treated as the candidate's release verdict.
+The [final implementation receipt](../reviews/2026-10-15-game-quality-delivery.md) records fresh commands, counts, browser screenshots and exact source revision. The historical review's checks describe the earlier source and must not be treated as the candidate's release verdict.
 
 Synthetic longevity checks reached 90, 180 and 365 game days at 56 exchanges per day. All checkpoints retained the 90-coin total and reimported their exports. The measured exports were approximately 1.10, 1.17 and 1.27 MB, with reimport taking 24, 21 and 25 milliseconds on this machine. Protected story/reflection history can still grow; these measurements do not prove an infinite town or physical-phone performance. Oversized exports fail visibly rather than silently deleting history.
 

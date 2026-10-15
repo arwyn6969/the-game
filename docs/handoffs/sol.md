@@ -1,5 +1,11 @@
 # Sol handoff
 
+## 15 October 2026 — current game backlog
+
+Current delivery is `codex/game-quality-review`, integrating main through `4a39cdf`; final game rules and replay/search guard fixes are at `128e1d4`. The [implementation receipt](../reviews/2026-10-15-game-quality-delivery.md) records the 539 passing tests, desktop/phone built and delayed-AI journeys, year-long synthetic checks, evidence and remaining gates. The [delivery guide](../implementation/game-quality-delivery.md) covers the funded library, durable work, inventory, saves and operator budget setup. The [roadmap](../ROADMAP.md) is reconciled with implemented scope. Cross-device saves and a continuously running shared town remain explicitly deferred. Human playtesting, physical accessibility checks, live configuration and separately authorized publication remain open; no production action or paid call was performed.
+
+The provider and earlier integration notes below are historical, not the current assignment or release verdict.
+
 ## 12 October 2026 — provider activation follow-up
 
 - User authorized free-provider enrollment and private local key configuration. Gemini, Cohere trial, NVIDIA NIM and OpenRouter free access were verified with synthetic JSON requests. Secrets and account-specific preferences are in ignored local files with mode 0600. No production secrets, database or deployment were changed; Groq, Mistral and Ollama remain disabled where free access or a running local model was unavailable.

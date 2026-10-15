@@ -154,13 +154,11 @@ export async function runLibraryChecks(browser, url, out) {
       const chunks = [];
       for await (const chunk of stream) chunks.push(chunk);
       const portable = Buffer.concat(chunks);
-      await page
-        .getByLabel("Import a town file", { exact: true })
-        .setInputFiles({
-          name: "synthetic-library.json",
-          mimeType: "application/json",
-          buffer: portable,
-        });
+      await page.getByLabel("Import a town file", { exact: true }).setInputFiles({
+        name: "synthetic-library.json",
+        mimeType: "application/json",
+        buffer: portable,
+      });
       await page.getByRole("button", { name: "Replace", exact: true }).click();
       await page.waitForFunction(
         (expected) =>
