@@ -21,6 +21,20 @@ import { agentById, makeMemory, pushMemory } from "./memory";
 import { findPath } from "./path";
 import { ANCHORS, zoneAt } from "./world";
 import { advanceTown } from "./sim";
+import {
+  createReadingEvening,
+  ensureReadingNote,
+  readingNoteDue,
+  readingStoryView,
+  readingActions,
+  applyReadingAction,
+  prepareReadingAppointments,
+  readingMovementGoals,
+  advanceReadingEvening,
+  refreshReadingAttendance,
+  validateReadingEvening,
+  type ReadingEvening,
+} from "./reading-evening";
 
 export const LIBRARY_PROJECT = "library-index";
 export const BOX_IDS = ["Birch", "Alder", "Cedar"] as const;
@@ -134,6 +148,7 @@ type LibraryState = {
   nextDayRecorded: number;
   finds?: { record: RecordId; revision: number; result: string }[];
   notice?: { revision: number; mode: "verified" | "marked" };
+  evening?: ReadingEvening;
 };
 type LibraryTown = FundedTown;
 const getState = (town: Town): LibraryState | null =>
@@ -349,6 +364,7 @@ function start(town: LibraryTown, role: Role) {
     delivery: false,
     corrected: false,
     nextDayRecorded: 0,
+    evening: createReadingEvening(town.day),
   };
   setState(town, state);
   town.guide = 3;
@@ -376,6 +392,10 @@ function inspect(town: LibraryTown, state: LibraryState, key: string) {
     day: town.day,
     minute: town.minute,
   });
+  // Carry only direct observations into an unsubmitted draft; never overwrite a chosen mapping.
+  const observed = LIBRARY_RECORDS.find((record) => key === `box:${record.box}`);
+  if (observed && !state.revisions.length && state.draft[observed.id] === null)
+    state.draft[observed.id] = observed.box;
   const assignment = state.assignments[state.role as Role];
   if (assignment && REQUIRED[state.role as Role].includes(key)) {
     const input = {
@@ -660,6 +680,7 @@ export function libraryView(town: Town) {
     .filter((item) => item.status === "open" && item.kind === "shift")
     .map((item) => item.text);
   return {
+    story: readingStoryView(town, state),
     title: "The library index",
     status: state?.phase ?? "offered",
     owner: "The town" as const,
@@ -732,7 +753,7 @@ export function libraryView(town: Town) {
   };
 }
 export type LibraryAction = PlayerAction & {
-  category: "offer" | "evidence" | "report" | "draft" | "lookup" | "manage";
+  category: "offer" | "evidence" | "report" | "draft" | "lookup" | "manage" | "story";
 };
 export function libraryActions(town: Town): LibraryAction[] {
   const state = getState(town);
@@ -786,6 +807,8 @@ export function libraryActions(town: Town): LibraryAction[] {
         "lookup",
         location,
       );
+  for (const story of readingActions(town, state))
+    add(story.kind, story.arg, story.label, story.terms, "story", story.disabledReason);
   if (state.phase === "closed") return actions;
   for (const fixture of FIXTURE)
     if (!state.observations.some((item) => item.key === fixture.id))
@@ -954,7 +977,15 @@ export function applyLibraryAction(town: Town, actionId: string): { ok: boolean;
     } else if (kind === "accept") reply = start(draft, arg as Role);
     else {
       if (!state) throw new Error("Read the offer first.");
-      if (kind === "inspect") reply = inspect(draft, state, arg);
+      if (kind === "evening-wait" || kind === "evening-wait-note") {
+        advanceTown(draft, Number(arg));
+        state = getState(draft)!;
+        reply = readingStoryView(draft, state).nextStep;
+      } else if (kind.startsWith("evening-")) {
+        reply = applyReadingAction(draft, state, kind, arg, (id, text, participants) =>
+          event(draft, getState(draft)!, id, text, participants),
+        );
+      } else if (kind === "inspect") reply = inspect(draft, state, arg);
       else if (kind === "report") reply = report(draft, state, arg as Role, "player");
       else if (kind === "request")
         reply = report(draft, state, arg as Role, arg === "source" ? "arwyn" : "kevin", true);
@@ -1103,6 +1134,7 @@ function correct(town: LibraryTown, state: LibraryState) {
 /** Called around normal pathfinder movement; no teleport or wall-clock absence penalty. */
 export function prepareLibraryAppointment(town: Town) {
   const state = getState(town);
+  if (state) prepareReadingAppointments(town, state);
   if (state?.lookup?.status !== "routing") return;
   const northern = agentById(town, "northern");
   restoreLookupRoute(town, state);
@@ -1121,11 +1153,17 @@ export function libraryMovementGoals(
   town: Town,
 ): Partial<Record<AgentId, { x: number; y: number }>> | undefined {
   const state = getState(town);
-  if (state?.lookup?.status !== "routing") return undefined;
+  const reading = state ? readingMovementGoals(town, state) : {};
+  if (state?.lookup?.status !== "routing") return Object.keys(reading).length ? reading : undefined;
   if (lookupCommitment(town, state)) return undefined;
   const revision = state.revisions.find((item) => item.id === state.lookup!.revision);
   const box = revision?.mappings["room-access"];
-  return { northern: box ? BOX_TILES[box] : { x: 36, y: 20 } };
+  return { ...reading, northern: box ? BOX_TILES[box] : { x: 36, y: 20 } };
+}
+/** Preserve a new work plan without keeping a stale 'everyone here' claim. */
+export function refreshLibraryReading(town: Town) {
+  const state = getState(town);
+  if (state) refreshReadingAttendance(town, state);
 }
 export function advanceLibraryProject(town: Town) {
   const state = getState(town);
@@ -1206,6 +1244,7 @@ export function advanceLibraryProject(town: Town) {
     }
   }
   const current = getState(town)!;
+  ensureReadingNote(town, current);
   if (
     town.day > current.started &&
     current.lookup?.status === "done" &&
@@ -1226,7 +1265,11 @@ export function advanceLibraryProject(town: Town) {
       ["arwyn"],
     );
   }
-  if (town.day >= current.started + 2 && !current.delivery && current.lookup?.status === "done") {
+  if (
+    (town.day >= current.started + 2 || readingNoteDue(town, current)) &&
+    !current.delivery &&
+    current.lookup?.status === "done"
+  ) {
     current.delivery = true;
     event(
       town,
@@ -1237,6 +1280,9 @@ export function advanceLibraryProject(town: Town) {
     );
     current.actionRevision++;
   }
+  advanceReadingEvening(town, getState(town)!, (id, text, participants) =>
+    event(town, getState(town)!, id, text, participants),
+  );
 }
 /** A resident knows a public event after witnessing it or reading its notice. */
 export function residentLibraryReply(town: Town, resident: AgentId): string | null {
@@ -1457,5 +1503,5 @@ export function validateLibraryState(town: Town): string[] {
       errors.push("Invalid sourced public project event.");
     eventIds.add(item.id);
   }
-  return errors;
+  return [...errors, ...validateReadingEvening(town, state)];
 }

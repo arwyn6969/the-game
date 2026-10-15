@@ -22,7 +22,7 @@ import { placeTitle, zoneAt } from "./world";
 import { groundPlayerReply, groundSharedLine } from "./conversation";
 import { settleLegacyDebt, availableFunds } from "./economy";
 import type { FundedTown } from "./economy-types";
-import { libraryView } from "./community";
+import { libraryView, refreshLibraryReading } from "./community";
 import {
   activateFundedTown,
   closeCompletedWorkItems,
@@ -490,6 +490,7 @@ export function applyResult(
   } catch {
     /* A partial hour is kept. The clock still moves. */
   } finally {
+    safely(() => refreshLibraryReading(town));
     safely(() => recordSocial(town, result, socialBefore));
   }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { ActionCards } from "./ActionCards";
-import { LibraryProject } from "./LibraryProject";
+import { LibraryProject, ReadingStatus } from "./LibraryProject";
+import { libraryView } from "@/game/community";
 import { GAME_BUILD_ID } from "@/game/build";
 import { X } from "lucide-react";
 import type { PlaceId, Town } from "@/game/types";
@@ -42,6 +43,7 @@ export function PlayerTools({
   onBackup,
   onLibrary,
   onLibraryAction,
+  onGoReading,
 }: {
   page: ToolPage;
   town: Town;
@@ -61,6 +63,7 @@ export function PlayerTools({
   onBackup: (backup: { key: string; raw: string }) => void;
   onLibrary: () => void;
   onLibraryAction: (id: string) => void;
+  onGoReading: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
@@ -76,6 +79,7 @@ export function PlayerTools({
     }
   }, [actionNote, page]);
   const player = agentById(town, "player");
+  const reading = page === "map" ? libraryView(town).story : null;
   const carried = player.projects.filter((p) => p.status === "open" && p.text === BABA_LOAF);
   const agreements = player.projects.filter((p) => p.status === "open" && p.text !== BABA_LOAF);
   const debts = town.favors.filter((f) => f.from === "player" || f.to === "player");
@@ -124,6 +128,7 @@ export function PlayerTools({
             busy={busy}
             actionNote={actionNote}
             onAction={onLibraryAction}
+            onGoReading={onGoReading}
           />
         )}
         {page === "help" && (
@@ -135,8 +140,9 @@ export function PlayerTools({
                 grocery, park and noticeboard. You can ask questions, take work, decline or walk on.
               </p>
               <p>
-                Northern needs a library record that he cannot find. Read the library project to
-                choose a funded contribution or decline it.
+                Northern wants to share a favorite first page with his neighbors. Help find the
+                library record he needs, then choose a small outdoor reading or a later gathering at
+                the library. Read the project to choose a paid contribution or decline it.
               </p>
               <button className="btn" type="button" onClick={onLibrary}>
                 Library project
@@ -373,7 +379,6 @@ export function PlayerTools({
               aria-atomic="true"
               tabIndex={-1}
               data-tool-feedback
-              hidden={!actionNote}
             >
               {actionNote}
             </p>
@@ -410,6 +415,19 @@ export function PlayerTools({
             <section>
               <h3>Destinations</h3>
               <p>Walk along a clear route. You can travel while town time is paused.</p>
+              {reading?.gathering && reading.scene.length === 0 && (
+                <div className="library-gathering">
+                  <p>
+                    {reading.gathering.label} · {placeTitle(reading.gathering.place)}
+                  </p>
+                  <p>
+                    <ReadingStatus status={reading.gathering.status} />
+                  </p>
+                  <button className="btn" type="button" onClick={onGoReading}>
+                    Go to the reading
+                  </button>
+                </div>
+              )}
               <div className="tool-destinations">
                 {PLACE_IDS.filter((place) => place !== "street").map((place) => (
                   <button className="btn" key={place} type="button" onClick={() => onGo(place)}>

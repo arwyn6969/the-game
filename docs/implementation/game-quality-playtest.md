@@ -20,32 +20,36 @@ After their chosen action, ask:
 4. Who owns the index? Does being credited give anyone control over another person's work?
 5. Is there anything you would want to do on a further visit?
 
+For the first-reading story, also record who the player believed they were helping, why they chose the park or library, and whether the gathering felt worth arranging. Ask whether optional bread or tea felt useful and whether free attendance was clear. Do not explain these answers for them.
+
 Reopen the same saved town on the next **game** day, using ordinary clock controls. Leaving the browser overnight does not advance this local simulation. Ask the participant what they recognize and what they would do next. Do not promise a reward for returning.
 
 ## Session record
 
 Copy this record for each participant. Use anonymous session identifiers; keep personal details outside Git.
 
-| Field | Observation |
-| --- | --- |
-| Session | 1 / 2 / 3 / 4 / 5 |
-| Date and local timezone | |
-| Exact build | |
-| Device and browser | |
-| Input and accessibility settings | |
-| Local-only or AI mode | |
-| Starting town day and time | |
-| First action discovered without help | |
-| Chosen contribution or refusal | |
-| Time to decision and result | |
-| Hesitation and any assistance | |
-| Player's explanation of the consequence | |
-| Understanding of funding and payment | |
-| Understanding of usefulness and ownership | |
-| Recognition after reopening | |
-| Voluntary further visit | |
-| Player's words and suggested change | |
-| Defect, if any | |
+| Field                                                | Observation       |
+| ---------------------------------------------------- | ----------------- |
+| Session                                              | 1 / 2 / 3 / 4 / 5 |
+| Date and local timezone                              |                   |
+| Exact build                                          |                   |
+| Device and browser                                   |                   |
+| Input and accessibility settings                     |                   |
+| Local-only or AI mode                                |                   |
+| Starting town day and time                           |                   |
+| First action discovered without help                 |                   |
+| Chosen contribution or refusal                       |                   |
+| Time to decision and result                          |                   |
+| Hesitation and any assistance                        |                   |
+| Player's explanation of the consequence              |                   |
+| Understanding of funding and payment                 |                   |
+| Understanding of usefulness and ownership            |                   |
+| Understanding of Northern's purpose and chosen venue |                   |
+| Reaction to the reading and optional spending        |                   |
+| Recognition after reopening                          |                   |
+| Voluntary further visit                              |                   |
+| Player's words and suggested change                  |                   |
+| Defect, if any                                       |                   |
 
 ## Decision gate
 

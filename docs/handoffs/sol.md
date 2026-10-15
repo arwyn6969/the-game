@@ -1,5 +1,9 @@
 # Sol handoff
 
+## 15 October 2026 — first-reading story
+
+The user's further quest/money request is implemented in the [first-reading pass](../reviews/2026-10-15-first-reading.md): Northern's human purpose, observed draft locations, park/library choice, physically routed guests, optional listening or an explicit first line, and two-coin bread/tea cash sales into business tills. The optional save extension preserves older projects, plans and paid work. The full suite passes 573 tests; integrated build/browser evidence follows in that receipt. The same draft PR remains the review handoff; publication and human evaluation remain separate.
+
 ## 15 October 2026 — pre-release refinement
 
 At the user's request, the [second pass](../reviews/2026-10-15-pre-release-polish.md) improves the newly delivered work: actionable library guidance, truthful required evidence, protected NPC commitments, clearer payment/inventory/accessibility feedback, employer-bound local work replies, exact work-item completion, selective Resume, resident drafts and recovery of empty saves. Runtime `5c33966` passes 549 full tests and 257 town cases, typecheck, lint with the inherited warning, diagnostics and a credential-free build. Built desktop/phone and expanded mocked-AI/recovery checks pass. The same draft PR remains the review handoff; publication and human/physical-device gates remain separate.

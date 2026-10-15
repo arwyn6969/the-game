@@ -273,6 +273,8 @@ try {
   }
   const { runLibraryChecks } = await import("./library-browser.mjs");
   report.library = await runLibraryChecks(browser, target.href, join(out, "library"));
+  const { runReadingEveningChecks } = await import("./reading-evening-browser.mjs");
+  report.readings = await runReadingEveningChecks(browser, target.href, join(out, "readings"));
   console.log(
     JSON.stringify(
       { ok: true, journeys: report.journeys, report: join(out, "results.json") },

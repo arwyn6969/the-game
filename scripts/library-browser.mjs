@@ -93,13 +93,21 @@ export async function runLibraryChecks(browser, url, out) {
       await group("Written reports");
       await action("Request source check · pay Arwyn 2");
       await group("Prepare the index");
-      for (const [label, box] of [
-        ["Hobbs equipment register", "Birch"],
-        ["Dormitory repair request", "Alder"],
-        ["Community room access note", viewport.room],
-      ]) {
+      assert.deepEqual(
+        (await saved()).economy.projects.library.draft,
+        {
+          "hobbs-equipment": "Birch",
+          "dorm-repair": "Alder",
+          "room-access": "Cedar",
+        },
+        "direct inspections should remove needless manual transcription",
+      );
+      if (viewport.room !== "Cedar") {
+        await page.getByText("Review or change locations", { exact: true }).click();
         const before = (await saved()).economy.projects.library.actionRevision;
-        await page.getByLabel(`Box for ${label}`, { exact: true }).selectOption(box);
+        await page
+          .getByLabel("Box for Community room access note", { exact: true })
+          .selectOption(viewport.room);
         await page.waitForFunction(
           (previous) =>
             JSON.parse(localStorage.getItem("the-game-town-v2")).town.economy.projects.library

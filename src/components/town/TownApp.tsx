@@ -27,9 +27,10 @@ import { visibleSocialEvents } from "@/game/social";
 import type { Agent, AgentId, Face, PlaceId, ThinkJob, Town } from "@/game/types";
 
 import { NPC_IDS } from "@/game/types";
-import { applyLibraryAction } from "@/game/community";
+import { applyLibraryAction, libraryActions, libraryView } from "@/game/community";
 import { findPath } from "@/game/path";
 import { PlayerTools, type ToolPage } from "./PlayerTools";
+import { ReadingStatus } from "./LibraryProject";
 import {
   applyPlayerAction,
   applyResult,
@@ -227,7 +228,14 @@ export function TownApp() {
   const requestSerial = useRef(0);
   const activeJobRef = useRef<{ town: Town; job: ThinkJob } | null>(null);
   const localOnlyRef = useRef(savedLocalPreference());
-  const routeRef = useRef<{ title: string; target: { x: number; y: number } } | null>(null);
+  const routeRef = useRef<{
+    title: string;
+    target: { x: number; y: number };
+    arrivalRadius: number;
+  } | null>(null);
+  const readingDestinationRef = useRef<{ title: string; target: { x: number; y: number } } | null>(
+    null,
+  );
   const stepInputRef = useRef<string | null>(null);
   const movementSaveRef = useRef<number | undefined>(undefined);
   const movementDirtyRef = useRef(false);
@@ -472,15 +480,26 @@ export function TownApp() {
   }
 
   function goTo(place: PlaceId) {
+    walkTo(placeTitle(place), ANCHORS[place]);
+  }
+
+  function walkTo(title: string, target: { x: number; y: number }, arrivalRadius = 1) {
     setWatching(null);
     watchingRef.current = null;
     const live = townRef.current;
     if (!live || replayRef.current) return;
-    const target = ANCHORS[place];
-    routeRef.current = { title: placeTitle(place), target };
+    routeRef.current = { title, target: { ...target }, arrivalRadius };
     keysRef.current.clear();
-    setFarNote(`Walking to ${placeTitle(place)}. Use a direction or Escape to stop.`);
+    setFarNote(`Walking to ${title}. Use a direction or Escape to stop.`);
     closeTools();
+  }
+
+  function goToReading() {
+    const live = townRef.current;
+    if (!live || replayRef.current) return;
+    const story = libraryView(live).story;
+    if (story.gathering && story.scene.length === 0)
+      walkTo(story.gathering.label, story.gathering.tile, 0);
   }
 
   useEffect(() => {
@@ -786,7 +805,7 @@ export function TownApp() {
         const player = agentById(live, "player");
         if (
           Math.abs(player.tile.x - route.target.x) + Math.abs(player.tile.y - route.target.y) <=
-          1
+          route.arrivalRadius
         ) {
           routeRef.current = null;
           persistTown(live);
@@ -957,6 +976,13 @@ export function TownApp() {
               positions,
               replay: replayRef.current !== null,
               selected: panelRef.current ?? watchingRef.current,
+              readingMarker: readingDestinationRef.current?.target,
+              waypoint:
+                replayRef.current !== null
+                  ? null
+                  : (routeRef.current ??
+                    readingDestinationRef.current ??
+                    ((live.guide ?? 0) < 3 ? { title: "Library", target: ANCHORS.library } : null)),
               names: Object.fromEntries(live.agents.map((a) => [a.id, a.name])) as Record<
                 AgentId,
                 string
@@ -1499,6 +1525,19 @@ export function TownApp() {
   const town = townRef.current;
   void tick;
   const player = agentById(town, "player");
+  const library = libraryView(town);
+  const reading = library.story.gathering;
+  const readingPending = reading !== null && library.story.scene.length === 0;
+  const joinReading =
+    readingPending && reading.status === "ready"
+      ? libraryActions(town).find((action) => {
+          const [kind, argument] = JSON.parse(action.id) as [string, string];
+          return kind === "evening-join" && argument === "listen";
+        })
+      : undefined;
+  readingDestinationRef.current = readingPending
+    ? { title: "The reading", target: reading.tile }
+    : null;
   const shown = panel;
 
   panelRef.current = shown;
@@ -1515,6 +1554,10 @@ export function TownApp() {
         ? "The clock is at 4×. Pause if you want to talk first."
         : "The clock is at 1×.";
   const here = zoneAt(player.tile.x, player.tile.y);
+  const readingHere =
+    reading !== null &&
+    here === reading.place &&
+    Math.abs(player.tile.x - reading.tile.x) + Math.abs(player.tile.y - reading.tile.y) <= 3;
   const planned = beatAt(player, town.minute);
   const guideLine = `${clockLine} WASD or arrows move one tile. On a phone, hold N W E S. Enter speaks to whoever is beside you. ${hobbsWay(player.tile.x, player.tile.y)} Open Choices with Kevin to agree a cafe shift, or with Baba to agree a bread tab. Read the terms before you choose. Or walk on.`;
   const yourOpenDebts = (town.favors ?? []).filter(
@@ -1751,10 +1794,10 @@ export function TownApp() {
         <div className="welcome-tip">
           <Sparkles className="welcome-icon size-5" aria-hidden />
           <div>
-            <strong>A useful first step: the library index.</strong>
+            <strong>{library.story.title}</strong>
             <p>
-              Northern cannot find a record. Choose a funded contribution, decline, or explore. The
-              library is east of the plaza. You can walk while the clock is paused.
+              Northern wants to read a first page to his neighbors. Help find a place to begin, or
+              explore on your own.
             </p>
           </div>
           <button className="btn" type="button" onClick={() => openTools("library")}>
@@ -1783,6 +1826,42 @@ export function TownApp() {
           onClick={onCanvasClick}
           aria-label={`The town, home to ${town.agents.length - 1} neighbors and you. Use the nearby conversation buttons or press Enter to talk.`}
         />
+        {readingPending && !shown && !tools && !board && !socialOpen && replay === null && (
+          <div className="reading-invitation" aria-label="Reading invitation">
+            <strong>{reading.label}</strong>
+            <p>
+              <ReadingStatus status={reading.status} />
+            </p>
+            {joinReading && !joinReading.disabledReason ? (
+              <>
+                <p id="reading-join-terms">{joinReading.terms}</p>
+                <button
+                  className="btn reading-main-action"
+                  type="button"
+                  aria-describedby="reading-join-terms"
+                  disabled={thinking === "player"}
+                  onClick={() => {
+                    chooseLibrary(town, joinReading.id);
+                    openTools("library");
+                  }}
+                >
+                  {joinReading.label}
+                </button>{" "}
+              </>
+            ) : !readingHere ? (
+              <button className="btn reading-main-action" type="button" onClick={goToReading}>
+                Go to the reading
+              </button>
+            ) : null}{" "}
+            <button
+              className={`btn${readingHere && !joinReading ? " reading-main-action" : ""}`}
+              type="button"
+              onClick={() => openTools("library")}
+            >
+              Reading details
+            </button>
+          </div>
+        )}
         <div className="world-label" aria-hidden>
           <i />
           {replay
@@ -1794,7 +1873,7 @@ export function TownApp() {
         <div className="world-caption" aria-hidden>
           {town.agents.length} residents · endless possibilities
         </div>
-        {!shown && !board && !tools && !socialOpen && (
+        {!shown && !board && !tools && !socialOpen && !(readingPending && readingHere) && (
           <ConversationCaption
             town={town}
             event={conversations[0]}
@@ -1816,28 +1895,36 @@ export function TownApp() {
             onProfile={approach}
           />
         )}
-        {!shown && !board && !tools && !socialOpen && replay === null && talkChoices.length > 0 && (
-          <div className="crowd" role="group" aria-label={crowd ? "Who is here" : "Talk nearby"}>
-            <span className="crowd-label">{crowd ? "Who is here" : "Talk nearby"}</span>
-            {talkChoices.map((id) => {
-              const person = town.agents.find((agent) => agent.id === id);
-              return (
-                <button
-                  key={id}
-                  className="btn"
-                  type="button"
-                  aria-label={id === "player" ? "Your journal" : `Talk with ${person?.name ?? id}`}
-                  onClick={() => {
-                    setCrowd(null);
-                    approach(id, true);
-                  }}
-                >
-                  {person?.name ?? id}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {!shown &&
+          !board &&
+          !tools &&
+          !socialOpen &&
+          replay === null &&
+          !(readingPending && readingHere) &&
+          talkChoices.length > 0 && (
+            <div className="crowd" role="group" aria-label={crowd ? "Who is here" : "Talk nearby"}>
+              <span className="crowd-label">{crowd ? "Who is here" : "Talk nearby"}</span>
+              {talkChoices.map((id) => {
+                const person = town.agents.find((agent) => agent.id === id);
+                return (
+                  <button
+                    key={id}
+                    className="btn"
+                    type="button"
+                    aria-label={
+                      id === "player" ? "Your journal" : `Talk with ${person?.name ?? id}`
+                    }
+                    onClick={() => {
+                      setCrowd(null);
+                      approach(id, true);
+                    }}
+                  >
+                    {person?.name ?? id}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         {!tools && !shown && here === "library" && replay === null && (
           <button className="btn library-board" type="button" onClick={() => openTools("library")}>
             Library board
@@ -1943,6 +2030,7 @@ export function TownApp() {
             onAction={(id) => chooseAction(town, "player", id)}
             onLibrary={() => setTools("library")}
             onLibraryAction={(id) => chooseLibrary(town, id)}
+            onGoReading={goToReading}
             backups={browserBackups}
             onBackup={(backup) => {
               try {
