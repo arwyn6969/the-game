@@ -1,5 +1,9 @@
 # Sol handoff
 
+## 15 October 2026 — pre-release refinement
+
+At the user's request, the [second pass](../reviews/2026-10-15-pre-release-polish.md) improves the newly delivered work: actionable library guidance, truthful required evidence, protected NPC commitments, clearer payment/inventory/accessibility feedback, employer-bound local work replies, exact work-item completion, selective Resume, resident drafts and recovery of empty saves. Runtime `5c33966` passes 549 full tests and 257 town cases, typecheck, lint with the inherited warning, diagnostics and a credential-free build. Built desktop/phone and expanded mocked-AI/recovery checks pass. The same draft PR remains the review handoff; publication and human/physical-device gates remain separate.
+
 ## 15 October 2026 — current game backlog
 
 Current delivery is `codex/game-quality-review`, integrating main through `4a39cdf`; final game rules and replay/search guard fixes are at `128e1d4`. The [implementation receipt](../reviews/2026-10-15-game-quality-delivery.md) records the 539 passing tests, desktop/phone built and delayed-AI journeys, year-long synthetic checks, evidence and remaining gates. The [delivery guide](../implementation/game-quality-delivery.md) covers the funded library, durable work, inventory, saves and operator budget setup. The [roadmap](../ROADMAP.md) is reconciled with implemented scope. Cross-device saves and a continuously running shared town remain explicitly deferred. Human playtesting, physical accessibility checks, live configuration and separately authorized publication remain open; no production action or paid call was performed.

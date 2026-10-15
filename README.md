@@ -6,6 +6,8 @@ This is the current web game: `arwyn6969/the-game`. The separate `arwyn6969/THE_
 
 The current quality candidate integrates main through `4a39cdf`, including character cards, town conversations, per-resident drafts and remembered deeds. It adds a playable funded library project, durable wage agreements, inventory actions, responsive AI waits, safer saves and shared provider budgets. See the [delivery notes](docs/implementation/game-quality-delivery.md) and [roadmap](docs/ROADMAP.md). Publishing https://thegame.grok.me is a separate step; this branch does not identify the live site's version.
 
+The [pre-release refinement](docs/reviews/2026-10-15-pre-release-polish.md) adds precise library checklists, clearer money and inventory feedback, employer-bound work guidance, protected appointments and further draft/save recovery fixes.
+
 ## Play
 
 Name yourself. The clock starts paused on the row.
