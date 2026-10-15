@@ -15,6 +15,11 @@ export async function runLibraryChecks(browser, url, out) {
       hasTouch: viewport.name === "phone",
       acceptDownloads: true,
     });
+    await context.route("**/*", async (route) => {
+      if (new URL(route.request().url()).origin === new URL(url).origin) return route.continue();
+      // Keep the offline gate independent of external font availability.
+      return route.fulfill({ status: 200, contentType: "text/css", body: "" });
+    });
     const page = await context.newPage();
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
@@ -140,17 +145,15 @@ export async function runLibraryChecks(browser, url, out) {
         current.tills.grocery +
         custody();
       assert.equal(total, 90);
-      const download = page.waitForEvent("download");
-      await page.getByRole("button", { name: "Download town", exact: true }).click();
-      const stream = await (await download).createReadStream();
+      await page.getByRole("button", { name: "Close Library project", exact: true }).click();
+      const [download] = await Promise.all([
+        page.waitForEvent("download"),
+        page.getByRole("button", { name: "Download town", exact: true }).click(),
+      ]);
+      const stream = await download.createReadStream();
       const chunks = [];
       for await (const chunk of stream) chunks.push(chunk);
       const portable = Buffer.concat(chunks);
-      const closeAfterDownload = page.getByRole("button", {
-        name: "Close Library project",
-        exact: true,
-      });
-      if (await closeAfterDownload.isVisible()) await closeAfterDownload.click();
       await page
         .getByLabel("Import a town file", { exact: true })
         .setInputFiles({
@@ -178,9 +181,8 @@ export async function runLibraryChecks(browser, url, out) {
       });
       await page.screenshot({ path: join(out, `${viewport.name}-library.png`) });
       await page
-        .getByRole("heading", { name: "Independent lookup", exact: true })
-        .scrollIntoViewIfNeeded()
-        .catch(() => {});
+        .getByRole("heading", { name: "Lookup result", exact: true })
+        .scrollIntoViewIfNeeded();
       await page.screenshot({ path: join(out, `${viewport.name}-lookup.png`) });
       assert.deepEqual(errors, []);
       results.push({

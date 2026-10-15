@@ -87,6 +87,12 @@ type Revision = {
   mappings: Mapping;
   verified: RecordId[];
 };
+function findResult(revision: Revision, record: (typeof LIBRARY_RECORDS)[number]): string {
+  const box = revision.mappings[record.id];
+  return box === record.box
+    ? `Found ${record.label} in ${box} using revision ${revision.id}. Source: the submitted index and this direct box search.`
+    : `Revision ${revision.id} points to ${box ?? "no box"}; that reference did not locate ${record.label}. The mapping remains ${box ? "provisional" : "unresolved"}.`;
+}
 const BOX_TILES: Record<BoxId, { x: number; y: number }> = {
   Birch: { x: 40, y: 16 },
   Alder: { x: 44, y: 16 },
@@ -825,11 +831,7 @@ export function applyLibraryAction(town: Town, actionId: string): { ok: boolean;
       else if (kind === "find") {
         const revision = state.revisions.at(-1)!;
         const record = LIBRARY_RECORDS.find((item) => item.id === arg)!;
-        const box = revision.mappings[record.id];
-        reply =
-          box === record.box
-            ? `Found ${record.label} in ${box} using revision ${revision.id}. Source: the submitted index and this direct box search.`
-            : `Revision ${revision.id} points to ${box ?? "no box"}; that reference did not locate ${record.label}. The mapping remains ${box ? "provisional" : "unresolved"}.`;
+        reply = findResult(revision, record);
         state.finds ??= [];
         state.finds = state.finds.filter(
           (item) => item.record !== record.id || item.revision !== revision.id,
@@ -847,7 +849,7 @@ export function applyLibraryAction(town: Town, actionId: string): { ok: boolean;
         );
         state.notice = { revision: revision.id, mode };
         reply = `Sub's notice, revision ${revision.id}: ${entries.length ? entries.map((item) => `${item.label}: ${item.box ?? "unresolved"} (${item.status})`).join("; ") : "No verified entries yet"}. Credit: ${agentById(draft, revision.author).name} submitted the index; the town owns it.`;
-        event(draft, state, `library:notice:${revision.id}:${mode}`, reply, ["player", "sub"]);
+        event(draft, state, `library:notice:${revision.id}:${mode}`, reply, ["sub", "player"]);
       } else if (kind === "wait") {
         advanceTown(draft, Number(arg));
         state = getState(draft);
@@ -1285,14 +1287,17 @@ export function validateLibraryState(town: Town): string[] {
     else {
       const seen = new Set<string>();
       for (const find of state.finds) {
-        const key = `${find.record}:${find.revision}`;
-        if (
-          !RECORD_IDS.includes(find.record) ||
-          !state.revisions.some((revision) => revision.id === find.revision) ||
-          typeof find.result !== "string" ||
-          seen.has(key)
-        )
+        const record = LIBRARY_RECORDS.find((record) => record.id === find?.record);
+        const revision = state.revisions.find((revision) => revision.id === find?.revision);
+        if (!find || !record || !revision) {
           errors.push("A common index search lacks its unique record and revision.");
+          continue;
+        }
+        const key = `${find.record}:${find.revision}`;
+        if (find.result !== findResult(revision, record) || seen.has(key))
+          errors.push(
+            "A common index search contradicts its unique record and submitted revision.",
+          );
         seen.add(key);
       }
     }

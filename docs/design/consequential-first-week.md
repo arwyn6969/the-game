@@ -1,6 +1,6 @@
 # Product strategy: useful work, a fair agreement, a different tomorrow
 
-Proposed next milestone, 12 October 2026. Baseline: main `900015b`, runtime `4e7786c`. Explicit choices, café shifts, usable loaves, repayment and trust repairs are released. The funded library project below is **not implemented**. PR #11's neon UI is a separate draft, outside this baseline.
+Design begun 12 October; implementation status updated 15 October 2026. The current candidate integrates main through `4a39cdf`, preserving its neon interface and character social tools, and implements the funded library loop, next-day consequences and optional shared meal below. See the [delivery notes](../implementation/game-quality-delivery.md). Human playtest and hosted publication remain separate gates; the original baseline was main `900015b` / runtime `4e7786c`.
 
 Read the [roadmap](../ROADMAP.md), [economic rules](economy-and-fair-contribution.md) and [implementation contracts](../implementation/community-project.md) together. Those contracts pin the prototype's records, paid units and rollout boundaries; this document owns the player experience.
 
@@ -8,9 +8,9 @@ Read the [roadmap](../ROADMAP.md), [economic rules](economy-and-fair-contributio
 
 Build one small, funded community project that demonstrates **“I come back because of what I did yesterday.”** Its first session must also be satisfying: **“We changed this place together, and people remember my part.”**
 
-The current game earns **5/10**, with an **8/10 vision**: a distinctive town and stronger reliability, but few consequential choices. These are qualitative judgments, not measured player ratings. Planned features earn no points.
+The original review rated the game **5/10**, with an **8/10 vision**: a distinctive town and stronger reliability, but few consequential choices. These are historical qualitative judgments, not measured player ratings or a new score for this implementation. The five-player gate below must test whether the added loop is understandable and worth returning to.
 
-Keep the five residents and the player's resident role. Kevin World's specialist think tank should emerge through people contributing different methods to a practical problem. The player participates; they do not manage an omniscient panel of autonomous experts.
+Keep the seven residents and the player's resident role. Kevin World's specialist think tank should emerge through people contributing different methods to a practical problem. The player participates; they do not manage an omniscient panel of autonomous experts.
 
 ## The three highest-value changes
 
@@ -48,7 +48,7 @@ These are game days. Leaving the app causes no missed-work punishment. This is o
 
 ## Bread follow-on and non-goals
 
-After the core passes its checks, prototype an optional shared meal using an explicitly offered loaf. Add a visible carrying/inventory action so eating does not require an unrelated conversation. Offer a short public gathering with Baba or Northern where the participants discuss the library result and one optional next activity. Show who accepted before consuming the loaf; one loaf can be eaten or shared once, never both. A declined invitation keeps the loaf. Memories record the meal and participants; no automatic affection bonus or essential participation gate. Eating alone remains an optional roleplay action with an honest description. No hunger meter, starvation, absence punishment or compulsory food spending. Sharing is proposed; current loaf eating does not implement it.
+After the core passes its checks, prototype an optional shared meal using an explicitly offered loaf. Add a visible carrying/inventory action so eating does not require an unrelated conversation. Offer a short public gathering with Baba or Northern where the participants discuss the library result and one optional next activity. Show who accepted before consuming the loaf; one loaf can be eaten or shared once, never both. A declined invitation keeps the loaf. Memories record the meal and participants; no automatic affection bonus or essential participation gate. Eating alone remains an optional roleplay action with an honest description. No hunger meter, starvation, absence punishment or compulsory food spending. Inventory and the optional shared meal are implemented in this candidate; player appeal still needs the diagnostic below.
 
 Defer extra residents, map expansion, broad markets, banking, token voting, procedural projects and provider migration. Account saves remain a subsequent persistence milestone. Preserve existing saves, identities and controls. A visual refresh is separate from proving this loop.
 

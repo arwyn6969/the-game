@@ -418,6 +418,10 @@ export function TownApp() {
     foregroundPendingRef.current = false;
     setThinking("");
     if (!current || townRef.current !== current.town || current.job.kind !== "player") return;
+    if (replayRef.current !== null) {
+      setSendNote("Return to now to send your line again; your draft is still here.");
+      return;
+    }
     const player = agentById(current.town, "player");
     const resident = agentById(current.town, current.job.agentId);
     if (!inTalkRange(player.tile.x, player.tile.y, resident.tile.x, resident.tile.y)) {
@@ -487,6 +491,14 @@ export function TownApp() {
   useEffect(() => {
     replayRef.current = replay;
     if (replay) {
+      const pendingPlayer = activeJobRef.current?.job.kind === "player";
+      requestSerial.current += 1;
+      activeJobRef.current = null;
+      pendingRef.current = false;
+      foregroundPendingRef.current = false;
+      setThinking("");
+      if (pendingPlayer)
+        setSendNote("Return to now to send your line again; your draft is still here.");
       routeRef.current = null;
       keysRef.current.clear();
       stepInputRef.current = null;

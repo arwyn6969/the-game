@@ -101,6 +101,21 @@ const reload = (town) => {
   assert.equal(cash(restored), cash(town));
   return restored;
 };
+const contributionSnapshot = (town) => {
+  const { projects: _projects, ...books } = town.economy;
+  const { assignments, reports, draft, revisions, lookup, phase } = state(town);
+  return structuredClone({
+    books,
+    assignments,
+    reports,
+    draft,
+    revisions,
+    lookup,
+    phase,
+    money: town.agents.map(({ id, money }) => ({ id, money })),
+    relationships: town.agents.map(({ id, relationships }) => ({ id, relationships })),
+  });
+};
 
 test("declining creates no personal obligation, spending, trust penalty or private disclosure", () => {
   const town = createTown("Mira");
@@ -232,7 +247,123 @@ test("delegated submission credits Arwyn without taking the player's earned cont
   assert.equal(state(town).reports.find((report) => report.role === "reference").worker, "player");
   assert.equal(person(town, "player").money, 6);
   assert.equal(state(town).revisions[0].mappings["room-access"], "Cedar");
+  const notice = act(town, "publish", "verified").result.reply;
+  assert.match(notice, /Credit: Arwyn submitted the index; the town owns it/);
+  assert.doesNotMatch(notice, /Credit: Mira/);
   finishLookup(town);
+});
+
+test("optional verified publication omits conflicting entries without paying or certifying a lookup", () => {
+  const town = prepared("Birch");
+  const before = contributionSnapshot(town);
+  const { action, result } = act(town, "publish", "verified");
+  assert.match(result.reply, /Hobbs equipment register: Birch \(verified\)/);
+  assert.match(result.reply, /Dormitory repair request: Alder \(verified\)/);
+  assert.doesNotMatch(result.reply, /Community room access note|provisional/);
+  assert.match(result.reply, /Credit: Mira submitted the index; the town owns it/);
+  assert.deepEqual(state(town).notice, { revision: 1, mode: "verified" });
+  assert.deepEqual(contributionSnapshot(town), before);
+  assert.equal(state(town).lookup, null);
+  const saved = exportTown(town);
+  assert.equal(applyLibraryAction(town, action.id).ok, false, "stale publication cannot repeat");
+  assert.equal(exportTown(town), saved);
+  assert.deepEqual(reload(town).economy.projects.library.notice, state(town).notice);
+});
+
+test("verified-only publication says when the submitted index has no verified entries", () => {
+  const town = start();
+  inspect(town);
+  act(town, "report", "reference");
+  act(town, "request", "source");
+  for (const record of ["hobbs-equipment", "dorm-repair", "room-access"])
+    act(town, "map", `${record}:unresolved`);
+  act(town, "submit", "player");
+  const { result } = act(town, "publish", "verified");
+  assert.match(result.reply, /Sub's notice, revision 1: No verified entries yet/);
+  assert.doesNotMatch(result.reply, /Birch|Alder|Cedar/);
+  assert.ok(libraryView(town).entries.every((entry) => entry.status === "unresolved"));
+  reload(town);
+});
+
+test("Sub's marked notice preserves provisional and unresolved confidence without changing the index", () => {
+  for (const [box, expected] of [
+    ["Birch", "Birch (provisional)"],
+    ["unresolved", "unresolved (unresolved)"],
+  ]) {
+    const town = prepared(box);
+    const before = contributionSnapshot(town);
+    const { result } = act(town, "publish", "marked");
+    assert.ok(result.reply.includes(`Community room access note: ${expected}`));
+    assert.match(result.reply, /Hobbs equipment register: Birch \(verified\)/);
+    assert.doesNotMatch(result.reply, /Community room access note: .*\(verified\)/);
+    assert.deepEqual(contributionSnapshot(town), before);
+    const event = state(town).events.find((item) => item.id === "library:notice:1:marked");
+    assert.equal(event.text, result.reply);
+    assert.deepEqual(event.participants.toSorted(), ["player", "sub"]);
+    assert.equal(reload(town).economy.projects.library.events.at(-1).text, result.reply);
+  }
+});
+
+test("the public board attributes Sub's voluntary index notice to Sub", () => {
+  const town = prepared("Birch");
+  const { result } = act(town, "publish", "marked");
+  const notice = town.notices.findLast((item) => item.text === result.reply);
+  assert.ok(notice, "the optional publication must reach the public board");
+  assert.equal(notice.author, "sub", "requesting a notice does not make the player its author");
+  assert.equal(reload(town).notices.find((item) => item.id === notice.id).author, "sub");
+});
+
+test("free record searches retain one result per revision and do not become paid independent work", () => {
+  let town = prepared("Birch", 0);
+  const before = contributionSnapshot(town);
+  for (let repeat = 0; repeat < 3; repeat++) act(town, "find", "room-access");
+  assert.equal(state(town).finds.length, 1);
+  assert.match(state(town).finds[0].result, /Revision 1 points to Birch;.*did not locate/);
+  for (const record of ["hobbs-equipment", "dorm-repair"]) act(town, "find", record);
+  assert.equal(state(town).finds.length, 3);
+  assert.deepEqual(contributionSnapshot(town), before);
+  assert.equal(state(town).lookup, null);
+  assert.match(libraryView(town).outcome, /No independent lookup completed/);
+  const searches = structuredClone(state(town).finds);
+  town = reload(town);
+  assert.deepEqual(state(town).finds, searches);
+  person(town, "player").tile = { ...ANCHORS.cafe };
+  const distantFind = choice(town, "find", "room-access");
+  assert.ok(distantFind.disabledReason);
+  const distantSnapshot = exportTown(town);
+  assert.equal(applyLibraryAction(town, distantFind.id).ok, false);
+  assert.equal(exportTown(town), distantSnapshot, "a remote search cannot record a visit");
+  for (const mutate of [
+    (finds) => (finds[0].record = "invented-record"),
+    (finds) => (finds[0].revision = 2),
+    (finds) => finds.push(structuredClone(finds[0])),
+  ]) {
+    const invalid = JSON.parse(exportTown(town));
+    mutate(invalid.town.economy.projects.library.finds);
+    assert.equal(parseTownFile(JSON.stringify(invalid)), null);
+  }
+});
+
+test("import rejects a common search result that contradicts its frozen reference", () => {
+  const town = prepared("Birch");
+  act(town, "find", "room-access");
+  const forged = JSON.parse(exportTown(town));
+  forged.town.economy.projects.library.finds[0].result =
+    "Found Community room access note in Cedar using revision 1. Source: the submitted index and this direct box search.";
+  assert.equal(parseTownFile(JSON.stringify(forged)), null);
+});
+
+test("import rejects a public notice with an unknown revision or confidence mode", () => {
+  const town = prepared("Birch");
+  act(town, "publish", "marked");
+  for (const notice of [
+    { revision: 2, mode: "marked" },
+    { revision: 1, mode: "certified" },
+  ]) {
+    const invalid = JSON.parse(exportTown(town));
+    invalid.town.economy.projects.library.notice = notice;
+    assert.equal(parseTownFile(JSON.stringify(invalid)), null);
+  }
 });
 
 test("reload preserves a lookup en route and a blocked box does not earn a search fee", () => {
@@ -319,6 +450,8 @@ test("three completed fees refund one each and preserve the common index after c
 
 test("next-day use, separately paid correction and zero-refund closure preserve original test attribution", () => {
   let town = finishLookup(prepared("Birch"));
+  act(town, "find", "room-access");
+  const originalFind = structuredClone(state(town).finds[0]);
   const endOfDay = 1440 - town.minute;
   advanceTown(town, endOfDay);
   assert.match(residentLibraryReply(town, "arwyn"), /read Northern's public search report.*failed/);
@@ -332,6 +465,15 @@ test("next-day use, separately paid correction and zero-refund closure preserve 
   assert.equal(state(town).lookup.revision, 1);
   assert.equal(state(town).revisions[0].mappings["room-access"], "Birch");
   assert.equal(state(town).revisions[1].mappings["room-access"], "Cedar");
+  assert.match(
+    libraryView(town).finds.find((find) => find.id === "room-access").result,
+    /Use Find a record/,
+    "the old result cannot silently become a search of the corrected revision",
+  );
+  act(town, "find", "room-access");
+  assert.equal(state(town).finds.length, 2);
+  assert.deepEqual(state(town).finds[0], originalFind);
+  assert.match(state(town).finds[1].result, /Found Community room access note in Cedar using revision 2/);
   assert.equal(libraryView(town).spent, 8);
   const tills = { ...town.tills };
   act(town, "close", "");
