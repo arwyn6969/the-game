@@ -56,10 +56,15 @@ test("non-.sql entries are dropped (readdir also yields the auth/ directory)", (
   assert.deepEqual(pendingMigrations(["auth", "README.md"], []), []);
 });
 
-test("the auth schema ships outside the globbed directory", () => {
+test("owner registration activates the unchanged auth schema once before dependent tables", () => {
   const migrationsDir = join(projectRoot(), "migrations");
   const pending = pendingMigrations(readdirSync(migrationsDir), []);
-  assert.ok(!pending.some((migration) => migration.name === AUTH_MIGRATION));
+  assert.equal(pending.filter((migration) => migration.name === AUTH_MIGRATION).length, 1);
+  assert.ok(
+    pending.findIndex((migration) => migration.name === AUTH_MIGRATION) <
+      pending.findIndex((migration) => migration.name === "20261016_agent_registry.sql"),
+  );
+  assert.ok(pending.some((migration) => migration.name === "20261016_agent_registry.sql"));
   assert.ok(pending.some((migration) => migration.name === "20261012_mind_pool.sql"));
   assert.ok(readdirSync(join(migrationsDir, "auth")).includes("0001_auth.sql"));
 });

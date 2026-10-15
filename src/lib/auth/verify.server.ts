@@ -56,6 +56,7 @@ export type VerifiedUser = { id: string; email: string | null };
  */
 export async function getSessionUser(
   bearerToken?: string,
+  options: { disableCookieCache?: boolean } = {},
 ): Promise<VerifiedUser | null> {
   if (!authConfigured && !gateIdentityEnabled()) return null;
   const request = getRequest();
@@ -65,7 +66,10 @@ export async function getSessionUser(
     headers = new Headers(request.headers);
     headers.set("Authorization", `Bearer ${bearerToken}`);
   }
-  const session = await auth.api.getSession({ headers });
+  const session = await auth.api.getSession({
+    headers,
+    ...(options.disableCookieCache ? { query: { disableCookieCache: true } } : {}),
+  });
   if (!session?.user) return null;
   return { id: session.user.id, email: session.user.email ?? null };
 }

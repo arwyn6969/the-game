@@ -48,6 +48,12 @@ jobs:
           if (!ready) throw new Error("AI test preview did not start");
           JS
           node scripts/quality-ai-browser.mjs
+      - name: Authenticated private agent-wallet browser checks
+        env:
+          VITE_AUTH_ENABLED: "true"
+        run: |
+          npm run build
+          npm run test:browser:agent-wallets
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -56,4 +62,5 @@ jobs:
             artifacts/quality-browser
             artifacts/quality-ai-browser
             artifacts/stamp-identity-browser
+            artifacts/agent-wallet-browser
           if-no-files-found: ignore
