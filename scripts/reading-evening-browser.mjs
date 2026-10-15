@@ -218,7 +218,34 @@ export async function runReadingEveningChecks(browser, url, outputDirectory) {
         assert.deepEqual(afterSale.favors, beforeSale.favors);
         assert.equal(total(afterSale), total(beforeSale));
         await finishGuests();
-        await action(venue === "park" ? "Join the reading" : "Read a first line of your own");
+        if (venue === "park") {
+          await close();
+          const invitation = page.getByLabel("Reading invitation", { exact: true });
+          const joinButton = invitation.getByRole("button", {
+            name: "Join the reading",
+            exact: true,
+          });
+          await joinButton.scrollIntoViewIfNeeded();
+          for (const control of [
+            joinButton,
+            invitation.getByRole("button", { name: "Reading details", exact: true }),
+          ])
+            assert.equal(
+              await control.evaluate((button) => {
+                const box = button.getBoundingClientRect();
+                return [
+                  [box.left + 8, box.top + 8],
+                  [box.right - 8, box.top + 8],
+                  [box.left + 8, box.bottom - 8],
+                  [box.right - 8, box.bottom - 8],
+                ].every(([x, y]) => button.contains(document.elementFromPoint(x, y)));
+              }),
+              true,
+              "Floating controls must not obscure either reading action",
+            );
+          await page.screenshot({ path: join(out, `${viewport.name}-park-ready.png`) });
+          await action("Join the reading");
+        } else await action("Read a first line of your own");
         const completed = await state();
         assert.equal(completed.evening.status, "done");
         assert.equal(completed.evening.attendedByPlayer, true);

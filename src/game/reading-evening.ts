@@ -281,7 +281,7 @@ export function readingActions(town: Town, state: Library): ReadingAction[] {
       "evening-join",
       "listen",
       "Join the reading",
-      "Listen as Northern reads his first page. Joining is free; it promises no job, affection reward or future attendance.",
+      "Listen to Northern's first page. Joining is free.",
       here ? undefined : "Walk to the reading place to join the people who are there.",
     );
     add(
