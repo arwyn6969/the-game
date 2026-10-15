@@ -2,7 +2,7 @@
 
 ## 15 October 2026 — first-reading story
 
-The user's further quest/money request is implemented in the [first-reading pass](../reviews/2026-10-15-first-reading.md): Northern's human purpose, observed draft locations, park/library choice, physically routed guests, optional listening or an explicit first line, and two-coin bread/tea cash sales into business tills. The optional save extension preserves older projects, plans and paid work. The full suite passes 573 tests; integrated build/browser evidence follows in that receipt. The same draft PR remains the review handoff; publication and human evaluation remain separate.
+The user's further quest/money request is implemented in the [first-reading pass](../reviews/2026-10-15-first-reading.md): Northern's human purpose, observed draft locations, park/library choice, physically routed guests, optional listening or an explicit first line, and two-coin bread/tea cash sales into business tills. The optional save extension preserves older projects, plans and paid work. Runtime `7b5233a` passes 573 full tests including 281 town cases, typecheck and the credential-free production build. Built desktop/phone journeys include both venues, ordinary controls, sales, portable saves and unobstructed inline actions. Mocked AI/recovery also passes; source details are in the receipt. Lint has no errors and the inherited auth warning. The same draft PR remains the review handoff; publication and human evaluation remain separate.
 
 ## 15 October 2026 — pre-release refinement
 
