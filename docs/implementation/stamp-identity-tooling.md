@@ -73,7 +73,7 @@ The implementation receipt must record the actual checks and results. Until that
 
 ## Implementation receipt
 
-Packet 1 is implemented on `codex/stamp-identity-tooling`, based on `80ee299`. The feature is isolated from the gameplay candidate and is not merged or published. The first packet keeps Town version 2 and the eight local gameplay keys; the registry and new helper references are additive. `@noble/hashes` is now a direct pinned dependency at its already locked version 2.4.0 for portable SHA-256 migration hashing; no dependency version was upgraded.
+Packet 1 is implemented on `codex/stamp-identity-tooling`, based on `80ee299`, in [draft PR 31](https://github.com/arwyn6969/the-game/pull/31). Its implementation commit is `7ab79da`; the draft is stacked on the [gameplay candidate PR 30](https://github.com/arwyn6969/the-game/pull/30) and must be retargeted after that dependency is integrated. The feature is not merged or published. The first packet keeps Town version 2 and the eight local gameplay keys; the registry and new helper references are additive. `@noble/hashes` is now a direct pinned dependency at its already locked version 2.4.0 for portable SHA-256 migration hashing; no dependency version was upgraded.
 
 New worlds receive secure random world/resident IDs. Existing valid registries are preserved; legacy content is hashed before narrative, roster or economy normalization. Import defaults to restoring the same world and offers a separate explicit fork that assigns new IDs and records historical origin, root, parent and source-character lineage. This choice replaces the browser town only through the existing backup/conflict guards. Malformed identities retain their original bytes and cannot silently acquire replacements.
 
