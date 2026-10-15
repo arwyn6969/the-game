@@ -18,7 +18,7 @@ The user requested another improvement pass before going live, focused on the wo
 | Closing a resident card during a delayed reply left the already-sent line in its draft                        | An accepted line clears that resident's matching draft even with the card closed; a newer unsent edit is retained                                           |
 | Empty save bytes led to name entry, and a damaged save arriving during naming lacked a recovery route         | Both open explicit recovery without overwriting the stored bytes; paused movement saving and pending-import cancellation are also covered in browser checks |
 
-The shared meal now uses an explicit completion flag rather than searching display text. Inventory describes eating, sharing and the surviving bread tab in one place. The lookup uses the record's readable name, and later-day guidance explains when Baba's evidence arrives and that game time stops while the app is closed. Closure terms show the amount each donor would receive after earned fees settle.
+Repeated wage buttons also use distinct list identities, so two unpaid wages with the same label do not collide in the interface. The shared meal now uses an explicit completion flag rather than searching display text. Inventory describes eating, sharing and the surviving bread tab in one place. The lookup uses the record's readable name, and later-day guidance explains when Baba's evidence arrives and that game time stops while the app is closed. Closure terms show the amount each donor would receive after earned fees settle.
 
 ## Verification
 

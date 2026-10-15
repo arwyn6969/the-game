@@ -14,7 +14,7 @@ export function ActionCards({
   return (
     <ul className="tool-actions">
       {actions.map((action, index) => (
-        <li key={action.label}>
+        <li key={`${action.label}:${index}`}>
           <p id={`${descriptionId}-terms-${index}`}>{action.terms}</p>
           <button
             className="btn"
