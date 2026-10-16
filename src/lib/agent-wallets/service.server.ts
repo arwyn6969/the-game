@@ -4,6 +4,7 @@ import { listStampHoldings } from "../stamps/stampchain.server";
 import { SqlAgentRegistryStore, AgentRegistryStoreError } from "./store.server";
 import { assertRealOwnerUser } from "./auth.server";
 import { ownerReference, receivingProofMessage } from "./proof.server";
+import { AgentObservationStoreError } from "./observation-store.server";
 import type {
   ReceivingInventory,
   ReceivingProfile,
@@ -208,6 +209,17 @@ export async function registryResult<T>(run: () => Promise<T>): Promise<Registry
   } catch (error) {
     if (error instanceof AgentRegistryError)
       return { ok: false, error: error.code, message: error.message };
+    if (error instanceof AgentObservationStoreError)
+      return {
+        ok: false,
+        error: error.code,
+        message:
+          error.code === "stale"
+            ? "This private profile changed. Refresh owner status."
+            : error.code === "rate-limited"
+              ? "Wait before refreshing this address again."
+              : "These private observations could not be loaded. Refresh the profile and try again.",
+      };
     if (error instanceof AgentRegistryStoreError)
       return {
         ok: false,

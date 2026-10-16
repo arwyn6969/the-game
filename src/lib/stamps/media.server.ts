@@ -59,6 +59,7 @@ async function decodeImage(asset: StampHolding, options: StampFetchOptions): Pro
         width: 256,
         height: 256,
         fit: "contain",
+        kernel: sharp.kernel.nearest,
         background: { r: 0, g: 0, b: 0, alpha: 0 },
       })
       .png({ compressionLevel: 9 })

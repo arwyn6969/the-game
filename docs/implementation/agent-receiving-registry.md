@@ -57,6 +57,8 @@ An explicit **Refresh inventory** reads the currently supported classic stamp ho
 
 ## Next gate: supported receiving profiles and deposit reconciliation
 
+This section records the original 3A handoff. The 16 October [private observation continuation](agent-deposit-observations.md) implements bounded BTC-output and Counterparty direct-send observations; the [recovery policy](agent-wallet-recovery.md) records ownership rules, account-linking fixes and partial actual Leather acceptance. The original validation receipt below remains the dated `b840a67` receipt. Full asset classification, protocol coverage and human/operator recovery acceptance are still required.
+
 Before inviting external deposits:
 
 1. Exercise the actual Leather extension/version, account switching, retained keys, backup and recovery with the selected asset protocol.
@@ -69,7 +71,7 @@ Owner-approved proposals, transaction composition and tested trade settlement fo
 
 ## Validation receipt
 
-Branch `codex/agent-receiving-registry` is stacked on appearance PR 32 at `8453443`. Node 24 validation passed:
+Initial packet 3A receipt, 15 October 2026, commit `b840a67`. Branch `codex/agent-receiving-registry` is stacked on appearance PR 32 at `8453443`. Node 24 validation passed:
 
 - A clean offline `npm ci` from the exact committed dependency files: 453 packages. `better-call` is an exact direct development dependency for signing disposable QA cookies; its existing locked version and runtime dependencies are unchanged.
 - TypeScript and ESLint, with one inherited unused-directive warning in `use-current-user.ts` and no new warnings.

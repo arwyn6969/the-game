@@ -107,3 +107,23 @@ export async function agentRegistryContext(
   const { getSql } = await import("../db");
   return new AgentRegistryService(new SqlAgentRegistryStore(await getSql()), owner, origin);
 }
+
+export async function agentObservationContext(expectedOwnerRef: string, bearerToken?: string) {
+  const { mode } = boundary();
+  if (mode === "unavailable")
+    throw new AgentRegistryError(
+      "unavailable",
+      "Agent wallets aren't configured on this server yet.",
+    );
+  const owner = await resolveOwnerUser(bearerToken);
+  assertExpectedOwner(owner, expectedOwnerRef);
+  const { getSql } = await import("../db");
+  const { SqlAgentObservationStore } = await import("./observation-store.server");
+  const { AgentReceivingObservationService } = await import("./observation-service.server");
+  const sql = await getSql();
+  return new AgentReceivingObservationService(
+    new SqlAgentRegistryStore(sql),
+    new SqlAgentObservationStore(sql),
+    owner,
+  );
+}

@@ -14,6 +14,7 @@ import type {
   ReceivingInventory,
   RegisteredWorldView,
   RegistryResult,
+  RegistryErrorCode,
   WorldRegistrationInput,
 } from "@/lib/agent-wallets/types";
 import type { AgentId } from "@/game/types";
@@ -23,6 +24,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getLeatherAddress, LeatherWalletError, signLeatherChallenge } from "@/lib/stamps/leather";
 import { isAgentOwnerHidden, setAgentOwnerHidden } from "@/lib/agent-wallets/client-state";
 import { ownerReference } from "@/lib/agent-wallets/owner-reference";
+import { AgentDepositObservations } from "./AgentDepositObservations";
 
 type Tagged<T> = { context: string; value: T };
 type CopyState = Tagged<{
@@ -473,8 +475,8 @@ export function AgentWalletsPanel({
     const profileId = profile.profileId;
     setNote(
       profile.state === "draft"
-        ? "Choose the active mainnet Native SegWit account in Leather. Previous addresses remain reserved to this resident after replacement."
-        : "Choose the active mainnet Native SegWit account in Leather.",
+        ? "Choose the active mainnet Native SegWit account in Leather. Previous addresses remain reserved to this resident after replacement. Leather may open behind this window; check its popup/extension icon."
+        : "Choose the active mainnet Native SegWit account in Leather. Leather may open behind this window; check its popup/extension icon.",
     );
     try {
       const selected = await getLeatherAddress({ signal: operation.abort.signal });
@@ -504,7 +506,7 @@ export function AgentWalletsPanel({
           "The wallet check did not match this resident's current profile. Refresh owner status.",
         );
       setNote(
-        "Review the resident and address in Leather. This signature registers a watch-only draft and does not spend or transfer anything.",
+        "Review the resident and address in Leather. This signature registers a watch-only draft and does not spend or transfer anything. Leather may open behind this window; check its popup/extension icon.",
       );
       const proof = await signLeatherChallenge(challenge, selected, {
         signal: operation.abort.signal,
@@ -656,6 +658,18 @@ export function AgentWalletsPanel({
     invalidate();
     callbacks.current.onClose();
   }
+  function observationOwnerFailure(code: RegistryErrorCode, message: string): void {
+    if (context !== currentContext.current) return;
+    invalidate();
+    setBusy(null);
+    clearPrivate();
+    if (code === "owner-mismatch" || code === "unauthenticated") {
+      setPrivateHidden(true);
+      setAccess(null);
+    } else setCopy({ context, value: { state: "unknown", view: null } });
+    setError(true);
+    setNote(message.slice(0, 400));
+  }
   const held = observation?.observation.holdings;
   const unavailable = (ownerAccess && !ownerAccess.available) || !authEnabled;
   return (
@@ -690,8 +704,7 @@ export function AgentWalletsPanel({
           while owner tools are unavailable.
         </p>
         <p className="mt-2 text-sm text-muted">
-          The game holds no keys. Funding is unpublished; deposits, spending and trading are not
-          enabled here.
+          The game holds no keys. Funding is unpublished; spending and trading are not enabled here.
         </p>
         <section className="mt-4" aria-label="Owner access">
           <h3>Your account</h3>
@@ -965,6 +978,16 @@ export function AgentWalletsPanel({
                       </>
                     )}
                   </section>
+                )}
+                {expectedOwnerRef && (
+                  <AgentDepositObservations
+                    key={`${expectedOwnerRef}:${registered.world.registrationId}:${profile.profileId}:${profile.revision}`}
+                    expectedOwnerRef={expectedOwnerRef}
+                    registrationId={registered.world.registrationId}
+                    profileId={profile.profileId}
+                    revision={profile.revision}
+                    onOwnerFailure={observationOwnerFailure}
+                  />
                 )}
               </section>
             )}

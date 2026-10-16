@@ -119,6 +119,18 @@ async function startPreview() {
   throw new Error(`Built QA preview did not start: ${serverOutput}`);
 }
 const panel = (page) => page.getByRole("dialog", { name: "Agent wallets", exact: true });
+const observations = (page) =>
+  panel(page).getByRole("region", { name: "Private chain observations", exact: true });
+const bitcoin = (page) =>
+  observations(page).getByRole("region", { name: "Bitcoin outputs", exact: true });
+const counterparty = (page) =>
+  observations(page).getByRole("region", { name: "Counterparty direct sends", exact: true });
+const fixtureChainCalls = () =>
+  serverOutput
+    .split("\n")
+    .filter((line) => line.startsWith("[agent-fixture] "))
+    .map((line) => JSON.parse(line.slice("[agent-fixture] ".length)))
+    .filter((item) => item.chain);
 const tool = (page) => page.getByRole("button", { name: "Agent wallets", exact: true });
 const rawTown = (page) => page.evaluate(() => localStorage.getItem("the-game-town-v2"));
 const balances = (raw) => {
@@ -258,6 +270,85 @@ async function verify(page, role, index) {
     .waitFor();
   await panel(page).getByText(wallets[index].address, { exact: true }).waitFor();
 }
+async function importTown(page, raw, fork = false) {
+  await page.getByLabel("Import a town file", { exact: true }).setInputFiles({
+    name: "synthetic-private-registry-town.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(raw),
+  });
+  await page.getByRole("heading", { name: "Replace the live town?", exact: true }).waitFor();
+  if (fork) await page.getByRole("radio", { name: /Create a separate town/ }).check();
+  await page
+    .getByRole("button", { name: fork ? "Create separate town" : "Replace", exact: true })
+    .click();
+  await page
+    .getByRole("heading", { name: "Replace the live town?", exact: true })
+    .waitFor({ state: "hidden" });
+}
+async function pendingProof(page, role, index) {
+  await panel(page).getByLabel("Resident", { exact: true }).selectOption(role);
+  await page.evaluate((value) => {
+    window.__agentWalletMock.index = value;
+    window.__agentWalletMock.pending = true;
+  }, index);
+  await panel(page).getByRole("button", { name: "Verify external address", exact: true }).click();
+  await page.waitForFunction(() => window.__agentWalletMock.jobs.length === 1);
+}
+async function releaseProof(page) {
+  await page.evaluate(async () => {
+    window.__agentWalletMock.pending = false;
+    await window.__agentWalletMock.release();
+  });
+  // A resolved extension promise gets a chance to dispatch any unwanted finish POST.
+  await page.waitForTimeout(150);
+}
+async function loadObservations(page) {
+  const before = fixtureChainCalls().length;
+  await observations(page).getByRole("button", { name: "Load observations", exact: true }).click();
+  await observations(page)
+    .getByText("Recorded observations loaded. Refresh chain observations to request a new scan.", {
+      exact: true,
+    })
+    .waitFor();
+  assert.equal(
+    fixtureChainCalls().length,
+    before,
+    "Loading stored observations must not contact any external indexer",
+  );
+}
+async function assertBitcoinEvidence(page) {
+  await bitcoin(page).getByText("1000 satoshis", { exact: true }).waitFor();
+  await bitcoin(page).getByText("1234 satoshis", { exact: true }).waitFor();
+  await bitcoin(page).getByText("4321 satoshis", { exact: true }).waitFor();
+  assert.equal(await bitcoin(page).locator("li").count(), 3);
+  const pending = bitcoin(page)
+    .locator("li")
+    .filter({ has: page.getByText("1000 satoshis", { exact: true }) });
+  await pending.getByText("Last observed state: Pending", { exact: true }).waitFor();
+  for (const [quantity, output] of [
+    [1234, 0],
+    [4321, 2],
+  ]) {
+    const row = bitcoin(page)
+      .locator("li")
+      .filter({ has: page.getByText(`${quantity} satoshis`, { exact: true }) });
+    await row
+      .getByText("Last observed state: Confirmed · observed block inclusion", { exact: true })
+      .waitFor();
+    await row.locator("summary").click();
+    await row.getByText(`Transaction ${"1".repeat(64)}`, { exact: true }).waitFor();
+    await row.getByText(`Output ${output}`, { exact: true }).waitFor();
+    await row.locator("summary").click();
+  }
+  await counterparty(page)
+    .getByText("Current status unknown · source unavailable", { exact: true })
+    .waitFor();
+  await counterparty(page)
+    .getByText("No current observations are available. This does not mean zero deposits.", {
+      exact: true,
+    })
+    .waitFor();
+}
 try {
   await startPreview();
   browser = await chromium.launch({ headless: true });
@@ -271,17 +362,20 @@ try {
     const page = (activePage = await context.newPage());
     page.on("pageerror", (error) => journey.errors.push(error.message));
     const requests = [];
+    let completionCount = 0;
     let lastCompletion;
     page.on("request", (request) => {
       const url = new URL(request.url());
       if (url.pathname.includes("_serverFn") || url.pathname.startsWith("/api/auth/"))
         requests.push(url.pathname);
-      if (request.method() === "POST" && request.postData()?.includes("challengeId"))
+      if (request.method() === "POST" && request.postData()?.includes("challengeId")) {
+        completionCount++;
         lastCompletion = {
           url: request.url(),
           data: request.postData(),
           contentType: request.headers()["content-type"],
         };
+      }
     });
     await enter(page, `Registry QA ${index}`);
     assert.deepEqual(
@@ -345,6 +439,38 @@ try {
       "optional tools do not contact auth or registry before opening",
       "a real account registers all eight residents privately",
     );
+    const completionsBeforeCancel = completionCount;
+    await pendingProof(page, "data", index * 2);
+    await panel(page).getByLabel("Resident", { exact: true }).selectOption("amelia");
+    await page.evaluate(
+      (value) => {
+        window.__agentWalletMock.index = value;
+      },
+      index * 2 + 1,
+    );
+    await releaseProof(page);
+    assert.equal(completionCount, completionsBeforeCancel);
+    await panel(page).getByText("No external address is linked yet.", { exact: true }).waitFor();
+    await pendingProof(page, "baba", index * 2);
+    await panel(page).getByRole("button", { name: "Cancel request", exact: true }).click();
+    await releaseProof(page);
+    assert.equal(completionCount, completionsBeforeCancel);
+    await pendingProof(page, "arwyn", index * 2);
+    await panel(page).getByRole("button", { name: "Close agent wallets", exact: true }).click();
+    await releaseProof(page);
+    assert.equal(completionCount, completionsBeforeCancel);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await tool(page).waitFor();
+    await open(page);
+    await panel(page).getByLabel("Resident", { exact: true }).waitFor();
+    for (const role of ["data", "amelia", "baba", "arwyn"]) {
+      await panel(page).getByLabel("Resident", { exact: true }).selectOption(role);
+      await panel(page).getByText("No external address is linked yet.", { exact: true }).waitFor();
+    }
+    journey.checks.push(
+      "a delayed signature cannot finish after resident/wallet selection changes",
+      "canceling or closing a pending extension prompt sends no proof completion and survives reload without linking a profile",
+    );
     await verify(page, "player", index * 2);
     const replay = lastCompletion;
     assert.ok(replay, "Capture the real proof completion to test replay after retirement");
@@ -355,6 +481,84 @@ try {
       .getByText("Observed quantity 2 · Supply 10", { exact: true })
       .scrollIntoViewIfNeeded();
     await page.screenshot({ path: join(out, `${index}-private-inventory.png`) });
+    const beforeObservationLoad = fixtureChainCalls().length;
+    await loadObservations(page);
+    assert.equal(fixtureChainCalls().length, beforeObservationLoad);
+    await bitcoin(page).getByText("Not checked", { exact: true }).waitFor();
+    await counterparty(page).getByText("Not checked", { exact: true }).waitFor();
+    await observations(page)
+      .getByRole("button", { name: "Refresh chain observations", exact: true })
+      .click();
+    await assertBitcoinEvidence(page);
+    await bitcoin(page).getByText("1234 satoshis", { exact: true }).scrollIntoViewIfNeeded();
+    await page.screenshot({ path: join(out, `${index}-bitcoin-observations.png`) });
+    await counterparty(page)
+      .getByRole("heading", { name: "Counterparty direct sends", exact: true })
+      .scrollIntoViewIfNeeded();
+    await page.screenshot({ path: join(out, `${index}-counterparty-unknown.png`) });
+    assert.deepEqual(balances(await rawTown(page)), before);
+    await panel(page).getByRole("button", { name: "Close agent wallets", exact: true }).click();
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await tool(page).waitFor();
+    await open(page);
+    await panel(page).getByLabel("Resident", { exact: true }).waitFor();
+    await loadObservations(page);
+    await assertBitcoinEvidence(page);
+    journey.checks.push(
+      "explicit observation load reads stored evidence without indexer calls; one refresh records pending and distinct confirmed Bitcoin outputs while Counterparty outage stays unknown",
+      "private chain observations survive reload without changing town coins or inferring spendability",
+    );
+    const failSignOut = (route) =>
+      route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({ code: "QA_SIGN_OUT_UNAVAILABLE", message: "Disposable outage" }),
+      });
+    await context.route("**/api/auth/sign-out", failSignOut);
+    await panel(page).getByRole("button", { name: "Sign out", exact: true }).click();
+    assert.equal(await panel(page).getByLabel("Resident", { exact: true }).count(), 0);
+    await panel(page)
+      .getByRole("alert")
+      .filter({ hasText: /Sign-out could not be confirmed/ })
+      .waitFor();
+    await context.unroute("**/api/auth/sign-out", failSignOut);
+    await panel(page).getByRole("button", { name: "Close agent wallets", exact: true }).click();
+    const afterSignOutIntent = requests.length;
+    await open(page);
+    await panel(page)
+      .getByText(/Private details for this account are hidden\./)
+      .waitFor();
+    assert.equal(await panel(page).getByLabel("Resident", { exact: true }).count(), 0);
+    await panel(page).getByRole("button", { name: "Close agent wallets", exact: true }).click();
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await tool(page).waitFor();
+    await open(page);
+    await panel(page)
+      .getByText(/Private details for this account are hidden\./)
+      .waitFor();
+    assert.equal(await panel(page).getByLabel("Resident", { exact: true }).count(), 0);
+    assert.equal(
+      await panel(page)
+        .getByText(wallets[index * 2].address, { exact: true })
+        .count(),
+      0,
+    );
+    assert.deepEqual(
+      requests
+        .slice(afterSignOutIntent)
+        .filter((path) => path.includes("_serverFn") && path !== `/_serverFn/${availabilityId}`),
+      [],
+      "A failed sign-out must not automatically refetch owner-registry data after reopen/reload",
+    );
+    await page.screenshot({ path: join(out, `${index}-failed-signout-hidden.png`) });
+    await panel(page).getByRole("button", { name: "Refresh owner status", exact: true }).click();
+    await panel(page).getByLabel("Resident", { exact: true }).waitFor();
+    await panel(page)
+      .getByText(wallets[index * 2].address, { exact: true })
+      .waitFor();
+    journey.checks.push(
+      "failed sign-out hides private data through close/reopen/reload with no owner RPC until an explicit verified refresh restores it",
+    );
     await verify(page, "kevin", index * 2 + 1);
     await panel(page).getByRole("button", { name: "Refresh inventory", exact: true }).click();
     await panel(page).getByRole("alert").waitFor();
@@ -368,6 +572,32 @@ try {
     journey.checks.push(
       "two residents verify distinct disposable addresses through real BIP-322",
       "inventory is read only and API outage stays unknown without changing game coins",
+    );
+    await loadObservations(page);
+    await observations(page)
+      .getByRole("button", { name: "Refresh chain observations", exact: true })
+      .click();
+    await bitcoin(page)
+      .getByText("Current status unknown · source unavailable", { exact: true })
+      .waitFor();
+    await bitcoin(page)
+      .getByText("No current observations are available. This does not mean zero deposits.", {
+        exact: true,
+      })
+      .waitFor();
+    assert.equal(await bitcoin(page).locator("li").count(), 0);
+    assert.equal(
+      await bitcoin(page)
+        .getByText(
+          "No incoming events were observed in this scan. Incomplete coverage can omit events.",
+          { exact: true },
+        )
+        .count(),
+      0,
+    );
+    assert.deepEqual(balances(await rawTown(page)), before);
+    journey.checks.push(
+      "a second resident's Bitcoin source outage remains unknown rather than zero and never credits game money",
     );
     await panel(page).getByLabel("Resident", { exact: true }).selectOption("player");
     await panel(page).getByRole("button", { name: "Retire draft profile", exact: true }).click();
@@ -397,15 +627,20 @@ try {
     for (const item of wallets) assert.equal(saved.includes(item.address), false);
     for (const value of ["registration_", "profile_", "resident_", "valid-test-proof"])
       assert.equal(saved.includes(value), false);
+    for (const value of ["1".repeat(64), "2".repeat(64), '"eventId"', '"lease_token"'])
+      assert.equal(saved.includes(value), false);
     await page.reload({ waitUntil: "domcontentloaded" });
     await tool(page).waitFor();
     await open(page);
     await panel(page)
       .getByText(/^This draft profile was retired\./)
       .waitFor();
+    await loadObservations(page);
+    await assertBitcoinEvidence(page);
     journey.checks.push(
       "retirement persists on reload and rejects old proof replay",
       "portable saves contain no private registrations, receiving addresses or proofs",
+      "retired profiles retain their private historical-address observations after reload",
     );
     assert.equal(await page.evaluate(() => document.cookie.includes("grok-auth")), false);
     const cookie = (await context.cookies()).find(
@@ -423,6 +658,40 @@ try {
       .scrollIntoViewIfNeeded();
     await page.screenshot({ path: join(out, `${index}-retired.png`) });
     if (index === 0) {
+      await panel(page).getByRole("button", { name: "Close agent wallets", exact: true }).click();
+      const changedSource = JSON.parse(saved);
+      changedSource.town.identityRegistry.characters.kevin.characterId = `character_${randomBytes(32).toString("hex")}`;
+      await importTown(page, JSON.stringify(changedSource));
+      await open(page);
+      await panel(page)
+        .getByRole("alert")
+        .filter({ hasText: /different owner or resident roster/ })
+        .waitFor();
+      assert.equal(await panel(page).getByLabel("Resident", { exact: true }).count(), 0);
+      for (const item of wallets)
+        assert.equal(await panel(page).getByText(item.address, { exact: true }).count(), 0);
+      await panel(page).getByRole("button", { name: "Close agent wallets", exact: true }).click();
+      await importTown(page, saved, true);
+      await open(page);
+      await panel(page).getByRole("button", { name: "Register private copy", exact: true }).click();
+      await panel(page).getByLabel("Resident", { exact: true }).waitFor();
+      await panel(page).getByText("No external address is linked yet.", { exact: true }).waitFor();
+      await panel(page).getByRole("button", { name: "Close agent wallets", exact: true }).click();
+      await importTown(page, saved);
+      await open(page);
+      await panel(page)
+        .getByText(/^This draft profile was retired\./)
+        .waitFor();
+      await panel(page).getByLabel("Resident", { exact: true }).selectOption("kevin");
+      await panel(page).getByText(wallets[1].address, { exact: true }).waitFor();
+      assert.deepEqual(
+        balances(await rawTown(page)).money,
+        before.money,
+        "Source/fork restoration preserves resident coins; legacy imports may initialize their opening ledger",
+      );
+      journey.checks.push(
+        "an altered source roster cannot remap private residents; a fork starts with empty profiles and restoring the source recovers its own registry",
+      );
       const other = await contextFor(viewport, journey, 1, saved);
       const otherPage = (activePage = await other.newPage());
       await enter(otherPage, "Same public IDs", true);
@@ -481,7 +750,9 @@ try {
     .map((line) => JSON.parse(line.slice("[agent-fixture] ".length)));
   if (
     report.fixtureRequests.some((item) => item.unexpectedNetwork || item.method !== "GET") ||
-    !report.fixtureRequests.length
+    !report.fixtureRequests.length ||
+    !report.fixtureRequests.some((item) => item.chain && item.protocol === "bitcoin") ||
+    !report.fixtureRequests.some((item) => item.chain && item.protocol === "counterparty")
   ) {
     report.failures.push("The read-only indexer fixture contract was not satisfied.");
     process.exitCode = 1;

@@ -1,6 +1,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { randomBytes } from "node:crypto";
 import { PGlite } from "@electric-sql/pglite";
+import { Address } from "bip322-js";
 import { pendingMigrations } from "../migration-plan.mjs";
 
 // This isolated Node preload seeds genuine account sessions; product auth,
@@ -59,11 +60,76 @@ for (const [index, session] of sessions.entries()) {
 globalThis.__pgliteInstance__ = Promise.resolve(database);
 
 const realFetch = globalThis.fetch;
+const anchor = { height: 900_001, hash: "b".repeat(64) };
+const includedBlock = { height: 900_000, hash: "a".repeat(64) };
+const json = (value) =>
+  new Response(JSON.stringify(value), { headers: { "content-type": "application/json" } });
+const text = (value) => new Response(value, { headers: { "content-type": "text/plain" } });
 globalThis.fetch = async (input, init) => {
   const url = new URL(typeof input === "string" || input instanceof URL ? input : input.url);
   const method = String(
     init?.method || (input instanceof Request ? input.method : "GET"),
   ).toUpperCase();
+  if (url.origin === "https://blockstream.info") {
+    if (method !== "GET" || url.search)
+      throw new Error("Chain QA permits exact Esplora GET paths only.");
+    const match =
+      /^\/api\/address\/(bc1q[a-z0-9]+)\/txs\/(mempool|chain)(?:\/([a-f0-9]{64}))?$/.exec(
+        url.pathname,
+      );
+    let response;
+    let outage = false;
+    if (url.pathname === "/api/blocks/tip/hash") response = text(anchor.hash);
+    else if (url.pathname === `/api/block/${anchor.hash}`)
+      response = json({ id: anchor.hash, height: anchor.height });
+    else if (url.pathname === `/api/block-height/${anchor.height}`) response = text(anchor.hash);
+    else if (url.pathname === `/api/block-height/${includedBlock.height}`)
+      response = text(includedBlock.hash);
+    else if (match && addresses.includes(match[1])) {
+      if (match[3] && (match[2] !== "chain" || match[3] !== "1".repeat(64)))
+        throw new Error("Unexpected chain QA cursor.");
+      outage = addresses.indexOf(match[1]) % 2 === 1;
+      if (outage) response = new Response("Disposable Bitcoin indexer outage", { status: 503 });
+      else {
+        const script = Address.convertAdressToScriptPubkey(match[1]).toString("hex");
+        const output = (value) => ({ value, scriptpubkey: script, scriptpubkey_address: match[1] });
+        response = json(
+          match[3]
+            ? []
+            : [
+                {
+                  txid: (match[2] === "mempool" ? "2" : "1").repeat(64),
+                  status:
+                    match[2] === "mempool"
+                      ? { confirmed: false }
+                      : {
+                          confirmed: true,
+                          block_height: includedBlock.height,
+                          block_hash: includedBlock.hash,
+                        },
+                  vin: [],
+                  vout:
+                    match[2] === "mempool"
+                      ? [output(1000)]
+                      : [output(1234), { value: 0, scriptpubkey: "6a" }, output(4321)],
+                },
+              ],
+        );
+      }
+    } else throw new Error(`Unexpected chain QA path: ${url.pathname}`);
+    console.log(
+      `[agent-fixture] ${JSON.stringify({ method, chain: true, protocol: "bitcoin", outage })}`,
+    );
+    return response;
+  }
+  if (url.origin === "https://api.counterparty.io:4000") {
+    if (method !== "GET" || url.pathname !== "/v2/" || url.search)
+      throw new Error("Unexpected Counterparty QA request.");
+    console.log(
+      `[agent-fixture] ${JSON.stringify({ method, chain: true, protocol: "counterparty", outage: true })}`,
+    );
+    return new Response("Disposable Counterparty indexer outage", { status: 503 });
+  }
   if (url.origin !== "https://stampchain.io") {
     if (!["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) {
       console.error(`[agent-fixture] ${JSON.stringify({ unexpectedNetwork: url.origin, method })}`);

@@ -5,6 +5,7 @@ import { after, before, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { serializeSignedCookie } from "better-call";
 import { requestHandler } from "@tanstack/react-start/server";
+import { runWithStartContext } from "@tanstack/start-storage-context";
 import { createServer } from "vite";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -18,6 +19,7 @@ let context;
 let guard;
 let handlers;
 let cookieName;
+let ownerTransport;
 
 before(async () => {
   delete process.env.DATABASE_URL;
@@ -31,6 +33,16 @@ before(async () => {
     logLevel: "error",
     optimizeDeps: { noDiscovery: true },
     server: { middlewareMode: true, hmr: false, ws: false, watch: null },
+    plugins: [
+      {
+        name: "test-owner-transport",
+        transform(source, id) {
+          // Expose the real middleware only to this test; production exports stay private.
+          if (id.endsWith("/src/lib/agent-wallets.functions.ts"))
+            return `${source}\nexport { ownerTransport as __testOwnerTransport };`;
+        },
+      },
+    ],
   });
   const dbModule = await server.ssrLoadModule("/src/lib/db.ts");
   database = await dbModule.getPglite();
@@ -41,6 +53,8 @@ before(async () => {
   guard = await server.ssrLoadModule("/src/lib/agent-wallets/auth.server.ts");
   const route = await server.ssrLoadModule("/src/routes/api.auth.$.ts");
   handlers = route.Route.options.server.handlers;
+  const functions = await server.ssrLoadModule("/src/lib/agent-wallets.functions.ts");
+  ownerTransport = functions.__testOwnerTransport;
 });
 after(async () => {
   await server?.close();
@@ -140,6 +154,91 @@ test("only a genuine Better Auth session establishes the owner through cookie or
     await inRequest(request(), () => guard.resolveOwnerUser(fixture.session.token)),
     fixture.user.id,
   );
+});
+
+async function ownerRead(token, cookie) {
+  const previousWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
+  let captured;
+  try {
+    Object.defineProperty(globalThis, "window", {
+      configurable: true,
+      value: { sessionStorage: { getItem: () => token ?? null } },
+    });
+    const outgoing = await ownerTransport.options.client({ next: async (options) => options });
+    // Exercise the installed serializer used by every compiled TanStack GET RPC.
+    const { serverFnFetcher } = await import(
+      new URL(
+        "../node_modules/@tanstack/start-client-core/dist/esm/client-rpc/serverFnFetcher.js",
+        import.meta.url,
+      ).href
+    );
+    const headers = new Headers(outgoing.headers);
+    if (cookie) headers.set("cookie", cookie);
+    let owner;
+    let failure;
+    await runWithStartContext({ startOptions: {} }, () =>
+      serverFnFetcher(
+        `${origin}/_serverFn/disposable-owner-read`,
+        [
+          {
+            method: "GET",
+            data: { expectedOwnerRef: "owner-reference", input: { profileId: "private-profile" } },
+            context: outgoing.sendContext ?? {},
+            headers,
+          },
+        ],
+        async (url, init) => {
+          captured = new Request(url, init);
+          try {
+            owner = await inRequest(captured, () => guard.resolveOwnerUser());
+          } catch (error) {
+            failure = error;
+          }
+          return Response.json({ checked: true });
+        },
+      ),
+    );
+    assert.ok(captured);
+    const query = new URL(captured.url).searchParams.get("payload") ?? "";
+    assert.ok(!query.includes("context"), "Credentials must not enter serialized GET context");
+    assert.ok(!query.includes("ownerBearer"));
+    if (token) {
+      assert.ok(!captured.url.includes(token), "The GET URL must not contain the bearer");
+      assert.ok(!decodeURIComponent(captured.url).includes(token));
+    }
+    return { captured, owner, failure };
+  } finally {
+    if (previousWindow) Object.defineProperty(globalThis, "window", previousWindow);
+    else delete globalThis.window;
+  }
+}
+
+test("owner GET transport keeps a genuine preview bearer in Authorization and out of the URL", async () => {
+  const fixture = await sessionFixture();
+  const result = await ownerRead(fixture.session.token);
+  assert.equal(result.captured.headers.get("authorization"), `Bearer ${fixture.session.token}`);
+  assert.equal(result.owner, fixture.user.id);
+  assert.equal(result.failure, undefined);
+});
+
+test("owner GET transport preserves cookie authentication without adding bearer credentials", async () => {
+  const fixture = await sessionFixture();
+  const result = await ownerRead(null, fixture.cookie);
+  assert.equal(result.captured.headers.get("authorization"), null);
+  assert.equal(result.owner, fixture.user.id);
+  assert.equal(result.failure, undefined);
+});
+
+test("owner GET transport grants no authority when signed out or its header bearer is revoked", async () => {
+  const signedOut = await ownerRead(null);
+  assert.equal(signedOut.captured.headers.get("authorization"), null);
+  assert.equal(signedOut.owner, undefined);
+  assert.ok(unauthorized(signedOut.failure));
+  const fixture = await sessionFixture();
+  await context.internalAdapter.deleteSession(fixture.session.token);
+  const revoked = await ownerRead(fixture.session.token);
+  assert.equal(revoked.owner, undefined);
+  assert.ok(unauthorized(revoked.failure));
 });
 
 test("the real auth catch-all dispatches GET and POST while retaining sibling isolation", async () => {

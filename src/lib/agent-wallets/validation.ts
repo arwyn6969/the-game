@@ -60,3 +60,10 @@ export const retireReceivingSchema = profileScopeSchema
 export const receivingInventorySchema = profileScopeSchema
   .extend({ page: z.number().int().min(1).max(1000).optional() })
   .strict();
+export const receivingObservationsSchema = profileScopeSchema
+  .extend({
+    revision: z.number().int().nonnegative().safe(),
+    address: z.string().min(14).max(90).optional(),
+    addressPage: z.number().int().min(1).max(1000).optional(),
+  })
+  .strict();
