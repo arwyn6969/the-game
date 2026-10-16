@@ -102,7 +102,9 @@ Use a reviewed staging origin with legitimately configured sign-in and persisten
 4. Confirm account A cannot see or mutate account B's registrations, including the same imported Town IDs. Exercise logout, revoked sessions, cached cookies, another open tab and pending requests. A failed logout must stay visibly unconfirmed with private data hidden until explicit recovery.
 5. Verify the supported account recovery process returns the intended established account. Do not invent a game support override if the provider returns a new account. Record unresolved linking/recovery behavior as pending.
 
-### Actual Leather and external-backup acceptance
+### Preferred wallet and external-backup acceptance
+
+The preferred recommendation is [Wonder Wallet](https://wonder-wallet.com), per the 16 October product direction. Its adapter and compatibility checks remain future work; the actual acceptance receipt above applies only to Leather. Run the same account selection, exact-message, cancellation, retirement and backup/restore checks for Wonder Wallet before presenting it as a supported default. Preserve the verified Leather path while that work is completed.
 
 Use a disposable wallet controlled by the human tester. The game must never receive its seed or keys. Address lookup and message signatures can be tested without moving funds.
 
