@@ -8,6 +8,8 @@ The current quality candidate integrates main through `4a39cdf`, including chara
 
 The [pre-release refinement](docs/reviews/2026-10-15-pre-release-polish.md) adds precise library checklists, clearer money and inventory feedback, employer-bound work guidance, protected appointments and further draft/save recovery fixes.
 
+The latest [interruption and save-recovery pass](docs/reviews/2026-10-16-interruptions.md) fixes hidden menus, keyboard tabs, wage follow-up dates, stale completed tasks and quest deadlines, with 610 passing tests and built desktop/phone checks.
+
 ## Play
 
 Name yourself. The clock starts paused on the row.
