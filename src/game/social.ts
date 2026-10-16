@@ -45,7 +45,9 @@ export function recordSocial(
   if (result.kind !== "talk" && result.kind !== "player" && result.kind !== "reflect") return;
   const fresh = town.agents.flatMap((agent) =>
     agent.memories
-      .filter((memory) => !before.ids.has(memory.id))
+      // Archiving changes a record's ID while retaining its original words.
+      // It is not a newly spoken exchange or a newly generated reflection.
+      .filter((memory) => !before.ids.has(memory.id) && !memory.id.startsWith("archive-"))
       .map((memory) => ({ agent, memory })),
   );
   const append = (event: Omit<SocialEvent, "id">) => {
@@ -151,8 +153,22 @@ export function rememberPaidWork(
   workerId: AgentId,
   workplace: "cafe" | "grocery",
   wage: number,
+  paymentId?: string,
+  at: { day: number; minute: number } = { day: town.day, minute: town.minute },
 ) {
   if (workerId !== "player") return;
+  if (
+    !Number.isSafeInteger(wage) ||
+    wage <= 0 ||
+    wage > 999 ||
+    !Number.isSafeInteger(at.day) ||
+    at.day < 1 ||
+    !Number.isSafeInteger(at.minute) ||
+    at.minute < 0 ||
+    at.minute > 1439 ||
+    stamp(at) > stamp(town)
+  )
+    return;
   const employerId: AgentId = workplace === "cafe" ? "kevin" : "baba";
   const employer = town.agents.find((agent) => agent.id === employerId);
   const player = town.agents.find((agent) => agent.id === "player");
@@ -161,20 +177,29 @@ export function rememberPaidWork(
     workplace === "cafe"
       ? `${player.name} worked the Hobbs shift. The till paid ${wage}.`
       : `${player.name} worked the grocery shift. The till paid ${wage}.`;
-  if (employer.memories.some((memory) => memory.day === town.day && memory.text === line)) return;
-  const memory = makeMemory(town, town.day, town.minute, "chat", line, 7, {
+  const paymentMemoryId = paymentId ? `paid-work-${paymentKey(`${workplace}:${paymentId}`)}` : null;
+  if (
+    employer.memories.some((memory) =>
+      paymentMemoryId
+        ? memory.id === paymentMemoryId
+        : memory.day === at.day && memory.text === line,
+    )
+  )
+    return;
+  const memory = makeMemory(town, at.day, at.minute, "chat", line, 7, {
     with: "player",
     mind: "offline",
     protected: true,
     source: "event",
     turns: [{ speaker: employerId, text: line }],
   });
+  if (paymentMemoryId) memory.id = paymentMemoryId;
   pushMemory(employer, memory);
   (town.social ??= []).push({
     id: `s${town.nextId++}`,
     kind: "conversation",
-    day: town.day,
-    minute: town.minute,
+    day: at.day,
+    minute: at.minute,
     participants: ["player", employerId],
     place: placeTitle(workplace),
     turns: [{ speaker: employerId, text: line }],
@@ -189,23 +214,60 @@ export function rememberPaidWork(
   town.social = town.social.slice(-MAX_SOCIAL_EVENTS);
 }
 
+/** A bounded presentation identifier; financial identity remains in the ledger. */
+function paymentKey(value: string): string {
+  const seeds = [0x811c9dc5, 0x9e3779b9, 0x85ebca6b, 0xc2b2ae35];
+  return seeds
+    .map((seed) => {
+      let hash = seed;
+      for (let index = 0; index < value.length; index++)
+        hash = Math.imul(hash ^ value.charCodeAt(index), 0x01000193);
+      return (hash >>> 0).toString(16).padStart(8, "0");
+    })
+    .join("");
+}
+
+function conversationKey(
+  participants: AgentId[],
+  day: number,
+  minute: number,
+  turns: { speaker: AgentId; text: string }[],
+  text: string,
+) {
+  return JSON.stringify([[...participants].sort(), day, minute, turns.length ? turns : text]);
+}
+
 /** Old histories retain their recorded words, with no invented past relationship values. */
 function legacyConversations(town: Town): SocialEvent[] {
   const recorded = new Set(
-    (town.social ?? []).flatMap((event) => event.memories.map((m) => m.memoryId)),
+    (town.social ?? []).flatMap((event) =>
+      event.memories.map((m) => m.memoryId.replace(/^archive-chat-/, "")),
+    ),
   );
-  const seen = new Set<string>();
+  const seen = new Set(
+    (town.social ?? [])
+      .filter((event) => event.kind === "conversation")
+      .map((event) =>
+        conversationKey(event.participants, event.day, event.minute, event.turns, event.text),
+      ),
+  );
   const events: SocialEvent[] = [];
   for (const agent of town.agents)
     for (const memory of agent.memories) {
-      if (memory.type !== "chat" || !memory.with || recorded.has(memory.id)) continue;
+      if (
+        memory.type !== "chat" ||
+        !memory.with ||
+        recorded.has(memory.id.replace(/^archive-chat-/, ""))
+      )
+        continue;
       const participants = [agent.id, memory.with].sort() as AgentId[];
-      const key = JSON.stringify([
+      const key = conversationKey(
         participants,
         memory.day,
         memory.minute,
-        memory.turns ?? memory.text,
-      ]);
+        memory.turns ?? [],
+        memory.text,
+      );
       if (seen.has(key)) continue;
       seen.add(key);
       events.push({

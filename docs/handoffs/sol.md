@@ -1,5 +1,27 @@
 # Sol handoff
 
+## 16 October 2026 — interrupted play and saved progress
+
+Runtime `fb9abc1` fixes overlapping/hidden menus, Board focus, keyboard character tabs, local wage follow-up dates, duplicate model edits, stale completed work items, contradictory financial dates, corrected-debt repayment identity and the library note deadline. The [interruption receipt](../reviews/2026-10-16-interruptions.md) records 610 passing full tests including 318 town cases, 14 new engine regressions, typecheck, diagnostics, lint with the inherited warning and a credential-free production build. Built desktop/phone journeys and mocked AI pass; the new menu/focus/tab/touch gate is integrated into CI. The same-origin local preview serves the new build. Schemas, canonical scene text and existing towns remain preserved; publication and human evaluation remain separate.
+
+## 16 October 2026 — further bug pass
+
+The user requested another review and improvement pass. Runtime `8bb77c4` fixes late legacy funding and earned-wage priority, unsupported imported attendance, occupied reading seats, repeat notice actions, corrupt tray receipts, natural reading questions, wage facts/dates, circular shift-text initialization and replay/import/keyboard control bugs. The [bug-pass receipt](../reviews/2026-10-16-bug-pass.md) records reproductions and checks: 596 full tests including 304 town cases, typecheck, lint with the inherited warning, town diagnostics and a credential-free production build. The new UI edge gate is part of the integrated browser gate. Existing towns, schemas and canonical scene text remain preserved; publication and human evaluation remain separate.
+
+## 15 October 2026 — first-reading story
+
+The user's further quest/money request is implemented in the [first-reading pass](../reviews/2026-10-15-first-reading.md): Northern's human purpose, observed draft locations, park/library choice, physically routed guests, optional listening or an explicit first line, and two-coin bread/tea cash sales into business tills. The optional save extension preserves older projects, plans and paid work. Runtime `7b5233a` passes 573 full tests including 281 town cases, typecheck and the credential-free production build. Built desktop/phone journeys include both venues, ordinary controls, sales, portable saves and unobstructed inline actions. Mocked AI/recovery also passes; source details are in the receipt. Lint has no errors and the inherited auth warning. The same draft PR remains the review handoff; publication and human evaluation remain separate.
+
+## 15 October 2026 — pre-release refinement
+
+At the user's request, the [second pass](../reviews/2026-10-15-pre-release-polish.md) improves the newly delivered work: actionable library guidance, truthful required evidence, protected NPC commitments, clearer payment/inventory/accessibility feedback, employer-bound local work replies, exact work-item completion, selective Resume, resident drafts and recovery of empty saves. Runtime `5c33966` passes 549 full tests and 257 town cases, typecheck, lint with the inherited warning, diagnostics and a credential-free build. Built desktop/phone and expanded mocked-AI/recovery checks pass. The same draft PR remains the review handoff; publication and human/physical-device gates remain separate.
+
+## 15 October 2026 — current game backlog
+
+Current delivery is `codex/game-quality-review`, integrating main through `4a39cdf`; final game rules and replay/search guard fixes are at `128e1d4`. The [implementation receipt](../reviews/2026-10-15-game-quality-delivery.md) records the 539 passing tests, desktop/phone built and delayed-AI journeys, year-long synthetic checks, evidence and remaining gates. The [delivery guide](../implementation/game-quality-delivery.md) covers the funded library, durable work, inventory, saves and operator budget setup. The [roadmap](../ROADMAP.md) is reconciled with implemented scope. Cross-device saves and a continuously running shared town remain explicitly deferred. Human playtesting, physical accessibility checks, live configuration and separately authorized publication remain open; no production action or paid call was performed.
+
+The provider and earlier integration notes below are historical, not the current assignment or release verdict.
+
 ## 12 October 2026 — provider activation follow-up
 
 - User authorized free-provider enrollment and private local key configuration. Gemini, Cohere trial, NVIDIA NIM and OpenRouter free access were verified with synthetic JSON requests. Secrets and account-specific preferences are in ignored local files with mode 0600. No production secrets, database or deployment were changed; Groq, Mistral and Ollama remain disabled where free access or a running local model was unavailable.

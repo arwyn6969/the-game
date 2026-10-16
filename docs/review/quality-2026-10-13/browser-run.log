@@ -1,0 +1,16 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.goto: Timeout 30000ms exceeded.
+Call log:
+[2m  - navigating to "http://127.0.0.1:8094/", waiting until "domcontentloaded"[22m
+
+    at /Users/arwynhughes/Documents/ChatGPT/THE GAME/product/docs/design/graphics-checks.mjs:417:20 {
+  log: [
+    '  - navigating to "http://127.0.0.1:8094/", waiting until "domcontentloaded"'
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v24.19.0

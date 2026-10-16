@@ -1,6 +1,6 @@
 # Value, investment and fair contribution
 
-Proposed design, begun 11 October and updated 12 October 2026, following Arwyn's question about where value comes from, when it is created or invested, where it goes and who accounts for it. Include paid, budgeted contributions in the first shared project; defer a broader job or banking system. These rules are a proposal, not released mechanics. The [roadmap](../ROADMAP.md) records current status; the [implementation plan](../implementation/community-project.md) pins packet boundaries, legacy-work handling and paid completion units.
+Design begun 11 October; implementation status updated 15 October 2026, following Arwyn's question about where value comes from, when it is created or invested, where it goes and who accounts for it. Include paid, budgeted contributions in the first shared project; defer a broader job or banking system. The current quality candidate implements the bounded accounts, work and library rules; hosted publication is separate. See the [delivery notes](../implementation/game-quality-delivery.md). The [roadmap](../ROADMAP.md) records current status; the [implementation plan](../implementation/community-project.md) pins packet boundaries, legacy-work handling and paid completion units.
 
 ## What the economy should represent
 
@@ -31,7 +31,7 @@ Use a grant-funded library index owned in common. The following is the default p
 
 | Event                                         | Transfer or allocation                                                          | Result                                                                                                                       |
 | --------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Kevin and Baba explicitly approve the project | Café till contributes 4; grocery till contributes 4                             | Project custody holds 8 existing coins; total town money remains 77 in the fresh fixture.                                    |
+| Kevin and Baba explicitly approve the project | Café till contributes 4; grocery till contributes 4                             | Project custody holds 8 existing coins; total town money remains 90 in the fresh eight-actor fixture.                        |
 | Participants accept bounded tasks             | Reserve 2 each for source checking, reference testing and an independent lookup | 6 of the 8 are committed, not paid or created. One resident can perform more than one task, but receives each fee only once. |
 | Agreed work is performed                      | Pay the three fees to their actual workers                                      | Workers collectively receive 6; project custody retains 2.                                                                   |
 | A correction is needed                        | Offer a separate correction task funded by the remaining 2                      | Corrective work is paid; it is not an unpaid obligation imposed after failure.                                               |
@@ -59,11 +59,11 @@ A cooperative approach is a useful starting proposal: voluntary participation, s
 
 ## Acceptance before expanding the economy
 
-1. Follow every coin in the 8-coin example and reconcile the fresh fixture's 77-coin total before/after funding, payment, refund, reload and import. Other initial balances use their own recorded total.
+1. Follow every coin in the 8-coin example and reconcile the fresh eight-actor fixture's 90-coin total before/after funding, payment, refund, reload and import. Other initial balances use their own recorded total.
 2. Reserve funds once; reject unauthorized, duplicate or unaffordable transfers without partial effects. No balance changes solely because dialogue says someone paid.
 3. Pay agreed completed work on both useful and unsuccessful project branches. Preserve outstanding liabilities across midnight and cancellation.
 4. Show money spent, tasks completed and actual lookup success separately. Test whether players can explain all three and identify the beneficiary and asset owner.
 5. Let people decline, inspect their terms and report a discrepancy. Ensure lower starting wealth does not block access to paid tasks or the common result. Do not turn contribution into a compulsory morality or reputation score.
 6. Continue day-5/day-30 economy simulations after the bounded example. Measure concentration, access to work, unpaid obligations and stalled circulation before choosing any future issuance or redistribution rule. Do not claim long-run fairness from this small demonstration.
 
-Trustworthy actions and recovery are now released. Next, S1 supplies the accounting/work foundation and migration tests; S2 activates the complete rules with the funded library UI and matching terms. Do not activate an incomplete ledger or silently change live financial terms in a helper-only packet. Existing wages must be protected before project funding. Preserve ambiguous legacy work as labelled evidence, never invented arrears; the implementation plan specifies the bounded recognition and suspension policy. A broad trading system, loans, new providers and additional residents remain separate work.
+The current candidate combines S1 accounting/work and migration with S2 funded library UI and matching terms, retaining the later consequences and shared meal. The historical audit above describes the earlier six-actor source; the current fresh town has eight actors and 90 coins. Human evaluation and publication remain separate. Do not activate an incomplete ledger or silently change live financial terms in a helper-only packet. Existing wages must be protected before project funding. Preserve ambiguous legacy work as labelled evidence, never invented arrears; the implementation plan specifies the bounded recognition and suspension policy. A broad trading system, loans, new providers and additional residents remain separate work.

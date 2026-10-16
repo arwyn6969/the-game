@@ -99,7 +99,11 @@ export function refreshResidentStatus(
 }
 
 /** Move residents within their usual budget; an NPC can make room for another NPC. */
-export function moveResidents(town: Town, hourStart: boolean) {
+export function moveResidents(
+  town: Town,
+  hourStart: boolean,
+  appointments?: Partial<Record<AgentId, Tile>>,
+) {
   const residents = NPC_IDS.flatMap((id) => town.agents.find((a) => a.id === id) ?? []);
   const budget = new Map(residents.map((a) => [a.id, STEP]));
   const yielded = new Set<AgentId>();
@@ -142,7 +146,7 @@ export function moveResidents(town: Town, hourStart: boolean) {
       agent.tile = nearestWalkable(agent.tile.x, agent.tile.y);
       agent.path = [];
     }
-    const goal = goalFor(agent, beatAt(agent, town.minute));
+    const goal = appointments?.[agent.id] ?? goalFor(agent, beatAt(agent, town.minute));
     if (same(agent.tile, goal)) {
       agent.path = [];
       continue;

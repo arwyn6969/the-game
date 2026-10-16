@@ -1,0 +1,16 @@
+{
+  "viewport": "390x844",
+  "rafDelayMs": 120,
+  "oldFocus": {
+    "tag": "BUTTON",
+    "label": "Help & privacy"
+  },
+  "oldHelperReopenedHelp": true,
+  "newFocus": {
+    "tag": "CANVAS",
+    "className": "town-canvas h-full"
+  },
+  "newHelperOpenedKevin": true,
+  "errors": [],
+  "providerCalls": 0
+}

@@ -61,9 +61,9 @@ export async function loadPoolConfig(env = process.env): Promise<PoolConfig> {
   }
 }
 
-export async function poolAvailable(): Promise<boolean> {
+export async function poolAvailable(configSnapshot?: PoolConfig): Promise<boolean> {
   try {
-    const config = await loadPoolConfig();
+    const config = configSnapshot ?? (await loadPoolConfig());
     // PGLite is process-local; a deployed pool must use shared Postgres.
     if (process.env.GROK_PROJECT_ID && !process.env.DATABASE_URL?.trim()) return false;
     if (process.env.VERCEL && !process.env.DATABASE_URL?.trim()) return false;
@@ -77,12 +77,18 @@ export async function thinkWithPool(
   kind: MindKind,
   user: string,
   system: string,
+  configSnapshot?: PoolConfig,
 ): Promise<PoolResult> {
   const started = Date.now();
   const attempts: { provider: string; model: string; completion: Completion }[] = [];
   try {
-    if (!(await poolAvailable())) return { ok: false, error: "offline" };
-    const config = await loadPoolConfig();
+    // One validated, private snapshot governs both the caller's budget and the
+    // actual router. Editing a local config during quota I/O cannot raise the
+    // reserved request's output or retry allowance underneath it.
+    const config = configSnapshot
+      ? validateConfig(structuredClone(configSnapshot))
+      : await loadPoolConfig();
+    if (!(await poolAvailable(config))) return { ok: false, error: "offline" };
     const result = await routeMind({
       kind,
       system,

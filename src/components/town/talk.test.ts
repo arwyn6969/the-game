@@ -46,7 +46,7 @@ describe("a far click is not a conversation", () => {
     assert.equal(inTalkRange(0, 0, 3, 0), false);
     assert.equal(
       activityStatus("plaza", "townhouses", "asleep in the last townhouse"),
-      "on foot, not where that hour planned",
+      "exploring the town",
     );
     assert.equal(activityStatus("cafe", "cafe", "behind the counter"), "behind the counter");
   });

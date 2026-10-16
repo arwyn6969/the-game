@@ -1,0 +1,233 @@
+[
+  {
+    "elapsedDays": 90,
+    "gameDay": 91,
+    "talksPerDay": 56,
+    "syntheticExchanges": 5040,
+    "elapsedSeconds": 17.8,
+    "exportBytes": 1101220,
+    "exportMs": 25,
+    "importMs": 24,
+    "openingTotal": 90,
+    "currentTotal": 90,
+    "roundTrip": true,
+    "ledgerTransactions": 2,
+    "commandReceipts": 367,
+    "workReceipts": 2,
+    "memories": [
+      {
+        "id": "kevin",
+        "total": 176,
+        "archive": 64,
+        "protected": 88,
+        "rawChats": 38
+      },
+      {
+        "id": "arwyn",
+        "total": 247,
+        "archive": 56,
+        "protected": 74,
+        "rawChats": 39
+      },
+      {
+        "id": "northern",
+        "total": 169,
+        "archive": 64,
+        "protected": 86,
+        "rawChats": 33
+      },
+      {
+        "id": "baba",
+        "total": 157,
+        "archive": 56,
+        "protected": 76,
+        "rawChats": 33
+      },
+      {
+        "id": "sub",
+        "total": 170,
+        "archive": 64,
+        "protected": 82,
+        "rawChats": 34
+      },
+      {
+        "id": "player",
+        "total": 81,
+        "archive": 40,
+        "protected": 41,
+        "rawChats": 40
+      },
+      {
+        "id": "data",
+        "total": 173,
+        "archive": 64,
+        "protected": 79,
+        "rawChats": 40
+      },
+      {
+        "id": "amelia",
+        "total": 162,
+        "archive": 64,
+        "protected": 79,
+        "rawChats": 35
+      }
+    ],
+    "replayFrames": 10080,
+    "heapMiB": 34,
+    "issues": []
+  },
+  {
+    "elapsedDays": 180,
+    "gameDay": 181,
+    "talksPerDay": 56,
+    "syntheticExchanges": 10080,
+    "elapsedSeconds": 34.4,
+    "exportBytes": 1169696,
+    "exportMs": 25,
+    "importMs": 21,
+    "openingTotal": 90,
+    "currentTotal": 90,
+    "roundTrip": true,
+    "ledgerTransactions": 2,
+    "commandReceipts": 367,
+    "workReceipts": 2,
+    "memories": [
+      {
+        "id": "kevin",
+        "total": 194,
+        "archive": 64,
+        "protected": 100,
+        "rawChats": 40
+      },
+      {
+        "id": "arwyn",
+        "total": 353,
+        "archive": 56,
+        "protected": 86,
+        "rawChats": 39
+      },
+      {
+        "id": "northern",
+        "total": 187,
+        "archive": 64,
+        "protected": 98,
+        "rawChats": 35
+      },
+      {
+        "id": "baba",
+        "total": 172,
+        "archive": 56,
+        "protected": 88,
+        "rawChats": 34
+      },
+      {
+        "id": "sub",
+        "total": 185,
+        "archive": 64,
+        "protected": 94,
+        "rawChats": 37
+      },
+      {
+        "id": "player",
+        "total": 81,
+        "archive": 40,
+        "protected": 41,
+        "rawChats": 40
+      },
+      {
+        "id": "data",
+        "total": 185,
+        "archive": 64,
+        "protected": 91,
+        "rawChats": 40
+      },
+      {
+        "id": "amelia",
+        "total": 178,
+        "archive": 64,
+        "protected": 91,
+        "rawChats": 37
+      }
+    ],
+    "replayFrames": 10080,
+    "heapMiB": 38,
+    "issues": []
+  },
+  {
+    "elapsedDays": 365,
+    "gameDay": 366,
+    "talksPerDay": 56,
+    "syntheticExchanges": 20440,
+    "elapsedSeconds": 70.2,
+    "exportBytes": 1271733,
+    "exportMs": 27,
+    "importMs": 25,
+    "openingTotal": 90,
+    "currentTotal": 90,
+    "roundTrip": true,
+    "ledgerTransactions": 2,
+    "commandReceipts": 367,
+    "workReceipts": 2,
+    "memories": [
+      {
+        "id": "kevin",
+        "total": 215,
+        "archive": 64,
+        "protected": 127,
+        "rawChats": 37
+      },
+      {
+        "id": "arwyn",
+        "total": 559,
+        "archive": 56,
+        "protected": 113,
+        "rawChats": 35
+      },
+      {
+        "id": "northern",
+        "total": 212,
+        "archive": 64,
+        "protected": 125,
+        "rawChats": 40
+      },
+      {
+        "id": "baba",
+        "total": 195,
+        "archive": 56,
+        "protected": 115,
+        "rawChats": 34
+      },
+      {
+        "id": "sub",
+        "total": 208,
+        "archive": 64,
+        "protected": 121,
+        "rawChats": 38
+      },
+      {
+        "id": "player",
+        "total": 81,
+        "archive": 40,
+        "protected": 41,
+        "rawChats": 40
+      },
+      {
+        "id": "data",
+        "total": 203,
+        "archive": 64,
+        "protected": 118,
+        "rawChats": 36
+      },
+      {
+        "id": "amelia",
+        "total": 198,
+        "archive": 64,
+        "protected": 118,
+        "rawChats": 34
+      }
+    ],
+    "replayFrames": 10080,
+    "heapMiB": 42,
+    "issues": []
+  }
+]

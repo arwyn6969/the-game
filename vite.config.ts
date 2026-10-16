@@ -1,4 +1,5 @@
 import { readdirSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 import type { Plugin } from "vite";
 import { defineConfig } from "vite";
@@ -13,6 +14,26 @@ import { appEnvPlugin } from "./scripts/app-env-plugin.mjs";
 import { isMigrationFile } from "./scripts/migration-plan.mjs";
 // @ts-expect-error JS build helper alongside the TS vite config
 import { copyPgliteAssets } from "./scripts/pglite-assets.mjs";
+
+function gameBuildId(): string {
+  const provided = process.env.VERCEL_GIT_COMMIT_SHA;
+  if (provided && /^[a-f0-9]{7,40}$/i.test(provided)) return provided.slice(0, 12);
+  try {
+    const options = {
+      encoding: "utf8" as const,
+      stdio: ["ignore", "pipe", "ignore"] as ["ignore", "pipe", "ignore"],
+    };
+    const commit = execFileSync("git", ["rev-parse", "--short=12", "HEAD"], options).trim();
+    const dirty = execFileSync(
+      "git",
+      ["status", "--porcelain", "--untracked-files=no"],
+      options,
+    ).trim();
+    return `${commit}${dirty ? " + local changes" : ""}`;
+  } catch {
+    return "local development";
+  }
+}
 
 /** The files `src/lib/db.ts` globs — same directory, same non-recursive scope. */
 function hasGlobbedMigrations(root: string): boolean {
@@ -148,6 +169,7 @@ function authPopupPlugin(): Plugin {
 // The dev server starts once `src/router.tsx` and `src/routes/` exist — see
 // AGENTS.md § "First scaffold".
 export default defineConfig(({ command, isPreview }) => ({
+  define: { __GAME_BUILD_ID__: JSON.stringify(gameBuildId()) },
   server: {
     host: "0.0.0.0",
     port: 8080,

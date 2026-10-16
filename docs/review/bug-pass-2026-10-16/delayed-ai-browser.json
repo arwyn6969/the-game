@@ -1,0 +1,191 @@
+{
+  "url": "http://127.0.0.1:8095/",
+  "mockedTransport": true,
+  "liveProviderCalls": 0,
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "moduleReplacements": 3,
+      "networkLeaks": [],
+      "errors": [],
+      "namingConflictOffersRecovery": true,
+      "emptySaveOffersRecovery": true,
+      "pausedMovementAutosavesWithoutAnotherAction": {
+        "before": {
+          "x": 26,
+          "y": 22
+        },
+        "after": {
+          "x": 27,
+          "y": 22
+        },
+        "key": "ArrowRight",
+        "input": "keyboard"
+      },
+      "ambientMovement": {
+        "before": {
+          "x": 27,
+          "y": 22
+        },
+        "after": {
+          "x": 26,
+          "y": 22
+        },
+        "key": "ArrowLeft",
+        "input": "keyboard"
+      },
+      "ambientUnresolvedMs": 30002,
+      "importRejectsStaleAmbient": true,
+      "manualFallbackAndReordering": true,
+      "walkAwayRetainsDraft": true,
+      "missingResultFallsBackExactlyOnce": true,
+      "replayCancelsPendingAndHidesFallback": true,
+      "localOnlyCancelsWithoutApplyingInReplay": true,
+      "localOnlyNoBackgroundOrPlayerCalls": true,
+      "acceptedClosedCardClearsSentDraft": true,
+      "localClosedCardClearsSentDraftOnce": true,
+      "acceptedReplyPreservesNewerUnsentDraft": true,
+      "importCancelsForegroundAndResetsDrafts": true,
+      "transportCalls": [
+        {
+          "id": 0,
+          "kind": "plan"
+        },
+        {
+          "id": 1,
+          "kind": "player"
+        },
+        {
+          "id": 2,
+          "kind": "player"
+        },
+        {
+          "id": 3,
+          "kind": "player"
+        },
+        {
+          "id": 4,
+          "kind": "player"
+        },
+        {
+          "id": 5,
+          "kind": "player"
+        },
+        {
+          "id": 6,
+          "kind": "player"
+        },
+        {
+          "id": 7,
+          "kind": "player"
+        },
+        {
+          "id": 8,
+          "kind": "player"
+        },
+        {
+          "id": 9,
+          "kind": "player"
+        },
+        {
+          "id": 10,
+          "kind": "player"
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "moduleReplacements": 3,
+      "networkLeaks": [],
+      "errors": [],
+      "namingConflictOffersRecovery": true,
+      "emptySaveOffersRecovery": true,
+      "pausedMovementAutosavesWithoutAnotherAction": {
+        "before": {
+          "x": 26,
+          "y": 22
+        },
+        "after": {
+          "x": 27,
+          "y": 22
+        },
+        "key": "ArrowRight",
+        "input": "touch"
+      },
+      "ambientMovement": {
+        "before": {
+          "x": 27,
+          "y": 22
+        },
+        "after": {
+          "x": 26,
+          "y": 22
+        },
+        "key": "ArrowLeft",
+        "input": "touch"
+      },
+      "ambientUnresolvedMs": 1513,
+      "importRejectsStaleAmbient": true,
+      "manualFallbackAndReordering": true,
+      "walkAwayRetainsDraft": true,
+      "replayCancelsPendingAndHidesFallback": true,
+      "localOnlyCancelsWithoutApplyingInReplay": true,
+      "localOnlyNoBackgroundOrPlayerCalls": true,
+      "acceptedClosedCardClearsSentDraft": true,
+      "localClosedCardClearsSentDraftOnce": true,
+      "acceptedReplyPreservesNewerUnsentDraft": true,
+      "importCancelsForegroundAndResetsDrafts": true,
+      "transportCalls": [
+        {
+          "id": 0,
+          "kind": "plan"
+        },
+        {
+          "id": 1,
+          "kind": "player"
+        },
+        {
+          "id": 2,
+          "kind": "player"
+        },
+        {
+          "id": 3,
+          "kind": "player"
+        },
+        {
+          "id": 4,
+          "kind": "player"
+        },
+        {
+          "id": 5,
+          "kind": "player"
+        },
+        {
+          "id": 6,
+          "kind": "player"
+        },
+        {
+          "id": 7,
+          "kind": "player"
+        },
+        {
+          "id": 8,
+          "kind": "player"
+        },
+        {
+          "id": 9,
+          "kind": "player"
+        }
+      ]
+    }
+  ],
+  "failures": []
+}
