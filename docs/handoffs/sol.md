@@ -1,5 +1,9 @@
 # Sol handoff
 
+## 16 October 2026 — further bug pass
+
+The user requested another review and improvement pass. Runtime `8bb77c4` fixes late legacy funding and earned-wage priority, unsupported imported attendance, occupied reading seats, repeat notice actions, corrupt tray receipts, natural reading questions, wage facts/dates, circular shift-text initialization and replay/import/keyboard control bugs. The [bug-pass receipt](../reviews/2026-10-16-bug-pass.md) records reproductions and checks: 596 full tests including 304 town cases, typecheck, lint with the inherited warning, town diagnostics and a credential-free production build. The new UI edge gate is part of the integrated browser gate. Existing towns, schemas and canonical scene text remain preserved; publication and human evaluation remain separate.
+
 ## 15 October 2026 — first-reading story
 
 The user's further quest/money request is implemented in the [first-reading pass](../reviews/2026-10-15-first-reading.md): Northern's human purpose, observed draft locations, park/library choice, physically routed guests, optional listening or an explicit first line, and two-coin bread/tea cash sales into business tills. The optional save extension preserves older projects, plans and paid work. Runtime `7b5233a` passes 573 full tests including 281 town cases, typecheck and the credential-free production build. Built desktop/phone journeys include both venues, ordinary controls, sales, portable saves and unobstructed inline actions. Mocked AI/recovery also passes; source details are in the receipt. Lint has no errors and the inherited auth warning. The same draft PR remains the review handoff; publication and human evaluation remain separate.
