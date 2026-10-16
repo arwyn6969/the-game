@@ -27,6 +27,7 @@ const { advanceTown } = await server.ssrLoadModule("/src/game/sim.ts");
 const { exportTown, parseTownFile } = await server.ssrLoadModule("/src/game/save.ts");
 const { auditEconomy } = await server.ssrLoadModule("/src/game/economy.ts");
 const { ANCHORS } = await server.ssrLoadModule("/src/game/world.ts");
+const { formatClock } = await server.ssrLoadModule("/src/game/text.ts");
 const person = (town, id) => town.agents.find((agent) => agent.id === id);
 const state = (town) => town.economy?.projects?.library;
 const cash = (town) =>
@@ -530,7 +531,10 @@ test("library guidance follows actual inspection, payment and submission progres
   finishLookup(town);
   assert.equal(libraryView(town).lookupCompleted, true);
   assert.equal(libraryView(town).stage, "aftermath");
-  assert.match(libraryView(town).nextStep, /town day 3/);
+  const due = state(town).evening.noteDueAt;
+  assert.ok(
+    libraryView(town).nextStep.includes(`town day ${due.day} at ${formatClock(due.minute)}`),
+  );
   reload(town);
 });
 

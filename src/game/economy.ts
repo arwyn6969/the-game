@@ -412,6 +412,8 @@ export function auditEconomy(town: Town): string[] {
       receipt.authority !== transaction.authority
     )
       issues.push(`Transaction ${transaction.id} has no matching authorized command receipt.`);
+    if (receipt && (transaction.day !== receipt.day || transaction.minute !== receipt.minute))
+      issues.push(`Transaction ${transaction.id} disagrees with its command's game time.`);
     if (
       transaction.kind !== "transfer" &&
       (transaction.authority !== "simulation" ||
@@ -481,8 +483,15 @@ export function auditEconomy(town: Town): string[] {
     const hold = raw as MoneyHold;
     if (holds.has(hold.id)) issues.push(`Duplicate hold ${hold.id}.`);
     holds.set(hold.id, hold);
-    if (!receipts.get(hold.commandId)?.holdIds.includes(hold.id))
+    const acceptingReceipt = receipts.get(hold.commandId);
+    if (!acceptingReceipt?.holdIds.includes(hold.id))
       issues.push(`Hold ${hold.id} has no accepting command receipt.`);
+    if (
+      acceptingReceipt &&
+      (hold.createdAt.day !== acceptingReceipt.day ||
+        hold.createdAt.minute !== acceptingReceipt.minute)
+    )
+      issues.push(`Hold ${hold.id} disagrees with its accepting command's game time.`);
     if (
       timestamp(hold.createdAt) < timestamp(economy.initializedAt) ||
       timestamp(hold.createdAt) > nowStamp
@@ -504,8 +513,14 @@ export function auditEconomy(town: Town): string[] {
       const release = rawRelease as MoneyHold["releases"][number];
       if (releases.has(release.id)) issues.push(`Duplicate release ${release.id}.`);
       releases.set(release.id, release);
-      if (!receipts.get(release.commandId)?.releaseIds.includes(release.id))
+      const releasingReceipt = receipts.get(release.commandId);
+      if (!releasingReceipt?.releaseIds.includes(release.id))
         issues.push(`Release ${release.id} has no authorized command receipt.`);
+      if (
+        releasingReceipt &&
+        (release.day !== releasingReceipt.day || release.minute !== releasingReceipt.minute)
+      )
+        issues.push(`Release ${release.id} disagrees with its command's game time.`);
       if (timestamp(release) < timestamp(hold.createdAt) || timestamp(release) > nowStamp)
         issues.push(`Release ${release.id} has invalid game time.`);
       released += release.amount;

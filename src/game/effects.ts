@@ -250,11 +250,37 @@ function applyFavor(town: Town, edit: FavorEdit | null | undefined, allowed?: Ag
       );
       return;
     }
-    const paid = settleLegacyDebt(
+    const transactions = town.economy!.transactions;
+    const priorPayments = new Set(
+      transactions
+        .filter(
+          (item) =>
+            item.kind === "transfer" &&
+            !item.reversalOf &&
+            item.agreementId === favor.id &&
+            item.from === `agent:${from.id}` &&
+            item.to === `agent:${to.id}` &&
+            item.amount === amount,
+        )
+        .map((item) => item.id),
+    );
+    const corrections = transactions.filter(
+      (item) => item.reversalOf && priorPayments.has(item.reversalOf),
+    ).length;
+    // An authorized correction reopens the same tab. Its next real payment
+    // needs a new identity; ordinary retries still replay exactly once.
+    const paymentCommand = runtimeCommand(
       town,
-      runtimeCommand(town, "debt.settle", from.id, { debtId: favor.id }, favor.id),
+      "debt.settle",
+      from.id,
+      { debtId: favor.id },
       favor.id,
     );
+    // Tuple IDs cannot collide with another preserved tab's ordinary
+    // `debt.settle:<id>` command, even when its ID contains correction suffixes.
+    if (corrections)
+      paymentCommand.id = JSON.stringify(["debt.settle.after-correction", favor.id, corrections]);
+    const paid = settleLegacyDebt(town, paymentCommand, favor.id);
     if (!paid.ok) return;
   } else if (edit.action === "forgive") {
     favor.status = "forgiven";
@@ -324,14 +350,20 @@ export function applyResult(
   try {
     const until = (town.day - 1) * 1440 + town.minute + 20;
     if (result.kind === "plan") {
-      for (const draft of result.plans ?? [])
+      const planned = new Set<AgentId>();
+      for (const draft of result.plans ?? []) {
+        if (planned.has(draft.id)) continue;
+        planned.add(draft.id);
         safely(() => applyPlanDraft(town, draft, result.mind, result.weekly === true));
+      }
       return;
     }
     if (result.kind === "reflect") {
+      const reflected = new Set<AgentId>();
       for (const item of result.agents ?? []) {
         const agent = maybeAgent(town, item.id);
-        if (!agent) continue;
+        if (!agent || reflected.has(agent.id)) continue;
+        reflected.add(agent.id);
         for (const line of (item.reflections ?? []).slice(0, 2)) {
           const text = clip(String(line ?? ""), 320);
           if (!text) continue;
@@ -407,8 +439,12 @@ export function applyResult(
         if (!agent.lastTalk || typeof agent.lastTalk !== "object") agent.lastTalk = {};
         agent.lastTalk[agent.id === a.id ? b.id : a.id] = (town.day - 1) * 1440 + town.minute;
       }
+      const changedRelations = new Set<string>();
       for (const rel of result.relationships ?? []) {
-        if (!pair.includes(rel.owner) || !pair.includes(rel.about)) continue;
+        const key = `${rel.owner}:${rel.about}`;
+        if (!pair.includes(rel.owner) || !pair.includes(rel.about) || changedRelations.has(key))
+          continue;
+        changedRelations.add(key);
         safely(() => adjustRelation(town, rel.owner, rel.about, rel.delta, rel.note));
       }
       if (result.thread && pair.includes(result.thread.owner))

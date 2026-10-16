@@ -222,7 +222,32 @@ export function advanceFundedPayroll(town: Town) {
       }
     }
   }
+  const openShiftIds = new Set(
+    town.agents.flatMap((resident) =>
+      resident.projects
+        .filter(
+          (project) =>
+            project.owner === resident.id && project.kind === "shift" && project.status === "open",
+        )
+        .map((project) => project.id),
+    ),
+  );
+  const legacyWorkItems = new Set(
+    funded.economy!.work!.legacyClaims.flatMap((claim) =>
+      claim.agreementId && claim.evidence.projects.some((project) => openShiftIds.has(project.id))
+        ? [claim.agreementId]
+        : [],
+    ),
+  );
   for (const payable of [...funded.economy!.work!.payables]) {
+    // A portable town may contain the committed wage before its legacy project
+    // projection was closed. Reconcile that projection even after settlement;
+    // only open project IDs need the historical agreement/claim lookup.
+    if (
+      openShiftIds.has(fundedWorkProjectId(payable.agreementId)) ||
+      legacyWorkItems.has(payable.agreementId)
+    )
+      closeCompletedWorkItems(town, payable.agreementId);
     if (payable.status !== "earned") continue;
     const worker = town.agents.find((agent) => agent.id === payable.worker);
     if (!worker || worker.money + payable.amount > 999) continue;

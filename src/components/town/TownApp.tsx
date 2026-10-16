@@ -241,6 +241,7 @@ export function TownApp() {
   const movementDirtyRef = useRef(false);
   const startOverRef = useRef(false);
   const toolOpenerRef = useRef<HTMLElement | null>(null);
+  const boardOpenerRef = useRef<HTMLElement | null>(null);
   const toolsRef = useRef<ToolPage | null>(null);
   const importTextRef = useRef<string | null>(null);
   const importKeepRef = useRef<HTMLButtonElement>(null);
@@ -406,6 +407,10 @@ export function TownApp() {
 
   function openTools(page: ToolPage) {
     setSocialOpen(false);
+    boardRef.current = false;
+    setBoard(false);
+    panelRef.current = null;
+    setPanel(null);
     routeRef.current = null;
     stepInputRef.current = null;
     if (page === "help") setBrowserBackups(readTownConflicts());
@@ -421,6 +426,31 @@ export function TownApp() {
     setTools(null);
     requestAnimationFrame(() => {
       if (toolOpenerRef.current?.isConnected) toolOpenerRef.current.focus();
+      else canvasRef.current?.focus();
+    });
+  }
+
+  function openBoard(opener?: HTMLElement) {
+    boardOpenerRef.current =
+      opener ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    routeRef.current = null;
+    keysRef.current.clear();
+    stepInputRef.current = null;
+    panelRef.current = null;
+    setPanel(null);
+    toolsRef.current = null;
+    setTools(null);
+    setSocialOpen(false);
+    setCrowd(null);
+    boardRef.current = true;
+    setBoard(true);
+  }
+
+  function closeBoard() {
+    boardRef.current = false;
+    setBoard(false);
+    requestAnimationFrame(() => {
+      if (boardOpenerRef.current?.isConnected) boardOpenerRef.current.focus();
       else canvasRef.current?.focus();
     });
   }
@@ -752,15 +782,14 @@ export function TownApp() {
         }
         stepInputRef.current = null;
         if (toolsRef.current) closeTools();
-        else if (panelRef.current || boardRef.current)
-          requestAnimationFrame(() => canvasRef.current?.focus());
+        else if (boardRef.current) closeBoard();
+        else if (panelRef.current) requestAnimationFrame(() => canvasRef.current?.focus());
         if (panelRef.current) {
           setPanel(null);
         }
         setSocialOpen(false);
 
         setCrowd(null);
-        if (boardRef.current) setBoard(false);
         return;
       }
       if (interactiveControl(focusOf(event.target))) return;
@@ -1193,6 +1222,11 @@ export function TownApp() {
     const live = townRef.current;
     if (!live) return;
     const target: AgentId = id;
+    toolsRef.current = null;
+    setTools(null);
+    boardRef.current = false;
+    setBoard(false);
+    setSocialOpen(false);
 
     setFarNote("");
     setSendNote("");
@@ -1241,7 +1275,7 @@ export function TownApp() {
       onBoard(world.x, world.y) ||
       onBoard(agentById(live, "player").tile.x, agentById(live, "player").tile.y)
     ) {
-      setBoard(true);
+      openBoard(canvas);
     }
   }
 
@@ -2080,6 +2114,7 @@ export function TownApp() {
             }}
           />
         )}
+        {board && <Board town={town} onClose={closeBoard} />}
       </div>
       <footer className="foot">
         <label className="foot-label" htmlFor="scrub">
@@ -2160,7 +2195,7 @@ export function TownApp() {
           className="btn"
           type="button"
           disabled={!near && town.notices.length === 0}
-          onClick={() => setBoard(true)}
+          onClick={() => openBoard()}
         >
           {town.notices.length ? `Board · ${town.notices.length}` : "Board"}
         </button>
@@ -2207,7 +2242,6 @@ export function TownApp() {
           {saveStatus?.ok ? "Saved in this browser" : "Your town lives in this browser"}
         </span>
       </footer>
-      {board && <Board town={town} onClose={() => setBoard(false)} />}
       {importText !== null && (
         <div
           className="gate absolute inset-0 z-10 bg-bg/90"
@@ -2452,6 +2486,7 @@ function Mind({
   const lineRef = useRef<HTMLTextAreaElement | null>(null);
   const logRef = useRef<HTMLDivElement | null>(null);
   const latestRef = useRef<HTMLLIElement | null>(null);
+  const keyboardTabRef = useRef(false);
   const followRef = useRef(true);
   const [behind, setBehind] = useState(false);
   const [tab, setTab] = useState<"overview" | "strengths" | "together" | "progress">(
@@ -2459,7 +2494,8 @@ function Mind({
   );
   useEffect(() => {
     followRef.current = true;
-    if (tab === "together") lineRef.current?.focus();
+    if (tab === "together" && !keyboardTabRef.current) lineRef.current?.focus();
+    keyboardTabRef.current = false;
   }, [agent.id, tab]);
   const player = agentById(town, "player");
   const canTalk = inTalkRange(player.tile.x, player.tile.y, agent.tile.x, agent.tile.y);
@@ -2523,7 +2559,32 @@ function Mind({
             id={`character-tab-${name}`}
             aria-controls={`character-section-${name}`}
             aria-selected={tab === name}
-            onClick={() => setTab(name)}
+            tabIndex={tab === name ? 0 : -1}
+            onClick={() => {
+              keyboardTabRef.current = false;
+              setTab(name);
+            }}
+            onKeyDown={(event) => {
+              const tabs = ["overview", "strengths", "together", "progress"] as const;
+              const current = tabs.indexOf(name);
+              const next =
+                event.key === "ArrowRight"
+                  ? (current + 1) % tabs.length
+                  : event.key === "ArrowLeft"
+                    ? (current + tabs.length - 1) % tabs.length
+                    : event.key === "Home"
+                      ? 0
+                      : event.key === "End"
+                        ? tabs.length - 1
+                        : null;
+              if (next === null) return;
+              event.preventDefault();
+              keyboardTabRef.current = true;
+              setTab(tabs[next]);
+              event.currentTarget.parentElement
+                ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                [next]?.focus();
+            }}
           >
             {name === "together" ? "Together" : name.charAt(0).toUpperCase() + name.slice(1)}
           </button>
@@ -2805,11 +2866,21 @@ function Inspector({ town, agent }: { town: Town; agent: Agent }) {
 }
 
 function Board({ town, onClose }: { town: Town; onClose: () => void }) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    closeRef.current?.focus();
+  }, []);
   return (
-    <aside className="mind" aria-label="Noticeboard">
+    <aside className="mind" role="dialog" aria-label="Noticeboard">
       <div className="mind-bar">
         <h2 className="font-display text-3xl">Noticeboard</h2>
-        <button className="btn" type="button" onClick={onClose} aria-label="Close board">
+        <button
+          ref={closeRef}
+          className="btn"
+          type="button"
+          onClick={onClose}
+          aria-label="Close board"
+        >
           <X className="size-4" />
         </button>
       </div>

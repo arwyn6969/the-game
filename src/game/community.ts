@@ -20,6 +20,7 @@ import { availableFunds, runEconomyCommand, reserveFunds, releaseFunds } from ".
 import { agentById, makeMemory, pushMemory } from "./memory";
 import { findPath } from "./path";
 import { ANCHORS, zoneAt } from "./world";
+import { formatClock } from "./text";
 import { advanceTown } from "./sim";
 import {
   createReadingEvening,
@@ -578,6 +579,18 @@ function latestEntries(state: LibraryState | null) {
         : "Public source date confirmed",
   }));
 }
+function deliveryHint(town: Town, state: LibraryState): string {
+  const legacyDay = state.started + 2;
+  const note = state.evening?.noteDueAt;
+  // New reading invitations can bring the note forward; older projects retain
+  // their original calendar deadline until the player adopts that invitation.
+  const earlierNote = note && note.day < legacyDay;
+  const due = earlierNote ? note : { day: legacyDay, minute: 0 };
+  const arrived = town.day > due.day || (town.day === due.day && town.minute >= due.minute);
+  return arrived
+    ? "Your result is saved. Baba's delivery note is due now; advance the clock to receive it. Town time stops when you leave the game."
+    : `Your result is saved. Baba's delivery note arrives on town day ${due.day}${earlierNote ? ` at ${formatClock(due.minute)}` : ""}; use the clock to continue. Town time stops when you leave the game.`;
+}
 export function libraryView(town: Town) {
   const state = getState(town);
   const economy = (town as FundedTown).economy;
@@ -672,7 +685,7 @@ export function libraryView(town: Town) {
       ? `The corrected index is ready for free use. Northern's earlier test still belongs to revision ${state.lookup.revision}.`
       : state.delivery
         ? "Baba's dated delivery note is ready. Choose the paid correction, keep using the index, or close the project."
-        : `Your result is saved. Baba's delivery note arrives on town day ${state.started + 2}; use the clock to continue. Town time stops when you leave the game.`;
+        : deliveryHint(town, state);
   }
   const earnedUnpaid = funding?.earnedPayables.reduce((sum, item) => sum + item.amount, 0) ?? 0;
   const reserved = funding?.holds.reduce((sum, item) => sum + item.remaining, 0) ?? 0;

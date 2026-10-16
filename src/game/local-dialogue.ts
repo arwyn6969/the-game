@@ -15,7 +15,7 @@ import type { FundedTown } from "./economy-types";
 
 type Intent =
   "wages" | "work" | "money" | "stock" | "help" | "invitation" | "day" | "time" | "role";
-type Exchange = { question: string; answer: string };
+type Exchange = { question: string; answer: string; day: number };
 
 const normalize = (text: string) => text.toLowerCase().replace(/[’‘]/g, "'").trim();
 
@@ -137,6 +137,7 @@ function latestExchange(town: Town, agent: Agent): Exchange | null {
     .slice(-3)
     .reverse();
   let latest: Exchange | null = null;
+  let referenceDay: number | undefined;
   for (const memory of recent) {
     const age = absMinute(town.day, town.minute) - absMinute(memory.day, memory.minute);
     if (memory.seed || mentionsSeed(memory.text) || age < 0 || age > 180) break;
@@ -147,8 +148,16 @@ function latestExchange(town: Town, agent: Agent): Exchange | null {
     const question = [...turns].reverse().find((turn) => turn.speaker === "player");
     const answer = [...turns].reverse().find((turn) => turn.speaker === agent.id);
     if (!question || !answer) break;
-    latest ??= { question: question.text, answer: answer.text };
-    if (intentOf(question.text)) return { question: question.text, answer: latest.answer };
+    latest ??= { question: question.text, answer: answer.text, day: memory.day };
+    // The newest explicit date in a follow-up chain wins. Resolve relative words
+    // at the time they were spoken, including when the next reply is after midnight.
+    referenceDay ??= /\byesterday\b/i.test(question.text)
+      ? memory.day - 1
+      : /\btoday\b/i.test(question.text)
+        ? memory.day
+        : undefined;
+    if (intentOf(question.text))
+      return { question: question.text, answer: latest.answer, day: referenceDay ?? memory.day };
     if (!isFollowup(question.text)) break;
   }
   return latest;
@@ -239,7 +248,12 @@ function shiftReply(town: Town, agent: Agent, text: string): string {
 }
 
 /** Wage evidence comes from the worker's engine receipts, never conversational claims. */
-function wageReply(town: Town, agent: Agent, text: string): string {
+function wageReply(
+  town: Town,
+  agent: Agent,
+  text: string,
+  requestedDay = /\byesterday\b/i.test(text) ? town.day - 1 : town.day,
+): string {
   const workplace = agent.id === "kevin" ? "cafe" : agent.id === "baba" ? "grocery" : null;
   if (!workplace)
     return "Ask Kevin about cafe wages, or Baba about grocery wages. The employer and your recorded work determine payment; I cannot pay you through a conversation.";
@@ -248,7 +262,6 @@ function wageReply(town: Town, agent: Agent, text: string): string {
   const economy = (town as FundedTown).economy;
   if (work && economy) {
     const payer = `till:${workplace}`;
-    const requestedDay = /\byesterday\b/i.test(text) ? town.day - 1 : town.day;
     const settlements = settledWageTransfers(town, workplace);
     const paid = [...settlements].reverse().find((item) => item.day === requestedDay);
     const historical = [...wageReceipts(town, workplace)]
@@ -281,7 +294,6 @@ function wageReply(town: Town, agent: Agent, text: string): string {
     return `${evidence}${status}${legacy ? ` Earlier work is preserved as legacy evidence: ${legacy.reason}` : ""} Asking does not pay a second wage.`;
   }
   const receipts = wageReceipts(town, workplace);
-  const requestedDay = /\byesterday\b/i.test(text) ? town.day - 1 : town.day;
   const receipt = [...receipts].reverse().find((memory) => memory.day === requestedDay);
   const last = receipts.at(-1);
   const amount = workplace === "cafe" ? 5 : 4;
@@ -347,9 +359,8 @@ export function everydayReply(town: Town, agent: Agent, text: string): string | 
       return wageReply(
         town,
         agent,
-        continuation && !/\b(?:today|yesterday)\b/i.test(text)
-          ? `${previous?.question ?? ""} ${text}`
-          : text,
+        text,
+        continuation && !/\b(?:today|yesterday)\b/i.test(text) ? previous?.day : undefined,
       );
     case "work":
       return shiftReply(town, agent, text);
