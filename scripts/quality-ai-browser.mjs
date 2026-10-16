@@ -119,7 +119,13 @@ async function step(page, touch = false, preferred) {
   throw new Error("Movement stopped during a delayed provider request");
 }
 async function openKevin(page) {
-  await page.evaluate(() => document.activeElement?.blur());
+  // Close/import actions restore their opener on the next animation frame.
+  // Let that complete before placing focus on the town for this shortcut;
+  // otherwise Enter can correctly reactivate Help on a slower CI phone.
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+  await page.locator("canvas.town-canvas").focus();
   await page.keyboard.press("Enter");
   await page.getByLabel("Your line to Kevin", { exact: true }).waitFor();
 }

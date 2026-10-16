@@ -24,6 +24,8 @@ Built desktop 1280×800 and phone 390×844 journeys pass movement, pause/time, l
 
 The delayed-response/recovery gate also passes on desktop and phone: 21 mocked requests, zero real provider calls and zero page/console errors. The local built preview at `http://127.0.0.1:8094/` serves runtime `fb9abc1dd9b8`; browser saves remain on the same origin. Tests used isolated synthetic towns.
 
+The first CI attempt caught a timing race in the phone test: its Enter shortcut ran while Help was restoring focus, so Enter correctly reopened Help. A deterministic delayed-frame reproduction confirmed the cause. The harness now lets queued focus restoration finish and explicitly focuses the town before using Enter. The repeated complete mocked gate passes with all existing assertions retained; product controls and the tested runtime are unchanged by this harness repair.
+
 [Verification data](../review/interruptions-2026-10-16/verification.json) · [Built journeys](../review/interruptions-2026-10-16/built-browser.json) · [UI interruptions](../review/interruptions-2026-10-16/ui-interruptions.json) · [Mocked AI and recovery](../review/interruptions-2026-10-16/delayed-ai-browser.json)
 
 ![Phone noticeboard with navigation and close focus visible](../review/interruptions-2026-10-16/phone-noticeboard.png)

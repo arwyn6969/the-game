@@ -42,7 +42,8 @@
     "mockedAiAndRecovery": "passed",
     "mockedCalls": 21,
     "realProviderCalls": 0,
-    "pageConsoleErrors": 0
+    "pageConsoleErrors": 0,
+    "mockedAiFocusSynchronization": "passed; delayed-frame reproduction fails with old helper and passes after town-focus synchronization"
   },
   "compatibility": {
     "townSchema": "unchanged; v2 with v1 import",

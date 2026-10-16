@@ -38,7 +38,7 @@
         "key": "ArrowLeft",
         "input": "keyboard"
       },
-      "ambientUnresolvedMs": 30001,
+      "ambientUnresolvedMs": 30000,
       "importRejectsStaleAmbient": true,
       "manualFallbackAndReordering": true,
       "walkAwayRetainsDraft": true,
@@ -132,7 +132,7 @@
         "key": "ArrowLeft",
         "input": "touch"
       },
-      "ambientUnresolvedMs": 1532,
+      "ambientUnresolvedMs": 1547,
       "importRejectsStaleAmbient": true,
       "manualFallbackAndReordering": true,
       "walkAwayRetainsDraft": true,
