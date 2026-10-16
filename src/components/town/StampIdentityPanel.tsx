@@ -277,7 +277,9 @@ export function StampIdentityPanel({
     const operation = begin();
     if (!operation) return;
     polling.current = true;
-    setNote("Choose your mainnet Native SegWit address in Leather.");
+    setNote(
+      "Choose your mainnet Native SegWit address in Leather. Leather may open behind this window; check its popup/extension icon.",
+    );
     try {
       const selected = await getLeatherAddress({ signal: operation.abort.signal });
       if (!isCurrent(operation)) return;
@@ -286,7 +288,7 @@ export function StampIdentityPanel({
       );
       if (!isCurrent(operation)) return;
       setNote(
-        "Review the message in Leather. Signing this check does not spend BTC or move stamps.",
+        "Review the message in Leather. Signing this check does not spend BTC or move stamps. Leather may open behind this window; check its popup/extension icon.",
       );
       const proof = await signLeatherChallenge(challenge, selected, {
         signal: operation.abort.signal,
