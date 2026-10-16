@@ -8,7 +8,7 @@ import { beatAt } from "./plan";
 import { localReflections } from "./reflections";
 import { clip, formatClock, mentionsSeed } from "./text";
 import { placeTitle, placeTitleOf, zoneAt } from "./world";
-import { residentLibraryReply } from "./community";
+import { residentLibraryReply, residentReadingReply } from "./community";
 import { fundedWorkSummary } from "./funded-work";
 import type { FundedTown } from "./economy-types";
 
@@ -746,11 +746,19 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
     if (carrying) reply = `${reply} You are carrying the loaf. The tab is ${debt.amount}.`;
     else if (ateLoaf) reply = `${reply} You ate the loaf. You still owe ${debt.amount}.`;
   }
+  const asksReading =
+    /\b(?:(?:the|your|our|northern['’]s) (?:first )?reading|first[- ]page|(?:park|library) (?:reading|gathering))\b/i.test(
+      text,
+    );
   const asksProject =
     /\b(?:library (?:project|index|check|result)|index|catalogue|catalog|my (?:contribution|check)|what changed since yesterday|what happened (?:with|at|to) (?:the )?library)\b/i.test(
       text,
     );
-  if (!topic && !everyday && asksProject)
+  if (!topic && !everyday && asksReading)
+    reply =
+      residentReadingReply(town, id) ??
+      "I have not learned what happened with the reading. The library project board has its invitation and recorded outcome.";
+  else if (!topic && !everyday && asksProject)
     reply =
       residentLibraryReply(town, id) ??
       "I have not learned what happened with the library project. The public project board has its recorded progress and terms.";

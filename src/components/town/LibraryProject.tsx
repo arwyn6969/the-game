@@ -30,12 +30,14 @@ export function LibraryProject({
   actionNote,
   onAction,
   onGoReading,
+  replaying,
 }: {
   town: Town;
   busy: boolean;
   actionNote: string;
   onAction: (id: string) => void;
   onGoReading: () => void;
+  replaying: boolean;
 }) {
   const view = libraryView(town);
   const actions = libraryActions(town).map((action) => {
@@ -104,7 +106,7 @@ export function LibraryProject({
               ))}
             </ul>
             {view.story.scene.length === 0 && (
-              <button className="btn" type="button" onClick={onGoReading}>
+              <button className="btn" type="button" onClick={onGoReading} disabled={replaying}>
                 Go to the reading
               </button>
             )}

@@ -732,6 +732,10 @@ textarea.field {
   color: var(--color-bg);
   background: var(--color-primary);
 }
+.dpad button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
 .dpad .u {
   grid-column: 2;
   grid-row: 1;

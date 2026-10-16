@@ -1,5 +1,9 @@
 import type { Agent, Memory, Town } from "./types";
-import { memorySource } from "./conversation";
+import {
+  memorySource,
+  playerWageReceipts as wageReceipts,
+  settledPlayerWageTransfers as settledWageTransfers,
+} from "./conversation";
 import { BABA_LOAF, playerActions } from "./effects";
 import { absMinute, agentById } from "./memory";
 import { formatClock, mentionsSeed } from "./text";
@@ -232,35 +236,6 @@ function shiftReply(town: Town, agent: Agent, text: string): string {
       ? "Understood; I will not treat that as accepting or cancelling work. "
       : "";
   return `${prefix}${fundedShiftReply(town, agent)}`;
-}
-
-function wageReceipts(town: Town, workplace: "cafe" | "grocery"): Memory[] {
-  const line = `${placeTitle(workplace)} paid me ${workplace === "cafe" ? 5 : 4} for a shift I actually worked.`;
-  return agentById(town, "player")
-    .memories.filter(
-      (memory) =>
-        memory.type === "favor" &&
-        memorySource(memory) === "event" &&
-        memory.text === line &&
-        absMinute(memory.day, memory.minute) <= absMinute(town.day, town.minute),
-    )
-    .sort((a, b) => a.day - b.day || a.minute - b.minute);
-}
-
-function settledWageTransfers(town: Town, workplace: "cafe" | "grocery") {
-  const work = fundedPlayerWork(town);
-  const economy = (town as FundedTown).economy;
-  if (!work || !economy) return [];
-  return work.payables
-    .filter((payable) => payable.payer === `till:${workplace}` && payable.status === "settled")
-    .flatMap((payable) => {
-      const transfer = economy.transactions.find((item) => item.id === payable.transactionId);
-      return transfer &&
-        absMinute(transfer.day, transfer.minute) <= absMinute(town.day, town.minute)
-        ? [transfer]
-        : [];
-    })
-    .sort((a, b) => absMinute(a.day, a.minute) - absMinute(b.day, b.minute));
 }
 
 /** Wage evidence comes from the worker's engine receipts, never conversational claims. */

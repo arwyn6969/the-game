@@ -241,6 +241,9 @@ export function TownApp() {
   const movementDirtyRef = useRef(false);
   const startOverRef = useRef(false);
   const toolOpenerRef = useRef<HTMLElement | null>(null);
+  const toolsRef = useRef<ToolPage | null>(null);
+  const importTextRef = useRef<string | null>(null);
+  const importKeepRef = useRef<HTMLButtonElement>(null);
   const hourLock = useRef(false);
   const mounted = useRef(true);
   const runMindRef = useRef<(live: Town, job: ThinkJob) => Promise<void>>(async () => {});
@@ -283,6 +286,8 @@ export function TownApp() {
   const [thinking, setThinking] = useState("");
   const [hiccup, setHiccup] = useState(false);
   const [importText, setImportText] = useState<string | null>(null);
+  importTextRef.current = importText;
+  toolsRef.current = tools;
   const [importError, setImportError] = useState("");
   const [drafts, setDrafts] = useState<Partial<Record<AgentId, string>>>({});
   const draft = drafts[panel ?? "player"] ?? "";
@@ -407,10 +412,12 @@ export function TownApp() {
     toolOpenerRef.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
     keysRef.current.clear();
+    toolsRef.current = page;
     setTools(page);
   }
 
   function closeTools() {
+    toolsRef.current = null;
     setTools(null);
     requestAnimationFrame(() => {
       if (toolOpenerRef.current?.isConnected) toolOpenerRef.current.focus();
@@ -502,11 +509,36 @@ export function TownApp() {
       walkTo(story.gathering.label, story.gathering.tile, 0);
   }
 
+  function stepDirection(code: string) {
+    if (replayRef.current !== null || importTextRef.current !== null) return;
+    stepInputRef.current = code;
+  }
+
+  const importing = importText !== null;
+  useEffect(() => {
+    if (!importing) return;
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const canvas = canvasRef.current;
+    if (routeRef.current) setFarNote("Destination walk stopped while reviewing an import.");
+    routeRef.current = null;
+    keysRef.current.clear();
+    stepInputRef.current = null;
+    importKeepRef.current?.focus();
+    return () => {
+      requestAnimationFrame(() => {
+        if (opener?.isConnected) opener.focus();
+        else if (canvas?.isConnected) canvas.focus();
+      });
+    };
+  }, [importing]);
+
   useEffect(() => {
     onlineRef.current = online;
   }, [online]);
   useEffect(() => {
     replayRef.current = replay;
+    keysRef.current.clear();
+    stepInputRef.current = null;
     if (replay) {
       const pendingPlayer = activeJobRef.current?.job.kind === "player";
       requestSerial.current += 1;
@@ -706,13 +738,22 @@ export function TownApp() {
 
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
+      if (importTextRef.current !== null) {
+        if (event.code === "Escape") {
+          event.preventDefault();
+          setImportText(null);
+        }
+        return;
+      }
       if (event.code === "Escape") {
         if (routeRef.current) {
           routeRef.current = null;
           setFarNote("Destination walk stopped.");
         }
         stepInputRef.current = null;
-        setTools(null);
+        if (toolsRef.current) closeTools();
+        else if (panelRef.current || boardRef.current)
+          requestAnimationFrame(() => canvasRef.current?.focus());
         if (panelRef.current) {
           setPanel(null);
         }
@@ -723,6 +764,7 @@ export function TownApp() {
         return;
       }
       if (interactiveControl(focusOf(event.target))) return;
+      if (replayRef.current !== null) return;
       if (opensTalk(event.code, false, Boolean(panelRef.current || boardRef.current))) {
         const live = townRef.current;
         if (!live || replayRef.current) return;
@@ -791,7 +833,7 @@ export function TownApp() {
 
     const stepPlayer = () => {
       const live = townRef.current;
-      if (!live || replayRef.current !== null) return;
+      if (!live || replayRef.current !== null || importTextRef.current !== null) return;
       let { x, y } = axis(keysRef.current);
       const stepCode = stepInputRef.current;
       if (!x && !y && (routeRef.current || stepCode) && moveCool > 0) return;
@@ -911,6 +953,7 @@ export function TownApp() {
           stepPlayer();
           if (
             replayRef.current === null &&
+            importTextRef.current === null &&
             speedRef.current > 0 &&
             !hourLock.current &&
             !foregroundPendingRef.current
@@ -1934,9 +1977,8 @@ export function TownApp() {
           <Pad
             code="ArrowUp"
             keys={keysRef}
-            onStep={(code) => {
-              stepInputRef.current = code;
-            }}
+            onStep={stepDirection}
+            disabled={replay !== null || importing}
             className="u"
             label="North"
           >
@@ -1945,9 +1987,8 @@ export function TownApp() {
           <Pad
             code="ArrowLeft"
             keys={keysRef}
-            onStep={(code) => {
-              stepInputRef.current = code;
-            }}
+            onStep={stepDirection}
+            disabled={replay !== null || importing}
             className="l"
             label="West"
           >
@@ -1956,9 +1997,8 @@ export function TownApp() {
           <Pad
             code="ArrowRight"
             keys={keysRef}
-            onStep={(code) => {
-              stepInputRef.current = code;
-            }}
+            onStep={stepDirection}
+            disabled={replay !== null || importing}
             className="r"
             label="East"
           >
@@ -1967,9 +2007,8 @@ export function TownApp() {
           <Pad
             code="ArrowDown"
             keys={keysRef}
-            onStep={(code) => {
-              stepInputRef.current = code;
-            }}
+            onStep={stepDirection}
+            disabled={replay !== null || importing}
             className="d"
             label="South"
           >
@@ -2024,9 +2063,8 @@ export function TownApp() {
               setInspect(value);
             }}
             onGo={goTo}
-            onStep={(code) => {
-              stepInputRef.current = code;
-            }}
+            onStep={stepDirection}
+            replaying={replay !== null}
             onAction={(id) => chooseAction(town, "player", id)}
             onLibrary={() => setTools("library")}
             onLibraryAction={(id) => chooseLibrary(town, id)}
@@ -2171,7 +2209,33 @@ export function TownApp() {
       </footer>
       {board && <Board town={town} onClose={() => setBoard(false)} />}
       {importText !== null && (
-        <div className="gate absolute inset-0 z-10 bg-bg/90">
+        <div
+          className="gate absolute inset-0 z-10 bg-bg/90"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="town-import-title"
+          aria-describedby="town-import-description"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              event.stopPropagation();
+              setImportText(null);
+            }
+            if (event.key === "Tab") {
+              const buttons =
+                event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)");
+              const first = buttons[0];
+              const last = buttons[buttons.length - 1];
+              if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last?.focus();
+              } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first?.focus();
+              }
+            }
+          }}
+        >
           <form
             className="w-full max-w-md rounded-2xl border border-line bg-surface p-6"
             onSubmit={(event) => {
@@ -2185,8 +2249,10 @@ export function TownApp() {
               void acceptImportedTown(next);
             }}
           >
-            <h2 className="font-display text-2xl">Replace the live town?</h2>
-            <p className="mt-3 text-muted">
+            <h2 id="town-import-title" className="font-display text-2xl">
+              Replace the live town?
+            </h2>
+            <p id="town-import-description" className="mt-3 text-muted">
               The people here now will be overwritten in this browser.{" "}
               {(() => {
                 const preview = previewDay(importText);
@@ -2197,12 +2263,21 @@ export function TownApp() {
               })()}{" "}
               Debts, notes, and selves in it become the town.
             </p>
-            {importError && <p className="mt-3 text-primary">{importError}</p>}
+            {importError && (
+              <p className="mt-3 text-primary" role="alert">
+                {importError}
+              </p>
+            )}
             <div className="mt-5 flex gap-2">
               <button className="btn" data-on="true" type="submit">
                 Replace
               </button>
-              <button className="btn" type="button" onClick={() => setImportText(null)}>
+              <button
+                ref={importKeepRef}
+                className="btn"
+                type="button"
+                onClick={() => setImportText(null)}
+              >
                 Keep this town
               </button>
             </div>
@@ -2298,6 +2373,7 @@ function Pad({
   label,
   children,
   onStep,
+  disabled,
 }: {
   code: string;
   keys: React.RefObject<Set<string>>;
@@ -2305,12 +2381,14 @@ function Pad({
   label: string;
   children: string;
   onStep: (code: string) => void;
+  disabled: boolean;
 }) {
   return (
     <button
       type="button"
       className={className}
       aria-label={label}
+      disabled={disabled}
       onClick={(event) => {
         if (event.detail === 0) onStep(code);
       }}

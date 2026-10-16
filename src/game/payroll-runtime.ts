@@ -1,6 +1,7 @@
 import type { AgentId, Town } from "./types";
 import type { FundedTown, EconomyCommand } from "./economy-types";
 import { initializeFundedEconomy } from "./economy-migration";
+import { availableFunds } from "./economy";
 import {
   approvePayrollAgreement,
   CAFE_CANCELLATION,
@@ -10,6 +11,7 @@ import {
   settleWorkPayable,
   wageInterval,
   type PayrollApproval,
+  protectPayroll,
 } from "./funded-work";
 import { makeMemory, pushMemory } from "./memory";
 import { zoneAt, placeTitle } from "./world";
@@ -68,9 +70,30 @@ export const runtimeCommand = (
 });
 
 export function activateFundedTown(town: Town): { ok: boolean; reason?: string } {
-  if ((town as FundedTown).economy?.work) return { ok: true };
-  const result = initializeFundedEconomy(town);
-  if (!result.ok) return result;
+  if (!(town as FundedTown).economy?.work) {
+    const result = initializeFundedEconomy(town);
+    if (!result.ok) return result;
+  }
+  const economy = (town as FundedTown).economy!;
+  // A till may receive real sales/contributions after the first migration.
+  // Retry only when a complete old wage can now be protected, keeping partial
+  // evidence explicit and avoiding a new empty command on every game minute.
+  if (
+    economy.work!.legacyClaims.some(
+      (claim) =>
+        claim.resolution === "underfunded" &&
+        claim.payer !== null &&
+        claim.amount !== null &&
+        claim.amount > 0 &&
+        availableFunds(town, claim.payer) >= claim.amount,
+    )
+  ) {
+    const protectedResult = protectPayroll(
+      town,
+      runtimeCommand(town, "protect-payroll", "kevin", {}, `retry:${economy.revision}`),
+    );
+    if (!protectedResult.ok) return { ok: false, reason: protectedResult.reason };
+  }
   // Existing NPC agreements are authored town decisions. Player recognition
   // always remains an explicit choice; ambiguous evidence is never inferred.
   const work = (town as FundedTown).economy!.work!;

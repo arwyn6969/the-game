@@ -44,6 +44,7 @@ export function PlayerTools({
   onLibrary,
   onLibraryAction,
   onGoReading,
+  replaying,
 }: {
   page: ToolPage;
   town: Town;
@@ -64,6 +65,7 @@ export function PlayerTools({
   onLibrary: () => void;
   onLibraryAction: (id: string) => void;
   onGoReading: () => void;
+  replaying: boolean;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
@@ -122,6 +124,12 @@ export function PlayerTools({
         </button>
       </div>
       <div className="mind-body tool-body">
+        {replaying && (
+          <p className="tool-next-step" role="status">
+            Replay is view-only. Return to now to walk or make a choice. These tools show your
+            current town.
+          </p>
+        )}
         {page === "library" && (
           <LibraryProject
             town={town}
@@ -129,6 +137,7 @@ export function PlayerTools({
             actionNote={actionNote}
             onAction={onLibraryAction}
             onGoReading={onGoReading}
+            replaying={replaying}
           />
         )}
         {page === "help" && (
@@ -423,14 +432,20 @@ export function PlayerTools({
                   <p>
                     <ReadingStatus status={reading.gathering.status} />
                   </p>
-                  <button className="btn" type="button" onClick={onGoReading}>
+                  <button className="btn" type="button" onClick={onGoReading} disabled={replaying}>
                     Go to the reading
                   </button>
                 </div>
               )}
               <div className="tool-destinations">
                 {PLACE_IDS.filter((place) => place !== "street").map((place) => (
-                  <button className="btn" key={place} type="button" onClick={() => onGo(place)}>
+                  <button
+                    className="btn"
+                    key={place}
+                    type="button"
+                    onClick={() => onGo(place)}
+                    disabled={replaying}
+                  >
                     {placeTitle(place)}
                   </button>
                 ))}
@@ -440,7 +455,13 @@ export function PlayerTools({
               <h3>Move one tile</h3>
               <div className="tool-directions">
                 {directions.map((d) => (
-                  <button className="btn" type="button" key={d.code} onClick={() => onStep(d.code)}>
+                  <button
+                    className="btn"
+                    type="button"
+                    key={d.code}
+                    onClick={() => onStep(d.code)}
+                    disabled={replaying}
+                  >
                     {d.label}
                   </button>
                 ))}

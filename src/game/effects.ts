@@ -27,7 +27,7 @@ import {
   activateFundedTown,
   closeCompletedWorkItems,
   fundedWorkProjectId,
-  FUNDED_CAFE_SHIFT_TEXT,
+  FUNDED_CAFE_SHIFT_TEXT as PLAYER_CAFE_SHIFT,
   runtimeCommand,
 } from "./payroll-runtime";
 import {
@@ -516,7 +516,7 @@ type QuotedAction = PlayerAction & {
   reference?: string;
 };
 
-export const PLAYER_CAFE_SHIFT = FUNDED_CAFE_SHIFT_TEXT;
+export { PLAYER_CAFE_SHIFT };
 export const BABA_LOAF = "A loaf from Baba. It can be eaten.";
 
 function adoptActionDraft(town: Town, draft: Town) {

@@ -4,7 +4,11 @@ import type { GameTime } from "./economy-types";
 import { agentById } from "./memory";
 import { wageInterval } from "./funded-work";
 import { zoneAt } from "./world";
-import { buyReadingRefreshments, readingRefreshmentReceipt } from "./commerce";
+import {
+  buyReadingRefreshments,
+  readingRefreshmentReceipt,
+  validateReadingPurchases,
+} from "./commerce";
 import { availableFunds } from "./economy";
 
 export type ReadingEvening = {
@@ -134,8 +138,18 @@ function atWork(town: Town, state: Library, id: AgentId): boolean {
 function arrived(town: Town, state: Library, id: AgentId) {
   const target = seat(state, id),
     actual = agentById(town, id).tile;
-  return Boolean(
-    target && actual.x === target.x && actual.y === target.y && !atWork(town, state, id),
+  if (!target || atWork(town, state, id)) return false;
+  const distance = Math.abs(actual.x - target.x) + Math.abs(actual.y - target.y);
+  if (distance === 0) return true;
+  // Normal movement stops beside a seat occupied by the player or a neighbour.
+  // Once gathered, that guest remains present if the obstruction steps away.
+  return (
+    distance === 1 &&
+    zoneAt(actual.x, actual.y) === venue(state)?.place &&
+    (state.evening?.status === "ready" ||
+      town.agents.some(
+        (agent) => agent.id !== id && agent.tile.x === target.x && agent.tile.y === target.y,
+      ))
   );
 }
 function near(town: Town, state: Library) {
@@ -554,6 +568,7 @@ export function validateReadingEvening(town: Town, state: Library): string[] {
   if (Object.keys(e.originalPlans).some((id) => !guests(state).includes(id as AgentId)))
     errors.push("An unrelated resident cannot own a reading timetable.");
   if (errors.length) return errors;
+  errors.push(...validateReadingPurchases(town, e.eventId));
   if (
     e.status === "ready" &&
     (!e.readyAt || !guests(state).every((id) => arrived(town, state, id)))
@@ -561,6 +576,11 @@ export function validateReadingEvening(town: Town, state: Library): string[] {
     errors.push("Ready guests need an actual arrival time and physical attendance.");
   for (const kind of ["bread", "tea"] as const) {
     const sale = readingRefreshmentReceipt(town, e.eventId, kind);
+    if (
+      !sale &&
+      state.events.some((event) => event.id === `reading:${e.eventId}:refreshments:${kind}`)
+    )
+      errors.push("The reading's supplied tray lacks its actual cash-sale receipt.");
     if (!sale) continue;
     const payment = town.economy!.transactions.find((item) => item.id === sale.transactionId)!;
     const boughtAt = { day: payment.day, minute: payment.minute };

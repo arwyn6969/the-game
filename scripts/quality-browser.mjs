@@ -275,6 +275,8 @@ try {
   report.library = await runLibraryChecks(browser, target.href, join(out, "library"));
   const { runReadingEveningChecks } = await import("./reading-evening-browser.mjs");
   report.readings = await runReadingEveningChecks(browser, target.href, join(out, "readings"));
+  const { runUiEdgeChecks } = await import("./quality-ui-edges.mjs");
+  report.uiEdges = await runUiEdgeChecks(browser, target.href, join(out, "ui-edges"));
   console.log(
     JSON.stringify(
       { ok: true, journeys: report.journeys, report: join(out, "results.json") },

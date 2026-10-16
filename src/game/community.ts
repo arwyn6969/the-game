@@ -893,7 +893,11 @@ export function libraryActions(town: Town): LibraryAction[] {
   if (state.revisions.length)
     for (const mode of ["verified", "marked"] as const) {
       const revision = state.revisions.at(-1)!;
-      if (state.notice?.revision === revision.id && state.notice.mode === mode) continue;
+      if (
+        (state.notice?.revision === revision.id && state.notice.mode === mode) ||
+        state.events.some((item) => item.id === `library:notice:${revision.id}:${mode}`)
+      )
+        continue;
       add(
         "publish",
         mode,
@@ -1288,7 +1292,10 @@ export function advanceLibraryProject(town: Town) {
 export function residentLibraryReply(town: Town, resident: AgentId): string | null {
   const state = getState(town);
   if (!state) return null;
-  const known = state.events.filter(
+  return knownProjectEvents(town, state, resident).at(-1)?.text ?? null;
+}
+function knownProjectEvents(town: Town, state: LibraryState, resident: AgentId) {
+  return state.events.filter(
     (item) =>
       item.participants.includes(resident) ||
       item.witnesses.includes(resident) ||
@@ -1296,7 +1303,16 @@ export function residentLibraryReply(town: Town, resident: AgentId): string | nu
         (memory) => memory.source === "event" && memory.text === item.text,
       ),
   );
-  return known.at(-1)?.text ?? null;
+}
+/** Reading questions cannot borrow an unrelated payment or index discussion. */
+export function residentReadingReply(town: Town, resident: AgentId): string | null {
+  const state = getState(town);
+  if (!state) return null;
+  return (
+    knownProjectEvents(town, state, resident)
+      .filter((item) => item.id.startsWith("reading:"))
+      .at(-1)?.text ?? null
+  );
 }
 export function validateLibraryState(town: Town): string[] {
   const state = getState(town);

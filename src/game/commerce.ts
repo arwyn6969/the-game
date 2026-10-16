@@ -43,6 +43,8 @@ export function buyReadingRefreshments(
 ): EconomyResult<ReadingRefreshmentSale> {
   if (!validEventId(eventId) || !validKind(kind))
     return { ok: false, code: "invalid-event", reason: "Read the current reading event first." };
+  const problems = validateReadingPurchases(town, eventId);
+  if (problems.length) return { ok: false, code: "invalid-purchase", reason: problems.join(" ") };
   return runEconomyCommand<ReadingRefreshmentSale>(
     town,
     purchaseCommand(eventId, kind),
@@ -127,4 +129,19 @@ export function readingRefreshmentReceipt(
     transactionId: payment.id,
   };
   return canonicalEconomyPayload(receipt.value) === canonicalEconomyPayload(value) ? value : null;
+}
+
+/** A malformed recorded sale is recovery data, never an unpaid item to sell again. */
+export function validateReadingPurchases(town: Town, eventId: string): string[] {
+  return (["bread", "tea"] as const).flatMap((kind) => {
+    const command = purchaseCommand(eventId, kind);
+    const recorded =
+      town.economy?.commandReceipts.some((item) => item.id === command.id) ||
+      town.economy?.transactions.some((item) => item.id === transactionId(eventId, kind));
+    return recorded && !readingRefreshmentReceipt(town, eventId, kind)
+      ? [
+          "The reading's recorded refreshment sale has a malformed cash-sale receipt; preserve the original save.",
+        ]
+      : [];
+  });
 }

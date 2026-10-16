@@ -355,7 +355,14 @@ export function classifyLegacyPayroll(town: Town): LegacyWageClaim[] {
 
 function protectOnDraft(town: Town, context: EconomyContext) {
   const work = state(town);
-  for (const claim of work.legacyClaims) {
+  // Scarce newly available cash settles earned liabilities before accepting an
+  // unworked unit. Existing protected holds and the original claim order stay intact.
+  const claims = [...work.legacyClaims].sort(
+    (left, right) =>
+      Number(right.classification === "completed-unpaid") -
+      Number(left.classification === "completed-unpaid"),
+  );
+  for (const claim of claims) {
     if (claim.resolution !== "underfunded" || !claim.payer || !claim.amount) continue;
     if (availableFunds(town, claim.payer) < claim.amount) {
       claim.reason = `The prior ${claim.amount}-coin wage claim is not fully funded.`;
@@ -1398,8 +1405,8 @@ function validateWorkRecords(town: Town, economy: EconomyState): string[] {
   if (errors.length) return errors;
   const actorExists = (id: AgentId) => town.agents.some((agent) => agent.id === id);
   const knownAccount = (account: AccountId) => Object.hasOwn(economy.openingBalances, account);
-  const recordedCommand = (id: string) =>
-    economy.commandReceipts.find((receipt) => receipt.id === id);
+  const commandsById = new Map(economy.commandReceipts.map((receipt) => [receipt.id, receipt]));
+  const recordedCommand = (id: string) => commandsById.get(id);
   const commandTerms = (id: string): unknown => {
     const receipt = recordedCommand(id);
     return receipt ? (JSON.parse(receipt.payload) as { terms: unknown }).terms : null;
@@ -1412,6 +1419,34 @@ function validateWorkRecords(town: Town, economy: EconomyState): string[] {
         receipt.actor === actor &&
         canonical(commandTerms(receipt.id)) === canonical(terms),
     );
+  const attendanceByAgreement = new Map<string, Map<string, number>>();
+  for (const receipt of economy.commandReceipts) {
+    if (receipt.kind !== "record-cafe-attendance") continue;
+    const terms = commandTerms(receipt.id) as {
+      agreementId?: string;
+      day?: number;
+      minute?: number;
+    } | null;
+    const agreement = work.agreements.find((item) => item.id === terms?.agreementId);
+    if (
+      !agreement ||
+      agreement.kind !== "cafe-shift" ||
+      receipt.authority !== "simulation" ||
+      receipt.actor !== agreement.worker ||
+      !validTime(agreement.accepted) ||
+      receipt.day * 1440 + receipt.minute <
+        agreement.accepted.day * 1440 + agreement.accepted.minute ||
+      canonical(terms) !==
+        canonical({ agreementId: agreement.id, day: receipt.day, minute: receipt.minute })
+    ) {
+      errors.push(`Attendance command ${receipt.id} lacks its actual agreement, worker or minute.`);
+      continue;
+    }
+    const recorded = attendanceByAgreement.get(agreement.id) ?? new Map<string, number>();
+    const stamp = `${receipt.day}:${receipt.minute}`;
+    recorded.set(stamp, (recorded.get(stamp) ?? 0) + 1);
+    attendanceByAgreement.set(agreement.id, recorded);
+  }
   for (const command of economy.commandReceipts) {
     if (command.kind === "protect-payroll") {
       if (!Array.isArray(command.value))
@@ -1565,6 +1600,14 @@ function validateWorkRecords(town: Town, economy: EconomyState): string[] {
       )
         errors.push(
           `Wage agreement ${agreement.id} does not match its employer-approved funded terms.`,
+        );
+      const recorded = attendanceByAgreement.get(agreement.id) ?? new Map<string, number>();
+      if (
+        agreement.attendance.length !== recorded.size ||
+        agreement.attendance.some((stamp) => recorded.get(stamp) !== 1)
+      )
+        errors.push(
+          `Wage agreement ${agreement.id} has missing, duplicated or unsupported attendance minutes.`,
         );
     }
     if (
