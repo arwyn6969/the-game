@@ -94,6 +94,58 @@ export function pairObligations(town: Town, a: AgentId, b: AgentId) {
   }));
 }
 
+/** Historical prose is evidence only with the exact employer, amount and a past event date. */
+export function playerWageReceipts(town: Town, workplace: "cafe" | "grocery"): Memory[] {
+  const line = `${placeTitle(workplace)} paid me ${workplace === "cafe" ? 5 : 4} for a shift I actually worked.`;
+  return (town.agents.find((agent) => agent.id === "player")?.memories ?? [])
+    .filter(
+      (memory) =>
+        memory.type === "favor" &&
+        memorySource(memory) === "event" &&
+        memory.text === line &&
+        Number.isSafeInteger(memory.day) &&
+        memory.day >= 1 &&
+        Number.isSafeInteger(memory.minute) &&
+        memory.minute >= 0 &&
+        memory.minute < 1440 &&
+        memory.day * 1440 + memory.minute <= town.day * 1440 + town.minute,
+    )
+    .sort((a, b) => a.day - b.day || a.minute - b.minute);
+}
+
+/** Read actual settled wages independently of optional older prose memories. */
+export function settledPlayerWageTransfers(town: Town, workplace: "cafe" | "grocery") {
+  const economy = town.economy;
+  if (!economy?.work) return [];
+  const transactions = new Map(economy.transactions.map((item) => [item.id, item]));
+  const reversed = new Set(
+    economy.transactions.flatMap((item) => (item.reversalOf ? [item.reversalOf] : [])),
+  );
+  return economy.work.payables
+    .filter(
+      (payable) =>
+        payable.worker === "player" &&
+        payable.payer === `till:${workplace}` &&
+        payable.status === "settled",
+    )
+    .flatMap((payable) => {
+      const transfer = payable.transactionId ? transactions.get(payable.transactionId) : undefined;
+      return transfer &&
+        transfer.kind === "transfer" &&
+        transfer.from === payable.payer &&
+        transfer.to === "agent:player" &&
+        transfer.amount === payable.amount &&
+        transfer.agreementId === payable.agreementId &&
+        transfer.holdId === payable.holdId &&
+        !transfer.reversalOf &&
+        !reversed.has(transfer.id) &&
+        transfer.day * 1440 + transfer.minute <= town.day * 1440 + town.minute
+        ? [transfer]
+        : [];
+    })
+    .sort((a, b) => a.day - b.day || a.minute - b.minute);
+}
+
 /**
  * Narrow, deterministic guard for common unsupported player-action claims.
  * This does not claim to verify arbitrary prose; evidence instructions and evals
@@ -149,19 +201,18 @@ export function groundPlayerReply(
   ) {
     const workplace = resident.id === "kevin" ? "cafe" : resident.id === "baba" ? "grocery" : null;
     const requestedDay = /\byesterday\b/i.test(playerText) ? town.day - 1 : town.day;
+    const settlement =
+      workplace &&
+      [...settledPlayerWageTransfers(town, workplace)]
+        .reverse()
+        .find((item) => item.day === requestedDay);
+    if (settlement)
+      return `The accounts record ${settlement.amount} paid to you on day ${settlement.day}, ${formatClock(settlement.minute)}. This conversation made no new payment.`;
     const receipt =
       workplace &&
-      [...player.memories]
+      [...playerWageReceipts(town, workplace)]
         .reverse()
-        .find(
-          (memory) =>
-            memory.type === "favor" &&
-            memorySource(memory) === "event" &&
-            memory.day === requestedDay &&
-            (memory.day < town.day || memory.minute <= town.minute) &&
-            memory.text ===
-              `${placeTitle(workplace)} paid me ${workplace === "cafe" ? 5 : 4} for a shift I actually worked.`,
-        );
+        .find((memory) => memory.day === requestedDay);
     return receipt
       ? `The wage record from day ${receipt.day}, ${formatClock(receipt.minute)} says: ${receipt.text}`
       : "I have no wage receipt to confirm that. Talking does not pay a wage; your agreement and recorded work decide it.";

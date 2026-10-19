@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-16",
+  "baseSource": "d67b31657ad82163065e2e7ed6fc049a97449745",
+  "runtimeSource": "8bb77c4c0430c06bebb7fc0a2ea4c49c08ef15d0",
+  "node": "24.19.0",
+  "checks": {
+    "fullTests": {
+      "script": 541,
+      "appAuth": 55,
+      "total": 596,
+      "failed": 0
+    },
+    "townTests": {
+      "passed": 304,
+      "failed": 0
+    },
+    "newEngineRegressions": {
+      "dialogueAndModuleOrder": 12,
+      "readingNoticeAndReceipts": 5,
+      "payrollAndAttendance": 6
+    },
+    "typecheck": "passed",
+    "lint": {
+      "errors": 0,
+      "inheritedWarnings": 1
+    },
+    "townDiagnostics": "completed",
+    "productionBuild": "passed",
+    "databaseMigration": "skipped; DATABASE_URL unset"
+  },
+  "browser": {
+    "desktop": [1280, 800],
+    "phone": [390, 844],
+    "builtOrdinaryJourneys": "passed",
+    "librarySuccessFailure": "passed",
+    "bothReadingChoices": "passed",
+    "portableImportReload": "passed",
+    "keyboardAndTouch": "passed",
+    "replayMovementAndRouteCancellation": "passed",
+    "importModalFocusAndEscape": "passed",
+    "olderClosedProject": "passed",
+    "mockedAiAndRecovery": "passed",
+    "mockedCalls": 21,
+    "realProviderCalls": 0,
+    "pageConsoleErrors": 0
+  },
+  "compatibility": {
+    "townSchema": "unchanged; v2 with v1 import",
+    "savedSceneVersion1Text": "unchanged",
+    "personalTowns": "not used in tests",
+    "rawRecovery": "retained"
+  },
+  "publication": "not performed",
+  "humanEnjoyment": "not measured; playtest remains open"
+}

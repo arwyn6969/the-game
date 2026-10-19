@@ -1,6 +1,10 @@
 import type { Agent, Memory, Town } from "./types";
-import { memorySource } from "./conversation";
-import { BABA_LOAF, PLAYER_CAFE_SHIFT, playerActions } from "./effects";
+import {
+  memorySource,
+  playerWageReceipts as wageReceipts,
+  settledPlayerWageTransfers as settledWageTransfers,
+} from "./conversation";
+import { BABA_LOAF, playerActions } from "./effects";
 import { absMinute, agentById } from "./memory";
 import { formatClock, mentionsSeed } from "./text";
 import { placeTitle } from "./world";
@@ -11,7 +15,7 @@ import type { FundedTown } from "./economy-types";
 
 type Intent =
   "wages" | "work" | "money" | "stock" | "help" | "invitation" | "day" | "time" | "role";
-type Exchange = { question: string; answer: string };
+type Exchange = { question: string; answer: string; day: number };
 
 const normalize = (text: string) => text.toLowerCase().replace(/[’‘]/g, "'").trim();
 
@@ -133,6 +137,7 @@ function latestExchange(town: Town, agent: Agent): Exchange | null {
     .slice(-3)
     .reverse();
   let latest: Exchange | null = null;
+  let referenceDay: number | undefined;
   for (const memory of recent) {
     const age = absMinute(town.day, town.minute) - absMinute(memory.day, memory.minute);
     if (memory.seed || mentionsSeed(memory.text) || age < 0 || age > 180) break;
@@ -143,8 +148,16 @@ function latestExchange(town: Town, agent: Agent): Exchange | null {
     const question = [...turns].reverse().find((turn) => turn.speaker === "player");
     const answer = [...turns].reverse().find((turn) => turn.speaker === agent.id);
     if (!question || !answer) break;
-    latest ??= { question: question.text, answer: answer.text };
-    if (intentOf(question.text)) return { question: question.text, answer: latest.answer };
+    latest ??= { question: question.text, answer: answer.text, day: memory.day };
+    // The newest explicit date in a follow-up chain wins. Resolve relative words
+    // at the time they were spoken, including when the next reply is after midnight.
+    referenceDay ??= /\byesterday\b/i.test(question.text)
+      ? memory.day - 1
+      : /\btoday\b/i.test(question.text)
+        ? memory.day
+        : undefined;
+    if (intentOf(question.text))
+      return { question: question.text, answer: latest.answer, day: referenceDay ?? memory.day };
     if (!isFollowup(question.text)) break;
   }
   return latest;
@@ -176,113 +189,71 @@ function refusing(raw: string): boolean {
   );
 }
 
-function cafeShift(town: Town) {
-  return agentById(town, "player").projects.find(
-    (project) =>
-      project.owner === "player" &&
-      project.kind === "shift" &&
-      project.status === "open" &&
-      (project.place ?? "cafe") === "cafe",
-  );
-}
-
 function fundedPlayerWork(town: Town) {
   return (town as FundedTown).economy?.work ? fundedWorkSummary(town, "player") : null;
 }
 
-function fundedShiftReply(town: Town, agent: Agent): string | null {
+function fundedShiftReply(town: Town, agent: Agent): string {
+  const workplace = agent.id === "kevin" ? "cafe" : agent.id === "baba" ? "grocery" : null;
+  if (!workplace)
+    return "Ask Kevin at Hobbs about the cafe shift: 16:00–19:00, with 5 reserved before you accept. Ask Baba about any preserved grocery work. Only eligible attendance counts; I cannot give you a paid job through this conversation.";
   const work = fundedPlayerWork(town);
-  if (!work) return null;
-  if (agent.id !== "kevin")
-    return "Ask Kevin at Hobbs about the cafe shift. Its fee is reserved before acceptance, and only your eligible cafe attendance counts; I cannot give you a paid job through this conversation.";
-  const agreement = [...work.agreements]
+  const payer = `till:${workplace}`;
+  const agreement = [...(work?.agreements ?? [])]
     .reverse()
-    .find((item) => item.kind === "cafe-shift" && ["active", "suspended"].includes(item.status));
-  const choices = playerActions(town, "kevin");
+    .find(
+      (item) =>
+        item.payer === payer &&
+        item.kind === "cafe-shift" &&
+        ["active", "suspended"].includes(item.status),
+    );
+  const choices = playerActions(town, agent.id);
   if (agreement) {
     const paused = agreement.status === "suspended";
     const choice = choices.find((item) =>
       (paused ? /resume/i : /cancel|pause|suspend/i).test(item.label),
     );
-    return `Your cafe shift is ${paused ? "paused" : "open"}. You have ${agreement.eligibleMinutes} eligible cafe minutes recorded toward ${agreement.requiredMinutes}; the full fee is ${agreement.fee}. Accrued progress and reserved pay survive midnight and interruption.${choice ? ` Use ${choice.label} below when you choose.` : " Read the current choices for its available next step."} Talking does not change the agreement.`;
+    return `Your ${workplace} shift is ${paused ? "paused" : "open"}. You have ${agreement.eligibleMinutes} eligible ${workplace} minutes recorded toward ${agreement.requiredMinutes}; the full fee is ${agreement.fee}. Accrued progress and reserved pay survive midnight and interruption.${choice ? ` Use ${choice.label} below when you choose.` : " Read the current choices for its available next step."} Talking does not change the agreement.`;
   }
-  const unresolved = work.legacyClaims.find(
+  const recognition = choices.find((item) => /^Recognise .* work/.test(item.label));
+  if (recognition)
+    return `${recognition.terms}${recognition.disabledReason ? ` ${recognition.disabledReason}` : ""} Read ${recognition.label} below and choose explicitly. Talking does not recognise or accept work.`;
+  const settlement = choices.find((item) => /^Receive earned wage/.test(item.label));
+  if (settlement)
+    return `Your ${workplace} work is complete and its earned wage is still payable. ${settlement.terms}${settlement.disabledReason ? ` ${settlement.disabledReason}` : ""} Read ${settlement.label} below; talking does not transfer money.`;
+  const unresolved = work?.legacyClaims.find(
     (claim) =>
-      claim.payer === "till:cafe" && ["unresolved", "underfunded"].includes(claim.resolution),
+      (claim.payer === payer || (claim.payer === null && workplace === "cafe")) &&
+      ["unresolved", "underfunded", "protected"].includes(claim.resolution),
   );
   if (unresolved)
-    return `Your saved cafe work remains labelled legacy evidence: ${unresolved.reason} It has not been erased or turned into an invented payment. Read the current choices for any funded recognition or replacement.`;
+    return `Your saved ${workplace} work remains labelled legacy evidence: ${unresolved.reason} It has not been erased or turned into an invented payment. Read the current choices for any funded recognition or replacement.`;
   const offer = choices.find((item) => /Accept cafe shift/i.test(item.label));
   return offer
     ? `${offer.terms}${offer.disabledReason ? ` ${offer.disabledReason}` : ""} Read the terms below and choose explicitly; asking does not accept work.`
-    : "There is no available cafe shift offer in the current choices. No agreement was made by this conversation.";
+    : workplace === "grocery"
+      ? "You have no open grocery funded shift agreement, and I have no new grocery shift offer. Ask Kevin at Hobbs about the cafe shift: 16:00–19:00, with 5 reserved before acceptance. No agreement was made by this conversation."
+      : "There is no available cafe shift offer in the current choices. No agreement was made by this conversation.";
 }
 
 function shiftReply(town: Town, agent: Agent, text: string): string {
-  const funded = fundedShiftReply(town, agent);
-  if (funded)
-    return refusing(text)
-      ? `Understood; I will not treat that as accepting or cancelling work. ${funded}`
-      : funded;
-  const shift = cafeShift(town);
   const keeping =
     /\b(?:don't|do not|won't|will not) (?:want to )?(?:quit|cancel|stop|leave)\b/i.test(text);
-  const declining = refusing(text) && !keeping;
   const prefix = keeping
-    ? shift
-      ? "Understood; you want to keep your agreement. "
-      : "You have no cafe shift to cancel. "
-    : declining
+    ? "Understood; you want to keep your agreement. Talking does not cancel work. "
+    : refusing(text)
       ? "Understood; I will not treat that as accepting or cancelling work. "
       : "";
-  if (agent.id !== "kevin")
-    return `${prefix}Ask Kevin at Hobbs about the cafe shift: 16:00–19:00 each day, 5 after three game hours on the floor if the till can pay. He has the current terms and availability; I cannot offer you a paid job here.`;
-  if (shift) {
-    const hours =
-      shift.text === PLAYER_CAFE_SHIFT
-        ? "Your cafe shift is open, 16:00–19:00 each day until cancelled."
-        : "Your cafe shift is open; its agreed hours are in your timetable.";
-    return `${prefix}${hours} Today you have ${Math.round(agentById(town, "player").shiftHours * 60)} worked minutes recorded. Three game hours earn 5 if the till can pay. Unpaid hours reset at midnight. Use Cancel cafe shift below to end the agreement; talking does not change it.`;
-  }
-  if (/\b(?:quit|cancel|stop|leave)\b/i.test(text))
-    return "You have no open cafe shift to cancel. This conversation has not changed any agreement.";
-  const offer = playerActions(town, "kevin").find((action) =>
-    action.label.startsWith("Accept cafe shift"),
-  );
-  return `${prefix}The cafe shift is 16:00–19:00 each day until cancelled, for 5 after three game hours on the floor if the till can pay. ${offer?.disabledReason ? `${offer.disabledReason} ` : ""}Read the terms below and choose Accept to take it. Talking alone commits you to nothing.`;
-}
-
-function wageReceipts(town: Town, workplace: "cafe" | "grocery"): Memory[] {
-  const line = `${placeTitle(workplace)} paid me ${workplace === "cafe" ? 5 : 4} for a shift I actually worked.`;
-  return agentById(town, "player")
-    .memories.filter(
-      (memory) =>
-        memory.type === "favor" &&
-        memorySource(memory) === "event" &&
-        memory.text === line &&
-        absMinute(memory.day, memory.minute) <= absMinute(town.day, town.minute),
-    )
-    .sort((a, b) => a.day - b.day || a.minute - b.minute);
-}
-
-function settledWageTransfers(town: Town, workplace: "cafe" | "grocery") {
-  const work = fundedPlayerWork(town);
-  const economy = (town as FundedTown).economy;
-  if (!work || !economy) return [];
-  return work.payables
-    .filter((payable) => payable.payer === `till:${workplace}` && payable.status === "settled")
-    .flatMap((payable) => {
-      const transfer = economy.transactions.find((item) => item.id === payable.transactionId);
-      return transfer &&
-        absMinute(transfer.day, transfer.minute) <= absMinute(town.day, town.minute)
-        ? [transfer]
-        : [];
-    })
-    .sort((a, b) => absMinute(a.day, a.minute) - absMinute(b.day, b.minute));
+  return `${prefix}${fundedShiftReply(town, agent)}`;
 }
 
 /** Wage evidence comes from the worker's engine receipts, never conversational claims. */
-function wageReply(town: Town, agent: Agent, text: string): string {
+function wageReply(
+  town: Town,
+  agent: Agent,
+  text: string,
+  requestedDay = /\byesterday\b/i.test(text) ? town.day - 1 : town.day,
+): string {
   const workplace = agent.id === "kevin" ? "cafe" : agent.id === "baba" ? "grocery" : null;
   if (!workplace)
     return "Ask Kevin about cafe wages, or Baba about grocery wages. The employer and your recorded work determine payment; I cannot pay you through a conversation.";
@@ -291,7 +262,6 @@ function wageReply(town: Town, agent: Agent, text: string): string {
   const economy = (town as FundedTown).economy;
   if (work && economy) {
     const payer = `till:${workplace}`;
-    const requestedDay = /\byesterday\b/i.test(text) ? town.day - 1 : town.day;
     const settlements = settledWageTransfers(town, workplace);
     const paid = [...settlements].reverse().find((item) => item.day === requestedDay);
     const historical = [...wageReceipts(town, workplace)]
@@ -324,7 +294,6 @@ function wageReply(town: Town, agent: Agent, text: string): string {
     return `${evidence}${status}${legacy ? ` Earlier work is preserved as legacy evidence: ${legacy.reason}` : ""} Asking does not pay a second wage.`;
   }
   const receipts = wageReceipts(town, workplace);
-  const requestedDay = /\byesterday\b/i.test(text) ? town.day - 1 : town.day;
   const receipt = [...receipts].reverse().find((memory) => memory.day === requestedDay);
   const last = receipts.at(-1);
   const amount = workplace === "cafe" ? 5 : 4;
@@ -341,22 +310,15 @@ function wageReply(town: Town, agent: Agent, text: string): string {
       (project.place ?? "cafe") === workplace,
   );
   let status = shift
-    ? `Your ${workplace} shift is still open${shift.text === PLAYER_CAFE_SHIFT ? ", 16:00–19:00 daily" : "; check its hours in your timetable"}.`
+    ? `Your saved ${workplace} shift remains legacy evidence; its timetable and ${Math.round(player.shiftHours * 60)} aggregate minutes are preserved. It is not an active funded agreement.`
     : `You have no open ${workplace} shift agreement.`;
-  if (requestedDay === town.day && !receipt && shift) {
-    const minutes = Math.round(player.shiftHours * 60);
-    status += ` Today has ${minutes} worked minutes recorded; the full wage of ${amount} needs 180.`;
-    if (player.paidToday)
-      status +=
-        " Today's wage is already marked paid, but I cannot verify this employer's receipt.";
-    else if ((town.tills[workplace] ?? 0) < amount)
-      status += " The till cannot fund the full wage now.";
-    else if (player.money + amount > 999) status += " Your purse cannot hold the full wage now.";
-    else if (minutes >= 180)
-      status +=
-        " Recorded hours alone do not confirm payment; the work rules still have to issue a receipt.";
-    status += " Unpaid hours reset at midnight.";
-  }
+  const choice = playerActions(town, agent.id).find((action) =>
+    /^(?:Recognise .* work|Receive earned wage)/.test(action.label),
+  );
+  if (choice)
+    status += ` ${choice.terms}${choice.disabledReason ? ` ${choice.disabledReason}` : ""} Read ${choice.label} below; this conversation does not apply it.`;
+  else if (player.paidToday)
+    status += " The saved record is already marked paid; that cannot create another wage.";
   return `${evidence} ${status} Asking does not pay a second wage.`;
 }
 
@@ -397,9 +359,8 @@ export function everydayReply(town: Town, agent: Agent, text: string): string | 
       return wageReply(
         town,
         agent,
-        continuation && !/\b(?:today|yesterday)\b/i.test(text)
-          ? `${previous?.question ?? ""} ${text}`
-          : text,
+        text,
+        continuation && !/\b(?:today|yesterday)\b/i.test(text) ? previous?.day : undefined,
       );
     case "work":
       return shiftReply(town, agent, text);

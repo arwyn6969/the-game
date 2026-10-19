@@ -6,7 +6,13 @@ import { promptMemories } from "./retrieval";
 import { beatAt, blocksToBeats } from "./plan";
 import { clip, formatClock, periodName, plain } from "./text";
 import { placeTitle, zoneAt } from "./world";
-import { memorySource, pairObligations, recentConversation, sharedMemories } from "./conversation";
+import {
+  pairObligations,
+  recentConversation,
+  sharedMemories,
+  playerWageReceipts,
+  settledPlayerWageTransfers,
+} from "./conversation";
 import { characterProfile } from "./characters";
 import { fundedWorkSummary } from "./funded-work";
 import type { FundedTown } from "./economy-types";
@@ -163,21 +169,12 @@ function packet(town: Town, agent: Agent, job: ThinkJob) {
 }
 
 function playerFacts(town: Town, agent: Agent) {
-  const player = agentById(town, "player");
   const obligations = pairObligations(town, "player", agent.id);
   const owed = obligations.filter((debt) => debt.status === "owed");
   const actions = playerActions(town, agent.id);
   const receiptPlace = agent.id === "kevin" ? "cafe" : agent.id === "baba" ? "grocery" : null;
-  const wageReceipts = receiptPlace
-    ? player.memories
-        .filter(
-          (memory) =>
-            memory.type === "favor" &&
-            memorySource(memory) === "event" &&
-            memory.text.startsWith(`${placeTitle(receiptPlace)} paid me `),
-        )
-        .slice(-2)
-    : [];
+  const wageReceipts = receiptPlace ? playerWageReceipts(town, receiptPlace).slice(-2) : [];
+  const settlements = receiptPlace ? settledPlayerWageTransfers(town, receiptPlace) : [];
   const economy = (town as FundedTown).economy;
   const work = receiptPlace && economy?.work ? fundedWorkSummary(town, "player") : null;
   const payer = receiptPlace ? `till:${receiptPlace}` : null;
@@ -212,13 +209,17 @@ function playerFacts(town: Town, agent: Agent) {
             payables: work.payables
               .filter((payable) => payable.payer === payer)
               .slice(-2)
-              .map(({ id, amount, status, reason, transactionId }) => ({
-                id,
-                amount,
-                status,
-                reason: reason ? clip(reason, 160) : null,
-                transactionId,
-              })),
+              .map(({ id, amount, status, reason, transactionId }) => {
+                const payment = settlements.find((item) => item.id === transactionId);
+                return {
+                  id,
+                  amount,
+                  status,
+                  reason: reason ? clip(reason, 160) : null,
+                  transactionId,
+                  paidAt: payment ? { day: payment.day, minute: payment.minute } : null,
+                };
+              }),
             legacyClaims: work.legacyClaims
               .filter((claim) => claim.payer === payer)
               .slice(-2)

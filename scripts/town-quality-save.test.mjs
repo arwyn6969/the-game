@@ -135,6 +135,20 @@ test("explicit replacement preserves original unreadable bytes and refuses destr
   assert.equal(data.get(save.TOWN_STORAGE_KEY), before);
 });
 
+test("an existing empty save requires explicit recovery and is backed up before replacement", async () => {
+  const { data } = fixture();
+  data.set(save.TOWN_STORAGE_KEY, "");
+  assert.deepEqual(save.readTownSave(), { status: "unreadable", raw: "" });
+  const next = createTown("Recovered empty");
+  assert.equal((await save.initializeTownSave(next)).reason, "conflict");
+  assert.equal(data.get(save.TOWN_STORAGE_KEY), "");
+  assert.equal((await save.replaceTownSave(next)).ok, true);
+  assert.ok(
+    save.readTownConflicts().some((copy) => copy.key.includes(":replaced:") && copy.raw === ""),
+  );
+  assert.equal(save.readTownSave().town.playerName, "Recovered empty");
+});
+
 test("a conflict remains recoverable when durable backup storage is exhausted", () => {
   const { data, box } = fixture();
   save.saveTownWithStatus(createTown("Full storage"));
