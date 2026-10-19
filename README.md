@@ -10,6 +10,8 @@ The [pre-release refinement](docs/reviews/2026-10-15-pre-release-polish.md) adds
 
 The latest [interruption and save-recovery pass](docs/reviews/2026-10-16-interruptions.md) fixes hidden menus, keyboard tabs, wage follow-up dates, stale completed tasks and quest deadlines, with 610 passing tests and built desktop/phone checks.
 
+The [AI avatar continuity plan](docs/implementation/offline-avatar-control.md) makes opt-in control while a player is away a core feature of the future shared server world. Its [roadmap milestone](docs/ROADMAP.md#shared-server-world-and-ai-avatar-continuity) covers safe human takeover, an unpaid trial and later prepaid Bitcoin time, with model choice and optional Spark hosting after evaluation. This is planned work; the current browser-local town stops when the player leaves.
+
 ## Play
 
 Name yourself. The clock starts paused on the row.
