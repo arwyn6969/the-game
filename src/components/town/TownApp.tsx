@@ -2260,10 +2260,17 @@ export function TownApp() {
               setImportText(null);
             }
             if (event.key === "Tab") {
-              const buttons =
-                event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)");
-              const first = buttons[0];
-              const last = buttons[buttons.length - 1];
+              const controls = Array.from(
+                event.currentTarget.querySelectorAll<HTMLElement>(
+                  "button:not(:disabled), input:not(:disabled)",
+                ),
+              ).filter(
+                (control) =>
+                  !(control instanceof HTMLInputElement && control.type === "radio") ||
+                  control.checked,
+              );
+              const first = controls[0];
+              const last = controls[controls.length - 1];
               if (event.shiftKey && document.activeElement === first) {
                 event.preventDefault();
                 last?.focus();

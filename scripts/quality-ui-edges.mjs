@@ -175,11 +175,33 @@ export async function runUiEdgeChecks(browser, url, outputDirectory) {
       const dialog = page.getByRole("dialog", { name: "Replace the live town?", exact: true });
       const keep = dialog.getByRole("button", { name: "Keep this town", exact: true });
       const replace = dialog.getByRole("button", { name: "Replace", exact: true });
+      const restore = dialog.getByRole("radio", { name: /Restore this town/ });
+      const fork = dialog.getByRole("radio", { name: /Create a separate town/ });
       await assertFocus(keep, "Import should initially focus Keep this town");
       await page.keyboard.press("Tab");
-      await assertFocus(replace, "Tab must remain inside the import dialog");
+      await assertFocus(restore, "Tab must reach the selected import mode");
+      const choosingMode = await position(page);
+      await page.keyboard.press("ArrowRight");
+      await assertFocus(fork, "Arrow keys must reach the separate-town choice");
+      assert.equal(await fork.isChecked(), true, "Keyboard choice must select fork mode");
+      await page.keyboard.press("Tab");
+      await assertFocus(
+        dialog.getByRole("button", { name: "Create separate town", exact: true }),
+        "Tab must reach the import confirmation after the selected radio",
+      );
+      await page.keyboard.press("Shift+Tab");
+      await assertFocus(fork, "Reverse Tab must reach the selected fork radio");
       await page.keyboard.press("Shift+Tab");
       await assertFocus(keep, "Reverse Tab must remain inside the import dialog");
+      await page.keyboard.press("Tab");
+      await assertFocus(fork, "Forward wrap must follow the current selected radio");
+      await page.keyboard.press("ArrowLeft");
+      await assertFocus(restore, "The original restore mode must remain reachable");
+      assert.equal(await restore.isChecked(), true);
+      await page.keyboard.press("Tab");
+      await assertFocus(replace, "Restore mode must expose the existing Replace action");
+      assert.deepEqual(await position(page), choosingMode, "Radio keys must not move the town");
+      result.importModesKeyboard = true;
       const reviewing = await position(page);
       await page.waitForTimeout(500);
       assert.deepEqual(await position(page), reviewing, "A route must stop before import review");
