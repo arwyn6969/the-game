@@ -11,6 +11,9 @@ import { chromium } from "playwright";
 // database and raster decoder. Only public Stampchain GET responses and the
 // browser extension are fixtures. No personal wallet/browser is ever attached.
 const target = new URL(process.env.GAME_STAMP_QA_URL || "http://127.0.0.1:8198/");
+const walletId = process.env.GAME_STAMP_QA_WALLET || "wonder";
+assert.ok(["wonder", "leather"].includes(walletId), "Choose wonder or leather for wallet QA");
+const walletName = walletId === "wonder" ? "Wonder Wallet" : "Leather";
 assert.equal(target.protocol, "http:");
 assert.ok(["127.0.0.1", "localhost"].includes(target.hostname));
 assert.equal(
@@ -23,6 +26,7 @@ await mkdir(out, { recursive: true });
 const report = {
   url: target.href,
   node: process.version,
+  wallet: walletId,
   builtPreview: true,
   mockedStampchainGetOnly: true,
   liveWalletRequests: 0,
@@ -158,13 +162,11 @@ async function headPixelStats(page) {
   });
 }
 async function importTown(page, raw, fork = false) {
-  await page
-    .getByLabel("Import a town file", { exact: true })
-    .setInputFiles({
-      name: "synthetic-stamp-scope-town.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(raw),
-    });
+  await page.getByLabel("Import a town file", { exact: true }).setInputFiles({
+    name: "synthetic-stamp-scope-town.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(raw),
+  });
   await page.getByRole("heading", { name: "Replace the live town?", exact: true }).waitFor();
   if (fork) await page.getByRole("radio", { name: /Create a separate town/ }).check();
   await page
@@ -177,8 +179,72 @@ async function importTown(page, raw, fork = false) {
 async function readyPanel(page) {
   await panel(page).waitFor();
   await panel(page)
-    .getByText("Connect Leather to browse stamps you hold.", { exact: true })
+    .getByText("Choose a wallet and connect to browse stamps you hold.", { exact: true })
     .waitFor();
+}
+function connectButton(page) {
+  return panel(page).getByRole("button", {
+    name: new RegExp(`^(?:Connect|Sign again with) ${walletName}$`),
+  });
+}
+async function selectWallet(page, selected = walletId) {
+  await panel(page).getByRole("combobox", { name: "Wallet", exact: true }).selectOption(selected);
+}
+async function verifyAndApplyStamp(page) {
+  await selectWallet(page);
+  await page.evaluate(() => {
+    window.__stampWalletMock.install();
+    window.__stampWalletMock.mode = "approve";
+  });
+  // The real server limits proof challenges; do not weaken that gate for this fixture.
+  await page.waitForTimeout(5200);
+  await connectButton(page).click();
+  await panel(page).getByRole("heading", { name: "Choose a stamp", exact: true }).waitFor();
+  await panel(page)
+    .getByRole("button", { name: /Stamp #4242.*You hold 2.*Supply 10/ })
+    .click();
+  await panel(page).getByRole("img", { name: "Preview of Stamp #4242", exact: true }).waitFor();
+  await panel(page).getByRole("radio", { name: "Stamp head and portrait", exact: true }).check();
+  await panel(page).getByRole("button", { name: "Apply appearance", exact: true }).click();
+  await panel(page).getByText("Your stamp head is active.", { exact: true }).waitFor();
+  await stampTool(page).getByRole("img", { name: "Stamp #4242", exact: true }).waitFor();
+}
+async function assertWalletInvalidationSurvivesReload(page) {
+  assert.equal(await stampTool(page).getByRole("img").count(), 0);
+  assert.equal(
+    await panel(page)
+      .getByText(/^Verified address/)
+      .count(),
+    0,
+  );
+  assert.equal(
+    await panel(page).getByRole("heading", { name: "Choose a stamp", exact: true }).count(),
+    0,
+  );
+  await panel(page).getByRole("button", { name: "Close stamp appearance", exact: true }).click();
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await stampTool(page).waitFor();
+  await page.waitForFunction(() => Boolean(window.__game));
+  assert.equal(await stampTool(page).getByRole("img").count(), 0);
+  await stampTool(page).click();
+  await panel(page)
+    .getByText(
+      "Your local wallet check is hidden. Connect your selected wallet to verify it again.",
+      {
+        exact: true,
+      },
+    )
+    .waitFor();
+  assert.equal(
+    await panel(page)
+      .getByText(/^Verified address/)
+      .count(),
+    0,
+  );
+  assert.equal(
+    await panel(page).getByRole("button", { name: "Refresh holdings", exact: true }).isDisabled(),
+    true,
+  );
 }
 async function installWallet(context, result) {
   await context.exposeFunction("__stampQaSign", (message) => wallet.sign(message));
@@ -187,31 +253,109 @@ async function installWallet(context, result) {
   });
   await context.addInitScript(
     ({ address, publicKey }) => {
+      const listeners = { wonder: {}, leather: {} };
       const state = (window.__stampWalletMock = {
         mode: "approve",
         calls: [],
         pending: [],
+        connected: false,
+        connectReplyShapes: [],
+        emit(wallet, event, payload) {
+          for (const handler of (listeners[wallet][event] || []).slice()) handler(payload);
+        },
         install() {
-          window.LeatherProvider = provider;
+          window.LeatherProvider = leather;
+          if (!window.wonderWallet)
+            Object.defineProperty(window, "wonderWallet", {
+              value: wonder,
+              writable: false,
+              configurable: false,
+            });
+          window.dispatchEvent(new Event("wonder-wallet#initialized"));
+          window.dispatchEvent(new Event("focus"));
         },
         async release() {
-          for (const job of this.pending.splice(0)) job.resolve(await response(job.params));
+          for (const job of this.pending.splice(0))
+            job.resolve(await response(job.wallet, job.params));
         },
       });
-      async function response(params) {
+      function eventMethods(wallet) {
         return {
-          jsonrpc: "2.0",
-          result: {
-            address,
-            message: params.message,
-            signature: await window.__stampQaSign(params.message),
+          on(event, handler) {
+            (listeners[wallet][event] ||= []).push(handler);
+            return this;
+          },
+          removeListener(event, handler) {
+            listeners[wallet][event] = (listeners[wallet][event] || []).filter(
+              (listener) => listener !== handler,
+            );
+            return this;
           },
         };
       }
-      const provider = {
+      async function record(wallet, method) {
+        state.calls.push({ wallet, method });
+        await window.__stampQaCall(`${wallet}:${method}`);
+      }
+      async function response(wallet, params) {
+        const signature = await window.__stampQaSign(params.message);
+        return wallet === "wonder"
+          ? signature
+          : {
+              jsonrpc: "2.0",
+              result: {
+                address,
+                message: params.message,
+                signature,
+              },
+            };
+      }
+      async function sign(wallet, params) {
+        if (state.mode === "reject")
+          throw { error: { code: 4001, message: "User declined fixture proof" } };
+        if (state.mode === "pending")
+          return new Promise((resolve) => state.pending.push({ wallet, params, resolve }));
+        return response(wallet, params);
+      }
+      const wonder = {
+        isWonderWallet: true,
+        ...eventMethods("wonder"),
+        async requestAccounts() {
+          await record("wonder", "requestAccounts");
+          if (state.connected) {
+            state.connectReplyShapes.push("array");
+            return [address];
+          }
+          state.connected = true;
+          state.connectReplyShapes.push("object");
+          // Actual source emits this while approving the new grant, before its reply.
+          state.emit("wonder", "accountsChanged", [address]);
+          return {
+            accounts: [address],
+            // This wallet-generated message deliberately cannot satisfy the server challenge.
+            proof: {
+              address,
+              message: "WALLET-GENERATED CONNECT PROOF: no THE GAME server nonce",
+              signature: "not-a-server-challenge-signature",
+              scheme: "BIP-322",
+            },
+          };
+        },
+        async getAccounts() {
+          await record("wonder", "getAccounts");
+          return state.connected ? [address] : [];
+        },
+        async signMessage(message, selectedAddress) {
+          await record("wonder", "signMessage");
+          if (!state.connected || selectedAddress !== address)
+            throw new Error("Unexpected read-only Wonder Wallet proof account");
+          return sign("wonder", { message });
+        },
+      };
+      const leather = {
+        ...eventMethods("leather"),
         async request(method, params) {
-          state.calls.push({ method });
-          await window.__stampQaCall(method);
+          await record("leather", method);
           if (method === "getAddresses")
             return {
               result: {
@@ -237,11 +381,7 @@ async function installWallet(context, result) {
             params.account !== 0
           )
             throw new Error("Unexpected read-only wallet proof parameters");
-          if (state.mode === "reject")
-            throw { error: { code: 4001, message: "User declined fixture proof" } };
-          if (state.mode === "pending")
-            return new Promise((resolve) => state.pending.push({ params, resolve }));
-          return response(params);
+          return sign("leather", params);
         },
       };
       // Starts without an extension so the graceful optional path is exercised.
@@ -262,6 +402,7 @@ try {
       errors: [],
       externalBrowserRequests: [],
       walletCalls: [],
+      serverPosts: [],
       expectedAbortedRequests: [],
       assertions: [],
     };
@@ -280,6 +421,10 @@ try {
     });
     await installWallet(context, result);
     const page = (activePage = await context.newPage());
+    page.on("request", (request) => {
+      if (request.method() === "POST" && new URL(request.url()).origin === target.origin)
+        result.serverPosts.push(new URL(request.url()).pathname);
+    });
     page.on("pageerror", (error) => result.errors.push(error.message));
     let expectingAbort = false;
     page.on("console", (message) => {
@@ -307,8 +452,17 @@ try {
     );
     if (viewport.name === "phone") await stampTool(page).click();
     await readyPanel(page);
-    await panel(page).getByRole("button", { name: "Connect Leather", exact: true }).click();
-    await panel(page).getByRole("alert").filter({ hasText: "Leather was not found" }).waitFor();
+    assert.equal(
+      await panel(page).getByRole("combobox", { name: "Wallet", exact: true }).inputValue(),
+      "wonder",
+      "Wonder Wallet is the default recommendation; Leather requires an explicit choice",
+    );
+    await selectWallet(page);
+    await connectButton(page).click();
+    await panel(page)
+      .getByRole("alert")
+      .filter({ hasText: `${walletName} was not found` })
+      .waitFor();
     assert.equal(
       (await context.cookies()).some((cookie) => cookie.name === "__Host-the-game.stamp-session"),
       false,
@@ -320,7 +474,7 @@ try {
       window.__stampWalletMock.install();
       window.__stampWalletMock.mode = "reject";
     });
-    await panel(page).getByRole("button", { name: "Connect Leather", exact: true }).click();
+    await connectButton(page).click();
     await panel(page).getByRole("alert").filter({ hasText: "Wallet request declined" }).waitFor();
     const cookie = (await context.cookies()).find(
       (item) => item.name === "__Host-the-game.stamp-session",
@@ -340,11 +494,17 @@ try {
     await page.evaluate(() => {
       window.__stampWalletMock.mode = "pending";
     });
-    await panel(page).getByRole("button", { name: "Connect Leather", exact: true }).click();
+    await connectButton(page).click();
     await page.waitForFunction(() => window.__stampWalletMock.pending.length === 1);
     await panel(page).getByRole("button", { name: "Cancel request", exact: true }).click();
+    const postsAtCancel = result.serverPosts.length;
     await page.evaluate(() => window.__stampWalletMock.release());
     await page.waitForTimeout(150);
+    assert.equal(
+      result.serverPosts.length,
+      postsAtCancel,
+      "A cancelled proof cannot finish on the server",
+    );
     assert.equal(
       await panel(page)
         .getByText(/^Verified address/)
@@ -361,7 +521,7 @@ try {
     await page.evaluate(() => {
       window.__stampWalletMock.mode = "approve";
     });
-    await panel(page).getByRole("button", { name: "Connect Leather", exact: true }).click();
+    await connectButton(page).click();
     await panel(page).getByRole("heading", { name: "Choose a stamp", exact: true }).waitFor();
     await panel(page)
       .getByText(/^Verified address/)
@@ -407,6 +567,20 @@ try {
       "safe raster preview and keyboard crop controls work",
       "selected head and toolbar portrait display",
     );
+    if (walletId === "wonder") {
+      result.wonderConnection = await page.evaluate(() => ({
+        replyShapes: window.__stampWalletMock.connectReplyShapes,
+        ignoredConnectProof: true,
+      }));
+      assert.deepEqual([...new Set(result.wonderConnection.replyShapes)].sort(), [
+        "array",
+        "object",
+      ]);
+      assert.ok(
+        result.walletCalls.includes("wonder:signMessage"),
+        "The invalid wallet-generated connect proof must be ignored in favor of a fresh server challenge",
+      );
+    }
 
     await panel(page)
       .getByRole("radio", { name: "Portrait only · original sprite head", exact: true })
@@ -569,6 +743,53 @@ try {
       "disconnect clears draft, display and server link, including on reopen",
       "failed disconnect stays hidden after close and reload until explicit retry succeeds",
     );
+
+    for (const invalidation of ["wallet-selection", "accountsChanged", "disconnect"]) {
+      await verifyAndApplyStamp(page);
+      await page.waitForTimeout(5200);
+      await page.evaluate(() => {
+        window.__stampWalletMock.mode = "pending";
+      });
+      await connectButton(page).click();
+      await page.waitForFunction(() => window.__stampWalletMock.pending.length === 1);
+      const postsBeforeInvalidation = result.serverPosts.length;
+      if (invalidation === "wallet-selection")
+        await selectWallet(page, walletId === "wonder" ? "leather" : "wonder");
+      else
+        await page.evaluate(
+          ({ selected, event }) => {
+            if (event === "disconnect") window.__stampWalletMock.connected = false;
+            window.__stampWalletMock.emit(
+              selected,
+              event,
+              event === "accountsChanged" ? [] : undefined,
+            );
+          },
+          { selected: walletId, event: invalidation },
+        );
+      await panel(page).getByRole("button", { name: "Cancel request", exact: true }).waitFor({
+        state: "hidden",
+      });
+      assert.equal(await stampTool(page).getByRole("img").count(), 0);
+      assert.equal(
+        await panel(page)
+          .getByText(/^Verified address/)
+          .count(),
+        0,
+      );
+      await page.evaluate(() => window.__stampWalletMock.release());
+      await page.waitForTimeout(200);
+      assert.equal(
+        result.serverPosts.length,
+        postsBeforeInvalidation,
+        `${invalidation} must prevent a late proof from finishing on the server`,
+      );
+      await assertWalletInvalidationSurvivesReload(page);
+      await page.screenshot({ path: join(out, `${viewport.name}-${invalidation}-hidden.png`) });
+      result.assertions.push(
+        `${invalidation} during signing clears an active head and holds it hidden through reload without a late server finish`,
+      );
+    }
     assert.equal(
       await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1),
       false,
@@ -577,7 +798,13 @@ try {
     const rect = await panel(page).boundingBox();
     assert.ok(rect && rect.x >= 0 && rect.x + rect.width <= viewport.width + 1);
     result.walletMethods = [...new Set(result.walletCalls)];
-    assert.deepEqual(result.walletMethods.sort(), ["getAddresses", "signMessage"]);
+    assert.deepEqual(
+      result.walletMethods.sort(),
+      walletId === "wonder"
+        ? ["wonder:getAccounts", "wonder:requestAccounts", "wonder:signMessage"]
+        : ["leather:getAddresses", "leather:signMessage"],
+      "Only the explicitly selected wallet's read-only connection and signature methods may run",
+    );
     assert.deepEqual(
       result.errors,
       [],

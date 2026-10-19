@@ -93,7 +93,7 @@ export class AgentRegistryService {
     address: string;
   }): Promise<ReceivingProof> {
     if (!validateP2wpkhAddress(input.address))
-      throw new AgentRegistryError("invalid", "Choose a mainnet Native SegWit address in Leather.");
+      throw new AgentRegistryError("invalid", "Choose a Bitcoin mainnet Native SegWit address.");
     const profile = await this.profile(input.registrationId, input.profileId);
     if (profile.revision !== input.revision) throw stale();
     const now = this.now();

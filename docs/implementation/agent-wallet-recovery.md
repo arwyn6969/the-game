@@ -104,7 +104,7 @@ Use a reviewed staging origin with legitimately configured sign-in and persisten
 
 ### Preferred wallet and external-backup acceptance
 
-The preferred recommendation is [Wonder Wallet](https://wonder-wallet.com), per the 16 October product direction. Its adapter and compatibility checks remain future work; the actual acceptance receipt above applies only to Leather. Run the same account selection, exact-message, cancellation, retirement and backup/restore checks for Wonder Wallet before presenting it as a supported default. Preserve the verified Leather path while that work is completed.
+The preferred recommendation is [Wonder Wallet](https://wonder-wallet.com), per the 16 October product direction. The [Wonder adapter](wonder-wallet.md) is implemented in the review candidate with automated provider/signature checks; the actual installed-extension acceptance receipt above still applies only to Leather. Run the same account selection, exact-message, cancellation, retirement and backup/restore checks for Wonder Wallet before presenting it as a supported default. Preserve the verified Leather path while that work is completed.
 
 Use a disposable wallet controlled by the human tester. The game must never receive its seed or keys. Address lookup and message signatures can be tested without moving funds.
 

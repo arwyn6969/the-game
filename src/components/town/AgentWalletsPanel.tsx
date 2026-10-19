@@ -21,7 +21,13 @@ import type { AgentId } from "@/game/types";
 import { authClient, authEnabled, GROK_PROVIDERS, signIn, signOut } from "@/lib/auth/client";
 import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { getLeatherAddress, LeatherWalletError, signLeatherChallenge } from "@/lib/stamps/leather";
+import {
+  getWalletAddress,
+  signWalletChallenge,
+  WalletError,
+  watchWalletChanges,
+  type WalletId,
+} from "@/lib/stamps/wallet";
 import { isAgentOwnerHidden, setAgentOwnerHidden } from "@/lib/agent-wallets/client-state";
 import { ownerReference } from "@/lib/agent-wallets/owner-reference";
 import { AgentDepositObservations } from "./AgentDepositObservations";
@@ -35,12 +41,14 @@ type InventoryState = Tagged<{ observation: ReceivingInventory; stale: boolean }
 type Operation = {
   generation: number;
   context: string;
+  walletId: WalletId;
   abort: AbortController;
   role?: AgentId;
   kind: "owner" | "sign-in" | "sign-out" | "register" | "proof" | "retire" | "inventory";
 };
 const subscribeToNothing = () => () => {};
 const noGateSession = () => false;
+const WALLET_NAMES: Record<WalletId, string> = { wonder: "Wonder Wallet", leather: "Leather" };
 
 class RegistryPanelError extends Error {
   constructor(
@@ -87,6 +95,7 @@ export function AgentWalletsPanel({
 }) {
   const titleId = useId();
   const residentId = useId();
+  const walletSelectId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
   const { user, isPending } = useCurrentUserState();
   // authEnabled is fixed for this build; disabled/offline play must not mount an auth request.
@@ -109,6 +118,7 @@ export function AgentWalletsPanel({
   const [confirmRetire, setConfirmRetire] = useState<string | null>(null);
   const [note, setNote] = useState("Checking owner access…");
   const [error, setError] = useState(false);
+  const [walletId, setWalletId] = useState<WalletId>("wonder");
   const mounted = useRef(false);
   const generation = useRef(0);
   const signInAttempt = useRef(0);
@@ -116,10 +126,13 @@ export function AgentWalletsPanel({
   const active = useRef<Operation | null>(null);
   const currentContext = useRef(context);
   const currentRole = useRef(selectedRole);
+  const currentWallet = useRef(walletId);
   const callbacks = useRef({ onClose });
   currentContext.current = context;
   currentRole.current = selectedRole;
+  currentWallet.current = walletId;
   callbacks.current = { onClose };
+  const walletName = WALLET_NAMES[walletId];
 
   const ownerAccess = access?.context === context ? access.value : null;
   const ownerPresentationHidden = Boolean(realUser && isAgentOwnerHidden(realUser.id));
@@ -163,6 +176,7 @@ export function AgentWalletsPanel({
     return (
       mounted.current &&
       operation.context === currentContext.current &&
+      (operation.kind !== "proof" || operation.walletId === currentWallet.current) &&
       operation.generation === generation.current &&
       !operation.abort.signal.aborted &&
       (operation.role === undefined || operation.role === currentRole.current)
@@ -175,6 +189,7 @@ export function AgentWalletsPanel({
       kind,
       role,
       context,
+      walletId,
       generation: ++generation.current,
       abort: new AbortController(),
     };
@@ -208,6 +223,11 @@ export function AgentWalletsPanel({
 
   function failure(cause: unknown, operation: Operation): void {
     if (!isCurrent(operation)) return;
+    if (cause instanceof WalletError && cause.code === "changed") {
+      resetWalletPresentation(cause.message.slice(0, 400));
+      setError(true);
+      return;
+    }
     const ownerMismatch = cause instanceof RegistryPanelError && cause.code === "owner-mismatch";
     const unauthorized =
       (cause instanceof RegistryPanelError && cause.code === "unauthenticated") ||
@@ -248,7 +268,7 @@ export function AgentWalletsPanel({
         ? "Your account changed. Private details are hidden; refresh owner status to continue."
         : unauthorized
           ? "Your owner session ended. Sign in again to view private profiles."
-          : cause instanceof RegistryPanelError || cause instanceof LeatherWalletError
+          : cause instanceof RegistryPanelError || cause instanceof WalletError
             ? cause.message.slice(0, 400)
             : "The owner service could not be reached. Your local town is still available; try again.",
     );
@@ -346,6 +366,42 @@ export function AgentWalletsPanel({
       if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
     };
   }, []);
+
+  function resetWalletPresentation(message: string): void {
+    refreshedAccount.current = null;
+    invalidate();
+    setBusy(null);
+    clearPrivate();
+    setError(false);
+    setNote(message);
+  }
+
+  function selectWallet(next: WalletId): void {
+    if (next === currentWallet.current) return;
+    currentWallet.current = next;
+    setWalletId(next);
+    if (active.current?.kind === "proof" || active.current?.kind === "inventory") {
+      invalidate();
+      setBusy(null);
+    }
+    setInventory(null);
+    setConfirmRetire(null);
+    setError(false);
+    setNote(
+      `${WALLET_NAMES[next]} selected for your next address verification. Existing profiles remain private watch-only records.`,
+    );
+  }
+
+  useEffect(() => {
+    return watchWalletChanges(walletId, () => {
+      if (!mounted.current || currentWallet.current !== walletId) return;
+      resetWalletPresentation(
+        `${WALLET_NAMES[walletId]} changed or disconnected. Private details are hidden. Refresh owner status before verifying your wallet again.`,
+      );
+    });
+    // Wallet changes cancel proof work; owner and wallet verification remain explicit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [walletId, context]);
 
   useEffect(() => {
     invalidate();
@@ -473,13 +529,19 @@ export function AgentWalletsPanel({
     if (!operation) return;
     const registrationId = registered.world.registrationId;
     const profileId = profile.profileId;
+    const connectionHelp =
+      walletId === "wonder"
+        ? "Wonder may first request its own connection proof; the game's fresh resident verification message follows. "
+        : "";
     setNote(
       profile.state === "draft"
-        ? "Choose the active mainnet Native SegWit account in Leather. Previous addresses remain reserved to this resident after replacement. Leather may open behind this window; check its popup/extension icon."
-        : "Choose the active mainnet Native SegWit account in Leather. Leather may open behind this window; check its popup/extension icon.",
+        ? `Choose the mainnet Native SegWit account in ${walletName}. ${connectionHelp}Previous addresses remain reserved to this resident after replacement. Its prompt may open behind this window; check the popup/extension icon.`
+        : `Choose the mainnet Native SegWit account in ${walletName}. ${connectionHelp}Its prompt may open behind this window; check the popup/extension icon.`,
     );
     try {
-      const selected = await getLeatherAddress({ signal: operation.abort.signal });
+      const selected = await getWalletAddress(operation.walletId, {
+        signal: operation.abort.signal,
+      });
       if (!isCurrent(operation)) return;
       const challenge = valueOf(
         await beginAgentReceivingProof({
@@ -506,9 +568,9 @@ export function AgentWalletsPanel({
           "The wallet check did not match this resident's current profile. Refresh owner status.",
         );
       setNote(
-        "Review the resident and address in Leather. This signature registers a watch-only draft and does not spend or transfer anything. Leather may open behind this window; check its popup/extension icon.",
+        `Review the resident and address in ${walletName}. This signature registers a watch-only draft and does not spend or transfer anything. Its prompt may open behind this window; check the popup/extension icon.`,
       );
-      const proof = await signLeatherChallenge(challenge, selected, {
+      const proof = await signWalletChallenge(operation.walletId, challenge, selected, {
         signal: operation.abort.signal,
       });
       if (!isCurrent(operation)) return;
@@ -706,6 +768,30 @@ export function AgentWalletsPanel({
         <p className="mt-2 text-sm text-muted">
           The game holds no keys. Funding is unpublished; spending and trading are not enabled here.
         </p>
+        <label className="mt-3 block text-sm" htmlFor={walletSelectId}>
+          Receiving wallet
+        </label>
+        <select
+          id={walletSelectId}
+          className="field mt-1 w-full"
+          value={walletId}
+          onChange={(event) => selectWallet(event.target.value as WalletId)}
+        >
+          <option value="wonder">Wonder Wallet · recommended</option>
+          <option value="leather">Leather · alternative</option>
+        </select>
+        <p className="mt-2 text-sm text-muted">
+          {walletId === "wonder" ? (
+            <a href="https://www.wonder-wallet.com" target="_blank" rel="noopener noreferrer">
+              Get Wonder Wallet
+            </a>
+          ) : (
+            <a href="https://leather.io" target="_blank" rel="noopener noreferrer">
+              Get Leather
+            </a>
+          )}
+          . This choice is used only when you explicitly verify an external address.
+        </p>
         <section className="mt-4" aria-label="Owner access">
           <h3>Your account</h3>
           {isPending ? (
@@ -838,9 +924,10 @@ export function AgentWalletsPanel({
                   </p>
                 )}
                 <p className="mt-2 text-sm text-muted">
-                  Use the active mainnet Native SegWit account in Leather. Switch Leather accounts
-                  before linking another resident. An address stays reserved to the same resident
-                  after retirement or replacement.
+                  {walletId === "wonder"
+                    ? "Wonder Wallet keeps an approved account for this site. To change accounts before linking another resident, disconnect and reconnect this site in Wonder's Connected sites, then verify the selected mainnet Native SegWit address."
+                    : "Use the active mainnet Native SegWit account in Leather. Switch Leather accounts before linking another resident."}{" "}
+                  An address stays reserved to the same resident after retirement or replacement.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
@@ -981,7 +1068,7 @@ export function AgentWalletsPanel({
                 )}
                 {expectedOwnerRef && (
                   <AgentDepositObservations
-                    key={`${expectedOwnerRef}:${registered.world.registrationId}:${profile.profileId}:${profile.revision}`}
+                    key={`${expectedOwnerRef}:${registered.world.registrationId}:${profile.profileId}:${profile.revision}:${walletId}`}
                     expectedOwnerRef={expectedOwnerRef}
                     registrationId={registered.world.registrationId}
                     profileId={profile.profileId}

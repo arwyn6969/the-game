@@ -28,7 +28,9 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: node scripts/quality-browser.mjs
       - name: Read-only stamp appearance browser checks
-        run: npm run test:browser:stamps
+        run: |
+          npm run test:browser:stamps
+          GAME_STAMP_QA_WALLET=leather GAME_STAMP_QA_OUT=artifacts/stamp-identity-browser/leather npm run test:browser:stamps
       - name: Delayed AI and replay browser checks
         run: |
           node scripts/with-app-env.mjs node node_modules/vite/bin/vite.js dev --host 127.0.0.1 --port 8094 --force > /tmp/game-ai-preview.log 2>&1 &
@@ -54,6 +56,7 @@ jobs:
         run: |
           npm run build
           npm run test:browser:agent-wallets
+          GAME_AGENT_QA_WALLET=leather GAME_AGENT_QA_OUT=artifacts/agent-wallet-browser/leather npm run test:browser:agent-wallets
       - uses: actions/upload-artifact@v4
         if: always()
         with:

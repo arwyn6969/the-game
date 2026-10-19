@@ -14,6 +14,8 @@ const target = new URL(process.env.GAME_AGENT_QA_URL || "http://127.0.0.1:8197/"
 assert.equal(Number(process.versions.node.split(".")[0]), 24);
 assert.equal(target.protocol, "http:");
 assert.ok(["localhost", "127.0.0.1"].includes(target.hostname));
+const walletId = process.env.GAME_AGENT_QA_WALLET || "wonder";
+assert.ok(["wonder", "leather"].includes(walletId));
 const out = resolve(process.env.GAME_AGENT_QA_OUT || "artifacts/agent-wallet-browser");
 await mkdir(out, { recursive: true });
 const secret = randomBytes(32).toString("hex");
@@ -26,6 +28,7 @@ const report = {
   builtPreview: true,
   genuineAccountSessions: true,
   genuineBip322: true,
+  walletId,
   spendingMethods: 0,
   journeys: [],
   fixtureRequests: [],
@@ -184,6 +187,13 @@ async function contextFor(viewport, journey, owner, saved) {
         index: 0,
         pending: false,
         jobs: [],
+        connected: false,
+        listeners: new Map(),
+        emit(event) {
+          if (event === "disconnect") this.connected = false;
+          const payload = event === "accountsChanged" ? [addresses[this.index].address] : undefined;
+          for (const listener of this.listeners.get(event) || []) listener(payload);
+        },
         async release() {
           for (const job of this.jobs.splice(0)) job.resolve(await response(job.params, job.index));
         },
@@ -219,6 +229,52 @@ async function contextFor(viewport, journey, owner, saved) {
           if (state.pending)
             return new Promise((resolve) => state.jobs.push({ resolve, params, index }));
           return response(params, index);
+        },
+      };
+      window.wonderWallet = {
+        isWonderWallet: true,
+        async requestAccounts() {
+          await window.__agentQaCall("requestAccounts");
+          const accounts = [addresses[state.index].address];
+          if (state.connected) return accounts;
+          state.connected = true;
+          // Actual Wonder emits this before its fresh approval promise resolves.
+          state.emit("accountsChanged");
+          return {
+            accounts,
+            proof: {
+              address: accounts[0],
+              message: "untrusted-wallet-generated-login",
+              signature: "not-the-server-proof",
+              scheme: "BIP-322",
+            },
+          };
+        },
+        async getAccounts() {
+          await window.__agentQaCall("getAccounts");
+          return state.connected ? [addresses[state.index].address] : [];
+        },
+        async signMessage(message, address) {
+          await window.__agentQaCall("signMessage");
+          const index = state.index;
+          if (address !== addresses[index].address)
+            throw new Error("Unexpected Wonder proof address");
+          const params = { message };
+          if (state.pending) {
+            const result = await new Promise((resolve) =>
+              state.jobs.push({ resolve, params, index }),
+            );
+            return result.result.signature;
+          }
+          return (await response(params, index)).result.signature;
+        },
+        on(event, listener) {
+          const values = state.listeners.get(event) || new Set();
+          values.add(listener);
+          state.listeners.set(event, values);
+        },
+        removeListener(event, listener) {
+          state.listeners.get(event)?.delete(listener);
         },
       };
       function assertReadOnly(method, params) {
@@ -258,7 +314,10 @@ async function open(page) {
     () =>
       document.querySelector('[role="dialog"] .mind-body')?.getAttribute("aria-busy") === "false",
   );
+  const choice = panel(page).getByLabel("Receiving wallet", { exact: true });
+  if ((await choice.inputValue()) !== walletId) await choice.selectOption(walletId);
 }
+
 async function verify(page, role, index) {
   await panel(page).getByLabel("Resident", { exact: true }).selectOption(role);
   await page.evaluate((value) => {
@@ -285,7 +344,14 @@ async function importTown(page, raw, fork = false) {
     .getByRole("heading", { name: "Replace the live town?", exact: true })
     .waitFor({ state: "hidden" });
 }
+const pendingProofTimes = new WeakMap();
 async function pendingProof(page, role, index) {
+  const times = pendingProofTimes.get(page) || new Map();
+  pendingProofTimes.set(page, times);
+  const previous = times.get(role);
+  // Keep the real server's five-second per-profile proof cooldown intact.
+  if (previous !== undefined)
+    await page.waitForTimeout(Math.max(0, 5_200 - (Date.now() - previous)));
   await panel(page).getByLabel("Resident", { exact: true }).selectOption(role);
   await page.evaluate((value) => {
     window.__agentWalletMock.index = value;
@@ -293,6 +359,7 @@ async function pendingProof(page, role, index) {
   }, index);
   await panel(page).getByRole("button", { name: "Verify external address", exact: true }).click();
   await page.waitForFunction(() => window.__agentWalletMock.jobs.length === 1);
+  times.set(role, Date.now());
 }
 async function releaseProof(page) {
   await page.evaluate(async () => {
@@ -471,6 +538,45 @@ try {
       "a delayed signature cannot finish after resident/wallet selection changes",
       "canceling or closing a pending extension prompt sends no proof completion and survives reload without linking a profile",
     );
+    await pendingProof(page, "northern", index * 2);
+    await panel(page)
+      .getByLabel("Receiving wallet", { exact: true })
+      .selectOption(walletId === "wonder" ? "leather" : "wonder");
+    await releaseProof(page);
+    assert.equal(
+      completionCount,
+      completionsBeforeCancel,
+      "A late signature cannot complete after changing provider",
+    );
+    await panel(page).getByLabel("Receiving wallet", { exact: true }).selectOption(walletId);
+    await panel(page).getByLabel("Resident", { exact: true }).waitFor();
+    await panel(page).getByText("No external address is linked yet.", { exact: true }).waitFor();
+    journey.checks.push(
+      "changing the explicit wallet provider cancels a pending proof without changing the authenticated owner or linking an address",
+    );
+    if (walletId === "wonder") {
+      for (const event of ["accountsChanged", "disconnect"]) {
+        await pendingProof(page, "northern", index * 2);
+        await page.evaluate((event) => window.__agentWalletMock.emit(event), event);
+        await releaseProof(page);
+        assert.equal(
+          completionCount,
+          completionsBeforeCancel,
+          "A changed Wonder grant cannot submit its stale proof",
+        );
+        await panel(page)
+          .getByRole("button", { name: "Refresh owner status", exact: true })
+          .click();
+        await panel(page).getByLabel("Resident", { exact: true }).waitFor();
+        await panel(page).getByLabel("Resident", { exact: true }).selectOption("northern");
+        await panel(page)
+          .getByText("No external address is linked yet.", { exact: true })
+          .waitFor();
+        journey.checks.push(
+          `Wonder ${event} prevents a pending signature from completing a receiving proof`,
+        );
+      }
+    }
     await verify(page, "player", index * 2);
     const replay = lastCompletion;
     assert.ok(replay, "Capture the real proof completion to test replay after retirement");
@@ -728,7 +834,12 @@ try {
       journey.checks.push("unsigned visitors cannot inherit private profiles from portable saves");
       await guest.close();
     }
-    assert.deepEqual([...new Set(journey.walletMethods)].sort(), ["getAddresses", "signMessage"]);
+    assert.deepEqual(
+      [...new Set(journey.walletMethods)].sort(),
+      walletId === "wonder"
+        ? ["getAccounts", "requestAccounts", "signMessage"]
+        : ["getAddresses", "signMessage"],
+    );
     assert.deepEqual(journey.errors, []);
     journey.checks.push(
       "account cookie is Secure, HttpOnly and inaccessible to scripts",
@@ -740,8 +851,13 @@ try {
   report.failures.push(
     (error instanceof Error ? error.stack || error.message : String(error)).slice(0, 4000),
   );
-  if (activePage && !activePage.isClosed())
+  if (activePage && !activePage.isClosed()) {
     await activePage.screenshot({ path: join(out, "failure.png") }).catch(() => undefined);
+    await writeFile(
+      join(out, "failure-body.txt"),
+      await activePage.locator("body").innerText(),
+    ).catch(() => undefined);
+  }
   process.exitCode = 1;
 } finally {
   report.fixtureRequests = serverOutput

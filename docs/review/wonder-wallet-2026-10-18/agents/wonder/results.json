@@ -1,0 +1,376 @@
+{
+  "url": "http://127.0.0.1:8196/",
+  "builtPreview": true,
+  "genuineAccountSessions": true,
+  "genuineBip322": true,
+  "walletId": "wonder",
+  "spendingMethods": 0,
+  "journeys": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "checks": [
+        "mixed cached account A/live session B blocks registration and reveals no private profiles until explicit refresh",
+        "optional tools do not contact auth or registry before opening",
+        "a real account registers all eight residents privately",
+        "a delayed signature cannot finish after resident/wallet selection changes",
+        "canceling or closing a pending extension prompt sends no proof completion and survives reload without linking a profile",
+        "changing the explicit wallet provider cancels a pending proof without changing the authenticated owner or linking an address",
+        "Wonder accountsChanged prevents a pending signature from completing a receiving proof",
+        "Wonder disconnect prevents a pending signature from completing a receiving proof",
+        "explicit observation load reads stored evidence without indexer calls; one refresh records pending and distinct confirmed Bitcoin outputs while Counterparty outage stays unknown",
+        "private chain observations survive reload without changing town coins or inferring spendability",
+        "failed sign-out hides private data through close/reopen/reload with no owner RPC until an explicit verified refresh restores it",
+        "two residents verify distinct disposable addresses through real BIP-322",
+        "inventory is read only and API outage stays unknown without changing game coins",
+        "a second resident's Bitcoin source outage remains unknown rather than zero and never credits game money",
+        "retirement persists on reload and rejects old proof replay",
+        "portable saves contain no private registrations, receiving addresses or proofs",
+        "retired profiles retain their private historical-address observations after reload",
+        "an altered source roster cannot remap private residents; a fork starts with empty profiles and restoring the source recovers its own registry",
+        "another account creates its own copy of identical public IDs and cannot reuse a retired address",
+        "unsigned visitors cannot inherit private profiles from portable saves",
+        "account cookie is Secure, HttpOnly and inaccessible to scripts",
+        "desktop/phone panel stays within viewport; wallet methods are address lookup and message signing only"
+      ],
+      "walletMethods": [
+        "requestAccounts",
+        "getAccounts",
+        "getAccounts",
+        "signMessage",
+        "requestAccounts",
+        "getAccounts",
+        "getAccounts",
+        "signMessage",
+        "requestAccounts",
+        "getAccounts",
+        "getAccounts",
+        "signMessage",
+        "requestAccounts",
+        "getAccounts",
+        "getAccounts",
+        "signMessage",
+        "requestAccounts",
+        "getAccounts",
+        "getAccounts",
+        "signMessage",
+        "requestAccounts",
+        "getAccounts",
+        "getAccounts",
+        "signMessage",
+        "requestAccounts",
+        "getAccounts",
+        "getAccounts",
+        "signMessage",
+        "getAccounts",
+        "requestAccounts",
+        "getAccounts",
+        "getAccounts",
+        "signMessage",
+        "getAccounts",
+        "requestAccounts",
+        "getAccounts",
+        "getAccounts",
+        "signMessage",
+        "getAccounts"
+      ],
+      "externalRequests": [
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com"
+      ],
+      "errors": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "checks": [
+        "optional tools do not contact auth or registry before opening",
+        "a real account registers all eight residents privately",
+        "a delayed signature cannot finish after resident/wallet selection changes",
+        "canceling or closing a pending extension prompt sends no proof completion and survives reload without linking a profile",
+        "changing the explicit wallet provider cancels a pending proof without changing the authenticated owner or linking an address",
+        "Wonder accountsChanged prevents a pending signature from completing a receiving proof",
+        "Wonder disconnect prevents a pending signature from completing a receiving proof",
+        "explicit observation load reads stored evidence without indexer calls; one refresh records pending and distinct confirmed Bitcoin outputs while Counterparty outage stays unknown",
+        "private chain observations survive reload without changing town coins or inferring spendability",
+        "failed sign-out hides private data through close/reopen/reload with no owner RPC until an explicit verified refresh restores it",
+        "two residents verify distinct disposable addresses through real BIP-322",
+        "inventory is read only and API outage stays unknown without changing game coins",
+        "a second resident's Bitcoin source outage remains unknown rather than zero and never credits game money",
+        "retirement persists on reload and rejects old proof replay",
+        "portable saves contain no private registrations, receiving addresses or proofs",
+        "retired profiles retain their private historical-address observations after reload",
+        "account cookie is Secure, HttpOnly and inaccessible to scripts",
+        "desktop/phone panel stays within viewport; wallet methods are address lookup and message signing only"
+      ],
+      "walletMethods": [
+        "requestAccounts",
+        "getAccounts",
+        "getAccounts",
+        "signMessage",
+        "requestAccounts",
+        "getAccounts",
+        "getAccounts",
+        "signMessage",
+        "requestAccounts",
+        "getAccounts",
+        "getAccounts",
+        "signMessage",
+        "requestAccounts",
+        "getAccounts",
+        "getAccounts",
+        "signMessage",
+        "requestAccounts",
+        "getAccounts",
+        "getAccounts",
+        "signMessage",
+        "requestAccounts",
+        "getAccounts",
+        "getAccounts",
+        "signMessage",
+        "requestAccounts",
+        "getAccounts",
+        "getAccounts",
+        "signMessage",
+        "getAccounts",
+        "requestAccounts",
+        "getAccounts",
+        "getAccounts",
+        "signMessage",
+        "getAccounts"
+      ],
+      "externalRequests": [
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com"
+      ],
+      "errors": []
+    }
+  ],
+  "fixtureRequests": [
+    {
+      "method": "GET",
+      "inventory": true,
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "counterparty",
+      "outage": true
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "inventory": true,
+      "outage": true
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": true
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": true
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "counterparty",
+      "outage": true
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "inventory": true,
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "counterparty",
+      "outage": true
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "inventory": true,
+      "outage": true
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": true
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": true
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "counterparty",
+      "outage": true
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    },
+    {
+      "method": "GET",
+      "chain": true,
+      "protocol": "bitcoin",
+      "outage": false
+    }
+  ],
+  "failures": []
+}

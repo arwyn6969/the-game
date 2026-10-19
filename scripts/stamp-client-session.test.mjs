@@ -152,3 +152,60 @@ test("session polling hints are bounded to the most recent 64 scopes independent
   assert.equal(client.isStampSuppressed(scope(2)), true);
   assert.equal(JSON.parse(data.get("the-game-stamp-sessions-v1")).length, 64);
 });
+
+test("wallet changes retain a bounded fresh-verification reason across reload without wallet data", async () => {
+  const { data } = storageFixture();
+  const client = await fresh();
+  client.setStampSuppressed(scope(), true);
+  for (let n = 1; n <= 64; n++) client.setStampVerificationRequired(scope(n), true);
+  client.setStampVerificationRequired(scope(1), true);
+  client.setStampVerificationRequired(scope(65), true);
+  const reloaded = await fresh();
+  assert.equal(reloaded.isStampVerificationRequired(scope(1)), true);
+  assert.equal(reloaded.isStampVerificationRequired(scope(2)), false);
+  assert.equal(reloaded.isStampVerificationRequired(scope(65)), true);
+  assert.equal(
+    reloaded.isStampVerificationRequired({ ...scope(), worldId: `world_${"b".repeat(64)}` }),
+    false,
+  );
+  assert.equal(reloaded.isStampSuppressed(scope()), true);
+  const stored = data.get("the-game-stamp-verification-required-v1");
+  const values = JSON.parse(stored);
+  assert.equal(values.length, 64);
+  for (const value of values)
+    assert.match(value, /^world_[0-9a-f]{64}:character_[0-9a-f]{64}$/);
+  assert.doesNotMatch(stored, /address|proof|signature|data:image|wonder|leather/);
+});
+
+test("clearing the fresh-verification reason preserves a failed-disconnect suppression latch", async () => {
+  storageFixture();
+  const client = await fresh();
+  client.setStampSuppressed(scope(), true);
+  client.setStampVerificationRequired(scope(), true);
+  client.setStampVerificationRequired(scope(2), true);
+  // Explicit disconnect clears the wallet-change reason before attempting the service call.
+  client.setStampVerificationRequired(scope(), false);
+  const reloaded = await fresh();
+  assert.equal(reloaded.isStampSuppressed(scope()), true);
+  assert.equal(reloaded.isStampVerificationRequired(scope()), false);
+  assert.equal(reloaded.isStampVerificationRequired(scope(2)), true);
+  assert.equal(reloaded.hasStampSession(scope()), false);
+});
+
+test("fresh-verification flags reject malformed storage and stay local when storage is blocked", async () => {
+  const { data, storage } = storageFixture();
+  data.set("the-game-stamp-verification-required-v1", JSON.stringify(["untrusted-address"]));
+  const client = await fresh();
+  assert.equal(client.isStampVerificationRequired(scope()), false);
+  client.setStampVerificationRequired({ ...scope(), characterId: "player" }, true);
+  assert.equal(client.isStampVerificationRequired(scope()), false);
+  storage.setItem = () => {
+    throw new DOMException("Full", "QuotaExceededError");
+  };
+  assert.doesNotThrow(() => client.setStampVerificationRequired(scope(), true));
+  assert.equal(client.isStampVerificationRequired(scope()), true);
+  delete globalThis.window;
+  const server = await fresh();
+  server.setStampVerificationRequired(scope(), true);
+  assert.equal(server.isStampVerificationRequired(scope()), false);
+});
