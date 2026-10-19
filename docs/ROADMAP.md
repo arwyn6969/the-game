@@ -43,6 +43,12 @@ The S1 source in PR #16 was an inactive six-actor foundation. This candidate rec
 
 If players understand the outcome but do not care, improve its stakes before adding more residents or map area. The original qualitative 5/10 review is historical; no new enjoyment score is claimed merely because code and tests were added.
 
+## AI control while the player is away
+
+The 19 October direction makes opt-in [AI avatar continuity](implementation/offline-avatar-control.md) a core feature of the future shared server world. It was not implemented or separately specified in the earlier backlog. Design canonical character control, bounded delegation and immediate human reclaim at the start of shared-world packet 6; trial one model with free credits in the server alpha. Include the working continuity feature in the first full public shared-world release. Add prepaid Bitcoin time only after authority, recovery, capacity, metering and payment tests pass. Model selection and optional NVIDIA DGX Spark inference follow measured quality and cost; either can be included at paid launch if qualified.
+
+The [delivery gates](implementation/offline-avatar-control.md#timing-and-delivery-gates) are OA0 planning now → OA1 server authority → OA2 unpaid continuity trial → OA3 paid time → OA4 qualified model choice and hosting. Runtime implementation remains future work. This does not delay the current browser-local release or enable resident wallet spending; every outgoing BTC/stamp transaction still requires owner approval.
+
 ## Deferred by scope
 
 Cross-device saves and a continuously running shared town remain outside the current quality delivery. The user has approved the [stamp identity and wallet tooling sequence](implementation/stamp-identity-tooling.md), starting from `codex/game-quality-review` at `80ee299`: permanent identities → verified stamp selection/optional heads → agent receiving wallets → owner-approved outgoing proposals/transfers → tested trading → shared multiplayer/PvP. Packet 1 is implemented for review as an additive Town v2 identity registry with restore/fork imports; its [verification receipt](implementation/stamp-identity-tooling.md#implementation-receipt) records its identity and save checks. The [packet 2 appearance preview](implementation/stamp-wallet-selection.md) adds optional Leather mainnet P2WPKH proof, read-only classic stamp selection and player portraits/heads in a separate private session.
@@ -57,6 +63,7 @@ Map expansion, extra residents, a broad job market, banking, token voting, proce
 
 - [First-week experience](design/consequential-first-week.md), [economic rules](design/economy-and-fair-contribution.md) and [implementation contracts](implementation/community-project.md) describe the bounded loop.
 - [Stamp identity and wallet tooling](implementation/stamp-identity-tooling.md) records the approved order, first-packet acceptance checks, wallet compatibility gate and unresolved stamp/persona transfer rules.
+- [AI control while away](implementation/offline-avatar-control.md) defines the shared-world continuity requirement, human/AI handoff, prepaid time, Bitcoin checkout, model options and hosting evaluation.
 - [Private owner registration and receiving drafts](implementation/agent-receiving-registry.md) records packet 3A's account boundary, permanent address reservations, watch-only observations and the packet 3B gate before deposits.
 - [Consolidation](CONSOLIDATION.md) and [earlier release evidence](RELEASE.md) retain their dated source/publication receipts.
 - [Collaboration guidance](COLLABORATION.md) defines ownership and reviewable feature-branch delivery. The original Sol/Grok split is not a reason to leave requested integration unfinished.
