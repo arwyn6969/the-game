@@ -520,10 +520,12 @@ export function ConversationCaption({
   town,
   event,
   onOpen,
+  onClose,
 }: {
   town: Town;
   event?: SocialEvent;
   onOpen: () => void;
+  onClose: () => void;
 }) {
   const [index, setIndex] = useState(0);
   const previous = useRef(event?.id);
@@ -537,6 +539,14 @@ export function ConversationCaption({
   const line = event.turns[shownIndex];
   return (
     <section className="conversation-caption" aria-label="Conversation captions">
+      <button
+        className="btn caption-close"
+        type="button"
+        onClick={onClose}
+        aria-label="Close exchange caption"
+      >
+        Close
+      </button>
       <button className="caption-pair" type="button" onClick={onOpen}>
         {event.participants.map((id) => nameOf(town, id)).join(" ↔ ")}
         <small>{dateOf(event)}</small>
