@@ -30,10 +30,14 @@ const hash = (bytes) => createHash("sha256").update(bytes).digest();
 
 // Disposable random keys never leave this process. Only fixture WIF encoding
 // lives here; signing and verification use the installed BIP-322 implementation.
-function wallet() {
+function wallet(inputScalar) {
   const ecdh = createECDH("secp256k1");
-  ecdh.generateKeys();
-  const privateKey = ecdh.getPrivateKey();
+  if (inputScalar) ecdh.setPrivateKey(inputScalar);
+  else ecdh.generateKeys();
+  // ECDH omits leading zero bytes; compressed WIF requires the full 32-byte scalar.
+  const scalar = ecdh.getPrivateKey();
+  const privateKey = Buffer.alloc(32);
+  scalar.copy(privateKey, privateKey.length - scalar.length);
   const publicKey = ecdh.getPublicKey(undefined, "compressed");
   const payload = Buffer.concat([Buffer.from([128]), privateKey, Buffer.from([1])]);
   const checked = Buffer.concat([payload, hash(hash(payload)).subarray(0, 4)]);
@@ -133,6 +137,18 @@ async function connect({
   );
   return request;
 }
+
+test("leading-zero private scalars retain compressed WIF framing and produce a valid server proof", () => {
+  // Public disposable test vector: scalar one deliberately contains 31 leading zero bytes.
+  const scalar = Buffer.alloc(32);
+  scalar[31] = 1;
+  const fixture = wallet(scalar);
+  const request = challenge({ address: fixture.address });
+  assert.deepEqual(fixture.privateKey, scalar);
+  const signature = fixture.sign(request.message);
+  assert.equal(verifyStampProof(fixture.address, request.message, signature), true);
+  assert.equal(verifyStampProof(firstWallet.address, request.message, signature), false);
+});
 
 test("mainnet native SegWit addresses require a real checksum and a 20-byte witness program", () => {
   assert.equal(validateP2wpkhAddress(firstWallet.address), true);

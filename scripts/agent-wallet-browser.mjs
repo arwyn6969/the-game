@@ -41,7 +41,11 @@ function wallet() {
   const key = createECDH("secp256k1");
   key.generateKeys();
   const publicKey = key.getPublicKey(undefined, "compressed");
-  const payload = Buffer.concat([Buffer.from([128]), key.getPrivateKey(), Buffer.from([1])]);
+  // ECDH omits leading zero bytes; compressed WIF requires the full 32-byte scalar.
+  const scalar = key.getPrivateKey();
+  const privateKey = Buffer.alloc(32);
+  scalar.copy(privateKey, privateKey.length - scalar.length);
+  const payload = Buffer.concat([Buffer.from([128]), privateKey, Buffer.from([1])]);
   const checked = Buffer.concat([payload, sha(sha(payload)).subarray(0, 4)]);
   let n = BigInt(`0x${checked.toString("hex")}`),
     wif = "";

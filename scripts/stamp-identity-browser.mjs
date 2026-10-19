@@ -44,7 +44,10 @@ const hash = (bytes) => createHash("sha256").update(bytes).digest();
 function disposableWallet() {
   const key = createECDH("secp256k1");
   key.generateKeys();
-  const privateKey = key.getPrivateKey();
+  // ECDH omits leading zero bytes; compressed WIF requires the full 32-byte scalar.
+  const scalar = key.getPrivateKey();
+  const privateKey = Buffer.alloc(32);
+  scalar.copy(privateKey, privateKey.length - scalar.length);
   const publicKey = key.getPublicKey(undefined, "compressed");
   const payload = Buffer.concat([Buffer.from([128]), privateKey, Buffer.from([1])]);
   const checked = Buffer.concat([payload, hash(hash(payload)).subarray(0, 4)]);
