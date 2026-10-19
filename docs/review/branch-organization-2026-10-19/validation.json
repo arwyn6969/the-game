@@ -2,7 +2,7 @@
   "date": "2026-10-19",
   "node": "24.19.0",
   "runtimeSource": "039faf4ffb23406163b145ae9452bac3be32b6a6",
-  "laterChanges": "browser focus harness plus merge/documentation records; no runtime or build-input changes",
+  "laterChanges": "Browser focus harnesses, merge ancestry and main avatar-planning documentation; no runtime or build-input changes.",
   "install": {
     "lockedOffline": true,
     "packages": 453
@@ -38,7 +38,8 @@
     "readings.json",
     "delayed-ai.json",
     "stamps.json",
-    "private-wallets.json"
+    "private-wallets.json",
+    "caption-focus.json"
   ],
   "ci": "Consult exact delivery heads and immutable workflow links in PR30\u201333 descriptions; all final heads must pass before the organization handoff."
 }

@@ -1,6 +1,6 @@
 # Branch organization receipt — 19 October 2026
 
-The review chain is **#30 gameplay → #31 identities → #32 stamp appearance → #33 private wallets/Wonder**. All dependencies have been refreshed using ordinary merges. Main remains at `4a39cdf`; no main merge or hosted release occurred. The [current branch guide](../../BRANCHES.md) explains the bases and eventual merge procedure.
+The review chain is **#30 gameplay → #31 identities → #32 stamp appearance → #33 private wallets/Wonder**. All dependencies have been refreshed using ordinary merges. During verification, separate PR #34 added the avatar-continuity plan to main at `093a4a6`. That documentation is now merged through this feature stack; this organization pass did not merge gameplay/wallet code into main or publish the game. The [current branch guide](../../BRANCHES.md) explains the bases and eventual merge procedure.
 
 ## Source and integration
 
@@ -27,13 +27,13 @@ The browser reports below use isolated synthetic towns, genuine disposable signa
 
 Both wallet variants are also exercised by the final PR #33 CI workflow. The local integration reports above use Wonder; the earlier dated receipts retain their Leather checks.
 
-The initial local full test run hit the now-fixed short-scalar fixture failure. The first auth probe had no dev server to inspect; the explicit comparison against the isolated dev server passed. The first identity CI browser run exposed the focus race described above; these attempts are not counted as successful verification.
+The initial local full test run hit the now-fixed short-scalar fixture failure. The first auth probe had no dev server to inspect; the explicit comparison against the isolated dev server passed. The first identity CI browser run exposed the conversation focus race described above. Duplicate runs on the next heads then exposed a second test race: cancelling import could restore focus after the separate caption Escape test had begun. Both CI artifacts identify that same caption-focus assertion. The harness now waits for Import focus before starting the caption case; its focused desktop/phone rerun passes with every assertion retained ([report](caption-focus.json)). These failed attempts are not counted as successful verification.
 
 ## Closed drafts and retired refs
 
 - PR #16 is closed as superseded by the reconciled eight-actor implementation in #30. Keep `codex/funded-project-accounts` at `53bd9ac`, including its three ancestry-unique commits, for experimental version-1 ledger recovery. It is not an independent merge candidate.
 - PR #29 is closed as incorporated into #30, retaining its source branch until the candidate merges. Neither closure means the replacement has reached main.
-- `codex/product-consolidation` (`1461148`) and `codex/character-social-release-evidence` (`940cd70`) were already reachable from main, unprotected and unused by open PR heads/bases. One atomic deletion used an expected-head lease for each ref. The merged local consolidation ref was removed and local main fast-forwarded.
+- `codex/product-consolidation` (`1461148`) and `codex/character-social-release-evidence` (`940cd70`) were already reachable from main, unprotected and unused by open PR heads/bases. One atomic deletion used an expected-head lease for each ref. The merged local consolidation ref was removed and local main fast-forwarded, first to `4a39cdf` and then to the separately updated main `093a4a6`.
 
 The verified complete Git bundle is stored locally at `artifacts/branch-organization-2026-10-19/pre-organization.bundle` (SHA-256 `036bf2b1283dcd880c1b2422a80d7dc30769e367bb4b2ec8fe08af14eee47fc4`). It is intentionally ignored, preserves tracked history/refs, and does not include private files or uncommitted work. Deleted remote heads also remain reachable from main; recreate a ref only after checking that its name has not since been reused.
 
@@ -41,6 +41,6 @@ The verified complete Git bundle is stored locally at `artifacts/branch-organiza
 
 All 13 initially audited checkouts were clean, with no merges or stashes. Every folder and ignored/private file was preserved. The old `character-social-ui/` conflict is no longer present; the three coherence folders are separate clones, not intelligence worktrees. Their unique/adapted source histories remain intact. The wrapper is an unborn workspace repository, not the product repository; its untracked material and non-Git review exports remain untouched.
 
-Separate work created `codex/offline-avatar-plan` and `codex/offline-avatar-roadmap` during this pass. These active branches/checkouts are preserved outside this four-PR integration; their ongoing heads are not cleanup candidates. No other task was messaged or repurposed.
+Separate work created `codex/offline-avatar-plan` and `codex/offline-avatar-roadmap` during this pass. PR #34 merged the latter plan into main while checks were running. Its complete planning document and the current implemented gameplay roadmap are both preserved in the feature stack. The local planning source and merged roadmap source refs/checkouts remain intact. No other task was messaged or repurposed.
 
 All four implementation PRs remain drafts. Human playtesting/accessibility and hosted operator acceptance remain release evidence. Actual Wonder extension signing, receiving/account/key/server recovery, asset classification and protected-output reconciliation remain gates before public funding. Funding remains unpublished; outgoing transfers, trading and server PvP remain later packets, with owner approval required for every outgoing transfer.

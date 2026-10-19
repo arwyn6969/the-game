@@ -1,0 +1,41 @@
+{
+  "url": "http://127.0.0.1:8231/",
+  "node": "v24.19.0",
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "blockedProviderRequests": [],
+      "escapeFocus": true,
+      "replayMovement": true,
+      "routeCancellation": true,
+      "importDialog": true,
+      "oldClosedProject": true,
+      "captionDismissal": true,
+      "captionImportEscapePriority": true,
+      "captionHistoryAndReload": true
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "blockedProviderRequests": [],
+      "escapeFocus": true,
+      "replayMovement": true,
+      "routeCancellation": true,
+      "importDialog": true,
+      "oldClosedProject": true,
+      "captionDismissal": true,
+      "captionImportEscapePriority": true,
+      "captionHistoryAndReload": true
+    }
+  ],
+  "failures": []
+}

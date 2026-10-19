@@ -1,6 +1,6 @@
 # Branch and PR organization
 
-Updated 19 October 2026. Review the candidate in this order; every child contains the current parent through ordinary merge commits. Main remains at `4a39cdf`.
+Updated 19 October 2026. Review the candidate in this order; every child contains the current parent through ordinary merge commits. Main now includes the separately merged avatar-continuity plan at `093a4a6`; the gameplay/identity/wallet implementation remains in this stack.
 
 | Order | Draft PR                                             | Branch                           | Review base                    | Scope                                                              |
 | ----- | ---------------------------------------------------- | -------------------------------- | ------------------------------ | ------------------------------------------------------------------ |
