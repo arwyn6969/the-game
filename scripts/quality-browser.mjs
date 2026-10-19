@@ -71,12 +71,16 @@ async function changePosition(page, touch = false) {
   }
   throw new Error("Player did not move on any adjacent walkable tile");
 }
-async function importFile(page, text, name) {
+async function importFile(page, text, name, { fork = false, screenshot } = {}) {
   await page
     .getByLabel("Import a town file", { exact: true })
     .setInputFiles({ name, mimeType: "application/json", buffer: Buffer.from(text) });
   await page.getByRole("heading", { name: "Replace the live town?", exact: true }).waitFor();
-  await page.getByRole("button", { name: "Replace", exact: true }).click();
+  if (fork) await page.getByRole("radio", { name: /Create a separate town/ }).check();
+  if (screenshot) await page.screenshot({ path: screenshot });
+  await page
+    .getByRole("button", { name: fork ? "Create separate town" : "Replace", exact: true })
+    .click();
   await page
     .getByRole("heading", { name: "Replace the live town?", exact: true })
     .waitFor({ state: "hidden" });
@@ -274,6 +278,60 @@ try {
     assert.equal(migrated.agents.length, 8);
     assert.ok(migrated.economy);
     result.v1Migration = true;
+    const identities = migrated.identityRegistry;
+    assert.ok(identities, "Old towns gain permanent identities");
+    await importFile(page, legacy, "restore-the-same-legacy-town.json");
+    assert.deepEqual((await town(page)).identityRegistry, identities);
+    const sourceRaw = await page.evaluate(() => localStorage.getItem("the-game-town-v2"));
+    const sourceTown = JSON.parse(sourceRaw).town;
+    await importFile(page, sourceRaw, "separate-town.json", {
+      fork: true,
+      screenshot: join(out, `${viewport.name}-identity-import.png`),
+    });
+    const forked = await town(page);
+    assert.notEqual(forked.identityRegistry.worldId, identities.worldId);
+    assert.equal(forked.identityRegistry.parentWorldId, identities.worldId);
+    assert.equal(forked.identityRegistry.rootWorldId, identities.rootWorldId);
+    for (const [role, character] of Object.entries(identities.characters)) {
+      const copied = forked.identityRegistry.characters[role];
+      assert.notEqual(copied.characterId, character.characterId);
+      assert.equal(copied.forkedFromCharacterId, character.characterId);
+      assert.equal(copied.originWorldId, character.originWorldId);
+    }
+    assert.deepEqual(forked.favors, sourceTown.favors, "Fork preserves the copied local debts");
+    assert.deepEqual(forked.economy, sourceTown.economy, "Fork preserves the copied game ledger");
+    assert.ok(
+      await page.evaluate(
+        (raw) =>
+          Object.keys(localStorage).some(
+            (key) =>
+              key.startsWith("the-game-town-backup-v1:") && localStorage.getItem(key) === raw,
+          ),
+        sourceRaw,
+      ),
+    );
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.waitForFunction(() => !!window.__game && !!window.__controlsTest);
+    assert.deepEqual((await town(page)).identityRegistry, forked.identityRegistry);
+    const currentRaw = await page.evaluate(() => localStorage.getItem("the-game-town-v2"));
+    const damaged = JSON.parse(currentRaw);
+    damaged.town.identityRegistry.characters.kevin.characterId =
+      damaged.town.identityRegistry.characters.baba.characterId;
+    await page.getByLabel("Import a town file", { exact: true }).setInputFiles({
+      name: "damaged-identities.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(damaged)),
+    });
+    await page.getByRole("button", { name: "Replace", exact: true }).click();
+    await page.getByText(/The saved permanent identities are invalid/).waitFor();
+    assert.equal(await page.evaluate(() => localStorage.getItem("the-game-town-v2")), currentRaw);
+    await page.getByRole("button", { name: "Keep this town", exact: true }).click();
+    result.identities = {
+      stableLegacyRestore: true,
+      explicitFork: true,
+      forkReload: true,
+      corruptImportRejected: true,
+    };
     assert.deepEqual(
       result.errors,
       [],

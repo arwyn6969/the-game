@@ -11,6 +11,37 @@ export const AGENT_IDS = [
 
 export type AgentId = (typeof AGENT_IDS)[number];
 
+/** Local role keys remain scoped to one town; tools spanning worlds use these IDs. */
+export type TownCharacterIdentity = {
+  characterId: string;
+  archetypeId: AgentId;
+  originWorldId: string;
+  forkedFromCharacterId?: string;
+};
+
+/** Portable provenance, never proof of account ownership or server authority. */
+export type TownIdentityRegistry = {
+  schemaVersion: 1;
+  worldId: string;
+  rootWorldId: string;
+  parentWorldId?: string;
+  characters: Record<AgentId, TownCharacterIdentity>;
+};
+
+export type CharacterRef = {
+  worldId: string;
+  characterId: string;
+  archetypeId: AgentId;
+  originWorldId: string;
+};
+
+export type TownRecordRef = {
+  worldId: string;
+  kind: string;
+  localId: string;
+  ownerCharacterId?: string;
+};
+
 export const NPC_IDS = [
   "kevin",
   "arwyn",
@@ -188,6 +219,8 @@ export type SocialEvent = {
 
 export type Town = {
   version: 2;
+  /** Additive identity extension; fixed Agent.id keys still address local gameplay. */
+  identityRegistry?: TownIdentityRegistry;
   day: number;
   minute: number;
   playerName: string;

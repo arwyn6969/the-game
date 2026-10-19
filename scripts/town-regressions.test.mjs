@@ -154,6 +154,7 @@ test("day-5 and day-30 exports and pretty current saves round trip", () => {
 test("older v1 files repair absent optional fields while keeping personal history", () => {
   const town = debtTown();
   town.version = 1;
+  delete town.identityRegistry; // Genuine v1 towns predate permanent identities.
   town.agents = town.agents.filter((a) => a.id !== "data" && a.id !== "amelia");
   town.playerName = "Iris";
   const kevin = agent(town, "kevin");
@@ -901,6 +902,7 @@ test("legacy missing timetables and conflicting projects cannot produce false sh
   for (const scenario of ["missing-plan", "empty-beats", "conflicting-project"]) {
     const raw = createTown("Ada");
     raw.version = 1;
+    delete raw.identityRegistry; // Genuine v1 towns predate permanent identities.
     raw.agents = raw.agents.filter((a) => a.id !== "data" && a.id !== "amelia");
     const player = agent(raw, "player");
     if (scenario === "missing-plan") delete player.plan;

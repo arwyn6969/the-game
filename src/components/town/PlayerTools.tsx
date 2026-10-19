@@ -205,18 +205,20 @@ export function PlayerTools({
             <section>
               <h3>Your saved town</h3>
               <p>
-                The town saves in this browser. Download town keeps a portable backup; Import
-                replaces the current town after you confirm. Downloads include conversation history
-                and private resident notes. Keep backups somewhere private. There is no
-                account-based cross-device sync yet.
+                The town saves in this browser. Download town keeps a portable backup; Import lets
+                you restore the same people or create a separate town with copied histories. Both
+                replace this browser’s current town after keeping a recovery copy. Downloads include
+                conversation history and private resident notes. Keep backups somewhere private.
+                There is no account-based cross-device sync yet.
               </p>
             </section>
             {backups.length > 0 && (
               <section>
                 <h3>Preserved browser copies</h3>
                 <p>
-                  These copies were kept when a town was replaced or another tab changed it.
-                  Download a copy before importing it. No copy is removed here.
+                  These copies were kept when a town was replaced, permanent identities were added,
+                  or another tab changed it. Download a copy before importing it. No copy is removed
+                  here.
                 </p>
                 <ul>
                   {backups.map((backup, index) => (
