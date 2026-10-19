@@ -10,6 +10,8 @@ The [pre-release refinement](docs/reviews/2026-10-15-pre-release-polish.md) adds
 
 The latest [interruption and save-recovery pass](docs/reviews/2026-10-16-interruptions.md) fixes hidden menus, keyboard tabs, wage follow-up dates, stale completed tasks and quest deadlines, with 610 passing tests and built desktop/phone checks.
 
+The [AI avatar continuity plan](docs/implementation/offline-avatar-control.md) makes opt-in control while a player is away a core feature of the future shared server world. Its [roadmap milestone](docs/ROADMAP.md#shared-server-world-and-ai-avatar-continuity) covers safe human takeover, an unpaid trial and later prepaid Bitcoin time, with model choice and optional Spark hosting after evaluation. This is planned work; the current browser-local town stops when the player leaves.
+
 The approved [stamp identity and wallet tooling plan](docs/implementation/stamp-identity-tooling.md) starts from quality candidate `80ee299`: permanent identities, verified stamp selection/optional heads, receiving wallets, owner-approved transfers, tested trading and then multiplayer/PvP. The additive identity packet is implemented for review in draft PR 31. The next [read-only wallet appearance packet](docs/implementation/stamp-wallet-selection.md) adds optional Leather proof, supported classic stamp selection and player portraits/heads. Account permissions, receiving funds and transfers follow in later packets.
 
 ## Play
