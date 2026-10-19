@@ -4,6 +4,7 @@ import type { Agent, AgentId, SocialEvent, Town } from "@/game/types";
 import { characterProfile } from "@/game/characters";
 import { paintPortrait } from "@/game/render";
 import { publicReflections } from "@/game/social";
+import { fundedWorkSummary } from "@/game/funded-work";
 import { formatClock, mentionsSeed } from "@/game/text";
 import { placeTitle, zoneAt } from "@/game/world";
 import { inTalkRange } from "./talk";
@@ -184,6 +185,7 @@ export function CharacterProgress({
   const person =
     agent.id === "player" || watch ? agent : town.agents.find((a) => a.id === "player")!;
   const projects = person.projects.filter((p) => !mentionsSeed(p.text));
+  const funded = town.economy?.work ? fundedWorkSummary(town, person.id) : null;
   const favors = town.favors.filter(
     (f) =>
       (f.from === "player" || f.to === "player") &&
@@ -201,11 +203,63 @@ export function CharacterProgress({
           </li>
         ))}
       </ul>
-      <h3>Work today · {person.name}</h3>
-      <p>
-        {person.shiftHours.toFixed(1)} attended hours ·{" "}
-        {person.paidToday ? "Wages paid" : "No wage payment recorded today"}
-      </p>
+      <h3>
+        {funded ? "Funded work" : "Work today"} · {person.name}
+      </h3>
+      {funded ? (
+        <>
+          {!funded.agreements.length && (
+            <p className="character-note">No funded agreement recorded.</p>
+          )}
+          <ul className="contribution-list">
+            {funded.agreements
+              .filter((agreement) => !mentionsSeed(agreement.task))
+              .map((agreement) => (
+                <li key={agreement.id}>
+                  <span className="badge">{agreement.status}</span>
+                  {agreement.task}
+                  {agreement.kind === "cafe-shift" && (
+                    <p>
+                      {agreement.eligibleMinutes} of {agreement.requiredMinutes} eligible minutes.
+                      Accrued progress carries across game days.
+                    </p>
+                  )}
+                  <p>
+                    {agreement.fee} agreed ·{" "}
+                    {funded.holds.find((hold) => hold.id === agreement.holdId)?.remaining ?? 0}{" "}
+                    still reserved
+                  </p>
+                </li>
+              ))}
+          </ul>
+          <h3>Payment records</h3>
+          {!funded.payables.length && (
+            <p className="character-note">No earned payment recorded yet.</p>
+          )}
+          <ul className="contribution-list">
+            {funded.payables.map((payable) => (
+              <li key={payable.id}>
+                {payable.amount}{" "}
+                {payable.status === "settled" ? "paid" : "earned and still payable"}
+                {payable.reason ? ` · ${payable.reason}` : ""}
+              </li>
+            ))}
+          </ul>
+          {funded.legacyClaims.some((claim) =>
+            ["unresolved", "underfunded", "protected"].includes(claim.resolution),
+          ) && (
+            <p className="character-note">
+              Earlier work evidence is preserved. Any unconfirmed attendance needs explicit employer
+              terms; it is separate from new funded work.
+            </p>
+          )}
+        </>
+      ) : (
+        <p>
+          {person.shiftHours.toFixed(1)} attended hours ·{" "}
+          {person.paidToday ? "Wages paid" : "No wage payment recorded today"}
+        </p>
+      )}
       <h3>Agreements involving you</h3>
       {!favors.length && <p className="character-note">Nothing written down between you.</p>}
       <ul className="contribution-list">
@@ -466,10 +520,12 @@ export function ConversationCaption({
   town,
   event,
   onOpen,
+  onClose,
 }: {
   town: Town;
   event?: SocialEvent;
   onOpen: () => void;
+  onClose: () => void;
 }) {
   const [index, setIndex] = useState(0);
   const previous = useRef(event?.id);
@@ -483,6 +539,14 @@ export function ConversationCaption({
   const line = event.turns[shownIndex];
   return (
     <section className="conversation-caption" aria-label="Conversation captions">
+      <button
+        className="btn caption-close"
+        type="button"
+        onClick={onClose}
+        aria-label="Close exchange caption"
+      >
+        Close
+      </button>
       <button className="caption-pair" type="button" onClick={onOpen}>
         {event.participants.map((id) => nameOf(town, id)).join(" ↔ ")}
         <small>{dateOf(event)}</small>

@@ -14,9 +14,8 @@ const server = await createServer({
 after(() => server.close());
 const { createTown } = await server.ssrLoadModule("/src/game/town.ts");
 const { stepMinute } = await server.ssrLoadModule("/src/game/sim.ts");
-const { applyPlayerAction, playerActions, PLAYER_CAFE_SHIFT } = await server.ssrLoadModule(
-  "/src/game/effects.ts",
-);
+const { applyPlayerAction, playerActions, PLAYER_CAFE_SHIFT } =
+  await server.ssrLoadModule("/src/game/effects.ts");
 const { offlineResult } = await server.ssrLoadModule("/src/game/offline.ts");
 const { applyResult } = await server.ssrLoadModule("/src/game/effects.ts");
 const { visibleSocialEvents } = await server.ssrLoadModule("/src/game/social.ts");
@@ -56,12 +55,28 @@ test("a finished cafe shift is remembered by Kevin and listed in town life", () 
     day: 1,
   });
   town.minute = 16 * 60;
+  const kevin = person(town, "kevin");
+  player.tile = { ...kevin.tile };
+  const recognition = playerActions(town, "kevin").find(
+    (action) => JSON.parse(action.id)[0] === "recognise-work",
+  );
+  assert.ok(recognition, "retained attendance needs an explicit funded recognition offer");
+  const recognized = applyPlayerAction(town, "kevin", recognition.id);
+  assert.equal(recognized.ok, true, recognized.reply);
+  const resume = playerActions(town, "kevin").find(
+    (action) => JSON.parse(action.id)[0] === "shift-resume",
+  );
+  assert.ok(resume);
+  const resumed = applyPlayerAction(town, "kevin", resume.id);
+  assert.equal(resumed.ok, true, resumed.reply);
+  player.tile = { x: 10, y: 21 };
   stepMinute(town, false);
   assert.equal(player.money, before + 5);
   assert.equal(player.paidToday, true);
-  const kevin = person(town, "kevin");
   assert.ok(
-    kevin.memories.some((memory) => memory.text === "Mira worked the Hobbs shift. The till paid 5."),
+    kevin.memories.some(
+      (memory) => memory.text === "Mira worked the Hobbs shift. The till paid 5.",
+    ),
   );
   const shown = visibleSocialEvents(town, false);
   assert.ok(shown.some((event) => event.text.includes("worked the Hobbs shift")));

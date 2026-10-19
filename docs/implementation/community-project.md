@@ -1,10 +1,10 @@
 # Implementation plan: funded work and a consequential first week
 
-Proposed work, 12 October 2026. Read the [roadmap](../ROADMAP.md), [experience](../design/consequential-first-week.md), [economy](../design/economy-and-fair-contribution.md) and [release evidence](../RELEASE.md). Main at planning: `900015b`; published runtime: `4e7786c`. No feature in S1–S5 is implemented by this document.
+Contract written 12 October; status updated 15 October 2026. S1–S4 are integrated in the current quality candidate, based on main through `4a39cdf`. S5 automated validation is covered by the implementation receipt; its human playtest and hosted publication gates remain open. Read the [delivery notes](game-quality-delivery.md), [roadmap](../ROADMAP.md), [experience](../design/consequential-first-week.md), [economy](../design/economy-and-fair-contribution.md) and historical [release evidence](../RELEASE.md). Main at planning was `900015b`; the earlier published runtime was `4e7786c`. This document specifies contracts rather than proving publication.
 
 ## Ownership and rollout
 
-Sol owns `src/game/**` excluding concurrent render work, the save/action contracts and regression tests. Inspect PR #11 before UI work: it changes TownApp, render, styles and root assets. Define additive UI contracts during S1; name one integration owner on a stable visual baseline for S2. Preserve auth, PWA, the provider and the host.
+Sol owns `src/game/**` excluding concurrent render work, the save/action contracts and regression tests. Preserve the already integrated PR #11 art and current character social tools when changing TownApp, render, styles or root assets. Define additive UI contracts during S1; name one integration owner on a stable visual baseline for S2. Preserve auth, PWA, the provider and the host.
 
 S1 is a reviewable foundation with migration and command tests. It may land unused helpers; it must not activate half a ledger or change a player's financial terms before the matching UI exists. S2 activates the coherent account/work/project rules and player-facing terms together. Use one explicit initialization/migration boundary, not independently enabled fragments. Publication remains a separate release action.
 
@@ -12,7 +12,7 @@ S1 is a reviewable foundation with migration and command tests. It may land unus
 
 **Outcome:** one authority can explain where every coin came from, what is reserved and what is owed. Stop before authored project UI and ordinary-play activation.
 
-Add one optional, validated extension to `Town.version === 1` for opening balances, transactions, holds, agreements, work receipts, command receipts and eventual project/event state. Choose names in code and document them in the handoff. Existing personal purses and business tills remain the authoritative balances behind account IDs; project custody adds its own balance. Do not keep two independently mutable copies of money.
+Add one optional, validated extension to `Town.version === 2` for opening balances, transactions, holds, agreements, work receipts, command receipts and eventual project/event state. Choose names in code and document them in the handoff. Existing personal purses and business tills remain the authoritative balances behind account IDs; project custody adds its own balance. Do not keep two independently mutable copies of money.
 
 A legacy import records valid existing balances as migration opening balances, not historical earnings or new issuance. Preserve names, memories, debts, creditors, projects, pause and recorded shift progress. Missing extension migrates once. A malformed extension, contradictory account total or edit by an older runtime must retain raw recovery data and fail with an explanation; do not silently rebuild books, rename financial IDs or fabricate a balancing entry. No downgrade round-trip is promised to an older runtime that cannot maintain the ledger.
 
@@ -23,7 +23,7 @@ A command validates issuer/authority, actor, target, terms/revision/expiry, elig
 - Integer nonnegative cash; available cash = balance minus active holds. Hold totals cannot exceed cash. A hold earmarks money and does not spend or create it.
 - Each transfer has a stable ID, source, destination, amount, game time, purpose, agreement and authority. Issuance/retirement are separate, explicitly authorized event types.
 - Closing total = opening total + recorded issuance − recorded retirement. Ordinary transfers, fees, grants between town accounts, holds and refunds preserve total money.
-- On S2 activation, all balance mutations must use this authority, including existing wage and debt paths. Remove unexplained midnight top-ups and destructive absolute till caps together with that activation. The bounded demonstration has no recurring external issuance. Fresh opening money is 77; imports keep their own valid total.
+- On S2 activation, all balance mutations must use this authority, including existing wage and debt paths. Remove unexplained midnight top-ups and destructive absolute till caps together with that activation. The bounded demonstration has no recurring external issuance. Fresh eight-actor opening money is 90; imports keep their own valid total. Experimental version-1 ledgers remain recoverable on their original branch.
 - Legacy bread tabs retain Baba personally as creditor. Paying them credits her purse. Future business sales need a new disclosed business-creditor agreement; do not reinterpret an old debt as grocery revenue.
 - Earned payables, active holds and command receipts survive midnight, cancellation, reload and memory compression. A full recipient purse delays settlement without deleting the payable.
 

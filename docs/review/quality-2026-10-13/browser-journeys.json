@@ -1,0 +1,451 @@
+{
+  "url": "http://127.0.0.1:8094/",
+  "node": "v24.19.0",
+  "checks": {
+    "desktop": {
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "onboardingGeometry": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "width": 1280,
+          "height": 800
+        },
+        "horizontalOverflow": false,
+        "colorScheme": "dark",
+        "bodyBackground": "rgb(16, 9, 28)",
+        "tokens": {
+          "bg": "#10091c",
+          "primary": "#c3ff63",
+          "accent": "#c3ff63"
+        },
+        "hud": null,
+        "canvas": null,
+        "footer": null,
+        "conversation": null,
+        "conversationBar": null,
+        "composer": null
+      },
+      "nameEntry": true,
+      "keyboardMovement": {
+        "key": "ArrowRight",
+        "from": {
+          "x": 26,
+          "y": 22
+        },
+        "to": {
+          "x": 27,
+          "y": 22
+        }
+      },
+      "pause": {
+        "minute": 421,
+        "stable": true
+      },
+      "townGeometry": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "width": 1280,
+          "height": 800
+        },
+        "horizontalOverflow": false,
+        "colorScheme": "dark",
+        "bodyBackground": "rgb(16, 9, 28)",
+        "tokens": {
+          "bg": "#10091c",
+          "primary": "#c3ff63",
+          "accent": "#c3ff63"
+        },
+        "hud": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 77.796875,
+          "right": 1280,
+          "bottom": 77.796875
+        },
+        "canvas": {
+          "x": 25,
+          "y": 232.34375,
+          "width": 1230,
+          "height": 485.65625,
+          "right": 1255,
+          "bottom": 718
+        },
+        "footer": {
+          "x": 0,
+          "y": 735,
+          "width": 1280,
+          "height": 65,
+          "right": 1280,
+          "bottom": 800
+        },
+        "conversation": null,
+        "conversationBar": null,
+        "composer": null
+      },
+      "export": {
+        "filename": "the-game-day-1.json",
+        "bytes": 34990
+      },
+      "import": {
+        "playerName": "QA desktop",
+        "day": 1
+      },
+      "conversationEntry": "Enter beside Kevin",
+      "pinButtonText": {
+        "text": "Pin Kevin",
+        "lines": 1,
+        "lineTops": [
+          165
+        ],
+        "width": 89.671875,
+        "height": 44
+      },
+      "activePinButtonText": {
+        "text": "Unpin",
+        "lines": 1,
+        "lineTops": [
+          165
+        ],
+        "width": 72.578125,
+        "height": 44
+      },
+      "activeSendButtonText": {
+        "text": "Say it",
+        "lines": 1,
+        "lineTops": [
+          671
+        ],
+        "width": 76,
+        "height": 44
+      },
+      "offlineConversation": true,
+      "conversationGeometry": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "width": 1280,
+          "height": 800
+        },
+        "horizontalOverflow": false,
+        "colorScheme": "dark",
+        "bodyBackground": "rgb(16, 9, 28)",
+        "tokens": {
+          "bg": "#10091c",
+          "primary": "#c3ff63",
+          "accent": "#c3ff63"
+        },
+        "hud": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 77.796875,
+          "right": 1280,
+          "bottom": 77.796875
+        },
+        "canvas": {
+          "x": 25,
+          "y": 134.796875,
+          "width": 1230,
+          "height": 583.203125,
+          "right": 1255,
+          "bottom": 718
+        },
+        "footer": {
+          "x": 0,
+          "y": 735,
+          "width": 1280,
+          "height": 65,
+          "right": 1280,
+          "bottom": 800
+        },
+        "conversation": {
+          "x": 823,
+          "y": 134.796875,
+          "width": 432,
+          "height": 583.203125,
+          "right": 1255,
+          "bottom": 718
+        },
+        "conversationBar": {
+          "x": 825,
+          "y": 134.796875,
+          "width": 430,
+          "height": 123,
+          "right": 1255,
+          "bottom": 257.796875
+        },
+        "composer": {
+          "x": 825,
+          "y": 451.625,
+          "width": 430,
+          "height": 266.375,
+          "right": 1255,
+          "bottom": 718
+        }
+      },
+      "specialists": {
+        "data": {
+          "offlineReply": true,
+          "financesUnchanged": true
+        },
+        "amelia": {
+          "offlineReply": true,
+          "financesUnchanged": true
+        }
+      },
+      "reloadPersistence": true,
+      "ok": true
+    },
+    "mobile": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "consoleErrors": [],
+      "pageErrors": [],
+      "onboardingGeometry": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "document": {
+          "width": 390,
+          "height": 844
+        },
+        "horizontalOverflow": false,
+        "colorScheme": "dark",
+        "bodyBackground": "rgb(16, 9, 28)",
+        "tokens": {
+          "bg": "#10091c",
+          "primary": "#c3ff63",
+          "accent": "#c3ff63"
+        },
+        "hud": null,
+        "canvas": null,
+        "footer": null,
+        "conversation": null,
+        "conversationBar": null,
+        "composer": null
+      },
+      "nameEntry": true,
+      "keyboardMovement": {
+        "key": "ArrowRight",
+        "from": {
+          "x": 26,
+          "y": 22
+        },
+        "to": {
+          "x": 27,
+          "y": 22
+        }
+      },
+      "mobilePointerMovement": {
+        "label": "West",
+        "input": "touch",
+        "from": {
+          "x": 27,
+          "y": 22
+        },
+        "to": {
+          "x": 26,
+          "y": 22
+        }
+      },
+      "pause": {
+        "minute": 421,
+        "stable": true
+      },
+      "townGeometry": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "document": {
+          "width": 390,
+          "height": 844
+        },
+        "horizontalOverflow": false,
+        "colorScheme": "dark",
+        "bodyBackground": "rgb(16, 9, 28)",
+        "tokens": {
+          "bg": "#10091c",
+          "primary": "#c3ff63",
+          "accent": "#c3ff63"
+        },
+        "hud": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 103.59375,
+          "right": 390,
+          "bottom": 103.59375
+        },
+        "canvas": {
+          "x": 13,
+          "y": 285.09375,
+          "width": 364,
+          "height": 434.53125,
+          "right": 377,
+          "bottom": 719.625
+        },
+        "footer": {
+          "x": 0,
+          "y": 731.015625,
+          "width": 390,
+          "height": 112.984375,
+          "right": 390,
+          "bottom": 844
+        },
+        "conversation": null,
+        "conversationBar": null,
+        "composer": null
+      },
+      "export": {
+        "filename": "the-game-day-1.json",
+        "bytes": 34883
+      },
+      "import": {
+        "playerName": "QA mobile",
+        "day": 1
+      },
+      "conversationEntry": "Enter beside Kevin",
+      "pinButtonText": {
+        "text": "Pin Kevin",
+        "lines": 1,
+        "lineTops": [
+          217
+        ],
+        "width": 89.671875,
+        "height": 44
+      },
+      "activePinButtonText": {
+        "text": "Unpin",
+        "lines": 1,
+        "lineTops": [
+          217
+        ],
+        "width": 72.578125,
+        "height": 44
+      },
+      "activeSendButtonText": {
+        "text": "Say it",
+        "lines": 1,
+        "lineTops": [
+          677
+        ],
+        "width": 76,
+        "height": 44
+      },
+      "offlineConversation": true,
+      "conversationGeometry": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "document": {
+          "width": 390,
+          "height": 844
+        },
+        "horizontalOverflow": false,
+        "colorScheme": "dark",
+        "bodyBackground": "rgb(16, 9, 28)",
+        "tokens": {
+          "bg": "#10091c",
+          "primary": "#c3ff63",
+          "accent": "#c3ff63"
+        },
+        "hud": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 103.59375,
+          "right": 390,
+          "bottom": 103.59375
+        },
+        "canvas": {
+          "x": 13,
+          "y": 188.34375,
+          "width": 364,
+          "height": 531.28125,
+          "right": 377,
+          "bottom": 719.625
+        },
+        "footer": {
+          "x": 0,
+          "y": 731.015625,
+          "width": 390,
+          "height": 112.984375,
+          "right": 390,
+          "bottom": 844
+        },
+        "conversation": {
+          "x": 13,
+          "y": 188.34375,
+          "width": 364,
+          "height": 531.28125,
+          "right": 377,
+          "bottom": 719.625
+        },
+        "conversationBar": {
+          "x": 13,
+          "y": 190.34375,
+          "width": 364,
+          "height": 111.390625,
+          "right": 377,
+          "bottom": 301.734375
+        },
+        "composer": {
+          "x": 13,
+          "y": 451.25,
+          "width": 364,
+          "height": 268.375,
+          "right": 377,
+          "bottom": 719.625
+        }
+      },
+      "specialists": {
+        "data": {
+          "offlineReply": true,
+          "financesUnchanged": true
+        },
+        "amelia": {
+          "offlineReply": true,
+          "financesUnchanged": true
+        }
+      },
+      "reloadPersistence": true,
+      "ok": true
+    }
+  },
+  "screenshots": [
+    "/private/tmp/the-game-quality-browser/desktop-onboarding.png",
+    "/private/tmp/the-game-quality-browser/desktop-town.png",
+    "/private/tmp/the-game-quality-browser/desktop-conversation-active.png",
+    "/private/tmp/the-game-quality-browser/desktop-conversation.png",
+    "/private/tmp/the-game-quality-browser/desktop-hobbs.png",
+    "/private/tmp/the-game-quality-browser/desktop-data-conversation.png",
+    "/private/tmp/the-game-quality-browser/desktop-amelia-conversation.png",
+    "/private/tmp/the-game-quality-browser/mobile-onboarding.png",
+    "/private/tmp/the-game-quality-browser/mobile-town.png",
+    "/private/tmp/the-game-quality-browser/mobile-conversation-active.png",
+    "/private/tmp/the-game-quality-browser/mobile-conversation.png",
+    "/private/tmp/the-game-quality-browser/mobile-hobbs.png",
+    "/private/tmp/the-game-quality-browser/mobile-data-conversation.png",
+    "/private/tmp/the-game-quality-browser/mobile-amelia-conversation.png"
+  ],
+  "failures": []
+}

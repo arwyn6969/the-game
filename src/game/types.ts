@@ -203,6 +203,8 @@ export type Town = {
   paused: boolean;
   sawHint: boolean;
   guide: number;
+  /** Validated funded-work extension; absent older towns gain an opening snapshot. */
+  economy?: import("./economy-types").EconomyState;
   /** Optional bounded presentation history; older version-2 saves remain valid. */
   social?: SocialEvent[];
 };

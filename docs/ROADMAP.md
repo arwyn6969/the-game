@@ -1,71 +1,47 @@
-# THE GAME: roadmap for the next playable week
+# THE GAME: current delivery and next gates
 
-Shared-world planning updated 19 October 2026. The playable-week sections retain their 12 October baseline. This is the planning entry point; dated reviews are historical evidence and proposed features below are not shipped features.
+Updated 19 October 2026. The current game backlog is implemented in the quality candidate, integrating main through `4a39cdf`. A source candidate and its checks do not establish hosted publication or player enjoyment. The [delivery notes](implementation/game-quality-delivery.md) explain the resulting behavior; the dated [quality review](reviews/2026-10-13-game-quality.md) records the problems that prompted it.
 
-**Product promise: “I come back because of what I did yesterday.”** Build a small community where chosen work produces a useful result, payment is explainable, and people remember the player's actual contribution. The consolidation candidate has seven residents and the player. The original Kevin World think-tank vision becomes playable through their different contributions to a shared problem; further expansion comes later.
+**Product promise: “I come back because of what I did yesterday.”** The seven residents and the player can now contribute to a small common project, inspect its funding, test whether it helped, and encounter its consequences on later game days. The player remains a resident with voluntary choices.
 
-## Read and build
+## Current scope
 
-1. [Product strategy and first week](design/consequential-first-week.md): the intended experience, choices, bread direction and playtest gates.
-2. [Value, investment and fair contribution](design/economy-and-fair-contribution.md): economic principles, the eight-coin example and ownership.
-3. [Implementation plan](implementation/community-project.md): ordered packets, state contracts, migration and acceptance tests.
-4. [Sol 6.1 brief](prompts/SOL-6.1.md): ready-to-use assignment for the first packet, with instructions for subsequent packets.
-5. [Release record](RELEASE.md): what was actually published, checked and left unverified.
-6. [AI avatar continuity](implementation/offline-avatar-control.md): a core future shared-world feature, with human/AI control, prepaid Bitcoin time, model options and hosting gates.
+| Area                 | Implemented in the candidate                                                                                                                      | Evidence still needed                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Useful activity      | Northern's first reading; observed locations carry into a reviewable draft; paid preparation; independent lookup; park or library gathering       | Five uncoached players must understand the result and want to revisit                  |
+| A different tomorrow | Attributed outcomes, next-day use, later delivery evidence, separately paid correction and closure                                                | Human recognition of the consequence after reopening                                   |
+| Economy              | Reconciled eight-actor accounts; immutable transfers and holds; payroll protected before grants; durable work; no nightly money creation/caps     | Broader economic sustainability is outside this bounded demonstration                  |
+| Bread                | Inventory eating and one shared meal; optional cash bread/tea trays for the reading, paid into actual business tills                              | Human assessment of whether the encounters add interest                                |
+| Access               | Permanent Help, Journal, Inventory, Library and destination navigation; keyboard, touch and single-step controls                                  | Physical-phone keyboard and screen-reader checks                                       |
+| Dialogue and memory  | Partner-first relationship context, authored local replies, sourced consequences, bounded complete-record archives, preserved character social UI | Live provider quality and capacity; protected history can still grow                   |
+| Responsiveness       | Ambient waits allow time and movement; foreground bounded wait and immediate local reply; stale results rejected                                  | Physical-device performance under real network conditions                              |
+| Persistence          | Version-1 migration, validated version-2 financial extension, explicit import backup, guarded multi-tab saves and raw recovery                    | Account synchronization remains deferred                                               |
+| AI operation         | Existing verified auth plus shared global/per-user reservations for both provider modes; local-only preference                                    | Operator applies migration and conservative tariffs, then verifies deployed accounting |
 
-## Verified starting point
+Fresh eight-actor towns start with 90 coins. Imported towns retain their valid total, balances, debts and identities. The library receives eight existing coins after payroll protection: six for three bounded tasks and two for a correction. Completed agreed work is paid even when its result fails. Contribution credit grants no ownership. Closing settles earned obligations and returns all unspent money equally to the two funders.
 
-The current main source is [the consolidation](CONSOLIDATION.md) plus visible conversations from [PR #23](https://github.com/arwyn6969/the-game/pull/23), at `8a35f3c877297b7a588aa8d38d6590e486f917cd`. It preserves the published graphics and the seven-resident version-2 runtime. Publish that commit before treating it as the live site. The trust-release details below describe the earlier reviewed baseline; [RELEASE.md](RELEASE.md) also records the later graphics publication.
+## Delivery packets
 
-The trust-repair game was published to https://thegame.grok.me on 12 October 2026. Runtime source is `4e7786c30431e6701c8477d6ddb0b5ffa8ba8ca1`; `900015b2a3bba0a0826ea6d814f72af2f47dc7f0` adds its release record. This planning branch includes that main revision. Future implementation must fetch and report its actual base; these SHAs identify the reviewed baseline, not a command to discard newer work.
+| Packet                                                | Status                                                                                                |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| S0: trustworthy choices, recovery and visible replies | Preserved with current main regressions                                                               |
+| S1: accounts, reservations and migration              | Implemented and integrated with eight actors and version-2 saves                                      |
+| S2: funded three-record library                       | Implemented with ordinary controls and offline operation                                              |
+| S3: later consequences and responsive AI waits        | Implemented with persistent outcomes, attribution and correction                                      |
+| S4: inventory and optional shared meal                | Implemented with explicit participant and single-consumption rules                                    |
+| S5: evaluate and publish                              | Automated candidate checks recorded in the implementation receipt; human and hosted gates remain open |
 
-The released tree passed 317 script/app/auth tests, 64 town tests, typecheck, lint with one inherited warning, diagnostics and a production build. Hosted checks confirmed the new bundles, explicit shift choices, desktop/phone movement and saved progress after reload. Hosted import/recovery was not reverified because Chrome file-upload access was unavailable. See the release record for the remaining limits.
+The S1 source in PR #16 was an inactive six-actor foundation. This candidate reconciles and activates its accounting with the matching UI; its historical 77-coin fixtures do not define a fresh current town. Experimental version-1 ledger files stay recoverable on their source branch. Do not merge the old foundation independently over this integration.
 
-| Capability         | Current state                                                                           | Next gap                                                                               |
-| ------------------ | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Town and residents | Seven residents in the candidate, places, routines, movement, time controls and replay  | Make residents' different knowledge useful in an activity                              |
-| Talk and memory    | Online dialogue, offline fallback, notices, stored exchanges and retrieval              | Make public consequences understandable; keep private knowledge private                |
-| Player consent     | Explicit Choices for bread, eating, payment and shifts; stale/repeated actions rejected | Reuse this authority boundary for funded tasks                                         |
-| Work               | Cafe shift 16:00–19:00; full attendance can earn 5 from its till                        | Useful output, reserved pay, employer-specific progress and durable unpaid obligations |
-| Bread              | Receive one loaf with a tab of 2; eat it; repay Baba separately                         | Eating has no health, energy or work benefit; sharing is unbuilt                       |
-| Economy            | Personal purses, business tills, debts and wage transfers                               | Unexplained nightly funding, till caps and incomplete accounts; no project ledger      |
-| Persistence        | Browser saves, v2 export, v1 import/migration, recovery and save warnings               | Account-based cross-device saves and conflict handling                                 |
-| Community project  | Design only                                                                             | Funded library index, observable use, corrections and attribution                      |
+## Next actions
 
-## Current design assessment
+1. Review the candidate diff and fresh verification receipt. Keep the current cast, art, character cards, per-resident drafts, auth, PWA and provider/hosting contracts.
+2. Run the [five-person playtest](implementation/game-quality-playtest.md): uncoached 10–15 minute sessions across desktop and phone, then reopen the next game day. Targets are four of five explaining their consequence, four recognizing it later and three voluntarily choosing a further visit. Record actual confusion and quotes; do not infer retention from automation.
+3. Perform physical-phone keyboard and screen-reader checks. Resolve any lost payment, unintended obligation, inaccessible essential action or private disclosure before release.
+4. Configure and verify the shared AI-budget migration and conservative tariffs in the intended environment. Check failed accounting falls back locally. No production keys, migrations or paid calls were used for the candidate's local validation.
+5. Obtain separate hosted-release authorization, publish the reviewed source, and verify its Help build ID, assets, ordinary controls, recovery and save round trip on the host. A GitHub merge alone is not that evidence.
 
-**Overall: 5/10 as a game today.** This is a qualitative assessment from the code, release evidence and independent Astra review, not measured retention. The concept has a strong identity, but too few actions make a useful difference tomorrow. Passing tests establish correctness within their coverage; they do not establish enjoyment.
-
-| Area                 | Design score | Reason                                                                            |
-| -------------------- | ------------ | --------------------------------------------------------------------------------- |
-| Vision and identity  | 8/10         | A persistent community with distinct expertise has a clear direction              |
-| First session        | 5/10         | Work and bread can be chosen; interesting decisions and useful rewards are scarce |
-| Reason to return     | 3/10         | State persists, but few consequences change the next visit                        |
-| Economy and fairness | 3/10         | Consent works; production, investment and complete accounting remain weak         |
-| Trust and usability  | 7/10         | Save and interaction repairs are released; AI waits and unsupported prose remain  |
-
-## Three priorities
-
-1. **One useful, fairly funded contribution.** Build a three-record library index with an identified budget, reserved task payments, different resident expertise and an actual lookup that can succeed or fail. Show money spent, work done and benefit delivered separately.
-2. **A different tomorrow.** Carry the result through reload and game-day changes. A specific mistake produces a paid correction opportunity; a working index changes a visible library interaction. Acknowledge the player's real contribution, refusal or withdrawal without inventing feelings or promises.
-3. **An understandable first session.** Within a target 10–15 minutes, let a fresh player discover a need, read terms, choose an action and see a result. Keep controls responsive and offer a brief journal of agreements and outcomes.
-
-## Delivery order
-
-These are bounded implementation packets, not parallel permission to edit the same files. The implementation plan owns detailed contracts and stopping points.
-
-| Packet | Scope                                                          | Exit condition                                                                                                                     | Status                                                         |
-| ------ | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| S0     | Trust repairs and identified publication                       | Explicit choices, recovery, reply visibility and verified live source                                                              | Released; preserve regressions                                 |
-| S1     | Accounts, reservations and migration                           | Account commands reconcile; funded-work/migration tests pass; all current money paths have an activation adapter plan              | PR #16 foundation; reconcile v2 before integration             |
-| S2     | Three-record library project                                   | A chosen paid contribution produces a working or visibly provisional index through ordinary controls, without a key                | Planned; depends on S1                                         |
-| S3     | Tomorrow, week-one consequences and responsiveness             | Outcomes, attribution and bounded corrections persist; public knowledge has a source; delayed background AI does not block walking | Planned; depends on S2                                         |
-| S4     | Purposeful bread and one optional shared meal                  | Inventory use is discoverable; voluntary sharing produces a specific social encounter and remembered outcome                       | Planned; after the project is useful                           |
-| S5     | Observe players and release the next slice                     | Journey and save checks pass; playtest evidence supports the loop; separately authorised hosted publication is verified            | Planned                                                        |
-| Later  | Cross-device saves, richer dialogue and additional specialists | Each addition solves an observed problem; account isolation/conflicts and provider budgets are tested                              | Deferred                                                       |
-| World  | Shared server world with opt-in AI avatar continuity           | One controller per avatar; immediate human reclaim; bounded actions, durable recovery and correct service metering                 | Planned; core feature for the full public shared-world release |
-
-S1 must prevent new project spending from consuming existing payroll commitments. It must also resolve legacy wage progress without inventing lost earnings or discarding recorded work. Its prototype uses six actors and an opening total of 77; the seven-resident fresh town totals 90. Define and test new resident accounts and migration accounting before activation. Do not copy the old ledger over version-2 saves. There is no blanket approval here for an expanded banking, trading or generic job system.
+If players understand the outcome but do not care, improve its stakes before adding more residents or map area. The original qualitative 5/10 review is historical; no new enjoyment score is claimed merely because code and tests were added.
 
 ## Shared server world and AI avatar continuity
 
@@ -77,25 +53,12 @@ Players choose goals, limits and maximum duration, then reclaim control immediat
 
 This is future shared-world work, outside the current S1–S5 playable-week delivery. The separate identity/wallet candidates supply possible foundations; this documentation update does not merge their code. At the start of the world milestone, the simulation/backend and player-experience owners must take OA1/OA2 from the [implementation handoff](implementation/offline-avatar-control.md#next-implementation-handoff), beginning with fake inference and free credits. Payment activation follows its own acceptance gate. Prices, production models and hardware remain decisions to make from measured service quality and cost.
 
-## First-session and first-week proof
+## Deferred by scope
 
-Day one: discover the library problem, inspect its funded offer, choose or refuse one bounded task, see the resulting lookup, and inspect the receipt. The player can leave with a concrete reason to revisit. Day two: show an actual use or an identified error, remember the player's part and offer any correction with its own funded terms. During the first game week: preserve the common result, record use and credit, and let the player choose further involvement. Progress uses game time; absence from the app creates no punishment or unchosen obligations.
+Cross-device saves and a continuously running shared town remain deferred, as confirmed by the user. Map expansion, extra residents, a broad job market, banking, trading, token voting, procedural projects, provider migration and compulsory hunger are also outside this delivery. Existing towns and portable backups remain central while a later persistence milestone is evaluated.
 
-Run five uncoached 10–15 minute sessions across desktop and phone, then reopen each saved town on the next game day. Diagnostic targets: four can explain their action's visible consequence; four recognise it after reopening; three voluntarily choose a further visit. Record confusion and quotes. These targets do not establish population retention. If people understand the result but do not care, revise the problem before expanding the cast or map.
+## Reference contracts and history
 
-## Coordination and open branches
-
-Current branch decisions are recorded in [the consolidation](CONSOLIDATION.md). PRs #5, #6, #9, #13, #14 and #23 are integrated. The open draft is [PR #16](https://github.com/arwyn6969/the-game/pull/16), the inactive funded-accounts work. The neon interface from PR #11 is already on main. The following list records the earlier planning snapshot and is historical:
-
-- [PR #5](https://github.com/arwyn6969/the-game/pull/5) contains this planning pack and the completed historical Astra review. Plans are not runtime changes.
-- [PR #11](https://github.com/arwyn6969/the-game/pull/11) was the neon visual redesign. It is merged. Do not restart it or overwrite main with an older export.
-- [PR #9](https://github.com/arwyn6969/the-game/pull/9) is a contributor handoff draft. Reconcile its README edits when integrating documentation.
-- [PR #6](https://github.com/arwyn6969/the-game/pull/6) is an optional technology-memory preference and original Kevin World notes. It is not required for the library's deterministic expertise roles and has not been published.
-
-Use one checkout/branch per active implementation lane. Sol owns simulation, accounts, save contracts and tests. UI integration has an explicitly named owner once the visual baseline is agreed; the original Sol/Grok lane split is not a reason to leave a requested integration unfinished. Read [coordination guidance](COLLABORATION.md) and preserve the host, provider, auth and PWA contracts.
-
-## Decision boundaries
-
-Approved planning direction: a funded common library index, fair task payment, persistent consequences, then optional useful bread interactions. Starting totals, payment amounts and player-test thresholds below are prototype defaults to test, not universal economic rules. The default eight-coin project budget is deliberately small. A changed budget or task scope must retain the accounting and fairness invariants and be explained in the implementation handoff.
-
-No new residents, expanded map, multiplayer, token trading, bank, provider migration, compulsory hunger system or cross-device architecture in S1–S3. User-facing prompts must state what is available now. Historical [Astra direction](reviews/2026-10-11-astra-direction.md) and [evidence](reviews/2026-10-11-astra-evidence.md) remain dated records; this roadmap and the current release record resolve their superseded status statements.
+- [First-week experience](design/consequential-first-week.md), [economic rules](design/economy-and-fair-contribution.md) and [implementation contracts](implementation/community-project.md) describe the bounded loop.
+- [Consolidation](CONSOLIDATION.md) and [earlier release evidence](RELEASE.md) retain their dated source/publication receipts.
+- [Collaboration guidance](COLLABORATION.md) defines ownership and reviewable feature-branch delivery. The original Sol/Grok split is not a reason to leave requested integration unfinished.

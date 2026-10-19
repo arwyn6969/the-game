@@ -23,6 +23,9 @@ const { makeMemory, scoreMemories, scoreResidentMemories } =
 const { memoryInterestScore } = await server.ssrLoadModule("/src/game/interests.ts");
 const { ANCHORS } = await server.ssrLoadModule("/src/game/world.ts");
 const { plain, mentionsSeed } = await server.ssrLoadModule("/src/game/text.ts");
+const { activateFundedTown } = await server.ssrLoadModule("/src/game/payroll-runtime.ts");
+const economy = await server.ssrLoadModule("/src/game/economy.ts");
+const fundedWork = await server.ssrLoadModule("/src/game/funded-work.ts");
 const storageDescriptor = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
 after(async () => {
   if (storageDescriptor) Object.defineProperty(globalThis, "localStorage", storageDescriptor);
@@ -136,9 +139,14 @@ test("day-5 and day-30 exports and pretty current saves round trip", () => {
         "raw and wrapped current saves remain supported",
       );
     }
-    assert.ok(
+    assert.equal(
+      town.economy.work.agreements.filter((agreement) => agreement.worker === "northern").length,
+      0,
+    );
+    assert.equal(
       agent(town, "northern").memories.some((m) => m.text.includes("paid me 5")),
-      "offered afternoon shifts earn wages in ordinary play",
+      false,
+      "a nonbinding work discussion cannot invent a funded agreement or wage",
     );
   }
 });
@@ -429,16 +437,61 @@ const shiftTown = (id = "northern", place = "cafe", from = 16, to = 20) => {
 const minutes = (town, count) => {
   for (let i = 0; i < count; i++) stepMinute(town, true);
 };
+const fundShift = (town, id = "player") => {
+  const tile = { ...agent(town, id).tile };
+  const place =
+    agent(town, id).projects.find(
+      (project) => project.kind === "shift" && project.status === "open",
+    )?.place ?? "cafe";
+  const activation = activateFundedTown(town);
+  assert.equal(activation.ok, true, activation.reason);
+  if (id === "player") {
+    const employer = place === "grocery" ? "baba" : "kevin";
+    const recognised = choose(town, employer, "recognise-work");
+    assert.equal(recognised.ok, true, recognised.reply);
+    const resumed = choose(town, employer, "shift-resume");
+    assert.equal(resumed.ok, true, resumed.reply);
+  }
+  const agreement = town.economy.work.agreements.find(
+    (item) => item.worker === id && item.status === "active",
+  );
+  assert.ok(agreement, "attendance requires an explicitly funded active agreement");
+  assert.equal(agreement.payer, `till:${place}`);
+  assert.equal(
+    town.economy.holds.find((hold) => hold.id === agreement.holdId).remaining,
+    agreement.fee,
+  );
+  agent(town, id).tile = tile;
+  return agreement;
+};
 
-test("the actual offered Northern 16–20 shift pays 5 after 180 eligible minutes", () => {
+test("Northern's work discussion remains nonbinding without a funded agreement", () => {
   const town = shiftTown();
   const worker = agent(town, "northern");
   worker.projects = [];
-  applyResult(
-    town,
-    offlineResult(town, { kind: "talk", a: "kevin", b: "northern", day: 1, minute: town.minute }),
+  const result = offlineResult(town, {
+    kind: "talk",
+    a: "kevin",
+    b: "northern",
+    day: 1,
+    minute: town.minute,
+  });
+  assert.equal(result.project, null);
+  assert.deepEqual(result.replan, []);
+  applyResult(town, result);
+  assert.equal(
+    worker.projects.some((project) => project.kind === "shift" && project.status === "open"),
+    false,
   );
-  assert.ok(worker.projects.some((p) => p.kind === "shift" && p.status === "open"));
+  const before = worker.money;
+  minutes(town, 180);
+  assert.equal(worker.money, before);
+  assert.equal(worker.shiftHours, 0);
+});
+test("a recognised funded Northern shift pays 5 after 180 eligible minutes", () => {
+  const town = shiftTown();
+  fundShift(town, "northern");
+  const worker = agent(town, "northern");
   const before = worker.money;
   const till = town.tills.cafe;
   minutes(town, 179);
@@ -469,6 +522,7 @@ test("a schedule alone, being at home, or visiting without an agreed shift earns
 });
 test("partial hours of real work do not become hourly attendance samples", () => {
   const town = shiftTown("player");
+  fundShift(town);
   const player = agent(town, "player");
   const before = player.money;
   for (let i = 0; i < 3; i++) {
@@ -486,6 +540,7 @@ for (const [place, wage] of [
 ]) {
   test(`player's agreed ${place} shift earns the full ${wage}`, () => {
     const town = shiftTown("player", place);
+    fundShift(town);
     const player = agent(town, "player");
     const before = player.money;
     const till = town.tills[place];
@@ -495,45 +550,88 @@ for (const [place, wage] of [
     assert.equal(player.paidToday, true);
   });
 }
-test("empty and partial tills defer a full wage, allowing payment once funded", () => {
+test("empty and partial tills preserve old evidence and reject work until explicitly funded", () => {
   for (const till of [0, 3]) {
-    const town = shiftTown("northern");
-    const player = agent(town, "northern");
+    const town = shiftTown("player");
+    const player = agent(town, "player");
     const before = player.money;
     town.tills.cafe = till;
     minutes(town, 185);
     assert.equal(player.money, before);
     assert.equal(town.tills.cafe, till);
     assert.equal(player.paidToday, false);
-    assert.equal(player.memories.filter((m) => m.text.includes("cannot pay the full")).length, 1);
-    town.tills.cafe = 5;
+    assert.equal(player.shiftHours, 0, "unaccepted attendance cannot invent accrued wages");
+    const quote = actionQuote(town, "kevin", "recognise-work");
+    assert.ok(quote.disabledReason);
+    const amount = 5 - till;
+    const deposit = economy.runEconomyCommand(
+      town,
+      {
+        id: `deposit:${till}`,
+        kind: "fund-legacy-payroll",
+        actor: "kevin",
+        authority: "simulation",
+        terms: { amount },
+      },
+      (draft, context) => {
+        economy.transferFunds(draft, context, {
+          id: `deposit-transfer:${till}`,
+          from: "agent:kevin",
+          to: "till:cafe",
+          amount,
+          purpose: "Explicit employer contribution to preserved payroll",
+        });
+        return { amount };
+      },
+    );
+    assert.equal(deposit.ok, true, deposit.reason);
+    const protectedResult = fundedWork.protectPayroll(town, {
+      id: `protect:${till}`,
+      kind: "protect-payroll",
+      actor: "kevin",
+      authority: "simulation",
+      terms: {},
+    });
+    assert.equal(protectedResult.ok, true, protectedResult.reason);
+    fundShift(town);
+    player.tile = { ...player.home };
+    minutes(town, 1440 - town.minute + 16 * 60);
+    player.tile = { ...ANCHORS.cafe };
+    minutes(town, 179);
+    assert.equal(player.money, before);
     minutes(town, 1);
     assert.equal(player.money, before + 5);
     assert.equal(town.tills.cafe, 0);
   }
 });
-test("wages respect purse capacity and reset work credit at midnight", () => {
+test("wages respect purse capacity and preserve reserved work credit at midnight", () => {
   const capped = shiftTown("player");
   agent(capped, "player").money = 998;
+  fundShift(capped);
   const till = capped.tills.cafe;
   minutes(capped, 180);
   assert.equal(agent(capped, "player").money, 998);
   assert.equal(capped.tills.cafe, till);
   assert.equal(agent(capped, "player").paidToday, false);
+  assert.equal(
+    capped.economy.work.payables.find((payable) => payable.worker === "player").status,
+    "earned",
+  );
   const town = shiftTown("player", "cafe", 23, 24);
   const player = agent(town, "player");
+  for (let hour = 0; hour < 4; hour++)
+    Object.assign(player.plan.beats[hour], { place: "cafe", spot: "out" });
+  fundShift(town);
   minutes(town, 59);
   assert.equal(player.shiftHours, 59 / 60);
   minutes(town, 1);
   assert.equal(town.day, 2);
-  assert.equal(player.shiftHours, 0);
+  assert.equal(player.shiftHours, 1);
   assert.equal(player.paidToday, false);
-  const dawn = shiftTown("player", "cafe", 0, 4).agents.find((a) => a.id === "player").plan;
-  player.plan = dawn;
   player.tile = { ...ANCHORS.cafe };
   const before = player.money;
-  minutes(town, 179);
-  assert.equal(player.money, before, "yesterday's hour is not counted today");
+  minutes(town, 119);
+  assert.equal(player.money, before, "179 accumulated employer-bound minutes are not a full wage");
   minutes(town, 1);
   assert.equal(player.money, before + 5);
 });
@@ -542,6 +640,7 @@ test("an imported legacy player cafe shift still pays during its agreed late hou
   const legacy = shiftTown("player", "cafe", 20, 24);
   const town = save.parseTownFile(save.exportTown(legacy));
   assert.ok(town, "legacy v1 work remains loadable");
+  fundShift(town);
   const player = agent(town, "player");
   const before = player.money;
   const till = town.tills.cafe;
@@ -771,8 +870,8 @@ test("late or unfunded shift acceptance is rejected with no promise of arrears",
     const town = createTown("Ada");
     near(town, "kevin");
     const original = actionQuote(town, "kevin", "shift-start");
-    assert.match(original.terms, /each day until cancelled/);
-    assert.match(original.terms, /do not carry past midnight/);
+    assert.match(original.terms, /5 coins reserved/);
+    assert.match(original.terms, /survive midnight/);
     if (scenario === "late") town.minute = 16 * 60 + 1;
     if (scenario === "unfunded") town.tills.cafe = 4;
     if (scenario === "already-paid") agent(town, "player").paidToday = true;
@@ -857,7 +956,10 @@ test("a player explicitly accepts Kevin's quoted shift, then is paid for real ho
   assert.equal(town.tills.cafe, 17);
   const kept = save.parseTownFile(save.exportTown(town));
   assert.equal(agent(kept, "player").money, before + 5);
-  assert.ok(agent(kept, "player").projects.some((p) => p.kind === "shift" && p.status === "open"));
+  assert.equal(
+    kept.economy.work.agreements.find((agreement) => agreement.worker === "player").status,
+    "completed",
+  );
   const ack = say(town, "Hello.", "kevin");
   assert.match(ack.reply, /paid you 5/);
 });
@@ -894,10 +996,18 @@ test("standing at the cafe, or leaving the shift, does not invent a wage", () =>
 
   const town = createTown("Ada");
   choose(town, "kevin", "shift-start");
+  const acceptedPlan = copy(agent(town, "player").plan);
   choose(town, "kevin", "shift-stop");
   const player = agent(town, "player");
-  assert.ok(player.projects.every((p) => p.status !== "open"));
-  assert.notEqual(player.plan.beats[16].place, "cafe");
+  const suspended = town.economy.work.agreements.find((agreement) => agreement.worker === "player");
+  assert.equal(suspended.status, "suspended");
+  assert.equal(suspended.eligibleMinutes, 0);
+  assert.equal(town.economy.holds.find((hold) => hold.id === suspended.holdId).remaining, 5);
+  assert.deepEqual(
+    player.plan,
+    acceptedPlan,
+    "pausing preserves the agreed timetable for a chosen resumption",
+  );
   player.tile = { ...ANCHORS.cafe };
   town.minute = 16 * 60;
   const money = player.money;
@@ -905,17 +1015,43 @@ test("standing at the cafe, or leaving the shift, does not invent a wage", () =>
   assert.equal(player.money, money);
 });
 
-test("an empty till explains the unpaid shift instead of paying it", () => {
+test("reserved wages cannot be drained by competing till spending", () => {
   const town = createTown("Ada");
-  choose(town, "kevin", "shift-start");
+  assert.equal(choose(town, "kevin", "shift-start").ok, true);
   const player = agent(town, "player");
-  town.tills.cafe = 0;
+  const amount = economy.availableFunds(town, "till:cafe") + 1;
+  const snapshot = save.exportTown(town);
+  const competing = economy.runEconomyCommand(
+    town,
+    {
+      id: "competing-spend",
+      kind: "competing-spend",
+      actor: "kevin",
+      authority: "simulation",
+      terms: { amount },
+    },
+    (draft, context) => {
+      economy.transferFunds(draft, context, {
+        id: "competing-transfer",
+        from: "till:cafe",
+        to: "agent:kevin",
+        amount,
+        purpose: "Attempt to spend cash already reserved for wages",
+      });
+      return { amount };
+    },
+  );
+  assert.equal(competing.ok, false);
+  assert.equal(save.exportTown(town), snapshot);
   player.tile = { ...ANCHORS.cafe };
   town.minute = 16 * 60;
   const before = player.money;
   minutes(town, 180);
-  assert.equal(player.money, before);
-  assert.equal(player.memories.filter((m) => m.text.includes("cannot pay the full")).length, 1);
+  assert.equal(player.money, before + 5);
+  assert.equal(
+    town.economy.work.payables.find((payable) => payable.worker === "player").status,
+    "settled",
+  );
 });
 
 test("taking bread gives a loaf, and eating it does not settle the tab", () => {
