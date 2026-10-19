@@ -27,7 +27,7 @@ import { visibleSocialEvents } from "@/game/social";
 import type { Agent, AgentId, Face, PlaceId, ThinkJob, Town } from "@/game/types";
 
 import { NPC_IDS } from "@/game/types";
-import { applyLibraryAction } from "@/game/community";
+import { applyLibraryAction, libraryActions, libraryView } from "@/game/community";
 import { findPath } from "@/game/path";
 import { PlayerTools, type ToolPage } from "./PlayerTools";
 import { StampIdentityPanel } from "./StampIdentityPanel";
@@ -39,6 +39,7 @@ import {
   rememberStampSession,
 } from "@/lib/stamps/client-session";
 import type { StampAppearance } from "@/lib/stamps/types";
+import { ReadingStatus } from "./LibraryProject";
 import {
   applyPlayerAction,
   applyResult,
@@ -211,7 +212,7 @@ function focusOf(target: EventTarget | null): FocusLike {
 
 export function TownApp() {
   const boot = useRef<Town | null | undefined>(undefined);
-  const bootHold = useRef<string | null | undefined>(undefined);
+  const bootHold = useRef<string | null>(null);
   const bootUnavailable = useRef(false);
   if (boot.current === undefined) {
     const report = readTownSave();
@@ -238,12 +239,23 @@ export function TownApp() {
   const requestSerial = useRef(0);
   const activeJobRef = useRef<{ town: Town; job: ThinkJob } | null>(null);
   const localOnlyRef = useRef(savedLocalPreference());
-  const routeRef = useRef<{ title: string; target: { x: number; y: number } } | null>(null);
+  const routeRef = useRef<{
+    title: string;
+    target: { x: number; y: number };
+    arrivalRadius: number;
+  } | null>(null);
+  const readingDestinationRef = useRef<{ title: string; target: { x: number; y: number } } | null>(
+    null,
+  );
   const stepInputRef = useRef<string | null>(null);
   const movementSaveRef = useRef<number | undefined>(undefined);
   const movementDirtyRef = useRef(false);
   const startOverRef = useRef(false);
   const toolOpenerRef = useRef<HTMLElement | null>(null);
+  const boardOpenerRef = useRef<HTMLElement | null>(null);
+  const toolsRef = useRef<ToolPage | null>(null);
+  const importTextRef = useRef<string | null>(null);
+  const importKeepRef = useRef<HTMLButtonElement>(null);
   const hourLock = useRef(false);
   const mounted = useRef(true);
   const runMindRef = useRef<(live: Town, job: ThinkJob) => Promise<void>>(async () => {});
@@ -254,7 +266,7 @@ export function TownApp() {
       ? "play"
       : bootUnavailable.current
         ? "unavailable"
-        : bootHold.current
+        : bootHold.current !== null
           ? "recover"
           : "name",
   );
@@ -344,6 +356,8 @@ export function TownApp() {
   const [hiccup, setHiccup] = useState(false);
   const [importText, setImportText] = useState<string | null>(null);
   const [importMode, setImportMode] = useState<"restore" | "fork">("restore");
+  importTextRef.current = importText;
+  toolsRef.current = tools;
   const [importError, setImportError] = useState("");
   const [drafts, setDrafts] = useState<Partial<Record<AgentId, string>>>({});
   const draft = drafts[panel ?? "player"] ?? "";
@@ -462,19 +476,50 @@ export function TownApp() {
 
   function openTools(page: ToolPage | "stamps") {
     setSocialOpen(false);
+    boardRef.current = false;
+    setBoard(false);
+    panelRef.current = null;
+    setPanel(null);
     routeRef.current = null;
     stepInputRef.current = null;
     if (page === "help") setBrowserBackups(readTownConflicts());
     toolOpenerRef.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
     keysRef.current.clear();
+    toolsRef.current = page;
     setTools(page);
   }
 
   function closeTools() {
+    toolsRef.current = null;
     setTools(null);
     requestAnimationFrame(() => {
       if (toolOpenerRef.current?.isConnected) toolOpenerRef.current.focus();
+      else canvasRef.current?.focus();
+    });
+  }
+
+  function openBoard(opener?: HTMLElement) {
+    boardOpenerRef.current =
+      opener ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    routeRef.current = null;
+    keysRef.current.clear();
+    stepInputRef.current = null;
+    panelRef.current = null;
+    setPanel(null);
+    toolsRef.current = null;
+    setTools(null);
+    setSocialOpen(false);
+    setCrowd(null);
+    boardRef.current = true;
+    setBoard(true);
+  }
+
+  function closeBoard() {
+    boardRef.current = false;
+    setBoard(false);
+    requestAnimationFrame(() => {
+      if (boardOpenerRef.current?.isConnected) boardOpenerRef.current.focus();
       else canvasRef.current?.focus();
     });
   }
@@ -507,10 +552,8 @@ export function TownApp() {
         before,
         playerChatIds(agentById(current.town, job.agentId).memories ?? []),
       );
-      setDraft(
-        (text) => nextDraft(text, job.text, panelRef.current === job.agentId, landed),
-        job.agentId,
-      );
+      // The resident's own draft remains the same context even with their card closed.
+      setDraft((text) => nextDraft(text, job.text, true, landed), job.agentId);
       if (panelRef.current === job.agentId)
         setSendNote(
           landed
@@ -543,22 +586,58 @@ export function TownApp() {
   }
 
   function goTo(place: PlaceId) {
+    walkTo(placeTitle(place), ANCHORS[place]);
+  }
+
+  function walkTo(title: string, target: { x: number; y: number }, arrivalRadius = 1) {
     setWatching(null);
     watchingRef.current = null;
     const live = townRef.current;
     if (!live || replayRef.current) return;
-    const target = ANCHORS[place];
-    routeRef.current = { title: placeTitle(place), target };
+    routeRef.current = { title, target: { ...target }, arrivalRadius };
     keysRef.current.clear();
-    setFarNote(`Walking to ${placeTitle(place)}. Use a direction or Escape to stop.`);
+    setFarNote(`Walking to ${title}. Use a direction or Escape to stop.`);
     closeTools();
   }
+
+  function goToReading() {
+    const live = townRef.current;
+    if (!live || replayRef.current) return;
+    const story = libraryView(live).story;
+    if (story.gathering && story.scene.length === 0)
+      walkTo(story.gathering.label, story.gathering.tile, 0);
+  }
+
+  function stepDirection(code: string) {
+    if (replayRef.current !== null || importTextRef.current !== null) return;
+    stepInputRef.current = code;
+  }
+
+  const importing = importText !== null;
+  useEffect(() => {
+    if (!importing) return;
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const canvas = canvasRef.current;
+    if (routeRef.current) setFarNote("Destination walk stopped while reviewing an import.");
+    routeRef.current = null;
+    keysRef.current.clear();
+    stepInputRef.current = null;
+    importKeepRef.current?.focus();
+    return () => {
+      requestAnimationFrame(() => {
+        if (opener?.isConnected) opener.focus();
+        else if (canvas?.isConnected) canvas.focus();
+      });
+    };
+  }, [importing]);
 
   useEffect(() => {
     onlineRef.current = online;
   }, [online]);
   useEffect(() => {
     replayRef.current = replay;
+    keysRef.current.clear();
+    stepInputRef.current = null;
     if (replay) {
       const pendingPlayer = activeJobRef.current?.job.kind === "player";
       requestSerial.current += 1;
@@ -734,7 +813,7 @@ export function TownApp() {
           setTick((n) => n + 1);
           if (job.kind === "player" && current()) {
             const same = townRef.current === live && panelRef.current === job.agentId;
-            setDraft((current) => nextDraft(current, job.text, same, landed), job.agentId);
+            setDraft((current) => nextDraft(current, job.text, true, landed), job.agentId);
             if (same) {
               setSendNote(
                 landed
@@ -758,23 +837,32 @@ export function TownApp() {
 
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
+      if (importTextRef.current !== null) {
+        if (event.code === "Escape") {
+          event.preventDefault();
+          setImportText(null);
+        }
+        return;
+      }
       if (event.code === "Escape") {
         if (routeRef.current) {
           routeRef.current = null;
           setFarNote("Destination walk stopped.");
         }
         stepInputRef.current = null;
-        setTools(null);
+        if (toolsRef.current) closeTools();
+        else if (boardRef.current) closeBoard();
+        else if (panelRef.current) requestAnimationFrame(() => canvasRef.current?.focus());
         if (panelRef.current) {
           setPanel(null);
         }
         setSocialOpen(false);
 
         setCrowd(null);
-        if (boardRef.current) setBoard(false);
         return;
       }
       if (interactiveControl(focusOf(event.target))) return;
+      if (replayRef.current !== null) return;
       if (opensTalk(event.code, false, Boolean(panelRef.current || boardRef.current))) {
         const live = townRef.current;
         if (!live || replayRef.current) return;
@@ -843,7 +931,7 @@ export function TownApp() {
 
     const stepPlayer = () => {
       const live = townRef.current;
-      if (!live || replayRef.current !== null) return;
+      if (!live || replayRef.current !== null || importTextRef.current !== null) return;
       let { x, y } = axis(keysRef.current);
       const stepCode = stepInputRef.current;
       if (!x && !y && (routeRef.current || stepCode) && moveCool > 0) return;
@@ -857,7 +945,7 @@ export function TownApp() {
         const player = agentById(live, "player");
         if (
           Math.abs(player.tile.x - route.target.x) + Math.abs(player.tile.y - route.target.y) <=
-          1
+          route.arrivalRadius
         ) {
           routeRef.current = null;
           persistTown(live);
@@ -963,6 +1051,7 @@ export function TownApp() {
           stepPlayer();
           if (
             replayRef.current === null &&
+            importTextRef.current === null &&
             speedRef.current > 0 &&
             !hourLock.current &&
             !foregroundPendingRef.current
@@ -1029,6 +1118,13 @@ export function TownApp() {
               replay: replayRef.current !== null,
               selected: panelRef.current ?? watchingRef.current,
               stampAppearance: stampAppearanceRef.current,
+              readingMarker: readingDestinationRef.current?.target,
+              waypoint:
+                replayRef.current !== null
+                  ? null
+                  : (routeRef.current ??
+                    readingDestinationRef.current ??
+                    ((live.guide ?? 0) < 3 ? { title: "Library", target: ANCHORS.library } : null)),
               names: Object.fromEntries(live.agents.map((a) => [a.id, a.name])) as Record<
                 AgentId,
                 string
@@ -1120,7 +1216,7 @@ export function TownApp() {
     event.preventDefault();
     const withStamp =
       (event.nativeEvent as SubmitEvent).submitter?.getAttribute("data-stamp-entry") === "true";
-    if (hold) return;
+    if (hold !== null) return;
     const town = createTown(name);
     town.paused = true;
     const result = startOverRef.current
@@ -1199,6 +1295,11 @@ export function TownApp() {
     const live = townRef.current;
     if (!live) return;
     const target: AgentId = id;
+    toolsRef.current = null;
+    setTools(null);
+    boardRef.current = false;
+    setBoard(false);
+    setSocialOpen(false);
 
     setFarNote("");
     setSendNote("");
@@ -1247,7 +1348,7 @@ export function TownApp() {
       onBoard(world.x, world.y) ||
       onBoard(agentById(live, "player").tile.x, agentById(live, "player").tile.y)
     ) {
-      setBoard(true);
+      openBoard(canvas);
     }
   }
 
@@ -1359,7 +1460,7 @@ export function TownApp() {
     );
   }
 
-  if (phase === "recover" && hold) {
+  if (phase === "recover" && hold !== null) {
     return (
       <main className="gate">
         <form
@@ -1554,7 +1655,11 @@ export function TownApp() {
                 onClick={() => {
                   const report = readTownSave();
                   if (report.status === "ready") void acceptImportedTown(report.town, "load");
-                  else
+                  else if (report.status === "unreadable") {
+                    setHold(report.raw);
+                    setRecoverNote("");
+                    setPhase("recover");
+                  } else
                     setRecoverNote(
                       "The saved town could not be read. Its original bytes have been kept.",
                     );
@@ -1576,6 +1681,19 @@ export function TownApp() {
   const town = townRef.current;
   void tick;
   const player = agentById(town, "player");
+  const library = libraryView(town);
+  const reading = library.story.gathering;
+  const readingPending = reading !== null && library.story.scene.length === 0;
+  const joinReading =
+    readingPending && reading.status === "ready"
+      ? libraryActions(town).find((action) => {
+          const [kind, argument] = JSON.parse(action.id) as [string, string];
+          return kind === "evening-join" && argument === "listen";
+        })
+      : undefined;
+  readingDestinationRef.current = readingPending
+    ? { title: "The reading", target: reading.tile }
+    : null;
   const shown = panel;
 
   panelRef.current = shown;
@@ -1592,6 +1710,10 @@ export function TownApp() {
         ? "The clock is at 4×. Pause if you want to talk first."
         : "The clock is at 1×.";
   const here = zoneAt(player.tile.x, player.tile.y);
+  const readingHere =
+    reading !== null &&
+    here === reading.place &&
+    Math.abs(player.tile.x - reading.tile.x) + Math.abs(player.tile.y - reading.tile.y) <= 3;
   const planned = beatAt(player, town.minute);
   const guideLine = `${clockLine} WASD or arrows move one tile. On a phone, hold N W E S. Enter speaks to whoever is beside you. ${hobbsWay(player.tile.x, player.tile.y)} Open Choices with Kevin to agree a cafe shift, or with Baba to agree a bread tab. Read the terms before you choose. Or walk on.`;
   const yourOpenDebts = (town.favors ?? []).filter(
@@ -1860,10 +1982,10 @@ export function TownApp() {
         <div className="welcome-tip">
           <Sparkles className="welcome-icon size-5" aria-hidden />
           <div>
-            <strong>A useful first step: the library index.</strong>
+            <strong>{library.story.title}</strong>
             <p>
-              Northern cannot find a record. Choose a funded contribution, decline, or explore. The
-              library is east of the plaza. You can walk while the clock is paused.
+              Northern wants to read a first page to his neighbors. Help find a place to begin, or
+              explore on your own.
             </p>
           </div>
           <button className="btn" type="button" onClick={() => openTools("library")}>
@@ -1892,6 +2014,42 @@ export function TownApp() {
           onClick={onCanvasClick}
           aria-label={`The town, home to ${town.agents.length - 1} neighbors and you. Use the nearby conversation buttons or press Enter to talk.`}
         />
+        {readingPending && !shown && !tools && !board && !socialOpen && replay === null && (
+          <div className="reading-invitation" aria-label="Reading invitation">
+            <strong>{reading.label}</strong>
+            <p>
+              <ReadingStatus status={reading.status} />
+            </p>
+            {joinReading && !joinReading.disabledReason ? (
+              <>
+                <p id="reading-join-terms">{joinReading.terms}</p>
+                <button
+                  className="btn reading-main-action"
+                  type="button"
+                  aria-describedby="reading-join-terms"
+                  disabled={thinking === "player"}
+                  onClick={() => {
+                    chooseLibrary(town, joinReading.id);
+                    openTools("library");
+                  }}
+                >
+                  {joinReading.label}
+                </button>{" "}
+              </>
+            ) : !readingHere ? (
+              <button className="btn reading-main-action" type="button" onClick={goToReading}>
+                Go to the reading
+              </button>
+            ) : null}{" "}
+            <button
+              className={`btn${readingHere && !joinReading ? " reading-main-action" : ""}`}
+              type="button"
+              onClick={() => openTools("library")}
+            >
+              Reading details
+            </button>
+          </div>
+        )}
         <div className="world-label" aria-hidden>
           <i />
           {replay
@@ -1903,7 +2061,7 @@ export function TownApp() {
         <div className="world-caption" aria-hidden>
           {town.agents.length} residents · endless possibilities
         </div>
-        {!shown && !board && !tools && !socialOpen && (
+        {!shown && !board && !tools && !socialOpen && !(readingPending && readingHere) && (
           <ConversationCaption
             town={town}
             event={conversations[0]}
@@ -1925,28 +2083,36 @@ export function TownApp() {
             onProfile={approach}
           />
         )}
-        {!shown && !board && !tools && !socialOpen && replay === null && talkChoices.length > 0 && (
-          <div className="crowd" role="group" aria-label={crowd ? "Who is here" : "Talk nearby"}>
-            <span className="crowd-label">{crowd ? "Who is here" : "Talk nearby"}</span>
-            {talkChoices.map((id) => {
-              const person = town.agents.find((agent) => agent.id === id);
-              return (
-                <button
-                  key={id}
-                  className="btn"
-                  type="button"
-                  aria-label={id === "player" ? "Your journal" : `Talk with ${person?.name ?? id}`}
-                  onClick={() => {
-                    setCrowd(null);
-                    approach(id, true);
-                  }}
-                >
-                  {person?.name ?? id}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {!shown &&
+          !board &&
+          !tools &&
+          !socialOpen &&
+          replay === null &&
+          !(readingPending && readingHere) &&
+          talkChoices.length > 0 && (
+            <div className="crowd" role="group" aria-label={crowd ? "Who is here" : "Talk nearby"}>
+              <span className="crowd-label">{crowd ? "Who is here" : "Talk nearby"}</span>
+              {talkChoices.map((id) => {
+                const person = town.agents.find((agent) => agent.id === id);
+                return (
+                  <button
+                    key={id}
+                    className="btn"
+                    type="button"
+                    aria-label={
+                      id === "player" ? "Your journal" : `Talk with ${person?.name ?? id}`
+                    }
+                    onClick={() => {
+                      setCrowd(null);
+                      approach(id, true);
+                    }}
+                  >
+                    {person?.name ?? id}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         {!tools && !shown && here === "library" && replay === null && (
           <button className="btn library-board" type="button" onClick={() => openTools("library")}>
             Library board
@@ -1956,9 +2122,8 @@ export function TownApp() {
           <Pad
             code="ArrowUp"
             keys={keysRef}
-            onStep={(code) => {
-              stepInputRef.current = code;
-            }}
+            onStep={stepDirection}
+            disabled={replay !== null || importing}
             className="u"
             label="North"
           >
@@ -1967,9 +2132,8 @@ export function TownApp() {
           <Pad
             code="ArrowLeft"
             keys={keysRef}
-            onStep={(code) => {
-              stepInputRef.current = code;
-            }}
+            onStep={stepDirection}
+            disabled={replay !== null || importing}
             className="l"
             label="West"
           >
@@ -1978,9 +2142,8 @@ export function TownApp() {
           <Pad
             code="ArrowRight"
             keys={keysRef}
-            onStep={(code) => {
-              stepInputRef.current = code;
-            }}
+            onStep={stepDirection}
+            disabled={replay !== null || importing}
             className="r"
             label="East"
           >
@@ -1989,9 +2152,8 @@ export function TownApp() {
           <Pad
             code="ArrowDown"
             keys={keysRef}
-            onStep={(code) => {
-              stepInputRef.current = code;
-            }}
+            onStep={stepDirection}
+            disabled={replay !== null || importing}
             className="d"
             label="South"
           >
@@ -2056,12 +2218,12 @@ export function TownApp() {
               setInspect(value);
             }}
             onGo={goTo}
-            onStep={(code) => {
-              stepInputRef.current = code;
-            }}
+            onStep={stepDirection}
+            replaying={replay !== null}
             onAction={(id) => chooseAction(town, "player", id)}
             onLibrary={() => setTools("library")}
             onLibraryAction={(id) => chooseLibrary(town, id)}
+            onGoReading={goToReading}
             backups={browserBackups}
             onBackup={(backup) => {
               try {
@@ -2073,6 +2235,7 @@ export function TownApp() {
             }}
           />
         )}
+        {board && <Board town={town} onClose={closeBoard} />}
       </div>
       <footer className="foot">
         <label className="foot-label" htmlFor="scrub">
@@ -2153,7 +2316,7 @@ export function TownApp() {
           className="btn"
           type="button"
           disabled={!near && town.notices.length === 0}
-          onClick={() => setBoard(true)}
+          onClick={() => openBoard()}
         >
           {town.notices.length ? `Board · ${town.notices.length}` : "Board"}
         </button>
@@ -2201,9 +2364,41 @@ export function TownApp() {
           {saveStatus?.ok ? "Saved in this browser" : "Your town lives in this browser"}
         </span>
       </footer>
-      {board && <Board town={town} onClose={() => setBoard(false)} />}
       {importText !== null && (
-        <div className="gate absolute inset-0 z-10 bg-bg/90">
+        <div
+          className="gate absolute inset-0 z-10 bg-bg/90"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="town-import-title"
+          aria-describedby="town-import-description"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              event.stopPropagation();
+              setImportText(null);
+            }
+            if (event.key === "Tab") {
+              const controls = Array.from(
+                event.currentTarget.querySelectorAll<HTMLElement>(
+                  "button:not(:disabled), input:not(:disabled)",
+                ),
+              ).filter(
+                (control) =>
+                  !(control instanceof HTMLInputElement && control.type === "radio") ||
+                  control.checked,
+              );
+              const first = controls[0];
+              const last = controls[controls.length - 1];
+              if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last?.focus();
+              } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first?.focus();
+              }
+            }
+          }}
+        >
           <form
             className="w-full max-w-md rounded-2xl border border-line bg-surface p-6"
             onSubmit={(event) => {
@@ -2224,8 +2419,10 @@ export function TownApp() {
               }
             }}
           >
-            <h2 className="font-display text-2xl">Replace the live town?</h2>
-            <p className="mt-3 text-muted">
+            <h2 id="town-import-title" className="font-display text-2xl">
+              Replace the live town?
+            </h2>
+            <p id="town-import-description" className="mt-3 text-muted">
               The people here now will be overwritten in this browser.{" "}
               {(() => {
                 const preview = previewDay(importText);
@@ -2260,12 +2457,21 @@ export function TownApp() {
                 Create a separate town — new people with copied histories.
               </label>
             </fieldset>
-            {importError && <p className="mt-3 text-primary">{importError}</p>}
+            {importError && (
+              <p className="mt-3 text-primary" role="alert">
+                {importError}
+              </p>
+            )}
             <div className="mt-5 flex flex-wrap gap-2">
               <button className="btn" data-on="true" type="submit">
                 {importMode === "fork" ? "Create separate town" : "Replace"}
               </button>
-              <button className="btn" type="button" onClick={() => setImportText(null)}>
+              <button
+                ref={importKeepRef}
+                className="btn"
+                type="button"
+                onClick={() => setImportText(null)}
+              >
                 Keep this town
               </button>
             </div>
@@ -2361,6 +2567,7 @@ function Pad({
   label,
   children,
   onStep,
+  disabled,
 }: {
   code: string;
   keys: React.RefObject<Set<string>>;
@@ -2368,12 +2575,14 @@ function Pad({
   label: string;
   children: string;
   onStep: (code: string) => void;
+  disabled: boolean;
 }) {
   return (
     <button
       type="button"
       className={className}
       aria-label={label}
+      disabled={disabled}
       onClick={(event) => {
         if (event.detail === 0) onStep(code);
       }}
@@ -2437,6 +2646,7 @@ function Mind({
   const lineRef = useRef<HTMLTextAreaElement | null>(null);
   const logRef = useRef<HTMLDivElement | null>(null);
   const latestRef = useRef<HTMLLIElement | null>(null);
+  const keyboardTabRef = useRef(false);
   const followRef = useRef(true);
   const [behind, setBehind] = useState(false);
   const [tab, setTab] = useState<"overview" | "strengths" | "together" | "progress">(
@@ -2444,7 +2654,8 @@ function Mind({
   );
   useEffect(() => {
     followRef.current = true;
-    if (tab === "together") lineRef.current?.focus();
+    if (tab === "together" && !keyboardTabRef.current) lineRef.current?.focus();
+    keyboardTabRef.current = false;
   }, [agent.id, tab]);
   const player = agentById(town, "player");
   const canTalk = inTalkRange(player.tile.x, player.tile.y, agent.tile.x, agent.tile.y);
@@ -2508,7 +2719,32 @@ function Mind({
             id={`character-tab-${name}`}
             aria-controls={`character-section-${name}`}
             aria-selected={tab === name}
-            onClick={() => setTab(name)}
+            tabIndex={tab === name ? 0 : -1}
+            onClick={() => {
+              keyboardTabRef.current = false;
+              setTab(name);
+            }}
+            onKeyDown={(event) => {
+              const tabs = ["overview", "strengths", "together", "progress"] as const;
+              const current = tabs.indexOf(name);
+              const next =
+                event.key === "ArrowRight"
+                  ? (current + 1) % tabs.length
+                  : event.key === "ArrowLeft"
+                    ? (current + tabs.length - 1) % tabs.length
+                    : event.key === "Home"
+                      ? 0
+                      : event.key === "End"
+                        ? tabs.length - 1
+                        : null;
+              if (next === null) return;
+              event.preventDefault();
+              keyboardTabRef.current = true;
+              setTab(tabs[next]);
+              event.currentTarget.parentElement
+                ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                [next]?.focus();
+            }}
           >
             {name === "together" ? "Together" : name.charAt(0).toUpperCase() + name.slice(1)}
           </button>
@@ -2790,11 +3026,21 @@ function Inspector({ town, agent }: { town: Town; agent: Agent }) {
 }
 
 function Board({ town, onClose }: { town: Town; onClose: () => void }) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    closeRef.current?.focus();
+  }, []);
   return (
-    <aside className="mind" aria-label="Noticeboard">
+    <aside className="mind" role="dialog" aria-label="Noticeboard">
       <div className="mind-bar">
         <h2 className="font-display text-3xl">Noticeboard</h2>
-        <button className="btn" type="button" onClick={onClose} aria-label="Close board">
+        <button
+          ref={closeRef}
+          className="btn"
+          type="button"
+          onClick={onClose}
+          aria-label="Close board"
+        >
           <X className="size-4" />
         </button>
       </div>

@@ -22,8 +22,14 @@ import { placeTitle, zoneAt } from "./world";
 import { groundPlayerReply, groundSharedLine } from "./conversation";
 import { settleLegacyDebt, availableFunds } from "./economy";
 import type { FundedTown } from "./economy-types";
-import { libraryView } from "./community";
-import { activateFundedTown, runtimeCommand } from "./payroll-runtime";
+import { libraryView, refreshLibraryReading } from "./community";
+import {
+  activateFundedTown,
+  closeCompletedWorkItems,
+  fundedWorkProjectId,
+  FUNDED_CAFE_SHIFT_TEXT as PLAYER_CAFE_SHIFT,
+  runtimeCommand,
+} from "./payroll-runtime";
 import {
   approvePayrollAgreement,
   createFundedCafeAgreement,
@@ -244,11 +250,37 @@ function applyFavor(town: Town, edit: FavorEdit | null | undefined, allowed?: Ag
       );
       return;
     }
-    const paid = settleLegacyDebt(
+    const transactions = town.economy!.transactions;
+    const priorPayments = new Set(
+      transactions
+        .filter(
+          (item) =>
+            item.kind === "transfer" &&
+            !item.reversalOf &&
+            item.agreementId === favor.id &&
+            item.from === `agent:${from.id}` &&
+            item.to === `agent:${to.id}` &&
+            item.amount === amount,
+        )
+        .map((item) => item.id),
+    );
+    const corrections = transactions.filter(
+      (item) => item.reversalOf && priorPayments.has(item.reversalOf),
+    ).length;
+    // An authorized correction reopens the same tab. Its next real payment
+    // needs a new identity; ordinary retries still replay exactly once.
+    const paymentCommand = runtimeCommand(
       town,
-      runtimeCommand(town, "debt.settle", from.id, { debtId: favor.id }, favor.id),
+      "debt.settle",
+      from.id,
+      { debtId: favor.id },
       favor.id,
     );
+    // Tuple IDs cannot collide with another preserved tab's ordinary
+    // `debt.settle:<id>` command, even when its ID contains correction suffixes.
+    if (corrections)
+      paymentCommand.id = JSON.stringify(["debt.settle.after-correction", favor.id, corrections]);
+    const paid = settleLegacyDebt(town, paymentCommand, favor.id);
     if (!paid.ok) return;
   } else if (edit.action === "forgive") {
     favor.status = "forgiven";
@@ -318,14 +350,20 @@ export function applyResult(
   try {
     const until = (town.day - 1) * 1440 + town.minute + 20;
     if (result.kind === "plan") {
-      for (const draft of result.plans ?? [])
+      const planned = new Set<AgentId>();
+      for (const draft of result.plans ?? []) {
+        if (planned.has(draft.id)) continue;
+        planned.add(draft.id);
         safely(() => applyPlanDraft(town, draft, result.mind, result.weekly === true));
+      }
       return;
     }
     if (result.kind === "reflect") {
+      const reflected = new Set<AgentId>();
       for (const item of result.agents ?? []) {
         const agent = maybeAgent(town, item.id);
-        if (!agent) continue;
+        if (!agent || reflected.has(agent.id)) continue;
+        reflected.add(agent.id);
         for (const line of (item.reflections ?? []).slice(0, 2)) {
           const text = clip(String(line ?? ""), 320);
           if (!text) continue;
@@ -401,8 +439,12 @@ export function applyResult(
         if (!agent.lastTalk || typeof agent.lastTalk !== "object") agent.lastTalk = {};
         agent.lastTalk[agent.id === a.id ? b.id : a.id] = (town.day - 1) * 1440 + town.minute;
       }
+      const changedRelations = new Set<string>();
       for (const rel of result.relationships ?? []) {
-        if (!pair.includes(rel.owner) || !pair.includes(rel.about)) continue;
+        const key = `${rel.owner}:${rel.about}`;
+        if (!pair.includes(rel.owner) || !pair.includes(rel.about) || changedRelations.has(key))
+          continue;
+        changedRelations.add(key);
         safely(() => adjustRelation(town, rel.owner, rel.about, rel.delta, rel.note));
       }
       if (result.thread && pair.includes(result.thread.owner))
@@ -484,6 +526,7 @@ export function applyResult(
   } catch {
     /* A partial hour is kept. The clock still moves. */
   } finally {
+    safely(() => refreshLibraryReading(town));
     safely(() => recordSocial(town, result, socialBefore));
   }
 }
@@ -509,8 +552,7 @@ type QuotedAction = PlayerAction & {
   reference?: string;
 };
 
-export const PLAYER_CAFE_SHIFT =
-  "Funded cafe attendance, 16:00 to 19:00; 5 reserved for 180 eligible minutes. Progress and earned wages survive midnight; no fractional wage.";
+export { PLAYER_CAFE_SHIFT };
 export const BABA_LOAF = "A loaf from Baba. It can be eaten.";
 
 function adoptActionDraft(town: Town, draft: Town) {
@@ -597,7 +639,7 @@ function quotedPlayerActions(town: Town, target: AgentId): QuotedAction[] {
       loaf.id,
     );
     const library = libraryView(town);
-    if (library.progress.includes("1/1 independent lookup")) {
+    if (library.lookupCompleted) {
       for (const invitee of ["baba", "northern"] as const)
         if (nearbyTogether(town, invitee)) {
           const name = maybeAgent(town, invitee)!.name;
@@ -720,8 +762,8 @@ function quotedPlayerActions(town: Town, target: AgentId): QuotedAction[] {
       );
     }
     if (target === "kevin" && !current && claims.length === 0) {
-      const pending = work.legacyClaims.some(
-        (claim) => !["paid", "settled"].includes(claim.resolution),
+      const pending = work.legacyClaims.some((claim) =>
+        ["unresolved", "underfunded", "protected"].includes(claim.resolution),
       );
       const completedToday = work.agreements.some(
         (a) =>
@@ -877,7 +919,7 @@ export function applyPlayerAction(
         if ((inviteeId !== "baba" && inviteeId !== "northern") || !nearbyTogether(draft, inviteeId))
           throw new Error("The invited resident is no longer here; your loaf is untouched.");
         const view = libraryView(draft);
-        if (!view.progress.includes("1/1 independent lookup"))
+        if (!view.lookupCompleted)
           throw new Error(
             "The meal needs a completed public library result; your loaf is untouched.",
           );
@@ -964,6 +1006,15 @@ export function applyPlayerAction(
         place: "cafe",
         text: PLAYER_CAFE_SHIFT,
       });
+      const item = player.projects.find(
+        (project) =>
+          project.owner === "player" &&
+          project.kind === "shift" &&
+          project.status === "open" &&
+          project.text === PLAYER_CAFE_SHIFT,
+      );
+      if (!item) throw new Error("The funded work item could not be recorded; nothing changed.");
+      item.id = fundedWorkProjectId(id);
       paintHours(player, [
         { from: 16, to: 19, place: "cafe", spot: "out", status: "on a funded cafe shift" },
       ]);
@@ -1051,6 +1102,7 @@ export function applyPlayerAction(
       );
       if (settled.status !== "settled")
         throw new Error(settled.reason ?? "The earned wage remains reserved and payable.");
+      closeCompletedWorkItems(draft, payable.agreementId);
       player = maybeAgent(draft, "player")!;
       player.paidToday = true;
       const workplace = payable.payer === "till:grocery" ? "grocery" : "cafe";
@@ -1103,7 +1155,13 @@ export function applyPlayerAction(
           (claim) => claim.agreementId === agreement.id,
         );
         if (legacyClaim?.payer && legacyClaim.classification !== "ambiguous") {
-          player.plan = structuredClone(legacyClaim.evidence.plan);
+          const workplace = agreement.payer === "till:grocery" ? "grocery" : "cafe";
+          paintHours(
+            player,
+            legacyClaim.evidence.plan.beats
+              .filter((beat) => beat.place === workplace && beat.spot === "out")
+              .map((beat) => ({ ...beat, from: beat.hour, to: beat.hour + 1 })),
+          );
           player.plan.day = draft.day;
         } else
           paintHours(player, [

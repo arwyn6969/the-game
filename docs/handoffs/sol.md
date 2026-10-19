@@ -1,5 +1,21 @@
 # Sol handoff
 
+## 16 October 2026 — interrupted play and saved progress
+
+Runtime `fb9abc1` fixes overlapping/hidden menus, Board focus, keyboard character tabs, local wage follow-up dates, duplicate model edits, stale completed work items, contradictory financial dates, corrected-debt repayment identity and the library note deadline. The [interruption receipt](../reviews/2026-10-16-interruptions.md) records 610 passing full tests including 318 town cases, 14 new engine regressions, typecheck, diagnostics, lint with the inherited warning and a credential-free production build. Built desktop/phone journeys and mocked AI pass; the new menu/focus/tab/touch gate is integrated into CI. The same-origin local preview serves the new build. Schemas, canonical scene text and existing towns remain preserved; publication and human evaluation remain separate.
+
+## 16 October 2026 — further bug pass
+
+The user requested another review and improvement pass. Runtime `8bb77c4` fixes late legacy funding and earned-wage priority, unsupported imported attendance, occupied reading seats, repeat notice actions, corrupt tray receipts, natural reading questions, wage facts/dates, circular shift-text initialization and replay/import/keyboard control bugs. The [bug-pass receipt](../reviews/2026-10-16-bug-pass.md) records reproductions and checks: 596 full tests including 304 town cases, typecheck, lint with the inherited warning, town diagnostics and a credential-free production build. The new UI edge gate is part of the integrated browser gate. Existing towns, schemas and canonical scene text remain preserved; publication and human evaluation remain separate.
+
+## 15 October 2026 — first-reading story
+
+The user's further quest/money request is implemented in the [first-reading pass](../reviews/2026-10-15-first-reading.md): Northern's human purpose, observed draft locations, park/library choice, physically routed guests, optional listening or an explicit first line, and two-coin bread/tea cash sales into business tills. The optional save extension preserves older projects, plans and paid work. Runtime `7b5233a` passes 573 full tests including 281 town cases, typecheck and the credential-free production build. Built desktop/phone journeys include both venues, ordinary controls, sales, portable saves and unobstructed inline actions. Mocked AI/recovery also passes; source details are in the receipt. Lint has no errors and the inherited auth warning. The same draft PR remains the review handoff; publication and human evaluation remain separate.
+
+## 15 October 2026 — pre-release refinement
+
+At the user's request, the [second pass](../reviews/2026-10-15-pre-release-polish.md) improves the newly delivered work: actionable library guidance, truthful required evidence, protected NPC commitments, clearer payment/inventory/accessibility feedback, employer-bound local work replies, exact work-item completion, selective Resume, resident drafts and recovery of empty saves. Runtime `5c33966` passes 549 full tests and 257 town cases, typecheck, lint with the inherited warning, diagnostics and a credential-free build. Built desktop/phone and expanded mocked-AI/recovery checks pass. The same draft PR remains the review handoff; publication and human/physical-device gates remain separate.
+
 ## 15 October 2026 — read-only stamp appearance preview
 
 Packet 2 is implemented in commit `6638071` on `codex/stamp-wallet-selection`, in [draft PR 32](https://github.com/arwyn6969/the-game/pull/32), stacked on identity PR 31 at `8b480cd` (itself above gameplay PR 30). The [implementation scope and receipt](../implementation/stamp-wallet-selection.md) document optional Leather mainnet P2WPKH BIP-322 proof, paginated classic raster stamp holdings, sanitized crop previews and player portrait/head controls. It uses a private scoped session, without changing game auth or establishing canonical character ownership. Wallet state stays outside Town, exports and model context. Receiving funds, owner/character registration, custody/recovery, transfers, trade settlement and server PvP remain subsequent packets.
