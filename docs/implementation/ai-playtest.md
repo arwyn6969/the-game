@@ -13,7 +13,7 @@ node --env-file=/absolute/private/environment.env scripts/ai-playtest-preflight.
   --pool-config /absolute/private/mind-pool.local.json --zero-spend
 ```
 
-This command performs no network access. It reports allowlisted configuration facts and reservation estimates, with no credentials, account identifiers, database URL, prompts or transcripts. Missing shared accounting, explicit budget policy or authentication configuration blocks the preflight. The $0 option rejects positive request cost estimates; zero tariffs are still an operator assertion requiring independent verification. A larger configured daily allowance does not authorize any spend for this round.
+This command performs no network access. It reports allowlisted configuration facts and reservation estimates, with no credentials, account identifiers, database URL, prompts or transcripts. Missing shared accounting, explicit budget policy or authentication configuration blocks the preflight. The $0 option requires `dailyMicrousd: 0` and `interactiveReserveMicrousd: 0` and rejects positive request cost estimates. These zero ceilings prevent any positive-cost reservation at runtime. Zero tariffs are still an operator assertion requiring independent verification; all call and concurrency limits remain finite. A larger configured daily allowance fails this round's preflight.
 
 After identifying the existing shared database for the intended environment, explicitly inspect it:
 

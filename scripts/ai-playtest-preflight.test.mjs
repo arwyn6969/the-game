@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { PGlite } from "@electric-sql/pglite";
 import { DEFAULT_BUDGET } from "../src/lib/mind-budget/policy.ts";
+import { SqlMindBudgetStore } from "../src/lib/mind-budget/store.ts";
 import { defaultConfig } from "../src/lib/mind-pool/config.ts";
 import {
   parseArguments,
@@ -280,7 +281,17 @@ test("zero-spend blocks positive reservations; zero tariffs still cannot prove n
       outputNanousdPerToken: 0,
     }),
   });
+  const allowance = await preflight(env, { zeroSpend: true });
+  assert.ok(
+    allowance.configuration.issues.includes("configured_budget_exceeds_zero_spend_authority"),
+  );
+  env.MIND_BUDGET_CONFIG = JSON.stringify({
+    ...JSON.parse(env.MIND_BUDGET_CONFIG),
+    dailyMicrousd: 0,
+    interactiveReserveMicrousd: 0,
+  });
   const zero = await preflight(env, { zeroSpend: true });
+  assert.equal(zero.configDatabasePreflight, "configuration-only");
   assert.equal(zero.configuration.jobs.player.reservedMicrousd, 0);
   assert.equal(zero.readyForAiPlaytest, false);
   assert.equal(zero.configuredAllowanceGrantsSpendingAuthority, false);
@@ -410,6 +421,53 @@ test("shared headroom and malformed counters are checked without reading individ
     const report = await inspect(broken);
     assert.equal(report.database.issue, "database_counters_invalid");
     noSecrets(report);
+  }
+});
+
+test("lowered monetary ceilings preserve prior charges and match actual SQL rejection of free work", async () => {
+  const ledger = new SqlMindBudgetStore({
+    query: async (text, params) => (await db.query(text, params)).rows,
+  });
+  try {
+    for (const limits of [
+      { dailyMicrousd: 0, interactiveReserveMicrousd: 0, priorCost: 1 },
+      { dailyMicrousd: 1000, interactiveReserveMicrousd: 200, priorCost: 801 },
+    ]) {
+      await db.exec("truncate mind_budget_attempts");
+      const prior = await ledger.reserve(
+        { user: "synthetic", kind: "player", calls: 1, microusd: limits.priorCost, leaseMs: 1000 },
+        configurationReport(environment()).policy,
+      );
+      assert.ok(prior);
+      await ledger.finish(prior, 1);
+      const config = configurationReport(
+        environment({
+          MIND_BUDGET_CONFIG: JSON.stringify({
+            ...DEFAULT_BUDGET,
+            dailyMicrousd: limits.dailyMicrousd,
+            interactiveReserveMicrousd: limits.interactiveReserveMicrousd,
+            inputNanousdPerToken: 0,
+            outputNanousdPerToken: 0,
+          }),
+        }),
+      );
+      assert.deepEqual(config.issues, []);
+      const result = await inspectDatabase({ query: (...args) => db.query(...args) }, config);
+      assert.equal(result.issue, "database_headroom_insufficient");
+      assert.equal(
+        await ledger.reserve(
+          { user: "synthetic", kind: "talk", calls: 1, microusd: 0, leaseMs: 1000 },
+          config.policy,
+        ),
+        null,
+      );
+      assert.equal(
+        (await db.query("select count(*) as count from mind_budget_attempts")).rows[0].count,
+        1,
+      );
+    }
+  } finally {
+    await db.exec("truncate mind_budget_attempts");
   }
 });
 

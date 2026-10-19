@@ -17,6 +17,8 @@ To favour intelligence for every job regardless of speed, assign your preferred 
 
 ## Run locally
 
+For the current human AI playtest round, follow the [zero-spend preflight procedure](implementation/ai-playtest.md) first. `status` describes configuration, not current billing or real sign-in. The `dev`, `preview` and live-smoke workflows can generate requests; they are not authentication or budget checks. Provider quotas in this guide do not replace the shared monetary budget policy.
+
 Use Node 24 and this checkout, `llm-pool`:
 
 ```sh

@@ -358,8 +358,8 @@ export async function inspectDatabase(client, config, expected) {
         return (
           job &&
           job.reservedCalls <= (kind === "player" ? headroom.calls : headroom.backgroundCalls) &&
-          job.reservedMicrousd <=
-            (kind === "player" ? headroom.microusd : headroom.backgroundMicrousd) &&
+          usage.microusd + job.reservedMicrousd <=
+            p.dailyMicrousd - (kind === "player" ? 0 : p.interactiveReserveMicrousd) &&
           (kind === "player" ? headroom.concurrent : headroom.backgroundConcurrent) > 0
         );
       }),
@@ -428,6 +428,8 @@ export async function preflight(env, options = {}) {
   if (loadIssue) config.issues.push(loadIssue);
   if (options.poolConfigPath && config.mode !== "pool")
     config.issues.push("pool_config_requires_pool_mode");
+  if (options.zeroSpend && config.policy && config.policy.dailyMicrousd !== 0)
+    config.issues.push("configured_budget_exceeds_zero_spend_authority");
   if (options.zeroSpend && Object.values(config.jobs).some((job) => job.reservedMicrousd > 0))
     config.issues.push("positive_reservation_exceeds_zero_spend_authority");
   const report = {
