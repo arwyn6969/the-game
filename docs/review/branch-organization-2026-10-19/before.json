@@ -1,0 +1,127 @@
+{
+  "date": "2026-10-19",
+  "repository": "arwyn6969/the-game",
+  "main": "4a39cdf8ec8c03b79d0e369e99dd7c862c9d8375",
+  "refs": [
+    {
+      "ref": "refs/heads/codex/agent-receiving-registry",
+      "sha": "ea2164318e72b88edd0e26b2ad7e3b9329c87477"
+    },
+    {
+      "ref": "refs/heads/codex/game-quality-review",
+      "sha": "ccec7d96ee637501a6dc024ad314c15bb6fd0223"
+    },
+    {
+      "ref": "refs/heads/codex/product-consolidation",
+      "sha": "14611482c31eca13f2f7bea237cf13c625804a3d"
+    },
+    {
+      "ref": "refs/heads/codex/stamp-identity-tooling",
+      "sha": "8b480cd5b4367250497636b42cd8a9ec017d352c"
+    },
+    {
+      "ref": "refs/heads/codex/stamp-wallet-selection",
+      "sha": "8453443942ddf04ae0f2d87d09fd1d61226a62e0"
+    },
+    {
+      "ref": "refs/heads/main",
+      "sha": "221ad798c6ea9a9f550f690deff8223e34427ea1"
+    },
+    {
+      "ref": "refs/remotes/origin/HEAD",
+      "sha": "4a39cdf8ec8c03b79d0e369e99dd7c862c9d8375"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/agent-receiving-registry",
+      "sha": "ea2164318e72b88edd0e26b2ad7e3b9329c87477"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/character-social-release-evidence",
+      "sha": "940cd70680690593e0aa786e838200f5a8fe8735"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/dismiss-exchange-caption",
+      "sha": "0f28226cf5bb0150d2628b0db5f5f5d905a9058f"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/funded-project-accounts",
+      "sha": "53bd9ac5b4354ac00195685cca429d7ca0681944"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/game-quality-review",
+      "sha": "ccec7d96ee637501a6dc024ad314c15bb6fd0223"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/product-consolidation",
+      "sha": "14611482c31eca13f2f7bea237cf13c625804a3d"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/stamp-identity-tooling",
+      "sha": "8b480cd5b4367250497636b42cd8a9ec017d352c"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/stamp-wallet-selection",
+      "sha": "8453443942ddf04ae0f2d87d09fd1d61226a62e0"
+    },
+    {
+      "ref": "refs/remotes/origin/main",
+      "sha": "4a39cdf8ec8c03b79d0e369e99dd7c862c9d8375"
+    }
+  ],
+  "openPullRequests": [
+    {
+      "number": 33,
+      "title": "Add Wonder Wallet and private agent wallet tooling",
+      "isDraft": true,
+      "headRefName": "codex/agent-receiving-registry",
+      "baseRefName": "codex/stamp-wallet-selection",
+      "headRefOid": "ea2164318e72b88edd0e26b2ad7e3b9329c87477",
+      "url": "https://github.com/arwyn6969/the-game/pull/33"
+    },
+    {
+      "number": 32,
+      "title": "Add read-only verified stamp appearances and optional player heads",
+      "isDraft": true,
+      "headRefName": "codex/stamp-wallet-selection",
+      "baseRefName": "codex/stamp-identity-tooling",
+      "headRefOid": "8453443942ddf04ae0f2d87d09fd1d61226a62e0",
+      "url": "https://github.com/arwyn6969/the-game/pull/32"
+    },
+    {
+      "number": 31,
+      "title": "Add permanent resident identities and restore or fork imports",
+      "isDraft": true,
+      "headRefName": "codex/stamp-identity-tooling",
+      "baseRefName": "codex/game-quality-review",
+      "headRefOid": "8b480cd5b4367250497636b42cd8a9ec017d352c",
+      "url": "https://github.com/arwyn6969/the-game/pull/31"
+    },
+    {
+      "number": 30,
+      "title": "Complete the game backlog and give library work a shared reading payoff",
+      "isDraft": true,
+      "headRefName": "codex/game-quality-review",
+      "baseRefName": "main",
+      "headRefOid": "ccec7d96ee637501a6dc024ad314c15bb6fd0223",
+      "url": "https://github.com/arwyn6969/the-game/pull/30"
+    },
+    {
+      "number": 29,
+      "title": "Make recorded exchange captions dismissible",
+      "isDraft": true,
+      "headRefName": "codex/dismiss-exchange-caption",
+      "baseRefName": "main",
+      "headRefOid": "0f28226cf5bb0150d2628b0db5f5f5d905a9058f",
+      "url": "https://github.com/arwyn6969/the-game/pull/29"
+    },
+    {
+      "number": 16,
+      "title": "Add S1 funded accounts and work contracts",
+      "isDraft": true,
+      "headRefName": "codex/funded-project-accounts",
+      "baseRefName": "main",
+      "headRefOid": "53bd9ac5b4354ac00195685cca429d7ca0681944",
+      "url": "https://github.com/arwyn6969/the-game/pull/16"
+    }
+  ]
+}

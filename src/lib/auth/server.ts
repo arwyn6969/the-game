@@ -30,6 +30,7 @@
  * a verified id via `@/lib/auth/middleware`.
  */
 import { betterAuth } from "better-auth";
+import { APIError, getAuthoritativeSessionFromCtx, getOAuthState } from "better-auth/api";
 import { bearer, genericOAuth } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { getCookie } from "@tanstack/react-start/server";
@@ -82,8 +83,7 @@ const grokClientId = env("GROK_AUTH_CLIENT_ID") ?? PREVIEW_CLIENT_ID;
 const grokClientSecret = env("GROK_AUTH_CLIENT_SECRET") ?? PREVIEW_CLIENT_SECRET;
 
 /** True when federated sign-in is active (real auth is enforced). */
-export const authConfigured =
-  !authDisabled && Boolean(grokClientId && grokClientSecret);
+export const authConfigured = !authDisabled && Boolean(grokClientId && grokClientSecret);
 
 // This app's own Better Auth origin. When deployed the deployer injects the
 // public URL. In the sandbox live preview there's no fixed URL (each preview gets
@@ -172,6 +172,28 @@ const grokOAuthPlugin = authConfigured
     })
   : null;
 
+type OAuthLinkContext = Parameters<typeof getAuthoritativeSessionFromCtx>[0];
+
+/** Check Better Auth's validated linking state at the point an alias is persisted. */
+async function requireCurrentLinkOwner(
+  context: OAuthLinkContext | null,
+  targetUserId?: string,
+): Promise<void> {
+  const state = await getOAuthState();
+  if (!state?.link) return; // Ordinary sign-in and first-account creation need no prior session.
+  if (!context || (targetUserId !== undefined && targetUserId !== state.link.userId))
+    throw new APIError("UNAUTHORIZED", {
+      code: "OAUTH_LINK_SESSION_REQUIRED",
+      message: "Sign in to the original account before linking a provider.",
+    });
+  const current = await getAuthoritativeSessionFromCtx(context);
+  if (current?.user.id !== state.link.userId)
+    throw new APIError("UNAUTHORIZED", {
+      code: "OAUTH_LINK_SESSION_REQUIRED",
+      message: "Sign in to the original account before linking a provider.",
+    });
+}
+
 export const auth = betterAuth({
   baseURL,
   // Deployed apps inject BETTER_AUTH_SECRET. Preview: process-stable secret on
@@ -184,23 +206,32 @@ export const auth = betterAuth({
   // local loopback variants, or clients get "Invalid origin".
   trustedOrigins,
 
-  // Encrypt broker-issued OAuth tokens at rest, and treat the broker's upstreams
-  // as trusted first-party identities. The broker owns identity and X emails are
-  // synthetic/unverified, so WITHOUT this a login can fail with
-  // `account_not_linked` (Better Auth refuses to attach an untrusted, unverified
-  // identity to an existing user). Google and X carry DISTINCT emails, so this
-  // never merges them into one user — they stay separate identities.
+  // Encrypt broker-issued OAuth tokens at rest. New provider identities must
+  // be linked explicitly while authenticated; matching email is not ownership.
   account: {
     encryptOAuthTokens: true,
     accountLinking: {
       enabled: true,
-      trustedProviders: [
-        ...GROK_PROVIDERS.map((p) => p.providerId),
-        GATE_PROVIDER_ID,
-      ],
+      disableImplicitLinking: true,
+      trustedProviders: [...GROK_PROVIDERS.map((p) => p.providerId), GATE_PROVIDER_ID],
       // X's synthetic email is never "verified", so don't gate linking on the
       // local user's email-verified state.
       requireLocalEmailVerified: false,
+    },
+  },
+
+  databaseHooks: {
+    account: {
+      create: {
+        before: async (account, context) => {
+          await requireCurrentLinkOwner(context, account.userId);
+        },
+      },
+      update: {
+        before: async (account, context) => {
+          await requireCurrentLinkOwner(context, account.userId);
+        },
+      },
     },
   },
 

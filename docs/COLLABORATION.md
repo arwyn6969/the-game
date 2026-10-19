@@ -1,6 +1,14 @@
 # Working with Sol and Grok
 
-## Current integration — 12 October 2026
+## Current integration — 19 October 2026
+
+The review stack is [PR #30](https://github.com/arwyn6969/the-game/pull/30) (gameplay and caption controls) → [PR #31](https://github.com/arwyn6969/the-game/pull/31) (permanent identities) → [PR #32](https://github.com/arwyn6969/the-game/pull/32) (stamp appearance) → [PR #33](https://github.com/arwyn6969/the-game/pull/33) (private wallet tooling and Wonder Wallet). Each child contains the refreshed parent through ordinary merges. The [branch record](BRANCHES.md) identifies source, checks, recovery refs and the eventual merge procedure.
+
+PR #16 is closed as superseded by the reconciled eight-actor implementation in PR #30. Its original branch remains for experimental version-1 ledger recovery. PR #29's caption change is incorporated into PR #30 with source ancestry preserved. Neither old draft should be merged independently. All four current PRs remain drafts; merging to main and hosted publication require the user's separate release instruction under AGENTS.md.
+
+## Integration snapshot — 12 October 2026
+
+The following paragraphs preserve the earlier status; use the current stack above for new work.
 
 Use [the consolidation record](CONSOLIDATION.md) as the current source and cleanup entry point. PR #19 merged PRs #5, #6, #9, #13 and #14 into main. The 17 incorporated remote branches are retired; start new work from current `origin/main`. The existing graphics are retained. Do not restart their historical lanes or copy an older whole-project export over this candidate.
 

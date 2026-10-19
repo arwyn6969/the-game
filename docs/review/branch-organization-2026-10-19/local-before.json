@@ -1,0 +1,231 @@
+{
+  "schema_version": 1,
+  "snapshot_date": "2026-10-19",
+  "snapshot_phase": "before_root_organization_mutations",
+  "snapshot_basis": "Observed by local_branch_audit during initial read-only audit; original statuses retained from that observation rather than reread after organization began.",
+  "wrapper": "THE GAME (workspace wrapper)",
+  "checkout_count": 13,
+  "repository_count_excluding_wrapper": 11,
+  "all_checkouts_clean": true,
+  "all_checkouts_without_merge_or_stash": true,
+  "network_fetch_performed_by_this_audit": false,
+  "tracking_comparisons_are_pre_refresh": true,
+  "checkouts": [
+    {
+      "checkout": "product",
+      "branch": "codex/game-quality-review",
+      "head": "ccec7d96ee637501a6dc024ad314c15bb6fd0223",
+      "clean": true,
+      "merge_in_progress": false,
+      "stash_count": 0,
+      "repository": "product",
+      "relationship": "primary",
+      "preservation_reasons": [
+        "active_quality_work",
+        "ignored_configuration_and_artifacts_require_separate_preservation"
+      ],
+      "origin_kind": "github_arwyn6969_the-game"
+    },
+    {
+      "checkout": "stamp-identity-tooling",
+      "branch": "codex/agent-receiving-registry",
+      "head": "ea2164318e72b88edd0e26b2ad7e3b9329c87477",
+      "clean": true,
+      "merge_in_progress": false,
+      "stash_count": 0,
+      "repository": "product",
+      "relationship": "linked_worktree",
+      "preservation_reasons": [
+        "active_wallet_work",
+        "ignored_configuration_and_artifacts_require_separate_preservation"
+      ],
+      "origin_kind": "github_arwyn6969_the-game"
+    },
+    {
+      "checkout": "intelligence-ui",
+      "branch": "codex/seven-resident-coherence",
+      "head": "578ab313d8679aab80a9badef058dbd36f51be30",
+      "clean": true,
+      "merge_in_progress": false,
+      "stash_count": 0,
+      "repository": "intelligence-ui",
+      "relationship": "primary",
+      "preservation_reasons": [
+        "primary_repository_for_character_social_ui",
+        "ignored_private_environment_configuration_and_artifacts_require_separate_preservation"
+      ],
+      "origin_kind": "github_arwyn6969_the-game"
+    },
+    {
+      "checkout": "character-social-ui",
+      "branch": "codex/dismiss-exchange-caption",
+      "head": "0f28226cf5bb0150d2628b0db5f5f5d905a9058f",
+      "clean": true,
+      "merge_in_progress": false,
+      "stash_count": 0,
+      "repository": "intelligence-ui",
+      "relationship": "linked_worktree",
+      "preservation_reasons": [
+        "caption_head_not_ancestor_of_main_at_snapshot",
+        "ignored_configuration_and_artifacts_require_separate_preservation"
+      ],
+      "origin_kind": "github_arwyn6969_the-game"
+    },
+    {
+      "checkout": "coherence-core",
+      "branch": "codex/everyday-dialogue",
+      "head": "c60863c1e1721abcbd6921e61c376eb28f0d3c7d",
+      "clean": true,
+      "merge_in_progress": false,
+      "stash_count": 0,
+      "repository": "coherence-core",
+      "relationship": "primary",
+      "preservation_reasons": [
+        "local_source_history_not_present_as_identical_objects_in_product",
+        "adapted_merged_counterpart_63adfff_has_different_stable_patch_id"
+      ],
+      "origin_kind": "local_clone_of_intelligence-ui"
+    },
+    {
+      "checkout": "coherence-offline",
+      "branch": "codex/resident-reflections",
+      "head": "90601a6ad0a2dda7004a8a415e8401d291c7a5df",
+      "clean": true,
+      "merge_in_progress": false,
+      "stash_count": 0,
+      "repository": "coherence-offline",
+      "relationship": "primary",
+      "preservation_reasons": [
+        "local_source_history_should_be_archived_before_folder_retirement",
+        "head_has_exact_stable_patch_id_equivalent_de259fb_in_main"
+      ],
+      "origin_kind": "local_clone_of_intelligence-ui"
+    },
+    {
+      "checkout": "coherence-ui",
+      "branch": "codex/resident-navigation",
+      "head": "09513d1e2db9fe2b19c7343036da05e0e4c7ac97",
+      "clean": true,
+      "merge_in_progress": false,
+      "stash_count": 0,
+      "repository": "coherence-ui",
+      "relationship": "primary",
+      "preservation_reasons": [
+        "local_source_history_should_be_archived_before_folder_retirement",
+        "head_has_exact_stable_patch_id_equivalent_34274d9_in_main"
+      ],
+      "origin_kind": "local_clone_of_intelligence-ui"
+    },
+    {
+      "checkout": "funded-accounts",
+      "branch": "codex/funded-project-accounts",
+      "head": "53bd9ac5b4354ac00195685cca429d7ca0681944",
+      "clean": true,
+      "merge_in_progress": false,
+      "stash_count": 0,
+      "repository": "funded-accounts",
+      "relationship": "primary",
+      "preservation_reasons": [
+        "preserve_until_pr16_disposition_and_recovery_receipt",
+        "ignored_configuration_requires_separate_preservation"
+      ],
+      "origin_kind": "github_arwyn6969_the-game"
+    },
+    {
+      "checkout": "llm-pool",
+      "branch": "codex/free-api-pool",
+      "head": "19920725eda43dba1103c0290d4fecdd93afdc98",
+      "clean": true,
+      "merge_in_progress": false,
+      "stash_count": 0,
+      "repository": "llm-pool",
+      "relationship": "primary",
+      "preservation_reasons": [
+        "historical_integrated_source",
+        "ignored_private_environment_configuration_and_artifacts_require_separate_preservation"
+      ],
+      "origin_kind": "github_arwyn6969_the-game"
+    },
+    {
+      "checkout": "graphics-ui",
+      "branch": "codex/graphics-release-evidence",
+      "head": "787f06e37f71c5a6ef0d58c0ff662cfe920f3b6e",
+      "clean": true,
+      "merge_in_progress": false,
+      "stash_count": 0,
+      "repository": "graphics-ui",
+      "relationship": "primary",
+      "preservation_reasons": [
+        "historical_integrated_source",
+        "ignored_configuration_and_artifacts_require_separate_preservation"
+      ],
+      "origin_kind": "github_arwyn6969_the-game"
+    },
+    {
+      "checkout": "neon-ui",
+      "branch": "codex/neon-arcade-ui",
+      "head": "971c52ab4a0623a4a6453d1125bbb075e2587fef",
+      "clean": true,
+      "merge_in_progress": false,
+      "stash_count": 0,
+      "repository": "neon-ui",
+      "relationship": "primary",
+      "preservation_reasons": [
+        "historical_integrated_source",
+        "local_baseline_remote_targets_review_astra_source",
+        "ignored_configuration_and_artifacts_require_separate_preservation"
+      ],
+      "origin_kind": "github_arwyn6969_the-game"
+    },
+    {
+      "checkout": "source-review",
+      "branch": "codex/agent-collaboration-setup",
+      "head": "b8d6c97ebe5d88b2f97a56e5e5edc82287554ad1",
+      "clean": true,
+      "merge_in_progress": false,
+      "stash_count": 0,
+      "repository": "source-review",
+      "relationship": "primary",
+      "preservation_reasons": [
+        "historical_integrated_source",
+        "ignored_configuration_requires_separate_preservation"
+      ],
+      "origin_kind": "github_arwyn6969_the-game"
+    },
+    {
+      "checkout": "review/astra-source",
+      "branch": "codex/playability-review",
+      "head": "a8e9098c4d0be76e96138fc0db7f34b662661d01",
+      "clean": true,
+      "merge_in_progress": false,
+      "stash_count": 0,
+      "repository": "review/astra-source",
+      "relationship": "primary",
+      "preservation_reasons": [
+        "historical_integrated_source",
+        "primary_git_source_for_neon_baseline_remote",
+        "ignored_configuration_and_artifacts_require_separate_preservation"
+      ],
+      "origin_kind": "github_arwyn6969_the-game"
+    }
+  ],
+  "wrapper_git": {
+    "branch": "main",
+    "head": null,
+    "state": "unborn",
+    "role": "workspace_wrapper_not_product_repository",
+    "untracked_material_preserved": true
+  },
+  "non_git_source_exports": ["review/pr-2-source", "review/main-4a39cdf"],
+  "initial_product_refs": {
+    "main": "221ad798c6ea9a9f550f690deff8223e34427ea1",
+    "codex/product-consolidation": "14611482c31eca13f2f7bea237cf13c625804a3d",
+    "codex/stamp-identity-tooling": "8b480cd5b4367250497636b42cd8a9ec017d352c",
+    "codex/stamp-wallet-selection": "8453443942ddf04ae0f2d87d09fd1d61226a62e0"
+  },
+  "historical_document_corrections": [
+    "character-social-ui had no unresolved merge at the snapshot",
+    "coherence-core, coherence-offline and coherence-ui were separate local clones, not linked intelligence-ui worktrees"
+  ],
+  "privacy": "Ignored/private file contents were not read or included; cleanliness does not establish that checkout deletion preserves ignored or private files."
+}

@@ -401,6 +401,44 @@ test("JPEG and WebP decode through the same safe raster boundary", async () => {
   }
 });
 
+test("small pixel stamps keep their original colour palette when enlarged", async () => {
+  const colours = [
+    [255, 0, 0, 255],
+    [0, 255, 0, 255],
+    [0, 0, 255, 255],
+    [255, 255, 0, 255],
+  ];
+  const input = await sharp(Buffer.from(colours.flat()), {
+    raw: { width: 2, height: 2, channels: 4 },
+  })
+    .png()
+    .toBuffer();
+  const result = await media.loadStampImage(asset(), { fetch: async () => imageResponse(input) });
+  const { data, info } = await sharp(Buffer.from(result.pngDataUrl.split(",")[1], "base64"))
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  assert.equal(info.width, 256);
+  assert.equal(info.height, 256);
+  const palette = new Set(colours.map((c) => c.join(",")));
+  const found = new Set();
+  for (let i = 0; i < data.length; i += 4) found.add([...data.subarray(i, i + 4)].join(","));
+  assert.deepEqual(
+    found,
+    palette,
+    "nearest-neighbour must not invent blended colours between pixels",
+  );
+  for (const [x, y, colour] of [
+    [32, 32, colours[0]],
+    [224, 32, colours[1]],
+    [32, 224, colours[2]],
+    [224, 224, colours[3]],
+  ]) {
+    const offset = (y * info.width + x) * 4;
+    assert.deepEqual([...data.subarray(offset, offset + 4)], colour);
+  }
+});
+
 test("HTML/SVG, MIME mismatches, corrupt files and oversized images fail without caching", async () => {
   const hugeSide = await sharp({
     create: { width: 2049, height: 1, channels: 3, background: "red" },

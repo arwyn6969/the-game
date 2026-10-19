@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-19",
+  "repository": "arwyn6969/the-game",
+  "sourceHeadsBeforeDocumentationCommit": {
+    "30": "2a851faa18f67ac2e57bb89f3e2bc0f7295a34c0",
+    "31": "b1540346a818edf7e3a03162182ddbda19346007",
+    "32": "9f5102b2407650d46d2fe544fb37558460efc993",
+    "33": "ea6e97ba73e4cdce368484729173e1ae43bea32b"
+  },
+  "mergeOrder": [
+    30,
+    31,
+    32,
+    33
+  ],
+  "mergeMethod": "merge commit; retarget each child only after its parent merges",
+  "closedPullRequests": [
+    {
+      "number": 16,
+      "reason": "superseded by the eight-actor accounting in PR30",
+      "sourceBranchRetained": true,
+      "sha": "53bd9ac5b4354ac00195685cca429d7ca0681944"
+    },
+    {
+      "number": 29,
+      "reason": "incorporated with ancestry into PR30",
+      "sourceBranchRetained": true,
+      "sha": "0f28226cf5bb0150d2628b0db5f5f5d905a9058f"
+    }
+  ],
+  "retiredRemoteRefs": [
+    {
+      "ref": "refs/heads/codex/product-consolidation",
+      "expectedSha": "14611482c31eca13f2f7bea237cf13c625804a3d"
+    },
+    {
+      "ref": "refs/heads/codex/character-social-release-evidence",
+      "expectedSha": "940cd70680690593e0aa786e838200f5a8fe8735"
+    }
+  ],
+  "retirementChecks": {
+    "reachableFromMain": true,
+    "unprotected": true,
+    "noOpenPullRequestHeadOrBase": true,
+    "atomicExpectedHeadLeaseDeletion": true
+  },
+  "localMainFastForwarded": true,
+  "removedMergedLocalRef": "codex/product-consolidation",
+  "checkoutFoldersRemoved": [],
+  "historyRewritten": false,
+  "preOrganizationBundle": {
+    "path": "artifacts/branch-organization-2026-10-19/pre-organization.bundle",
+    "sha256": "036bf2b1283dcd880c1b2422a80d7dc30769e367bb4b2ec8fe08af14eee47fc4",
+    "verifiedComplete": true,
+    "contents": "tracked Git refs/history, excluding ignored or uncommitted files"
+  },
+  "parallelWorkPreserved": [
+    "codex/offline-avatar-plan",
+    "codex/offline-avatar-roadmap"
+  ],
+  "parallelWorkNote": "The local avatar-plan source and the separately merged PR34 roadmap source are preserved; their refs/checkouts were not removed or rewritten.",
+  "mainAtStart": "4a39cdf8ec8c03b79d0e369e99dd7c862c9d8375",
+  "mainAfterParallelDocumentationMerge": "093a4a6536ba220442d0615726aa6435d972c4df",
+  "externalMainUpdate": {
+    "pr": 34,
+    "scope": "avatar continuity documentation only",
+    "mergedSeparatelyDuringVerification": true,
+    "integratedThroughFeatureStack": true
+  }
+}

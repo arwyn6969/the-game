@@ -9,11 +9,19 @@ import {
   getStampIdentity,
   previewStampImage,
 } from "@/lib/stamps.functions";
-import { getLeatherAddress, LeatherWalletError, signLeatherChallenge } from "@/lib/stamps/leather";
+import {
+  getWalletAddress,
+  signWalletChallenge,
+  WalletError,
+  watchWalletChanges,
+  type WalletId,
+} from "@/lib/stamps/wallet";
 import {
   isStampSuppressed,
+  isStampVerificationRequired,
   rememberStampSession,
   setStampSuppressed,
+  setStampVerificationRequired,
 } from "@/lib/stamps/client-session";
 import type {
   StampAppearance,
@@ -27,8 +35,15 @@ import type {
 
 type Mode = "original" | "portrait" | "head";
 type DraftStamp = Pick<StampHolding, "cpid" | "title" | "stampNumber">;
-type Operation = { generation: number; scopeKey: string; abort: AbortController; cpid?: string };
+type Operation = {
+  generation: number;
+  scopeKey: string;
+  walletId: WalletId;
+  abort: AbortController;
+  cpid?: string;
+};
 const DEFAULT_CROP: StampCrop = { x: 0, y: 0, size: 1 };
+const WALLET_NAMES: Record<WalletId, string> = { wonder: "Wonder Wallet", leather: "Leather" };
 
 class StampPanelError extends Error {
   constructor(
@@ -77,6 +92,7 @@ export function StampIdentityPanel({
 }) {
   const titleId = useId();
   const modeId = useId();
+  const walletSelectId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
   const [view, setView] = useState<StampIdentityView | null>(null);
   const [draft, setDraft] = useState<DraftStamp | null>(null);
@@ -87,6 +103,8 @@ export function StampIdentityPanel({
   const [disconnectPending, setDisconnectPending] = useState(false);
   const [note, setNote] = useState("Checking your stamp connection…");
   const [error, setError] = useState(false);
+  const [walletId, setWalletId] = useState<WalletId>("wonder");
+  const [walletNeedsVerification, setWalletNeedsVerification] = useState(false);
   const active = useRef<Operation | null>(null);
   const mounted = useRef(false);
   const generation = useRef(0);
@@ -95,15 +113,22 @@ export function StampIdentityPanel({
   const scopeKey = useRef(currentScopeKey);
   const viewRef = useRef(view);
   const polling = useRef(true);
+  const currentWallet = useRef(walletId);
+  const walletVerificationRequired = useRef(false);
+  const disconnectPendingRef = useRef(disconnectPending);
   callbacks.current = { onAppearance, onClose };
   scopeKey.current = currentScopeKey;
   viewRef.current = view;
+  currentWallet.current = walletId;
+  disconnectPendingRef.current = disconnectPending;
+  const walletName = WALLET_NAMES[walletId];
 
   function isCurrent(operation: Operation): boolean {
     return (
       mounted.current &&
       operation.generation === generation.current &&
       operation.scopeKey === scopeKey.current &&
+      operation.walletId === currentWallet.current &&
       !operation.abort.signal.aborted
     );
   }
@@ -113,6 +138,7 @@ export function StampIdentityPanel({
     const operation = {
       generation: ++generation.current,
       scopeKey: currentScopeKey,
+      walletId,
       abort: new AbortController(),
     };
     active.current = operation;
@@ -149,6 +175,11 @@ export function StampIdentityPanel({
 
   function failure(cause: unknown, operation: Operation): void {
     if (!isCurrent(operation)) return;
+    if (cause instanceof WalletError && cause.code === "changed") {
+      resetWalletPresentation(cause.message.slice(0, 400));
+      setError(true);
+      return;
+    }
     if (cause instanceof StampPanelError && cause.code === "expired") {
       setView((previous) =>
         previous ? { ...previous, connected: false, appearance: null, holdings: null } : previous,
@@ -166,7 +197,7 @@ export function StampIdentityPanel({
     }
     setError(true);
     setNote(
-      cause instanceof LeatherWalletError || cause instanceof StampPanelError
+      cause instanceof WalletError || cause instanceof StampPanelError
         ? cause.message.slice(0, 400)
         : "The stamp service could not be reached. Your draft is still here; try again.",
     );
@@ -193,12 +224,12 @@ export function StampIdentityPanel({
         ? "Your holdings have been checked. Choose a stamp to preview it."
         : next.address
           ? "Your wallet check expired. Sign again to refresh your holdings."
-          : "Connect Leather to browse stamps you hold.",
+          : "Choose a wallet and connect to browse stamps you hold.",
     );
   }
 
   async function refresh(page?: number, resetDraft = false): Promise<void> {
-    if (isStampSuppressed(scope)) return;
+    if (isStampSuppressed(scope) || walletVerificationRequired.current) return;
     const operation = begin();
     if (!operation) return;
     try {
@@ -223,16 +254,25 @@ export function StampIdentityPanel({
     setMode("original");
     setCrop({ ...DEFAULT_CROP });
     setBusy(false);
+    disconnectPendingRef.current = false;
     setDisconnectPending(false);
     setError(false);
+    walletVerificationRequired.current = false;
+    setWalletNeedsVerification(false);
     setNote("Checking your stamp connection…");
     const previousFocus = document.activeElement;
     closeRef.current?.focus();
-    if (isStampSuppressed(scope)) {
+    if (isStampSuppressed(scope) || isStampVerificationRequired(scope)) {
       polling.current = false;
-      setDisconnectPending(true);
+      const required = isStampVerificationRequired(scope);
+      walletVerificationRequired.current = required;
+      setWalletNeedsVerification(required);
+      disconnectPendingRef.current = !required;
+      setDisconnectPending(!required);
       setNote(
-        "Your local stamp appearance is cleared. Retry Disconnect to confirm it before reconnecting.",
+        required
+          ? "Your local wallet check is hidden. Connect your selected wallet to verify it again."
+          : "Your local stamp appearance is cleared. Retry Disconnect to confirm it before reconnecting.",
       );
     } else void refresh(undefined, true);
     const interval = setInterval(() => {
@@ -248,6 +288,49 @@ export function StampIdentityPanel({
     // A new identity invalidates every pending callback and resets only this panel.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentScopeKey]);
+
+  function resetWalletPresentation(message: string): void {
+    invalidate();
+    polling.current = false;
+    walletVerificationRequired.current = true;
+    setWalletNeedsVerification(true);
+    setBusy(false);
+    setView(null);
+    setDraft(null);
+    setPreview(null);
+    setMode("original");
+    setCrop({ ...DEFAULT_CROP });
+    setStampSuppressed(scope, true);
+    setStampVerificationRequired(scope, !disconnectPendingRef.current);
+    rememberStampSession(scope, false);
+    callbacks.current.onAppearance(null);
+    setError(false);
+    setNote(
+      disconnectPendingRef.current
+        ? "Your local stamp appearance is cleared. Retry Disconnect to confirm it before reconnecting."
+        : message,
+    );
+  }
+
+  function selectWallet(next: WalletId): void {
+    if (next === currentWallet.current) return;
+    currentWallet.current = next;
+    setWalletId(next);
+    resetWalletPresentation(
+      `${WALLET_NAMES[next]} selected. Verify this wallet to load its stamps; your previous wallet check is hidden.`,
+    );
+  }
+
+  useEffect(() => {
+    return watchWalletChanges(walletId, () => {
+      if (!mounted.current || currentWallet.current !== walletId) return;
+      resetWalletPresentation(
+        `${WALLET_NAMES[walletId]} changed or disconnected. Verify your wallet again to load its stamps.`,
+      );
+    });
+    // Wallet events remove local presentation and never start a new verification.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [walletId, currentScopeKey]);
 
   useEffect(() => {
     const appearance = view?.appearance;
@@ -274,21 +357,43 @@ export function StampIdentityPanel({
   }, [view?.appearance, currentScopeKey]);
 
   async function connect(): Promise<void> {
+    if (disconnectPendingRef.current) return;
     const operation = begin();
     if (!operation) return;
     polling.current = true;
-    setNote("Choose your mainnet Native SegWit address in Leather.");
+    // An explicit reconnect hides the old proof while the new account grant is reviewed.
+    // Wonder may acknowledge that grant with accountsChanged before its request resolves.
+    setView(null);
+    setDraft(null);
+    setPreview(null);
+    setMode("original");
+    setCrop({ ...DEFAULT_CROP });
+    setStampSuppressed(scope, true);
+    setStampVerificationRequired(scope, true);
+    rememberStampSession(scope, false);
+    walletVerificationRequired.current = true;
+    setWalletNeedsVerification(true);
+    callbacks.current.onAppearance(null);
+    setNote(
+      `Choose your mainnet Native SegWit address in ${walletName}. ${
+        walletId === "wonder"
+          ? "Wonder may first request its own connection proof; the game's fresh verification message follows. "
+          : ""
+      }Its prompt may open behind this window; check the popup/extension icon.`,
+    );
     try {
-      const selected = await getLeatherAddress({ signal: operation.abort.signal });
+      const selected = await getWalletAddress(operation.walletId, {
+        signal: operation.abort.signal,
+      });
       if (!isCurrent(operation)) return;
       const challenge = readResult(
         await beginStampProof({ data: { scope, address: selected.address } }),
       );
       if (!isCurrent(operation)) return;
       setNote(
-        "Review the message in Leather. Signing this check does not spend BTC or move stamps.",
+        `Review the message in ${walletName}. Signing this check does not spend BTC or move stamps. Its prompt may open behind this window; check the popup/extension icon.`,
       );
-      const proof = await signLeatherChallenge(challenge, selected, {
+      const proof = await signWalletChallenge(operation.walletId, challenge, selected, {
         signal: operation.abort.signal,
       });
       if (!isCurrent(operation)) return;
@@ -297,7 +402,11 @@ export function StampIdentityPanel({
       );
       if (!isCurrent(operation)) return;
       setStampSuppressed(scope, false);
+      setStampVerificationRequired(scope, false);
+      disconnectPendingRef.current = false;
       setDisconnectPending(false);
+      walletVerificationRequired.current = false;
+      setWalletNeedsVerification(false);
       acceptView(next, operation, true);
     } catch (cause) {
       failure(cause, operation);
@@ -375,7 +484,11 @@ export function StampIdentityPanel({
     const operation = begin();
     if (!operation) return;
     polling.current = false;
+    disconnectPendingRef.current = true;
     setDisconnectPending(true);
+    setStampVerificationRequired(scope, false);
+    walletVerificationRequired.current = false;
+    setWalletNeedsVerification(false);
     setView(null);
     setDraft(null);
     setPreview(null);
@@ -389,7 +502,10 @@ export function StampIdentityPanel({
       readResult(await disconnectStampIdentity({ data: { scope } }));
       if (!isCurrent(operation)) return;
       setStampSuppressed(scope, false);
+      disconnectPendingRef.current = false;
       setDisconnectPending(false);
+      walletVerificationRequired.current = false;
+      setWalletNeedsVerification(false);
       setNote("Wallet disconnected. Your original appearance is active.");
     } catch {
       if (isCurrent(operation)) {
@@ -449,6 +565,37 @@ export function StampIdentityPanel({
           This optional wallet check changes appearance only. It does not grant control of a game
           character or create a receiving wallet.
         </p>
+        <label className="mt-3 block text-sm" htmlFor={walletSelectId}>
+          Wallet
+        </label>
+        <select
+          id={walletSelectId}
+          className="field mt-1 w-full"
+          value={walletId}
+          onChange={(event) => selectWallet(event.target.value as WalletId)}
+        >
+          <option value="wonder">Wonder Wallet · recommended</option>
+          <option value="leather">Leather · alternative</option>
+        </select>
+        <p className="mt-2 text-sm text-muted">
+          {walletId === "wonder" ? (
+            <a href="https://www.wonder-wallet.com" target="_blank" rel="noopener noreferrer">
+              Get Wonder Wallet
+            </a>
+          ) : (
+            <a href="https://leather.io" target="_blank" rel="noopener noreferrer">
+              Get Leather
+            </a>
+          )}
+          . Use a mainnet Native SegWit address. Wallet changes require a new verification.
+          {walletId === "wonder" && (
+            <>
+              {" "}
+              To change accounts, disconnect and reconnect this site in Wonder's Connected sites,
+              then verify the selected address again.
+            </>
+          )}
+        </p>
         {view?.address && (
           <p className="mt-3 text-sm">
             {connected ? "Verified address" : "Previously checked address"}
@@ -463,13 +610,13 @@ export function StampIdentityPanel({
             onClick={() => void connect()}
             disabled={busy || disconnectPending}
           >
-            {view?.address ? "Sign again with Leather" : "Connect Leather"}
+            {view?.address ? `Sign again with ${walletName}` : `Connect ${walletName}`}
           </button>
           <button
             className="btn"
             type="button"
             onClick={() => void refresh(holdings?.page)}
-            disabled={busy || disconnectPending}
+            disabled={busy || disconnectPending || walletNeedsVerification}
           >
             Refresh holdings
           </button>
@@ -488,8 +635,8 @@ export function StampIdentityPanel({
           {note}
         </p>
         <p className="mt-2 text-sm text-muted">
-          Leather mainnet Native SegWit is supported in this preview. Taproot, testnet and other
-          wallets will need a later compatibility update.
+          Wonder Wallet is recommended; Leather is available when you select it above. This preview
+          verifies mainnet Native SegWit addresses. Taproot and testnet are not supported.
         </p>
         {connected && holdings && (
           <section className="mt-5" aria-label="Your stamp holdings">

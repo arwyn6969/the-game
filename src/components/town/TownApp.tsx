@@ -31,6 +31,7 @@ import { applyLibraryAction, libraryActions, libraryView } from "@/game/communit
 import { findPath } from "@/game/path";
 import { PlayerTools, type ToolPage } from "./PlayerTools";
 import { StampIdentityPanel } from "./StampIdentityPanel";
+import { AgentWalletsPanel } from "./AgentWalletsPanel";
 import { getStampIdentity } from "@/lib/stamps.functions";
 import { isStampAppearance } from "@/lib/stamps/validation";
 import {
@@ -253,7 +254,7 @@ export function TownApp() {
   const startOverRef = useRef(false);
   const toolOpenerRef = useRef<HTMLElement | null>(null);
   const boardOpenerRef = useRef<HTMLElement | null>(null);
-  const toolsRef = useRef<ToolPage | "stamps" | null>(null);
+  const toolsRef = useRef<ToolPage | "stamps" | "agent-wallets" | null>(null);
   const importTextRef = useRef<string | null>(null);
   const importKeepRef = useRef<HTMLButtonElement>(null);
   const hourLock = useRef(false);
@@ -282,7 +283,7 @@ export function TownApp() {
   const [replay, setReplay] = useState<Replay | null>(null);
   const [panel, setPanel] = useState<AgentId | null>(null);
   const [pinned, setPinned] = useState<AgentId | null>(null);
-  const [tools, setTools] = useState<ToolPage | "stamps" | null>(null);
+  const [tools, setTools] = useState<ToolPage | "stamps" | "agent-wallets" | null>(null);
   const [stampAppearance, setStampAppearance] = useState<StampAppearance | null>(null);
   const stampAppearanceRef = useRef<StampAppearance | null>(null);
   const stampGeneration = useRef(0);
@@ -476,7 +477,7 @@ export function TownApp() {
     setTick((n) => n + 1);
   }
 
-  function openTools(page: ToolPage | "stamps") {
+  function openTools(page: ToolPage | "stamps" | "agent-wallets") {
     setSocialOpen(false);
     boardRef.current = false;
     setBoard(false);
@@ -1852,6 +1853,9 @@ export function TownApp() {
         </div>
       </div>
       <nav className="town-tools" aria-label="Your town tools">
+        <button className="btn" type="button" onClick={() => openTools("agent-wallets")}>
+          Agent wallets
+        </button>
         <button className="btn" type="button" onClick={() => openTools("stamps")}>
           {stampAppearance &&
             stampAppearance.worldId === town.identityRegistry?.worldId &&
@@ -2217,7 +2221,21 @@ export function TownApp() {
             onClose={closeTools}
           />
         )}
-        {tools && tools !== "stamps" && (
+        {tools === "agent-wallets" && town.identityRegistry && (
+          <AgentWalletsPanel
+            world={{
+              sourceWorldId: town.identityRegistry.worldId,
+              title: `${player.name}'s town`,
+              characters: town.agents.map((person) => ({
+                role: person.id,
+                sourceCharacterId: town.identityRegistry!.characters[person.id].characterId,
+                name: person.name,
+              })),
+            }}
+            onClose={closeTools}
+          />
+        )}
+        {tools && tools !== "stamps" && tools !== "agent-wallets" && (
           <PlayerTools
             page={tools}
             town={town}

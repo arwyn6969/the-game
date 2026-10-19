@@ -6,6 +6,9 @@ export type LeatherProvider = {
     method: "getAddresses" | "signMessage",
     params?: Record<string, unknown>,
   ) => Promise<unknown>;
+  on?: (event: string, listener: () => void) => unknown;
+  off?: (event: string, listener: () => void) => unknown;
+  removeListener?: (event: string, listener: () => void) => unknown;
 };
 export type LeatherAddress = { address: string; account?: number };
 export type LeatherProof = { address: string; message: string; signature: string };
@@ -30,7 +33,7 @@ function object(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }
 
-function browserProvider(): LeatherProvider | undefined {
+export function getLeatherProvider(): LeatherProvider | undefined {
   if (typeof window === "undefined") return undefined;
   const provider = (window as unknown as { LeatherProvider?: unknown }).LeatherProvider;
   return object(provider) && typeof provider.request === "function"
@@ -39,7 +42,7 @@ function browserProvider(): LeatherProvider | undefined {
 }
 
 export function hasLeatherProvider(): boolean {
-  return Boolean(browserProvider());
+  return Boolean(getLeatherProvider());
 }
 
 function checkCancellation(signal?: AbortSignal): void {
@@ -75,7 +78,7 @@ async function request(
   options: LeatherOptions,
 ): Promise<unknown> {
   checkCancellation(options.signal);
-  const provider = options.provider ?? browserProvider();
+  const provider = options.provider ?? getLeatherProvider();
   if (!provider || typeof provider.request !== "function")
     throw new LeatherWalletError(
       "unavailable",

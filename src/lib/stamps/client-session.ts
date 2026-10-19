@@ -13,6 +13,11 @@ const sessions: ScopeFlags = {
   values: new Set(),
   loaded: false,
 };
+const verificationRequired: ScopeFlags = {
+  storageKey: "the-game-stamp-verification-required-v1",
+  values: new Set(),
+  loaded: false,
+};
 
 function scopeKey(scope: StampScope): string | null {
   const key = `${scope.worldId}:${scope.characterId}`;
@@ -80,4 +85,13 @@ export function hasStampSession(scope: StampScope): boolean {
 
 export function rememberStampSession(scope: StampScope, connected: boolean): void {
   change(sessions, scope, connected);
+}
+
+/** A local presentation reason only; reconnecting must still prove address control. */
+export function isStampVerificationRequired(scope: StampScope): boolean {
+  return contains(verificationRequired, scope);
+}
+
+export function setStampVerificationRequired(scope: StampScope, required: boolean): void {
+  change(verificationRequired, scope, required);
 }
