@@ -1,0 +1,17 @@
+{
+  "capturedAt": "2026-10-19T14:02:05.422Z",
+  "url": "http://127.0.0.1:8181/",
+  "buildSourceFingerprint": "aa8d06c0dd870e35943c239a29fe68415d618e812376fa3c84a6afdab69c042f",
+  "hashes": {
+    "scripts/accessibility-browser.mjs": "eb33034f65fd85519cd464716e266e92e141e7ed435b6ca84d514101be83df31",
+    "src/components/town/TownApp.tsx": "c0f2707092c2741b45eae23f795078739d3d7121af6fe7f97ccc6cc331100da8",
+    "src/components/town/PlayerTools.tsx": "b6ff67250f508869868d3ce3adf17ec82d10abdfc918c0809d2d436b38b77323",
+    "src/components/town/CharacterSocial.tsx": "4a0fc3742af23aa108ef9f6f6c478a4bc1f23f361ae003233cf14403345fcf3e",
+    "src/components/town/StampIdentityPanel.tsx": "4fe665fde55a78558fe973810ba24cd67b03cb9ba53f552abf7f0c68b5e91f62",
+    "src/components/town/AgentWalletsPanel.tsx": "ee4fcc7c4b53bde0fd486c973f63718784210324de8a00e7ff07e7c428f76f93",
+    "src/components/town/talk.ts": "a72295eb679c4e97348eeb5692be54750ba1c1cf3d8f0140aac07221cf7cd72f",
+    "src/styles.css": "29a6cfc9a6b8799b408e5a37dfbf0bb0fecd71ceeaa290bf9da4b04a2e628ddf"
+  },
+  "checkedAfterRunAt": "2026-10-19T14:02:52.440Z",
+  "changedDuringRun": []
+}

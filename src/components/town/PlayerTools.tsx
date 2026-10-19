@@ -108,7 +108,12 @@ export function PlayerTools({
     { code: "ArrowDown", label: "South" },
   ];
   return (
-    <aside ref={panelRef} className="mind player-tools" role="dialog" aria-labelledby="tools-title">
+    <section
+      ref={panelRef}
+      className="mind player-tools"
+      role="dialog"
+      aria-labelledby="tools-title"
+    >
       <div className="mind-bar">
         <h2 id="tools-title" className="font-display">
           {TITLES[page]}
@@ -123,7 +128,12 @@ export function PlayerTools({
           <X className="size-4" aria-hidden />
         </button>
       </div>
-      <div className="mind-body tool-body">
+      <div
+        className="mind-body tool-body"
+        role="region"
+        aria-label={`${TITLES[page]} content`}
+        tabIndex={0}
+      >
         {replaying && (
           <p className="tool-next-step" role="status">
             Replay is view-only. Return to now to walk or make a choice. These tools show your
@@ -480,6 +490,6 @@ export function PlayerTools({
           </>
         )}
       </div>
-    </aside>
+    </section>
   );
 }

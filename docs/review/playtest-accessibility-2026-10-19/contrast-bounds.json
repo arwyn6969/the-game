@@ -1,0 +1,42 @@
+{
+  "scope": "Analytical foreground/background bounds for gradient/canvas contrast checks axe could not resolve. Does not resolve offscreen/covered-node incompletes or establish complete WCAG conformance.",
+  "method": "WCAG sRGB relative luminance. Gate evaluates all 16 zero/max-alpha layer combinations in CSS stacking order, ignoring text shadows. Transparent canvas badges use white underneath for a conservative brightest background. Library uses its brightest gradient endpoint.",
+  "gate": {
+    "base": "#10091c",
+    "bottomToTopLayers": [
+      {
+        "rgb": "#c3ff63",
+        "maxAlpha": 0.09411764705882353
+      },
+      {
+        "rgb": "#a586ca",
+        "maxAlpha": 0.09411764705882353
+      },
+      {
+        "rgb": "#c3ff63",
+        "maxAlpha": 0.023529411764705882
+      },
+      {
+        "rgb": "#6a29ac",
+        "maxAlpha": 0.10196078431372549
+      }
+    ],
+    "minimumTextRatios": {
+      "#f3ecff": 11.215009204394875,
+      "#b6a5cf": 5.696908122426026,
+      "#c3ff63": 10.93942673829871,
+      "#b48aff": 4.927648338958161
+    }
+  },
+  "library": {
+    "background": "#312047",
+    "heading": 12.466587884966446,
+    "body": 12.780642095971466
+  },
+  "canvasBadges": {
+    "worldLabel": 13.466149381120822,
+    "worldCaption": 8.78445486748726,
+    "dpad": 11.563257018997673
+  },
+  "reference": "https://www.w3.org/TR/WCAG22/#contrast-minimum"
+}

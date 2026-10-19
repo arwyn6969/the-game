@@ -323,6 +323,10 @@ export function SocialPanel({
   replay: boolean;
 }) {
   const [chosen, setChosen] = useState<string | null>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    closeRef.current?.focus();
+  }, []);
   const [showReflections, setShowReflections] = useState(false);
   const conversations = events.filter((e) => e.kind === "conversation");
   const current = conversations.find((e) => e.id === chosen) ?? conversations[0];
@@ -343,7 +347,13 @@ export function SocialPanel({
           <p className="text-xs uppercase text-muted">Conversations and connections</p>
           <h2 className="font-display">Town life</h2>
         </div>
-        <button className="btn" type="button" onClick={onClose} aria-label="Close town life">
+        <button
+          ref={closeRef}
+          className="btn"
+          type="button"
+          onClick={onClose}
+          aria-label="Close town life"
+        >
           <X size={18} />
         </button>
       </div>
@@ -356,7 +366,12 @@ export function SocialPanel({
           ? "Watching public town life. This does not add knowledge to your resident."
           : "Your conversations and nearby exchanges you witnessed."}
       </p>
-      <div className="mind-body social-body">
+      <div
+        className="mind-body social-body"
+        role="region"
+        aria-label="Town life conversations"
+        tabIndex={0}
+      >
         {!conversations.length && (
           <div className="social-empty">
             <MessageCircle size={28} />
@@ -367,7 +382,7 @@ export function SocialPanel({
             </p>
           </div>
         )}
-        <div className="social-conversations" aria-label="Recent conversations">
+        <div className="social-conversations" role="group" aria-label="Recent conversations">
           {conversations.slice(0, 12).map((event) => (
             <button
               type="button"

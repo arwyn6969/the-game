@@ -254,6 +254,8 @@ export function TownApp() {
   const startOverRef = useRef(false);
   const toolOpenerRef = useRef<HTMLElement | null>(null);
   const boardOpenerRef = useRef<HTMLElement | null>(null);
+  const socialOpenerRef = useRef<HTMLElement | null>(null);
+  const socialPointerOpenRef = useRef(false);
   const toolsRef = useRef<ToolPage | "stamps" | "agent-wallets" | null>(null);
   const importTextRef = useRef<string | null>(null);
   const importKeepRef = useRef<HTMLButtonElement>(null);
@@ -261,6 +263,7 @@ export function TownApp() {
   const mounted = useRef(true);
   const runMindRef = useRef<(live: Town, job: ThinkJob) => Promise<void>>(async () => {});
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const worldFrameRef = useRef<HTMLDivElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [phase, setPhase] = useState<"name" | "play" | "recover" | "unavailable">(
     townRef.current
@@ -284,6 +287,7 @@ export function TownApp() {
   const [panel, setPanel] = useState<AgentId | null>(null);
   const [pinned, setPinned] = useState<AgentId | null>(null);
   const [tools, setTools] = useState<ToolPage | "stamps" | "agent-wallets" | null>(null);
+  const [crampedWorld, setCrampedWorld] = useState(false);
   const [stampAppearance, setStampAppearance] = useState<StampAppearance | null>(null);
   const stampAppearanceRef = useRef<StampAppearance | null>(null);
   const stampGeneration = useRef(0);
@@ -502,6 +506,20 @@ export function TownApp() {
     });
   }
 
+  function openSocial() {
+    socialOpenerRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setSocialOpen(true);
+  }
+
+  function closeSocial() {
+    setSocialOpen(false);
+    requestAnimationFrame(() => {
+      if (socialOpenerRef.current?.isConnected) socialOpenerRef.current.focus();
+      else canvasRef.current?.focus();
+    });
+  }
+
   function openBoard(opener?: HTMLElement) {
     boardOpenerRef.current =
       opener ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
@@ -703,6 +721,19 @@ export function TownApp() {
   }, []);
 
   useEffect(() => {
+    if (phase !== "play" || !worldFrameRef.current) return;
+    const frame = worldFrameRef.current;
+    const measure = () => {
+      const rem = Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
+      setCrampedWorld(frame.clientHeight < rem * 22);
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(frame);
+    measure();
+    return () => observer.disconnect();
+  }, [phase]);
+
+  useEffect(() => {
     if (!hiccup) return;
     const id = window.setTimeout(() => setHiccup(false), 4000);
     return () => window.clearTimeout(id);
@@ -859,6 +890,8 @@ export function TownApp() {
         if (toolsRef.current) closeTools();
         else if (boardRef.current) closeBoard();
         else if (panelRef.current) requestAnimationFrame(() => canvasRef.current?.focus());
+        else if (event.target instanceof Element && event.target.closest(".social-panel"))
+          closeSocial();
         else if (captionFocused) requestAnimationFrame(() => canvasRef.current?.focus());
         if (panelRef.current) {
           setPanel(null);
@@ -868,6 +901,7 @@ export function TownApp() {
         setCrowd(null);
         return;
       }
+      if (event.target instanceof Element && event.target.closest(".mind, [role='dialog']")) return;
       if (interactiveControl(focusOf(event.target))) return;
       if (replayRef.current !== null) return;
       if (opensTalk(event.code, false, Boolean(panelRef.current || boardRef.current))) {
@@ -1649,7 +1683,7 @@ export function TownApp() {
               Choose a stamp identity
             </button>
             <p className="gate-privacy-note">
-              Optional: prove a Leather wallet to choose a stamp portrait or head.
+              Optional: prove a supported wallet to choose a stamp portrait or head.
             </p>
             <p className="gate-save-note">
               <Save className="size-3" aria-hidden /> Your town saves in this browser.
@@ -1748,7 +1782,29 @@ export function TownApp() {
   };
 
   return (
-    <main className="town" data-talking={shown || board || socialOpen || tools ? "true" : "false"}>
+    <main
+      className="town"
+      data-talking={shown || board || socialOpen || tools ? "true" : "false"}
+      data-cramped-world={crampedWorld ? "true" : "false"}
+      onFocusCapture={(event) => {
+        if (!(event.target instanceof Element) || event.target.closest(".mind")) return;
+        if (!event.currentTarget.querySelector(".mind")) return;
+        // Nonmodal panes dismiss when focus leaves, keeping the destination visible.
+        // Explicit Close and Escape still restore focus to their opener.
+        toolsRef.current = null;
+        panelRef.current = null;
+        boardRef.current = false;
+        setTools(null);
+        setPanel(null);
+        setBoard(false);
+        setSocialOpen(false);
+        const destination = event.target;
+        requestAnimationFrame(() => {
+          if (destination === document.activeElement)
+            destination.scrollIntoView({ block: "nearest", inline: "nearest" });
+        });
+      }}
+    >
       <header className="hud">
         <div className="brand">
           <ArcadeMark className="brand-icon" />
@@ -1771,6 +1827,7 @@ export function TownApp() {
           <button
             className="btn"
             data-on={speed === 0 ? "true" : "false"}
+            aria-pressed={speed === 0}
             type="button"
             onClick={() => setRate(0)}
             aria-label="Pause"
@@ -1780,6 +1837,7 @@ export function TownApp() {
           <button
             className="btn"
             data-on={speed === 1 ? "true" : "false"}
+            aria-pressed={speed === 1}
             type="button"
             onClick={() => setRate(1)}
           >
@@ -1788,6 +1846,7 @@ export function TownApp() {
           <button
             className="btn"
             data-on={speed === 4 ? "true" : "false"}
+            aria-pressed={speed === 4}
             type="button"
             onClick={() => setRate(4)}
           >
@@ -1931,8 +1990,12 @@ export function TownApp() {
           className="btn town-life-toggle"
           type="button"
           aria-expanded={socialOpen}
-          onClick={() => {
-            setSocialOpen((value) => !value);
+          onPointerDown={() => {
+            socialPointerOpenRef.current = socialOpen;
+          }}
+          onClick={(event) => {
+            if (event.detail > 0 ? socialPointerOpenRef.current : socialOpen) closeSocial();
+            else openSocial();
             setTools(null);
             setPanel(null);
             setBoard(false);
@@ -2017,7 +2080,7 @@ export function TownApp() {
           </button>
         </p>
       )}
-      <div className="world-frame">
+      <div className="world-frame" ref={worldFrameRef}>
         <canvas
           ref={canvasRef}
           className="town-canvas h-full"
@@ -2081,7 +2144,7 @@ export function TownApp() {
             <ConversationCaption
               town={town}
               event={conversations[0]}
-              onOpen={() => setSocialOpen(true)}
+              onOpen={openSocial}
               onClose={() => {
                 setDismissedCaption(conversations[0]?.id ?? null);
                 requestAnimationFrame(() => canvasRef.current?.focus());
@@ -2098,7 +2161,7 @@ export function TownApp() {
               setWatchTown(value);
               if (!value) setWatching(null);
             }}
-            onClose={() => setSocialOpen(false)}
+            onClose={closeSocial}
             onFollow={followCharacter}
             onProfile={approach}
           />
@@ -2678,6 +2741,8 @@ function Mind({
   onLibrary: () => void;
 }) {
   const lineRef = useRef<HTMLTextAreaElement | null>(null);
+  const tabsRef = useRef<HTMLDivElement | null>(null);
+  const feedbackRef = useRef<HTMLParagraphElement | null>(null);
   const logRef = useRef<HTMLDivElement | null>(null);
   const latestRef = useRef<HTMLLIElement | null>(null);
   const keyboardTabRef = useRef(false);
@@ -2688,9 +2753,15 @@ function Mind({
   );
   useEffect(() => {
     followRef.current = true;
-    if (tab === "together" && !keyboardTabRef.current) lineRef.current?.focus();
+    if (!keyboardTabRef.current) {
+      if (tab === "together" && lineRef.current) lineRef.current.focus();
+      else tabsRef.current?.querySelector<HTMLElement>('[aria-selected="true"]')?.focus();
+    }
     keyboardTabRef.current = false;
   }, [agent.id, tab]);
+  useEffect(() => {
+    if (sendNote && document.activeElement === document.body) feedbackRef.current?.focus();
+  }, [sendNote]);
   const player = agentById(town, "player");
   const canTalk = inTalkRange(player.tile.x, player.tile.y, agent.tile.x, agent.tile.y);
   const memories = Array.isArray(agent.memories) ? agent.memories : [];
@@ -2744,7 +2815,12 @@ function Mind({
           </button>
         </div>
       </div>
-      <div className="character-tabs" role="tablist" aria-label={`${agent.name} card sections`}>
+      <div
+        ref={tabsRef}
+        className="character-tabs"
+        role="tablist"
+        aria-label={`${agent.name} card sections`}
+      >
         {(["overview", "strengths", "together", "progress"] as const).map((name) => (
           <button
             type="button"
@@ -2801,6 +2877,7 @@ function Mind({
         <div
           id="character-section-overview"
           role="tabpanel"
+          tabIndex={0}
           aria-labelledby="character-tab-overview"
           hidden={tab !== "overview"}
         >
@@ -2821,6 +2898,7 @@ function Mind({
         <div
           id="character-section-strengths"
           role="tabpanel"
+          tabIndex={0}
           aria-labelledby="character-tab-strengths"
           hidden={tab !== "strengths"}
         >
@@ -2829,6 +2907,7 @@ function Mind({
         <div
           id="character-section-progress"
           role="tabpanel"
+          tabIndex={0}
           aria-labelledby="character-tab-progress"
           hidden={tab !== "progress"}
         >
@@ -2837,6 +2916,7 @@ function Mind({
         <div
           id="character-section-together"
           role="tabpanel"
+          tabIndex={0}
           aria-labelledby="character-tab-together"
           hidden={tab !== "together"}
         >
@@ -3014,7 +3094,13 @@ function Mind({
             >
               {busy ? "Saying it" : "Say it"}
             </button>
-            <p className="mind-send-note text-sm text-muted" role="status" aria-live="polite">
+            <p
+              ref={feedbackRef}
+              tabIndex={-1}
+              className="mind-send-note text-sm text-muted"
+              role="status"
+              aria-live="polite"
+            >
               {sendNote}
             </p>
           </div>
@@ -3065,7 +3151,7 @@ function Board({ town, onClose }: { town: Town; onClose: () => void }) {
     closeRef.current?.focus();
   }, []);
   return (
-    <aside className="mind" role="dialog" aria-label="Noticeboard">
+    <section className="mind" role="dialog" aria-label="Noticeboard">
       <div className="mind-bar">
         <h2 className="font-display text-3xl">Noticeboard</h2>
         <button
@@ -3096,6 +3182,6 @@ function Board({ town, onClose }: { town: Town; onClose: () => void }) {
           ))}
         </ul>
       </div>
-    </aside>
+    </section>
   );
 }
