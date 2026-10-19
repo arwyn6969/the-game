@@ -1,6 +1,6 @@
 # THE GAME: current delivery and next gates
 
-Updated 15 October 2026. The current game backlog is implemented in the quality candidate, integrating main through `4a39cdf`. A source candidate and its checks do not establish hosted publication or player enjoyment. The [delivery notes](implementation/game-quality-delivery.md) explain the resulting behavior; the dated [quality review](reviews/2026-10-13-game-quality.md) records the problems that prompted it.
+Updated 19 October 2026. The current game backlog is implemented in the quality candidate, integrating main through `4a39cdf`. A source candidate and its checks do not establish hosted publication or player enjoyment. The [delivery notes](implementation/game-quality-delivery.md) explain the resulting behavior; the dated [quality review](reviews/2026-10-13-game-quality.md) records the problems that prompted it.
 
 **Product promise: “I come back because of what I did yesterday.”** The seven residents and the player can now contribute to a small common project, inspect its funding, test whether it helped, and encounter its consequences on later game days. The player remains a resident with voluntary choices.
 
@@ -42,6 +42,16 @@ The S1 source in PR #16 was an inactive six-actor foundation. This candidate rec
 5. Obtain separate hosted-release authorization, publish the reviewed source, and verify its Help build ID, assets, ordinary controls, recovery and save round trip on the host. A GitHub merge alone is not that evidence.
 
 If players understand the outcome but do not care, improve its stakes before adding more residents or map area. The original qualitative 5/10 review is historical; no new enjoyment score is claimed merely because code and tests were added.
+
+## Shared server world and AI avatar continuity
+
+The 19 October direction makes opt-in [AI control while the player is away](implementation/offline-avatar-control.md) a core feature of the future shared server world. The current browser-local release does not implement it. Build the controller, permission and recovery contracts at the start of shared-world engineering so logout, reconnect and background workers share one authority model.
+
+The [delivery gates](implementation/offline-avatar-control.md#timing-and-delivery-gates) are OA0 planning complete → OA1 authoritative server and human/AI handoff → OA2 unpaid trial with one tested model → OA3 prepaid Bitcoin time → OA4 qualified model choices and cloud/Spark hosting evaluation. A limited server alpha may precede AI continuity; the first full public shared-world release should include the working opt-in feature. Model selection can join paid launch if multiple models pass the same quality, capacity and billing checks.
+
+Players choose goals, limits and maximum duration, then reclaim control immediately on return and receive a factual activity journal. Purchased time means real elapsed service time per avatar; queued or unavailable service preserves credit. Keep service credits separate from town coins and resident BTC/stamp holdings. AI control never grants wallet signing authority, and outgoing real-asset transfers still require owner approval.
+
+This is future shared-world work, outside the current S1–S5 playable-week delivery. The separate identity/wallet candidates supply possible foundations; this documentation update does not merge their code. At the start of the world milestone, the simulation/backend and player-experience owners must take OA1/OA2 from the [implementation handoff](implementation/offline-avatar-control.md#next-implementation-handoff), beginning with fake inference and free credits. Payment activation follows its own acceptance gate. Prices, production models and hardware remain decisions to make from measured service quality and cost.
 
 ## Deferred by scope
 
