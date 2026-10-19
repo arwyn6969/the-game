@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   Download,
@@ -30,6 +30,15 @@ import { NPC_IDS } from "@/game/types";
 import { applyLibraryAction, libraryActions, libraryView } from "@/game/community";
 import { findPath } from "@/game/path";
 import { PlayerTools, type ToolPage } from "./PlayerTools";
+import { StampIdentityPanel } from "./StampIdentityPanel";
+import { getStampIdentity } from "@/lib/stamps.functions";
+import { isStampAppearance } from "@/lib/stamps/validation";
+import {
+  hasStampSession,
+  isStampSuppressed,
+  rememberStampSession,
+} from "@/lib/stamps/client-session";
+import type { StampAppearance } from "@/lib/stamps/types";
 import { ReadingStatus } from "./LibraryProject";
 import {
   applyPlayerAction,
@@ -244,7 +253,7 @@ export function TownApp() {
   const startOverRef = useRef(false);
   const toolOpenerRef = useRef<HTMLElement | null>(null);
   const boardOpenerRef = useRef<HTMLElement | null>(null);
-  const toolsRef = useRef<ToolPage | null>(null);
+  const toolsRef = useRef<ToolPage | "stamps" | null>(null);
   const importTextRef = useRef<string | null>(null);
   const importKeepRef = useRef<HTMLButtonElement>(null);
   const hourLock = useRef(false);
@@ -273,7 +282,64 @@ export function TownApp() {
   const [replay, setReplay] = useState<Replay | null>(null);
   const [panel, setPanel] = useState<AgentId | null>(null);
   const [pinned, setPinned] = useState<AgentId | null>(null);
-  const [tools, setTools] = useState<ToolPage | null>(null);
+  const [tools, setTools] = useState<ToolPage | "stamps" | null>(null);
+  const [stampAppearance, setStampAppearance] = useState<StampAppearance | null>(null);
+  const stampAppearanceRef = useRef<StampAppearance | null>(null);
+  const stampGeneration = useRef(0);
+  const stampWorldId = townRef.current?.identityRegistry?.worldId;
+  const stampCharacterId = townRef.current?.identityRegistry?.characters.player.characterId;
+  const acceptStampAppearance = useCallback((next: StampAppearance | null) => {
+    const registry = townRef.current?.identityRegistry;
+    const safe =
+      isStampAppearance(next) &&
+      next.expiresAt > Date.now() &&
+      next.worldId === registry?.worldId &&
+      next.characterId === registry?.characters.player.characterId &&
+      !isStampSuppressed(next)
+        ? next
+        : null;
+    stampGeneration.current++;
+    stampAppearanceRef.current = safe;
+    setStampAppearance(safe);
+  }, []);
+  useEffect(() => {
+    if (phase !== "play" || !stampWorldId || !stampCharacterId || tools === "stamps") return;
+    let alive = true;
+    const scope = { worldId: stampWorldId, characterId: stampCharacterId };
+    async function refresh() {
+      if (isStampSuppressed(scope) || !hasStampSession(scope)) {
+        if (alive) acceptStampAppearance(null);
+        return;
+      }
+      const generation = stampGeneration.current;
+      let next: StampAppearance | null = null;
+      let connected: boolean | null = null;
+      try {
+        const result = await getStampIdentity({ data: { scope } });
+        if (result.ok) {
+          connected = result.value.connected;
+          if (connected) next = result.value.appearance;
+        }
+      } catch {
+        /* Wallet tools are optional; keep local play available. */
+      }
+      if (alive && generation === stampGeneration.current) {
+        if (connected !== null) rememberStampSession(scope, connected);
+        acceptStampAppearance(next);
+      }
+    }
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 60_000);
+    const expiry = window.setInterval(() => {
+      if (stampAppearanceRef.current && stampAppearanceRef.current.expiresAt <= Date.now())
+        acceptStampAppearance(null);
+    }, 1000);
+    return () => {
+      alive = false;
+      window.clearInterval(timer);
+      window.clearInterval(expiry);
+    };
+  }, [phase, stampWorldId, stampCharacterId, tools, acceptStampAppearance]);
   const [browserBackups, setBrowserBackups] = useState<{ key: string; raw: string }[]>([]);
   const [localOnly, setLocalOnly] = useState(localOnlyRef.current);
   const [preferenceNote, setPreferenceNote] = useState("");
@@ -410,7 +476,7 @@ export function TownApp() {
     setTick((n) => n + 1);
   }
 
-  function openTools(page: ToolPage) {
+  function openTools(page: ToolPage | "stamps") {
     setSocialOpen(false);
     boardRef.current = false;
     setBoard(false);
@@ -1057,6 +1123,7 @@ export function TownApp() {
               positions,
               replay: replayRef.current !== null,
               selected: panelRef.current ?? watchingRef.current,
+              stampAppearance: stampAppearanceRef.current,
               readingMarker: readingDestinationRef.current?.target,
               waypoint:
                 replayRef.current !== null
@@ -1153,6 +1220,8 @@ export function TownApp() {
 
   async function enter(event: React.FormEvent) {
     event.preventDefault();
+    const withStamp =
+      (event.nativeEvent as SubmitEvent).submitter?.getAttribute("data-stamp-entry") === "true";
     if (hold !== null) return;
     const town = createTown(name);
     town.paused = true;
@@ -1177,6 +1246,7 @@ export function TownApp() {
     setSpeed(0);
     setHint(true);
     setPhase("play");
+    if (withStamp) openTools("stamps");
   }
 
   function setRate(next: 0 | 1 | 4) {
@@ -1574,6 +1644,12 @@ export function TownApp() {
             <button className="btn" data-on="true" type="submit" disabled={!name.trim()}>
               Walk in <ArrowRight className="size-4" aria-hidden />
             </button>
+            <button className="btn" type="submit" data-stamp-entry="true" disabled={!name.trim()}>
+              Choose a stamp identity
+            </button>
+            <p className="gate-privacy-note">
+              Optional: prove a Leather wallet to choose a stamp portrait or head.
+            </p>
             <p className="gate-save-note">
               <Save className="size-3" aria-hidden /> Your town saves in this browser.
             </p>
@@ -1776,6 +1852,38 @@ export function TownApp() {
         </div>
       </div>
       <nav className="town-tools" aria-label="Your town tools">
+        <button className="btn" type="button" onClick={() => openTools("stamps")}>
+          {stampAppearance &&
+            stampAppearance.worldId === town.identityRegistry?.worldId &&
+            stampAppearance.characterId === town.identityRegistry?.characters.player.characterId &&
+            stampAppearance.expiresAt > Date.now() && (
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 28,
+                  height: 28,
+                  overflow: "hidden",
+                  position: "relative",
+                  flexShrink: 0,
+                }}
+              >
+                <img
+                  alt={stampAppearance.title}
+                  src={stampAppearance.pngDataUrl}
+                  style={{
+                    position: "absolute",
+                    maxWidth: "none",
+                    width: `${100 / stampAppearance.crop.size}%`,
+                    height: `${100 / stampAppearance.crop.size}%`,
+                    left: `${(-100 * stampAppearance.crop.x) / stampAppearance.crop.size}%`,
+                    top: `${(-100 * stampAppearance.crop.y) / stampAppearance.crop.size}%`,
+                    imageRendering: "pixelated",
+                  }}
+                />
+              </span>
+            )}
+          Stamp identity
+        </button>
         <button className="btn" type="button" onClick={() => openTools("journal")}>
           Journal
         </button>
@@ -2099,7 +2207,17 @@ export function TownApp() {
             onLibrary={() => openTools("library")}
           />
         )}
-        {tools && (
+        {tools === "stamps" && town.identityRegistry && (
+          <StampIdentityPanel
+            scope={{
+              worldId: town.identityRegistry.worldId,
+              characterId: town.identityRegistry.characters.player.characterId,
+            }}
+            onAppearance={acceptStampAppearance}
+            onClose={closeTools}
+          />
+        )}
+        {tools && tools !== "stamps" && (
           <PlayerTools
             page={tools}
             town={town}

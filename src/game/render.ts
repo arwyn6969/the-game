@@ -13,6 +13,8 @@ import {
   hash,
 } from "../components/town/WorldArt";
 import type { Scenery } from "../components/town/WorldArt";
+import type { StampAppearance } from "../lib/stamps/types";
+import { stampArt } from "./stamp-art";
 
 type Appearance = {
   skin: string;
@@ -197,6 +199,7 @@ function drawPerson(
   stride: number,
   idle: number,
   activity: Activity,
+  stampHead?: StampAppearance | null,
 ) {
   const p = PALETTE[id];
   if (!p) return;
@@ -265,48 +268,59 @@ function drawPerson(
     rect(g, p.extra, bx + 2, -27, bodyW - 4, 2);
     rect(g, p.extra, side ? 3 : -4, -25, 3, 7);
   }
-  // Every view has a distinct silhouette: profile nose/ear and a full hair back.
-  rect(g, "#30253c", -7, -40, 14, 13);
-  rect(g, p.skin, -6, -38, 12, 11);
-  rect(g, "rgba(253, 225, 192, 0.22)", -5, -37, 3, 8);
-  rect(g, "rgba(72, 31, 42, 0.25)", 4, -34, 2, 7);
-  if (side) {
-    rect(g, p.skin, 6, -33, 2, 4);
-    rect(g, "#2d2333", 4, -34, 2, 2);
-    rect(g, p.skin, -4, -33, 2, 4);
-  } else if (!back) {
-    rect(g, "#2d2333", -4, -34, 2, 2);
-    rect(g, "#2d2333", 2, -34, 2, 2);
-    rect(g, "rgba(111, 49, 54, 0.5)", -2, -29, 4, 1);
-  }
-  rect(g, p.hair, -7, -40, 14, 6);
-  rect(g, p.hair, -6, -42, 11, 3);
-  if (back) rect(g, p.hair, -6, -37, 12, 9);
-  else rect(g, p.hair, -6, -36, side ? 5 : 2, 5);
-  rect(g, "rgba(231, 207, 190, 0.13)", -4, -40, 7, 2);
-  if (id === "arwyn") {
-    rect(g, p.hair, -2, -45, 6, 5);
-    if (!back) {
-      rect(g, "#413e48", side ? 1 : -5, -35, side ? 6 : 11, 4);
-      rect(g, "#d9edcc", side ? 2 : -4, -34, 3, 2);
-      if (!side) rect(g, "#d9edcc", 2, -34, 3, 2);
+  // Stamp art is a flat optional attachment; body motion and hitboxes stay authored.
+  const image = stampHead ? stampArt(stampHead) : null;
+  if (image && stampHead) {
+    const { x: cropX, y: cropY, size } = stampHead.crop;
+    g.save();
+    // Preserve the original artwork's orientation when the body faces west.
+    if (face === "w") g.scale(-1, 1);
+    g.drawImage(image, cropX * 256, cropY * 256, size * 256, size * 256, -7, -40, 14, 13);
+    g.restore();
+  } else {
+    // Every view has a distinct silhouette: profile nose/ear and a full hair back.
+    rect(g, "#30253c", -7, -40, 14, 13);
+    rect(g, p.skin, -6, -38, 12, 11);
+    rect(g, "rgba(253, 225, 192, 0.22)", -5, -37, 3, 8);
+    rect(g, "rgba(72, 31, 42, 0.25)", 4, -34, 2, 7);
+    if (side) {
+      rect(g, p.skin, 6, -33, 2, 4);
+      rect(g, "#2d2333", 4, -34, 2, 2);
+      rect(g, p.skin, -4, -33, 2, 4);
+    } else if (!back) {
+      rect(g, "#2d2333", -4, -34, 2, 2);
+      rect(g, "#2d2333", 2, -34, 2, 2);
+      rect(g, "rgba(111, 49, 54, 0.5)", -2, -29, 4, 1);
     }
-  } else if (id === "baba") {
-    rect(g, p.hair, -7, -37, 2, 9);
-    rect(g, "#a89887", -5, -41, 9, 2);
-    if (!back) {
-      rect(g, p.hair, -5, -30, 10, 4);
-      rect(g, p.skin, -2, -30, 4, 1);
+    rect(g, p.hair, -7, -40, 14, 6);
+    rect(g, p.hair, -6, -42, 11, 3);
+    if (back) rect(g, p.hair, -6, -37, 12, 9);
+    else rect(g, p.hair, -6, -36, side ? 5 : 2, 5);
+    rect(g, "rgba(231, 207, 190, 0.13)", -4, -40, 7, 2);
+    if (id === "arwyn") {
+      rect(g, p.hair, -2, -45, 6, 5);
+      if (!back) {
+        rect(g, "#413e48", side ? 1 : -5, -35, side ? 6 : 11, 4);
+        rect(g, "#d9edcc", side ? 2 : -4, -34, 3, 2);
+        if (!side) rect(g, "#d9edcc", 2, -34, 3, 2);
+      }
+    } else if (id === "baba") {
+      rect(g, p.hair, -7, -37, 2, 9);
+      rect(g, "#a89887", -5, -41, 9, 2);
+      if (!back) {
+        rect(g, p.hair, -5, -30, 10, 4);
+        rect(g, p.skin, -2, -30, 4, 1);
+      }
+    } else if (id === "kevin") {
+      rect(g, p.hair, -7, -38, 3, 6);
+      rect(g, p.hair, 4, -39, 3, 5);
+    } else if (id === "sub") {
+      rect(g, p.hair, -7, -37, 3, 7);
+      rect(g, p.hair, 4, -38, 3, 9);
+      rect(g, "#b37358", -4, -40, 6, 2);
+    } else if (id === "player") {
+      rect(g, p.extra, -2, -41, 3, 4);
     }
-  } else if (id === "kevin") {
-    rect(g, p.hair, -7, -38, 3, 6);
-    rect(g, p.hair, 4, -39, 3, 5);
-  } else if (id === "sub") {
-    rect(g, p.hair, -7, -37, 3, 7);
-    rect(g, p.hair, 4, -38, 3, 9);
-    rect(g, "#b37358", -4, -40, 6, 2);
-  } else if (id === "player") {
-    rect(g, p.extra, -2, -41, 3, 4);
   }
   if (activity && !back && stride === 0) {
     const handY = -19 - (activity === "cup" ? Math.round(Math.max(0, idle) * 2) : 0);
@@ -350,6 +364,7 @@ export type PaintOpts = {
   selected?: AgentId | null;
   names: Record<AgentId, string>;
   replay?: boolean;
+  stampAppearance?: StampAppearance | null;
   readingMarker?: { x: number; y: number } | null;
   waypoint?: { title: string; target: { x: number; y: number } } | null;
 };
@@ -619,6 +634,12 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
         stride,
         idle,
         activity,
+        id === "player" &&
+          opts.stampAppearance?.mode === "head" &&
+          opts.stampAppearance.worldId === town.identityRegistry?.worldId &&
+          opts.stampAppearance.characterId === town.identityRegistry?.characters.player.characterId
+          ? opts.stampAppearance
+          : null,
       );
     }
   }

@@ -1,0 +1,99 @@
+{
+  "date": "2026-10-15",
+  "node": "v24.19.0",
+  "branch": "codex/stamp-wallet-selection",
+  "base": "8b480cd",
+  "identityDependency": "https://github.com/arwyn6969/the-game/pull/31",
+  "scope": "Optional read-only private wallet proof and player cosmetics; no account/character authority or transfers",
+  "checks": {
+    "lockedInstall": {
+      "command": "npm ci --offline --no-audit --no-fund",
+      "passed": true,
+      "packages": 453,
+      "isolation": "separate temporary directory with exact package+lock"
+    },
+    "typecheck": {
+      "passed": true
+    },
+    "lint": {
+      "passed": true,
+      "errors": 0,
+      "inheritedWarnings": 1
+    },
+    "townTests": {
+      "passed": 267,
+      "failed": 0
+    },
+    "fullTests": {
+      "scriptPassed": 590,
+      "appAuthPassed": 55,
+      "totalPassed": 645,
+      "failed": 0,
+      "skipped": 0
+    },
+    "newStampTests": {
+      "proofAndStore": 19,
+      "serviceAndHttpGuards": 23,
+      "stampchainAndMedia": 19,
+      "leatherConnector": 12,
+      "rendererArt": 4,
+      "localDisconnectIntent": 9,
+      "total": 86
+    },
+    "diagnostics": {
+      "worldAuditIssues": 0,
+      "exportsImport": true,
+      "throughDay": 30
+    },
+    "build": {
+      "passed": true,
+      "DATABASE_URL": "unset",
+      "XAI_API_KEY": "unset",
+      "productionMigration": "skipped"
+    },
+    "gameplayBrowser": {
+      "passed": true,
+      "viewports": ["1280x800", "390x844"],
+      "evidence": "gameplay/results.json"
+    },
+    "stampBrowser": {
+      "passed": true,
+      "viewports": ["1280x800", "390x844"],
+      "evidence": "results.json",
+      "realServerFunctions": true,
+      "realSql": true,
+      "genuineDisposableSignatures": true,
+      "mockedLeatherProvider": true,
+      "mockedStampchainGetOnly": true,
+      "unexpectedConsoleOrPageErrors": 0
+    },
+    "delayedAiBrowser": {
+      "passed": true,
+      "evidence": "ai/results.json",
+      "unchangedAssertions": true,
+      "liveProviderCalls": 0,
+      "unexpectedServerRequests": 0,
+      "viewports": ["1280x800", "390x844"]
+    }
+  },
+  "externalEffects": {
+    "liveWalletRequests": 0,
+    "transactions": 0,
+    "productionMigrations": 0,
+    "deployments": 0
+  },
+  "remaining": [
+    "Real Leather extension/version QA",
+    "Physical devices and screen reader",
+    "Canonical authenticated account/character permission registry before receiving wallets",
+    "Custody, recovery and protocol-aware reconciliation before deposits"
+  ],
+  "implementationCommit": "6638071",
+  "draftPR": "https://github.com/arwyn6969/the-game/pull/32",
+  "reviewFixes": [
+    "post-await challenge/proof expiry",
+    "appearance revision CAS for delayed clear/select/disconnect",
+    "disconnect intent retained across network failure and reload",
+    "background wallet requests require explicit per-scope opt-in; unchanged AI privacy assertions retained"
+  ]
+}
