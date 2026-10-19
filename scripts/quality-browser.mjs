@@ -201,7 +201,18 @@ try {
       kevin.tile,
     );
     await importFile(page, JSON.stringify({ version: 2, town: fixture }), "near-kevin.json");
-    await page.evaluate(() => document.activeElement?.blur());
+    // Import completion restores its opener on the next animation frame.
+    // Settle that work before focusing the town for the conversation shortcut.
+    await page.evaluate(
+      () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+    );
+    const canvas = page.locator("canvas.town-canvas");
+    await canvas.focus();
+    assert.equal(
+      await canvas.evaluate((element) => document.activeElement === element),
+      true,
+      "The town canvas must own focus before Enter opens a nearby conversation",
+    );
     await page.keyboard.press("Enter");
     await page.getByLabel("Your line to Kevin", { exact: true }).fill("Who are you?");
     await page.getByRole("button", { name: "Say it", exact: true }).click();
