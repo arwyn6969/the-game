@@ -253,7 +253,7 @@ export function TownApp() {
   const startOverRef = useRef(false);
   const toolOpenerRef = useRef<HTMLElement | null>(null);
   const boardOpenerRef = useRef<HTMLElement | null>(null);
-  const toolsRef = useRef<ToolPage | null>(null);
+  const toolsRef = useRef<ToolPage | "stamps" | null>(null);
   const importTextRef = useRef<string | null>(null);
   const importKeepRef = useRef<HTMLButtonElement>(null);
   const hourLock = useRef(false);
@@ -349,6 +349,8 @@ export function TownApp() {
   const watchingRef = useRef<AgentId | null>(null);
   watchingRef.current = watching;
   const [socialOpen, setSocialOpen] = useState(false);
+  const [dismissedCaption, setDismissedCaption] = useState<string | null>(null);
+  const captionEventRef = useRef<string | null>(null);
   const [startTalking, setStartTalking] = useState(false);
 
   const [board, setBoard] = useState(false);
@@ -845,6 +847,9 @@ export function TownApp() {
         return;
       }
       if (event.code === "Escape") {
+        const captionFocused =
+          event.target instanceof Element && Boolean(event.target.closest(".conversation-caption"));
+        setDismissedCaption(captionEventRef.current);
         if (routeRef.current) {
           routeRef.current = null;
           setFarNote("Destination walk stopped.");
@@ -853,6 +858,7 @@ export function TownApp() {
         if (toolsRef.current) closeTools();
         else if (boardRef.current) closeBoard();
         else if (panelRef.current) requestAnimationFrame(() => canvasRef.current?.focus());
+        else if (captionFocused) requestAnimationFrame(() => canvasRef.current?.focus());
         if (panelRef.current) {
           setPanel(null);
         }
@@ -1731,6 +1737,7 @@ export function TownApp() {
 
   const events = visibleSocialEvents(town, watchTown, { day: clockDay, minute: clockMinute });
   const conversations = events.filter((event) => event.kind === "conversation");
+  captionEventRef.current = conversations[0]?.id ?? null;
   const followCharacter = (id: AgentId) => {
     setWatchTown(true);
     setWatching(id);
@@ -2061,13 +2068,22 @@ export function TownApp() {
         <div className="world-caption" aria-hidden>
           {town.agents.length} residents · endless possibilities
         </div>
-        {!shown && !board && !tools && !socialOpen && !(readingPending && readingHere) && (
-          <ConversationCaption
-            town={town}
-            event={conversations[0]}
-            onOpen={() => setSocialOpen(true)}
-          />
-        )}
+        {!shown &&
+          !board &&
+          !tools &&
+          !socialOpen &&
+          !(readingPending && readingHere) &&
+          conversations[0]?.id !== dismissedCaption && (
+            <ConversationCaption
+              town={town}
+              event={conversations[0]}
+              onOpen={() => setSocialOpen(true)}
+              onClose={() => {
+                setDismissedCaption(conversations[0]?.id ?? null);
+                requestAnimationFrame(() => canvasRef.current?.focus());
+              }}
+            />
+          )}
         {!shown && !board && !tools && socialOpen && (
           <SocialPanel
             town={town}
