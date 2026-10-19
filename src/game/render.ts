@@ -365,6 +365,8 @@ export type PaintOpts = {
   names: Record<AgentId, string>;
   replay?: boolean;
   stampAppearance?: StampAppearance | null;
+  readingMarker?: { x: number; y: number } | null;
+  waypoint?: { title: string; target: { x: number; y: number } } | null;
 };
 
 function isVisible(x: number, y: number, opts: PaintOpts, margin = 96) {
@@ -567,6 +569,21 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
   ctx.translate(-camX, -camY);
   ctx.drawImage(floorArt(), 0, 0);
   drawWater(ctx, opts, t);
+  if (!opts.replay && opts.readingMarker) {
+    const x = opts.readingMarker.x * TILE;
+    const y = opts.readingMarker.y * TILE;
+    ctx.strokeStyle = "#c8ff6a";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 4]);
+    ctx.strokeRect(x - 18, y - 8, TILE + 36, TILE + 16);
+    ctx.setLineDash([]);
+    // An open book marks the meeting place without blocking movement.
+    rect(ctx, "#493064", x + 4, y + 14, 24, 14);
+    rect(ctx, "#fff0bf", x + 6, y + 12, 9, 13);
+    rect(ctx, "#fff0bf", x + 17, y + 12, 9, 13);
+    rect(ctx, "#b48aff", x + 8, y + 15, 5, 2);
+    rect(ctx, "#b48aff", x + 19, y + 15, 5, 2);
+  }
   if (selected && positions[selected]) {
     const pos = positions[selected];
     ctx.strokeStyle = "#c8ff6a";
@@ -640,11 +657,26 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
     ctx.globalAlpha = 1;
   }
   drawLabels(ctx, opts);
+  if (!opts.replay && opts.readingMarker) {
+    const x = opts.readingMarker.x * TILE + TILE / 2;
+    const y = opts.readingMarker.y * TILE + TILE + 16;
+    ctx.font = "600 11px Space Grotesk, sans-serif";
+    ctx.textAlign = "center";
+    rect(ctx, "#1b102de8", x - 34, y - 12, 68, 18);
+    ctx.fillStyle = "#c8ff6a";
+    ctx.fillText("The reading", x, y);
+  }
   ctx.restore();
   const playerPos = positions.player;
-  if (playerPos && opts.day === 1) {
-    const dx = ANCHORS.cafe.x - playerPos.x;
-    const dy = ANCHORS.cafe.y - playerPos.y;
+  const waypoint =
+    opts.waypoint === undefined
+      ? opts.day === 1
+        ? { title: "Hobbs", target: ANCHORS.cafe }
+        : null
+      : opts.waypoint;
+  if (playerPos && waypoint) {
+    const dx = waypoint.target.x - playerPos.x;
+    const dy = waypoint.target.y - playerPos.y;
     if (Math.hypot(dx, dy) > 4) {
       const ang = Math.atan2(dy, dx);
       const cx = viewW / 2 + Math.cos(ang) * 72;
@@ -662,7 +694,7 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
       ctx.font = "600 11px Space Grotesk, sans-serif";
       ctx.fillStyle = "#f0e6ff";
       ctx.textAlign = "center";
-      ctx.fillText("Hobbs", cx, cy - 14);
+      ctx.fillText(waypoint.title, cx, cy - 14);
     }
   }
 }

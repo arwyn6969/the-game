@@ -109,7 +109,8 @@ test("wage wording reads dated worker receipts and does not pay twice", () => {
   ]) {
     const result = ask(town, "kevin", text);
     assert.match(result.reply, /paid you 5 on day 3 at 18:59/);
-    assert.match(result.reply, /shift is still open/);
+    assert.match(result.reply, /saved cafe shift remains legacy evidence/);
+    assert.doesNotMatch(result.reply, /reset at midnight/);
     assert.doesNotMatch(result.reply, /do not have a clear answer/);
     assert.equal(result.mind, "offline");
     for (const field of ["favor", "project", "thread", "notice"]) assert.equal(result[field], null);
@@ -140,16 +141,16 @@ test("old, foreign, future and conversational payment claims are not today's wag
   assert.match(say(town, "data", "Have I been paid?"), /Ask Kevin.*Baba/);
 });
 
-test("unpaid answers explain actual attendance, funding and current agreement", () => {
+test("unpaid legacy answers preserve aggregate evidence and explain funded recognition", () => {
   const town = createTown("Mira");
   shift(town);
   person(town, "player").shiftHours = 1.5;
   town.tills.cafe = 0;
   const reply = say(town, "kevin", "Where are my wages?");
-  assert.match(reply, /90 worked minutes/);
-  assert.match(reply, /full wage of 5 needs 180/);
-  assert.match(reply, /till cannot fund/);
-  assert.match(reply, /reset at midnight/);
+  assert.match(reply, /90 aggregate minutes are preserved/);
+  assert.match(reply, /Confirm 90 employer-bound minutes/);
+  assert.match(reply, /cannot reserve the full wage/);
+  assert.doesNotMatch(reply, /reset at midnight|90 worked minutes/);
   person(town, "player").projects[0].status = "done";
   assert.match(say(town, "kevin", "What happened to my wages?"), /no open cafe shift agreement/);
 });
@@ -217,9 +218,12 @@ test("offers, requests and refusals retain their direction and leave consent exp
   shift(town);
   const agreed = commitments(town);
   assert.match(say(town, "kevin", "Do not cancel my shift."), /want to keep your agreement/);
-  assert.match(say(town, "kevin", "I quit the shift."), /Use Cancel cafe shift/);
+  assert.match(
+    say(town, "kevin", "I quit the shift."),
+    /Talking does not recognise or accept work/,
+  );
   for (const text of ["I quit.", "Cancel.", "Please cancel my work."])
-    assert.match(say(town, "kevin", text), /Use Cancel cafe shift/);
+    assert.match(say(town, "kevin", text), /Talking does not recognise or accept work/);
   assert.deepEqual(commitments(town), agreed);
   person(town, "player").projects = [];
   assert.deepEqual(commitments(town), before);

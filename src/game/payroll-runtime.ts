@@ -1,6 +1,7 @@
 import type { AgentId, Town } from "./types";
 import type { FundedTown, EconomyCommand } from "./economy-types";
 import { initializeFundedEconomy } from "./economy-migration";
+import { availableFunds } from "./economy";
 import {
   approvePayrollAgreement,
   CAFE_CANCELLATION,
@@ -10,10 +11,49 @@ import {
   settleWorkPayable,
   wageInterval,
   type PayrollApproval,
+  protectPayroll,
 } from "./funded-work";
 import { makeMemory, pushMemory } from "./memory";
 import { zoneAt, placeTitle } from "./world";
 import { rememberPaidWork } from "./social";
+
+export const FUNDED_CAFE_SHIFT_TEXT =
+  "Funded cafe attendance, 16:00 to 19:00; 5 reserved for 180 eligible minutes. Progress and earned wages survive midnight; no fractional wage.";
+export const fundedWorkProjectId = (agreementId: string) => `work-item:${agreementId}`;
+
+/** Completing work frees its commitment slot even when its wage must wait. */
+export function closeCompletedWorkItems(town: Town, agreementId: string) {
+  const work = town.economy?.work;
+  const agreement = work?.agreements.find((item) => item.id === agreementId);
+  const claim = work?.legacyClaims.find((item) => item.agreementId === agreementId);
+  const completed = agreement?.kind === "cafe-shift" && agreement.status === "completed";
+  const legacyCompleted =
+    claim?.classification === "completed-unpaid" &&
+    work?.payables.some((item) => item.agreementId === agreementId);
+  if (!completed && !legacyCompleted) return;
+  const workerId = agreement?.worker ?? claim!.worker;
+  const payer = agreement?.payer ?? claim!.payer;
+  const worker = town.agents.find((item) => item.id === workerId);
+  if (!worker) return;
+  const workplace = payer === "till:grocery" ? "grocery" : "cafe";
+  const originalIds = new Set(
+    claim?.evidence.projects
+      .filter((item) => (item.place ?? "cafe") === workplace)
+      .map((item) => item.id),
+  );
+  const approval = work?.payrollApprovals.find((item) => item.id === agreement?.payrollApprovalId);
+  for (const project of worker.projects)
+    if (
+      project.owner === workerId &&
+      project.kind === "shift" &&
+      project.status === "open" &&
+      (originalIds.has(project.id) ||
+        (approval?.kind === "cafe-replacement" &&
+          project.id === fundedWorkProjectId(agreement!.id) &&
+          (project.place ?? "cafe") === "cafe"))
+    )
+      project.status = "done";
+}
 
 export const runtimeCommand = (
   _town: Town,
@@ -30,9 +70,30 @@ export const runtimeCommand = (
 });
 
 export function activateFundedTown(town: Town): { ok: boolean; reason?: string } {
-  if ((town as FundedTown).economy?.work) return { ok: true };
-  const result = initializeFundedEconomy(town);
-  if (!result.ok) return result;
+  if (!(town as FundedTown).economy?.work) {
+    const result = initializeFundedEconomy(town);
+    if (!result.ok) return result;
+  }
+  const economy = (town as FundedTown).economy!;
+  // A till may receive real sales/contributions after the first migration.
+  // Retry only when a complete old wage can now be protected, keeping partial
+  // evidence explicit and avoiding a new empty command on every game minute.
+  if (
+    economy.work!.legacyClaims.some(
+      (claim) =>
+        claim.resolution === "underfunded" &&
+        claim.payer !== null &&
+        claim.amount !== null &&
+        claim.amount > 0 &&
+        availableFunds(town, claim.payer) >= claim.amount,
+    )
+  ) {
+    const protectedResult = protectPayroll(
+      town,
+      runtimeCommand(town, "protect-payroll", "kevin", {}, `retry:${economy.revision}`),
+    );
+    if (!protectedResult.ok) return { ok: false, reason: protectedResult.reason };
+  }
   // Existing NPC agreements are authored town decisions. Player recognition
   // always remains an explicit choice; ambiguous evidence is never inferred.
   const work = (town as FundedTown).economy!.work!;
@@ -127,6 +188,7 @@ export function advanceFundedPayroll(town: Town) {
     const resident = town.agents.find((agent) => agent.id === agreement.worker)!;
     resident.shiftHours = current.eligibleMinutes / 60;
     if (current.status === "completed") {
+      closeCompletedWorkItems(town, current.id);
       const payable = funded.economy!.work!.payables.find(
         (item) => item.agreementId === current.id,
       )!;
@@ -160,7 +222,32 @@ export function advanceFundedPayroll(town: Town) {
       }
     }
   }
+  const openShiftIds = new Set(
+    town.agents.flatMap((resident) =>
+      resident.projects
+        .filter(
+          (project) =>
+            project.owner === resident.id && project.kind === "shift" && project.status === "open",
+        )
+        .map((project) => project.id),
+    ),
+  );
+  const legacyWorkItems = new Set(
+    funded.economy!.work!.legacyClaims.flatMap((claim) =>
+      claim.agreementId && claim.evidence.projects.some((project) => openShiftIds.has(project.id))
+        ? [claim.agreementId]
+        : [],
+    ),
+  );
   for (const payable of [...funded.economy!.work!.payables]) {
+    // A portable town may contain the committed wage before its legacy project
+    // projection was closed. Reconcile that projection even after settlement;
+    // only open project IDs need the historical agreement/claim lookup.
+    if (
+      openShiftIds.has(fundedWorkProjectId(payable.agreementId)) ||
+      legacyWorkItems.has(payable.agreementId)
+    )
+      closeCompletedWorkItems(town, payable.agreementId);
     if (payable.status !== "earned") continue;
     const worker = town.agents.find((agent) => agent.id === payable.worker);
     if (!worker || worker.money + payable.amount > 999) continue;
@@ -177,6 +264,7 @@ export function advanceFundedPayroll(town: Town) {
       payable.id,
     );
     if (settled.ok && settled.value.status === "settled" && payable.payer.startsWith("till:")) {
+      closeCompletedWorkItems(town, payable.agreementId);
       const resident = town.agents.find((agent) => agent.id === payable.worker)!;
       resident.paidToday = true;
       pushMemory(

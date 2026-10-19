@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { ActionCards } from "./ActionCards";
-import { LibraryProject } from "./LibraryProject";
+import { LibraryProject, ReadingStatus } from "./LibraryProject";
+import { libraryView } from "@/game/community";
 import { GAME_BUILD_ID } from "@/game/build";
 import { X } from "lucide-react";
 import type { PlaceId, Town } from "@/game/types";
@@ -42,6 +43,8 @@ export function PlayerTools({
   onBackup,
   onLibrary,
   onLibraryAction,
+  onGoReading,
+  replaying,
 }: {
   page: ToolPage;
   town: Town;
@@ -61,12 +64,24 @@ export function PlayerTools({
   onBackup: (backup: { key: string; raw: string }) => void;
   onLibrary: () => void;
   onLibraryAction: (id: string) => void;
+  onGoReading: () => void;
+  replaying: boolean;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
   useEffect(() => {
     closeRef.current?.focus();
   }, [page]);
+  useEffect(() => {
+    if (!actionNote || (page !== "inventory" && page !== "library")) return;
+    // A completed one-use choice can remove its focused button. Keep keyboard
+    // and screen-reader users in this panel instead of dropping focus to the map.
+    if (document.activeElement === document.body) {
+      panelRef.current?.querySelector<HTMLElement>("[data-tool-feedback]")?.focus();
+    }
+  }, [actionNote, page]);
   const player = agentById(town, "player");
+  const reading = page === "map" ? libraryView(town).story : null;
   const carried = player.projects.filter((p) => p.status === "open" && p.text === BABA_LOAF);
   const agreements = player.projects.filter((p) => p.status === "open" && p.text !== BABA_LOAF);
   const debts = town.favors.filter((f) => f.from === "player" || f.to === "player");
@@ -93,7 +108,7 @@ export function PlayerTools({
     { code: "ArrowDown", label: "South" },
   ];
   return (
-    <aside className="mind player-tools" role="dialog" aria-labelledby="tools-title">
+    <aside ref={panelRef} className="mind player-tools" role="dialog" aria-labelledby="tools-title">
       <div className="mind-bar">
         <h2 id="tools-title" className="font-display">
           {TITLES[page]}
@@ -109,12 +124,20 @@ export function PlayerTools({
         </button>
       </div>
       <div className="mind-body tool-body">
+        {replaying && (
+          <p className="tool-next-step" role="status">
+            Replay is view-only. Return to now to walk or make a choice. These tools show your
+            current town.
+          </p>
+        )}
         {page === "library" && (
           <LibraryProject
             town={town}
             busy={busy}
             actionNote={actionNote}
             onAction={onLibraryAction}
+            onGoReading={onGoReading}
+            replaying={replaying}
           />
         )}
         {page === "help" && (
@@ -126,8 +149,9 @@ export function PlayerTools({
                 grocery, park and noticeboard. You can ask questions, take work, decline or walk on.
               </p>
               <p>
-                Northern needs a library record that he cannot find. Read the library project to
-                choose a funded contribution or decline it.
+                Northern wants to share a favorite first page with his neighbors. Help find the
+                library record he needs, then choose a small outdoor reading or a later gathering at
+                the library. Read the project to choose a paid contribution or decline it.
               </p>
               <button className="btn" type="button" onClick={onLibrary}>
                 Library project
@@ -359,18 +383,37 @@ export function PlayerTools({
         )}
         {page === "inventory" && (
           <>
-            <p>
-              {carried.length ? `You carry ${carried.length} loaf.` : "You are carrying no items."}
+            <p
+              className="tool-action-note"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              tabIndex={-1}
+              data-tool-feedback
+            >
+              {actionNote}
             </p>
-            <p className="text-muted">
-              Eating removes the loaf once. Any unpaid tab stays open; check Journal for your
-              agreements.
-            </p>
-            <ActionCards actions={inventoryActions} busy={busy} onAction={onAction} />
-            {actionNote && (
-              <p role="status" aria-live="polite">
-                {actionNote}
+            <section className="inventory-summary">
+              <h3>{carried.length ? "Baba’s loaf" : "Your bag is empty"}</h3>
+              <p>
+                {carried.length
+                  ? `You carry ${carried.length} ${carried.length === 1 ? "loaf" : "loaves"}. Choose how to use it below.`
+                  : "Accepted items appear here. You can get a loaf from Baba at the grocery."}
               </p>
+              <p className="text-muted">
+                Eating or sharing uses one whole loaf. Any unpaid tab stays open; Journal keeps the
+                payment record.
+              </p>
+            </section>
+            {carried.length > 0 && (
+              <section>
+                <h3>Use your loaf</h3>
+                <p>
+                  You can eat it now. After Northern completes a library test, a nearby Baba or
+                  Northern can accept a shared meal; read their acceptance below before choosing.
+                </p>
+                <ActionCards actions={inventoryActions} busy={busy} onAction={onAction} />
+              </section>
             )}
           </>
         )}
@@ -383,9 +426,28 @@ export function PlayerTools({
             <section>
               <h3>Destinations</h3>
               <p>Walk along a clear route. You can travel while town time is paused.</p>
+              {reading?.gathering && reading.scene.length === 0 && (
+                <div className="library-gathering">
+                  <p>
+                    {reading.gathering.label} · {placeTitle(reading.gathering.place)}
+                  </p>
+                  <p>
+                    <ReadingStatus status={reading.gathering.status} />
+                  </p>
+                  <button className="btn" type="button" onClick={onGoReading} disabled={replaying}>
+                    Go to the reading
+                  </button>
+                </div>
+              )}
               <div className="tool-destinations">
                 {PLACE_IDS.filter((place) => place !== "street").map((place) => (
-                  <button className="btn" key={place} type="button" onClick={() => onGo(place)}>
+                  <button
+                    className="btn"
+                    key={place}
+                    type="button"
+                    onClick={() => onGo(place)}
+                    disabled={replaying}
+                  >
                     {placeTitle(place)}
                   </button>
                 ))}
@@ -395,7 +457,13 @@ export function PlayerTools({
               <h3>Move one tile</h3>
               <div className="tool-directions">
                 {directions.map((d) => (
-                  <button className="btn" type="button" key={d.code} onClick={() => onStep(d.code)}>
+                  <button
+                    className="btn"
+                    type="button"
+                    key={d.code}
+                    onClick={() => onStep(d.code)}
+                    disabled={replaying}
+                  >
                     {d.label}
                   </button>
                 ))}

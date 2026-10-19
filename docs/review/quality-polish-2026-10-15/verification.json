@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-15",
+  "runtimeCommit": "5c33966f8c4ae6f0c0e2cfa71ffa0f6c1feecae0",
+  "node": "24.19.0",
+  "fullTests": {
+    "script": 494,
+    "appAuth": 55,
+    "passed": 549,
+    "failed": 0,
+    "skipped": 0
+  },
+  "townTests": {
+    "passed": 257,
+    "failed": 0
+  },
+  "communityTests": 24,
+  "scopedWorkMemoryTests": 41,
+  "saveTests": 10,
+  "lint": {
+    "errors": 0,
+    "inheritedWarnings": 1
+  },
+  "typecheck": "passed",
+  "diagnoseTown": "completed",
+  "productionBuild": {
+    "status": "passed",
+    "databaseMigration": "skipped; DATABASE_URL unset"
+  },
+  "mockedAiBrowser": "delayed-ai-browser.json",
+  "noPaidProviderCalls": true,
+  "noProductionActions": true,
+  "publication": "pending",
+  "builtBrowser": "built-browser.json",
+  "keyboardInventoryFocus": "Passed both viewports; descriptive terms, shared loaf consumed once, focused feedback and no overflow"
+}

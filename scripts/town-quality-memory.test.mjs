@@ -30,8 +30,11 @@ const {
 } = await server.ssrLoadModule("/src/game/funded-work.ts");
 const { ANCHORS } = await server.ssrLoadModule("/src/game/world.ts");
 const { libraryActions, applyLibraryAction } = await server.ssrLoadModule("/src/game/community.ts");
-const { applyResult } = await server.ssrLoadModule("/src/game/effects.ts");
-const { recentCafePaymentGreeting } = await server.ssrLoadModule("/src/game/local-dialogue.ts");
+const { applyResult, playerActions, applyPlayerAction } =
+  await server.ssrLoadModule("/src/game/effects.ts");
+const { recentCafePaymentGreeting, everydayReply } = await server.ssrLoadModule(
+  "/src/game/local-dialogue.ts",
+);
 const person = (town, id) => town.agents.find((agent) => agent.id === id);
 const ask = (town, id, text) =>
   offlineResult(town, { kind: "player", agentId: id, text, day: town.day, minute: town.minute });
@@ -375,6 +378,52 @@ test("authored funded work answers retain reserved progress after a day change a
   assert.match(wages.reply, /no Hobbs Cafe wage receipt for day 2/);
   assert.match(wages.reply, /90 worked minutes.*180/);
   assert.doesNotMatch(wages.reply, /Unpaid hours reset|paid you 5/);
+});
+
+test("work explanations use funded terms before books activate and leave previews read-only", () => {
+  const town = createTown("Mira");
+  const before = JSON.stringify(town);
+  for (const question of ["Can I work here?", "How do I get a cafe shift?"]) {
+    const reply = everydayReply(town, person(town, "kevin"), question);
+    assert.match(reply, /one funded cafe work unit.*5 coins reserved.*180 eligible minutes/);
+    assert.match(reply, /survive midnight/);
+    assert.doesNotMatch(reply, /reset at midnight|until cancelled|if the till can pay/);
+  }
+  assert.equal(JSON.stringify(town), before);
+  assert.equal(town.economy, undefined);
+});
+
+test("grocery work stays attributed to Baba and cannot become cafe progress in Kevin's answer", () => {
+  const town = createTown("Mira");
+  const player = person(town, "player");
+  player.shiftHours = 1.5;
+  player.projects.push({
+    id: "preserved-grocery-work",
+    owner: "player",
+    kind: "shift",
+    status: "open",
+    place: "grocery",
+    text: "A preserved grocery shift.",
+    day: 1,
+  });
+  for (const beat of player.plan.beats)
+    if (beat.hour >= 16 && beat.hour < 19)
+      Object.assign(beat, { place: "grocery", spot: "out", status: "recorded grocery hours" });
+  player.tile = { ...person(town, "baba").tile };
+  const recognition = playerActions(town, "baba").find((action) =>
+    /^Recognise grocery work/.test(action.label),
+  );
+  assert.ok(recognition);
+  assert.equal(applyPlayerAction(town, "baba", recognition.id).ok, true);
+  const before = JSON.stringify(town);
+  const baba = everydayReply(town, person(town, "baba"), "What about my shift?");
+  assert.match(baba, /grocery shift is paused.*90 eligible grocery minutes.*180.*fee is 4/);
+  assert.match(baba, /Use Resume grocery shift/);
+  assert.doesNotMatch(baba, /Ask Kevin|eligible cafe minutes/);
+  const kevin = everydayReply(town, person(town, "kevin"), "What about my shift?");
+  assert.doesNotMatch(kevin, /Your cafe shift is (?:open|paused)|90 eligible cafe minutes/);
+  assert.match(kevin, /another funded workplace agreement open/);
+  assert.equal(JSON.stringify(town), before);
 });
 
 test("authored wage answers distinguish completed work from delayed payment", () => {

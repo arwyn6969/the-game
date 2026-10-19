@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-15",
+  "runtimeSource": "7b5233ac778605ef744716be6d7d4efa3f201bfb",
+  "node": "24.19.0",
+  "checks": {
+    "fullTests": {
+      "script": 518,
+      "appAuth": 55,
+      "total": 573,
+      "failures": 0
+    },
+    "townTests": {
+      "passed": 281,
+      "failed": 0
+    },
+    "focusedReadingCommerceIntegrity": 24,
+    "typecheck": "passed",
+    "lint": {
+      "errors": 0,
+      "inheritedWarnings": 1
+    },
+    "townDiagnostics": "completed",
+    "productionBuild": "passed",
+    "databaseMigration": "skipped; DATABASE_URL unset"
+  },
+  "browser": {
+    "builtDesktopPhone": "passed",
+    "librarySuccessFailure": "passed",
+    "readingVenues": ["park", "library"],
+    "participation": ["listen", "read"],
+    "cashSales": ["bread", "tea"],
+    "freshTotalCoins": 90,
+    "portableReload": "passed",
+    "mockedAIRecovery": "passed",
+    "realProviderCalls": 0,
+    "inlineJoinVisibleAndClickable": "passed on final built desktop and phone; all four inset corners of Join and Reading details uncovered",
+    "mockedAIAtSource": "b8dc0b3f653416654ca6f269dbbc220d3ec7aae7; subsequent runtime change only shortens free Join terms"
+  },
+  "publication": "not performed",
+  "humanEnjoyment": "not measured; five-person playtest remains open"
+}
