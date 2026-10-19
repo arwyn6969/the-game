@@ -6,6 +6,8 @@ This is the current web game: `arwyn6969/the-game`. The separate `arwyn6969/THE_
 
 Main is `8a35f3c877297b7a588aa8d38d6590e486f917cd`: the seven-resident town, visible conversations, character cards, and a Pin that keeps one resident at the front of the strip. Pin does not redirect other people's messages. [PR #16](https://github.com/arwyn6969/the-game/pull/16) stays outside this build. Publishing https://thegame.grok.me is still a separate step.
 
+The [AI avatar continuity plan](docs/implementation/offline-avatar-control.md) makes opt-in control while a player is away a core feature of the future shared server world. Its [roadmap milestone](docs/ROADMAP.md#shared-server-world-and-ai-avatar-continuity) covers safe human takeover, an unpaid trial and later prepaid Bitcoin time, with model choice and optional Spark hosting after evaluation. This is planned work; the current browser-local town stops when the player leaves.
+
 ## Play
 
 Name yourself. The clock starts paused on the row.

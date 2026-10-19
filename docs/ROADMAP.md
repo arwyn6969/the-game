@@ -1,6 +1,6 @@
 # THE GAME: roadmap for the next playable week
 
-Updated 12 October 2026. This is the current planning entry point. The dated reviews are historical evidence; proposed features below are not shipped features.
+Shared-world planning updated 19 October 2026. The playable-week sections retain their 12 October baseline. This is the planning entry point; dated reviews are historical evidence and proposed features below are not shipped features.
 
 **Product promise: “I come back because of what I did yesterday.”** Build a small community where chosen work produces a useful result, payment is explainable, and people remember the player's actual contribution. The consolidation candidate has seven residents and the player. The original Kevin World think-tank vision becomes playable through their different contributions to a shared problem; further expansion comes later.
 
@@ -11,6 +11,7 @@ Updated 12 October 2026. This is the current planning entry point. The dated rev
 3. [Implementation plan](implementation/community-project.md): ordered packets, state contracts, migration and acceptance tests.
 4. [Sol 6.1 brief](prompts/SOL-6.1.md): ready-to-use assignment for the first packet, with instructions for subsequent packets.
 5. [Release record](RELEASE.md): what was actually published, checked and left unverified.
+6. [AI avatar continuity](implementation/offline-avatar-control.md): a core future shared-world feature, with human/AI control, prepaid Bitcoin time, model options and hosting gates.
 
 ## Verified starting point
 
@@ -53,17 +54,28 @@ The released tree passed 317 script/app/auth tests, 64 town tests, typecheck, li
 
 These are bounded implementation packets, not parallel permission to edit the same files. The implementation plan owns detailed contracts and stopping points.
 
-| Packet | Scope                                                          | Exit condition                                                                                                                     | Status                                             |
-| ------ | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| S0     | Trust repairs and identified publication                       | Explicit choices, recovery, reply visibility and verified live source                                                              | Released; preserve regressions                     |
-| S1     | Accounts, reservations and migration                           | Account commands reconcile; funded-work/migration tests pass; all current money paths have an activation adapter plan              | PR #16 foundation; reconcile v2 before integration |
-| S2     | Three-record library project                                   | A chosen paid contribution produces a working or visibly provisional index through ordinary controls, without a key                | Planned; depends on S1                             |
-| S3     | Tomorrow, week-one consequences and responsiveness             | Outcomes, attribution and bounded corrections persist; public knowledge has a source; delayed background AI does not block walking | Planned; depends on S2                             |
-| S4     | Purposeful bread and one optional shared meal                  | Inventory use is discoverable; voluntary sharing produces a specific social encounter and remembered outcome                       | Planned; after the project is useful               |
-| S5     | Observe players and release the next slice                     | Journey and save checks pass; playtest evidence supports the loop; separately authorised hosted publication is verified            | Planned                                            |
-| Later  | Cross-device saves, richer dialogue and additional specialists | Each addition solves an observed problem; account isolation/conflicts and provider budgets are tested                              | Deferred                                           |
+| Packet | Scope                                                          | Exit condition                                                                                                                     | Status                                                         |
+| ------ | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| S0     | Trust repairs and identified publication                       | Explicit choices, recovery, reply visibility and verified live source                                                              | Released; preserve regressions                                 |
+| S1     | Accounts, reservations and migration                           | Account commands reconcile; funded-work/migration tests pass; all current money paths have an activation adapter plan              | PR #16 foundation; reconcile v2 before integration             |
+| S2     | Three-record library project                                   | A chosen paid contribution produces a working or visibly provisional index through ordinary controls, without a key                | Planned; depends on S1                                         |
+| S3     | Tomorrow, week-one consequences and responsiveness             | Outcomes, attribution and bounded corrections persist; public knowledge has a source; delayed background AI does not block walking | Planned; depends on S2                                         |
+| S4     | Purposeful bread and one optional shared meal                  | Inventory use is discoverable; voluntary sharing produces a specific social encounter and remembered outcome                       | Planned; after the project is useful                           |
+| S5     | Observe players and release the next slice                     | Journey and save checks pass; playtest evidence supports the loop; separately authorised hosted publication is verified            | Planned                                                        |
+| Later  | Cross-device saves, richer dialogue and additional specialists | Each addition solves an observed problem; account isolation/conflicts and provider budgets are tested                              | Deferred                                                       |
+| World  | Shared server world with opt-in AI avatar continuity           | One controller per avatar; immediate human reclaim; bounded actions, durable recovery and correct service metering                 | Planned; core feature for the full public shared-world release |
 
 S1 must prevent new project spending from consuming existing payroll commitments. It must also resolve legacy wage progress without inventing lost earnings or discarding recorded work. Its prototype uses six actors and an opening total of 77; the seven-resident fresh town totals 90. Define and test new resident accounts and migration accounting before activation. Do not copy the old ledger over version-2 saves. There is no blanket approval here for an expanded banking, trading or generic job system.
+
+## Shared server world and AI avatar continuity
+
+The 19 October direction makes opt-in [AI control while the player is away](implementation/offline-avatar-control.md) a core feature of the future shared server world. The current browser-local release does not implement it. Build the controller, permission and recovery contracts at the start of shared-world engineering so logout, reconnect and background workers share one authority model.
+
+The [delivery gates](implementation/offline-avatar-control.md#timing-and-delivery-gates) are OA0 planning complete → OA1 authoritative server and human/AI handoff → OA2 unpaid trial with one tested model → OA3 prepaid Bitcoin time → OA4 qualified model choices and cloud/Spark hosting evaluation. A limited server alpha may precede AI continuity; the first full public shared-world release should include the working opt-in feature. Model selection can join paid launch if multiple models pass the same quality, capacity and billing checks.
+
+Players choose goals, limits and maximum duration, then reclaim control immediately on return and receive a factual activity journal. Purchased time means real elapsed service time per avatar; queued or unavailable service preserves credit. Keep service credits separate from town coins and resident BTC/stamp holdings. AI control never grants wallet signing authority, and outgoing real-asset transfers still require owner approval.
+
+This is future shared-world work, outside the current S1–S5 playable-week delivery. The separate identity/wallet candidates supply possible foundations; this documentation update does not merge their code. At the start of the world milestone, the simulation/backend and player-experience owners must take OA1/OA2 from the [implementation handoff](implementation/offline-avatar-control.md#next-implementation-handoff), beginning with fake inference and free credits. Payment activation follows its own acceptance gate. Prices, production models and hardware remain decisions to make from measured service quality and cost.
 
 ## First-session and first-week proof
 
