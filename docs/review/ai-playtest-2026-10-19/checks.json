@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-19",
+  "sourceBase": "5001b22f9cc581598fa7e98828aa912d0bdc4dab",
+  "branch": "codex/ai-playtest-readiness",
+  "scope": "AI playtest preflight tooling and operator documentation; application runtime unchanged",
+  "approvedSpendMicrousd": 0,
+  "node": "24.19.0",
+  "validation": {
+    "scriptTests": 851,
+    "appAndAuthTests": 55,
+    "totalTests": 906,
+    "newPreflightTests": 14,
+    "townTests": 338,
+    "typecheck": "passed",
+    "lint": "passed with one inherited unused-disable warning in use-current-user.ts",
+    "diagnoseTown": "passed; empty world audit and export/import checks through day 30",
+    "build": "passed without database/provider credentials; database migrations skipped",
+    "independentReview": "passed after embedded-credential identifier redaction fixes"
+  },
+  "verification": {
+    "existingPoolLocated": true,
+    "providerRoutingChanged": false,
+    "cohereCredentialCheck": "accepted; no generation",
+    "geminiModelMetadata": "accepted; no generation; billing tier not proved",
+    "openrouterCurrentKeyMetadata": "authenticated; zero USD credit cap",
+    "privateReceipts": "ignored artifacts/ai-playtest; no credentials or raw account responses retained",
+    "actualPoolPreflight": "blocked: auth_configuration_incomplete, shared_database_required, budget_policy_missing",
+    "liveModelCalls": 0,
+    "liveDatabaseConnections": 0,
+    "liveDatabaseMigrations": 0
+  },
+  "pending": [
+    "registered private preview and exact served candidate",
+    "genuine player sign-in and unsigned rejection",
+    "shared database and applied auth/pool/budget schema",
+    "explicit conservative budget policy and aggregate/per-user headroom",
+    "current non-billing proof for every reachable provider route",
+    "bounded live reply and accounting comparison",
+    "human conversation-quality and accessibility acceptance"
+  ],
+  "readyForAiPlaytest": false
+}

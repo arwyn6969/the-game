@@ -1,5 +1,13 @@
 # Sol handoff
 
+## 19 October 2026 — zero-spend AI playtest preflight
+
+`codex/ai-playtest-readiness` starts from the accessibility candidate `5001b22f9cc581598fa7e98828aa912d0bdc4dab` in draft PR #36. The user requested the existing provider setup and set a $0 ceiling. The existing four-provider pool is located; the playtest guide now correctly describes Cohere/Gemini/NVIDIA/OpenRouter instead of assuming default legacy Grok. No provider configuration was changed.
+
+The [AI playtest procedure](../implementation/ai-playtest.md) and `npm run ai:playtest:preflight` provide a redacted, fail-closed configuration check with optional SELECT-only budget database inspection and explicit `--zero-spend`. The [validation receipt](../review/ai-playtest-2026-10-19/checks.json) records 906 passing tests, 338 town cases, typecheck, lint with the inherited warning, diagnostics and a credential-free build with migrations skipped. Fourteen new tests cover read-only database behavior, missing schema/functions/lock/privileges/headroom, no provider calls, zero-spend policy and credential redaction. Independent review reproduced and verified fixes for credentials embedded in report identifiers.
+
+Non-generation checks accepted the existing Cohere and Gemini credentials; current OpenRouter metadata confirmed authentication and its $0 key cap. Private receipts remain ignored. These checks do not prove all fallback accounts cannot bill. The existing local pool lacks shared database, explicit budget policy and registered game-auth configuration; its preflight correctly remains blocked. Genuine player sign-in, shared accounting, current NVIDIA/Gemini non-billing verification, the exact authenticated preview/build and actual AI conversations remain pending. No live model request, live database connection/migration, account/billing change, publication or human-session completion occurred.
+
 ## 16 October 2026 — interrupted play and saved progress
 
 Runtime `fb9abc1` fixes overlapping/hidden menus, Board focus, keyboard character tabs, local wage follow-up dates, duplicate model edits, stale completed work items, contradictory financial dates, corrected-debt repayment identity and the library note deadline. The [interruption receipt](../reviews/2026-10-16-interruptions.md) records 610 passing full tests including 318 town cases, 14 new engine regressions, typecheck, diagnostics, lint with the inherited warning and a credential-free production build. Built desktop/phone journeys and mocked AI pass; the new menu/focus/tab/touch gate is integrated into CI. The same-origin local preview serves the new build. Schemas, canonical scene text and existing towns remain preserved; publication and human evaluation remain separate.

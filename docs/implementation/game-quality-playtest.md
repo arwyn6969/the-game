@@ -19,7 +19,7 @@ The AI round needs its own recorded provider/model, configuration and accounting
 
 The launcher below deliberately supplies no provider credentials or live AI configuration. It makes no new paid calls and performs no credential setup, tariff configuration or production migration. Prepare the AI round through the existing provider/auth/budget contracts in an appropriately authorized environment; do not add keys to this credential-free snapshot. AI-quality acceptance remains pending until that separate round is actually observed.
 
-The existing provider path is the legacy Grok gateway (`MIND_PROVIDER_MODE=legacy`, also the default). Use its existing private configuration in the intended authenticated environment. Follow the [mind budget operator guide](../../src/lib/mind-budget/README.md) to verify shared database accounting, the budget migration, conservative maximum tariffs and a real verified identity before live sessions. `MIND_BUDGET_LOCAL_DEV` uses ephemeral accounting and cannot establish a durable spending limit. Record the model actually returned and observed usage; changing providers is outside this preparation.
+The existing private setup uses `MIND_PROVIDER_MODE=pool`: Cohere is preferred for conversation, Gemini for reflection, NVIDIA for planning, and OpenRouter supplies free-model fallback capacity. Reuse the existing private pool configuration; the code's default legacy Grok mode does not describe this configured setup. The [AI preflight procedure](ai-playtest.md) records the approved $0 ceiling, provider verification, genuine player sign-in and shared accounting checks. Follow the [mind budget operator guide](../../src/lib/mind-budget/README.md) for reservation semantics. `MIND_BUDGET_LOCAL_DEV` uses ephemeral accounting and cannot establish a durable spending limit. Record configured models separately from any model identifier actually returned by a provider; current router diagnostics alone report the configured model. Changing providers is outside this preparation.
 
 ## Local setup and session isolation
 
@@ -34,7 +34,7 @@ The first command stages the current Git-visible application inputs in `artifact
 
 This launcher uses an explicit minimal child environment, keeps authentication enabled and excludes `.env*`, `.grok`, local configuration and credentials from its staged source. Vite uses `envDir: false`; Nitro sees the same environment-free staged directory. Its build output and Nitro/Vite caches are separate from the ordinary app build. It does not run the deployment migration command, sign into an account, call a paid AI provider, open a browser, publish the app or clear browser storage. Normal development and deployment commands retain their existing behavior.
 
-The second command starts only PT01. Substitute PT02–PT05 for later sessions, or omit `--session` to start all five. Running `npm run playtest` without options builds and starts all five. The fixed origins isolate browser storage:
+The second command starts only PT01. Substitute PT02–PT05 for later sessions, or omit `--session` to start all five. Running `npm run playtest` without options builds and starts all five. The fixed origins isolate town storage. Cookies are shared across ports on the same hostname; these origins do not isolate signed-in identities. Use dedicated browser profiles for separately authenticated AI sessions:
 
 | Session | URL                    | Planned device                 | Result  |
 | ------- | ---------------------- | ------------------------------ | ------- |

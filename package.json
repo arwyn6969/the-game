@@ -11,6 +11,7 @@
   },
   "scripts": {
     "ai:pool": "node --env-file-if-exists=.env.local scripts/ai-pool.mjs",
+    "ai:playtest:preflight": "node scripts/ai-playtest-preflight.mjs",
     "test:mind-pool": "node --test scripts/mind-pool.test.mjs",
     "dev": "node scripts/with-app-env.mjs vite dev --host 0.0.0.0 --port 8080",
     "build": "node scripts/with-app-env.mjs vite build && npm run db:migrate",
