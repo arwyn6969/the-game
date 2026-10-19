@@ -268,6 +268,106 @@ export async function runUiEdgeChecks(browser, url, outputDirectory) {
       assert.equal((await saved(page)).agents.find((agent) => agent.id === "player").money, 4);
       assert.equal((await saved(page)).economy.projects.library.phase, "closed");
       result.oldClosedProject = true;
+
+      // Dismissing a caption is temporary presentation state. History and town
+      // records remain available, a newer exchange appears, and reload restores it.
+      await page.getByRole("button", { name: "Close Library project", exact: true }).click();
+      const captionTown = JSON.parse(await download());
+      const captionEvent = {
+        id: "caption-integration-first",
+        kind: "conversation",
+        day: captionTown.town.day,
+        minute: captionTown.town.minute,
+        participants: ["player", "kevin"],
+        place: "cafe",
+        turns: [
+          { speaker: "player", text: "The first caption should be easy to dismiss." },
+          { speaker: "kevin", text: "Its exchange stays in Town life." },
+        ],
+        text: "The first caption should be easy to dismiss.",
+        changes: [],
+        memories: [],
+        witnessed: true,
+        secret: false,
+        mind: "offline",
+      };
+      captionTown.town.social = [...(captionTown.town.social ?? []), captionEvent];
+      async function replaceCaptionTown(name) {
+        await upload(JSON.stringify(captionTown), name);
+        await page
+          .getByRole("dialog", { name: "Replace the live town?", exact: true })
+          .getByRole("button", { name: "Replace", exact: true })
+          .click();
+        await page
+          .getByRole("dialog", { name: "Replace the live town?", exact: true })
+          .waitFor({ state: "hidden" });
+      }
+      await replaceCaptionTown("synthetic-first-caption.json");
+      const caption = page.getByRole("region", { name: "Conversation captions", exact: true });
+      await caption.waitFor();
+      assert.match(await caption.innerText(), /first caption should be easy to dismiss/);
+      const captionClose = caption.getByRole("button", {
+        name: "Close exchange caption",
+        exact: true,
+      });
+      assert.ok((await captionClose.boundingBox()).height >= 44);
+      await page.screenshot({ path: join(out, `${viewport.name}-caption-close.png`) });
+      const beforeDismiss = await saved(page);
+      await captionClose.click();
+      await caption.waitFor({ state: "hidden" });
+      await assertFocus(page.locator(".town-canvas"), "Closing a caption should return town focus");
+      const beforeCaptionMove = await position(page);
+      for (const key of ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"]) {
+        await page.keyboard.down(key);
+        await page.waitForTimeout(200);
+        await page.keyboard.up(key);
+        if (JSON.stringify(await position(page)) !== JSON.stringify(beforeCaptionMove)) break;
+      }
+      assert.notDeepEqual(
+        await position(page),
+        beforeCaptionMove,
+        "The town should respond after caption Close",
+      );
+      await tools.getByRole("button", { name: "Help & privacy", exact: true }).click();
+      await page.getByRole("button", { name: "Close Help & privacy", exact: true }).click();
+      assert.equal(
+        await caption.count(),
+        0,
+        "Closing another panel must not restore a dismissed caption",
+      );
+      await page.getByRole("button", { name: /^Town life/ }).click();
+      const history = page.getByRole("complementary", { name: "Town life", exact: true });
+      await history.waitFor();
+      assert.match(await history.innerText(), /first caption should be easy to dismiss/);
+      await history.getByRole("button", { name: "Close town life", exact: true }).click();
+      assert.equal(await caption.count(), 0);
+      assert.deepEqual((await saved(page)).social, beforeDismiss.social);
+
+      // Import-review Escape has priority over caption dismissal.
+      captionEvent.id = "caption-integration-newer";
+      captionEvent.text = "A newer exchange can still appear.";
+      captionEvent.turns[0].text = captionEvent.text;
+      await replaceCaptionTown("synthetic-newer-caption.json");
+      await caption.waitFor();
+      assert.match(await caption.innerText(), /newer exchange can still appear/);
+      await upload(JSON.stringify(captionTown), "synthetic-caption-review.json");
+      await page.keyboard.press("Escape");
+      await page
+        .getByRole("dialog", { name: "Replace the live town?", exact: true })
+        .waitFor({ state: "hidden" });
+      await caption.waitFor();
+      await caption.getByRole("button", { name: "Next", exact: true }).focus();
+      await page.keyboard.press("Escape");
+      await caption.waitFor({ state: "hidden" });
+      await assertFocus(page.locator(".town-canvas"), "Caption Escape should return town focus");
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await caption.waitFor();
+      assert.match(await caption.innerText(), /newer exchange can still appear/);
+      await page.screenshot({ path: join(out, `${viewport.name}-caption-restored.png`) });
+      result.captionDismissal = true;
+      result.captionImportEscapePriority = true;
+      result.captionHistoryAndReload = true;
+      await tools.getByRole("button", { name: "Help & privacy", exact: true }).click();
       assert.equal(
         await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1),
         false,
