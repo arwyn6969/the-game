@@ -255,7 +255,6 @@ export function TownApp() {
   const toolOpenerRef = useRef<HTMLElement | null>(null);
   const boardOpenerRef = useRef<HTMLElement | null>(null);
   const socialOpenerRef = useRef<HTMLElement | null>(null);
-  const socialPointerOpenRef = useRef(false);
   const toolsRef = useRef<ToolPage | "stamps" | "agent-wallets" | null>(null);
   const importTextRef = useRef<string | null>(null);
   const importKeepRef = useRef<HTMLButtonElement>(null);
@@ -1788,20 +1787,45 @@ export function TownApp() {
       data-cramped-world={crampedWorld ? "true" : "false"}
       onFocusCapture={(event) => {
         if (!(event.target instanceof Element) || event.target.closest(".mind")) return;
-        if (!event.currentTarget.querySelector(".mind")) return;
-        // Nonmodal panes dismiss when focus leaves, keeping the destination visible.
-        // Explicit Close and Escape still restore focus to their opener.
-        toolsRef.current = null;
-        panelRef.current = null;
-        boardRef.current = false;
-        setTools(null);
-        setPanel(null);
-        setBoard(false);
-        setSocialOpen(false);
+        const pane = event.currentTarget.querySelector(".mind");
+        if (!pane) return;
         const destination = event.target;
         requestAnimationFrame(() => {
-          if (destination === document.activeElement)
-            destination.scrollIntoView({ block: "nearest", inline: "nearest" });
+          if (destination !== document.activeElement || !pane.isConnected) return;
+          const box = destination.getBoundingClientRect();
+          const left = Math.max(0, box.left);
+          const right = Math.min(innerWidth, box.right);
+          const top = Math.max(0, box.top);
+          const bottom = Math.min(innerHeight, box.bottom);
+          if (right <= left || bottom <= top) return;
+          const points = [
+            [0.5, 0.5],
+            [0.15, 0.15],
+            [0.85, 0.15],
+            [0.15, 0.85],
+            [0.85, 0.85],
+          ];
+          if (
+            !points.every(([x, y]) =>
+              pane.contains(
+                document.elementFromPoint(left + (right - left) * x, top + (bottom - top) * y),
+              ),
+            )
+          )
+            return;
+          // Dismiss a pane that obscures focus; visible clock and reply controls
+          // must remain usable without closing the active conversation.
+          toolsRef.current = null;
+          panelRef.current = null;
+          boardRef.current = false;
+          setTools(null);
+          setPanel(null);
+          setBoard(false);
+          setSocialOpen(false);
+          requestAnimationFrame(() => {
+            if (destination === document.activeElement)
+              destination.scrollIntoView({ block: "nearest", inline: "nearest" });
+          });
         });
       }}
     >
@@ -1990,11 +2014,8 @@ export function TownApp() {
           className="btn town-life-toggle"
           type="button"
           aria-expanded={socialOpen}
-          onPointerDown={() => {
-            socialPointerOpenRef.current = socialOpen;
-          }}
-          onClick={(event) => {
-            if (event.detail > 0 ? socialPointerOpenRef.current : socialOpen) closeSocial();
+          onClick={() => {
+            if (socialOpen) closeSocial();
             else openSocial();
             setTools(null);
             setPanel(null);

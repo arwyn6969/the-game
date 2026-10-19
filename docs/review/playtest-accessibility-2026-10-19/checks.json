@@ -2,8 +2,8 @@
   "date": "2026-10-19",
   "branch": "codex/playtest-accessibility",
   "baseCommit": "313e9baf626a5ece11ef08f705a7f401ca3608b1",
-  "testedSourceFingerprint": "aa8d06c0dd870e35943c239a29fe68415d618e812376fa3c84a6afdab69c042f",
-  "testedBuildLabel": "313e9baf626a + local changes",
+  "testedSourceFingerprint": "0b3778d0598efd5028ba93e8da57b8a3cac542367c3c5ac77d90b43df4aadecf",
+  "testedBuildLabel": "5c32de04c98d + local changes",
   "build": {
     "passed": true,
     "authEnabled": true,
@@ -31,7 +31,7 @@
       "wcagViolations": 0,
       "bestPracticeViolations": 0,
       "incompleteRuleResults": 54,
-      "essentialChecks": 26,
+      "essentialChecks": 27,
       "failedChecks": 0,
       "failures": 0,
       "externalBrowserNetworkRequests": 0
@@ -51,6 +51,24 @@
       ],
       "errors": [],
       "note": "GAME_QA_URL points to the sanitized Nitro built preview. The harness builtPreview flag is false whenever this override is supplied; tested-build.json identifies the actual build."
+    },
+    "delayedAi": {
+      "mockedTransport": true,
+      "liveProviderCalls": 0,
+      "viewports": [
+        {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "failures": [],
+      "scope": "Synthetic delayed transport: manual fallback, pause, walking away, reordered/late replies, replay, import cancellation and draft preservation."
     }
   },
   "screenReader": {

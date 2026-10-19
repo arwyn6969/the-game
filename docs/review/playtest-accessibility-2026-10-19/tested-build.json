@@ -1,9 +1,9 @@
 {
   "source": {
-    "commit": "313e9baf626a5ece11ef08f705a7f401ca3608b1",
+    "commit": "5c32de04c98d188469f099c85590d67b8206eec7",
     "dirty": true,
-    "buildId": "313e9baf626a + local changes",
-    "fingerprint": "aa8d06c0dd870e35943c239a29fe68415d618e812376fa3c84a6afdab69c042f",
+    "buildId": "5c32de04c98d + local changes",
+    "fingerprint": "0b3778d0598efd5028ba93e8da57b8a3cac542367c3c5ac77d90b43df4aadecf",
     "inputs": [
       {
         "path": "config/mind-pool.env.example",
@@ -67,7 +67,7 @@
       },
       {
         "path": "scripts/accessibility-browser.mjs",
-        "sha256": "eb33034f65fd85519cd464716e266e92e141e7ed435b6ca84d514101be83df31"
+        "sha256": "d8f5e352affc2c7aef1958b11c64a7d1e2adb6b1080a2897ebe3fec07c996108"
       },
       {
         "path": "scripts/agent-auth.test.mjs",
@@ -479,7 +479,7 @@
       },
       {
         "path": "src/components/town/TownApp.tsx",
-        "sha256": "c0f2707092c2741b45eae23f795078739d3d7121af6fe7f97ccc6cc331100da8"
+        "sha256": "18f61aad987858075b348269548213d32e63fcbda0c7be521f723c2fcbef20d7"
       },
       {
         "path": "src/components/town/WorldArt.ts",
@@ -987,7 +987,7 @@
       }
     ]
   },
-  "builtAt": "2026-10-19T14:00:58.376Z",
+  "builtAt": "2026-10-19T14:40:01.678Z",
   "node": "v24.19.0",
   "credentialFree": true,
   "authEnabled": true,

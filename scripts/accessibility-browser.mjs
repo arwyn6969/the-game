@@ -309,44 +309,59 @@ async function focusVisibility(page) {
 async function traversalChecks(page, journey, { extraPanes = true } = {}) {
   await check(
     journey,
-    "Tab and Shift+Tab dismiss nonmodal Help without obscuring destination focus",
+    "Tab and Shift+Tab preserve visible focus outside nonmodal Help",
     async () => {
       await openTool(page, "Help & privacy", "Help & privacy");
-      for (let index = 0; index < 20 && (await page.locator(".mind").count()); index++) {
+      let forward;
+      for (let index = 0; index < 20; index++) {
         await page.keyboard.press("Tab");
         await frames(page);
+        forward = await focusVisibility(page);
+        if (!forward.insidePane && forward.tag !== "BODY") break;
       }
-      assert.equal(
-        await page.locator(".mind").count(),
-        0,
-        "Tab past the last Help control dismisses its nonmodal pane",
-      );
-      const forward = await focusVisibility(page);
       assert.equal(forward.insidePane, false);
       assert.equal(
         forward.exposed,
         true,
         `The footer destination must remain visible after Tab leaves Help: ${JSON.stringify(forward)}`,
       );
+      const textTraversal = [];
+      if (journey.viewport.name === "text-200-spacing") {
+        textTraversal.push(forward);
+        for (let index = 0; index < 5 && (await page.locator(".mind").count()); index++) {
+          await page.keyboard.press("Tab");
+          await frames(page);
+          const focused = await focusVisibility(page);
+          assert.equal(focused.insidePane, false);
+          assert.equal(
+            focused.exposed,
+            true,
+            `Every footer focus must stay exposed: ${JSON.stringify(focused)}`,
+          );
+          textTraversal.push(focused);
+        }
+        assert.equal(
+          await page.locator(".mind").count(),
+          0,
+          "Enlarged Help dismisses by the genuinely covered Download or Import footer control",
+        );
+      }
+      if (await page.locator(".mind").count()) await closePanel(page);
       await openTool(page, "Help & privacy", "Help & privacy");
       await page.getByRole("button", { name: "Close Help & privacy", exact: true }).focus();
       await page.keyboard.press("Shift+Tab");
       await frames(page);
-      assert.equal(
-        await page.locator(".mind").count(),
-        0,
-        "Shift+Tab before the first Help control dismisses its pane",
-      );
       const backward = await focusVisibility(page);
+      assert.equal(backward.insidePane, false);
       assert.equal(backward.exposed, true, "Shift+Tab preserves a visible background destination");
-      return { forward, backward };
+      return { forward, backward, textTraversal };
     },
   );
   if (await page.locator(".mind").count()) await closePanel(page);
   if (!extraPanes) return;
   await check(
     journey,
-    "character pane dismisses on background focus and preserves resident pin",
+    "character pane preserves visible background focus and resident pin",
     async () => {
       const resident = page.getByRole("button", {
         name: "View Kevin's character card",
@@ -358,32 +373,28 @@ async function traversalChecks(page, journey, { extraPanes = true } = {}) {
       await page.keyboard.press("Shift+Tab");
       await frames(page);
       assert.equal(
-        await page.locator(".mind").count(),
-        0,
-        "Shift+Tab out of the character pane dismisses it",
-      );
-      assert.equal(
         await resident.locator('svg[aria-label="Pinned"]').count(),
         1,
         "Focus dismissal preserves the resident strip pin",
       );
       const focused = await focusVisibility(page);
       assert.equal(focused.exposed, true);
+      assert.equal(focused.insidePane, false);
       return focused;
     },
   );
   if (await page.locator(".mind").count()) await closePanel(page);
   await check(
     journey,
-    "Town life dismisses on background focus without stealing destination",
+    "Town life preserves visible background focus without stealing destination",
     async () => {
       await page.getByRole("button", { name: /^Town life / }).click();
       await page.getByRole("button", { name: "Close town life", exact: true }).focus();
       await page.keyboard.press("Shift+Tab");
       await frames(page);
-      assert.equal(await page.locator(".mind").count(), 0);
       const focused = await focusVisibility(page);
       assert.equal(focused.exposed, true);
+      assert.equal(focused.insidePane, false);
       assert.notEqual(focused.name, "Close town life");
       return focused;
     },
@@ -433,19 +444,19 @@ async function walletTraversalChecks(page, journey) {
   ]) {
     await check(
       journey,
-      `${title}: keyboard dismissal preserves destination focus through cleanup`,
+      `${title}: keyboard traversal preserves visible destination focus`,
       async () => {
         await openTool(page, button, title);
         await page.getByRole("button", { name: closeName, exact: true }).focus();
         await page.keyboard.press("Shift+Tab");
         await frames(page);
-        assert.equal(await page.locator(".mind").count(), 0);
         assert.equal(
           await townCanvas(page).evaluate((element) => document.activeElement === element),
           true,
           "Wallet cleanup must not steal the newly focused canvas destination",
         );
         const focused = await focusVisibility(page);
+        assert.equal(focused.insidePane, false);
         assert.equal(focused.exposed, true, JSON.stringify(focused));
         return focused;
       },
@@ -631,6 +642,32 @@ async function keyboardChecks(page, journey) {
     }));
   });
   if (await page.locator(".mind").count()) await closePanel(page);
+  if (journey.viewport.name === "desktop") {
+    await check(
+      journey,
+      "visible clock Pause preserves the open conversation and draft",
+      async () => {
+        await page
+          .getByRole("button", { name: "View Kevin's character card", exact: true })
+          .click();
+        await page.getByRole("tab", { name: "Together", exact: true }).click();
+        const line = page.getByLabel("Your line to Kevin", { exact: true });
+        await line.fill("Keep this conversation while paused.");
+        await page.getByRole("button", { name: "Pause", exact: true }).click();
+        await frames(page);
+        assert.equal(
+          await line.isVisible(),
+          true,
+          "A visible global Pause button must not dismiss the conversation",
+        );
+        assert.equal(await line.inputValue(), "Keep this conversation while paused.");
+        const focused = await focusVisibility(page);
+        assert.equal(focused.name, "Pause");
+        assert.equal(focused.exposed, true);
+      },
+    );
+    if (await page.locator(".mind").count()) await closePanel(page);
+  }
   await traversalChecks(page, journey);
   await walletTraversalChecks(page, journey);
 }

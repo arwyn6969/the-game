@@ -2,7 +2,7 @@
   "url": "http://127.0.0.1:8181/",
   "node": "v24.19.0",
   "axeVersion": "4.10.3",
-  "generatedAt": "2026-10-19T14:01:57.825Z",
+  "generatedAt": "2026-10-19T14:42:20.736Z",
   "scope": "Disposable local towns; authored local dialogue; no external wallet, account or provider",
   "wcagTags": [
     "wcag2a",
@@ -2191,7 +2191,11 @@
           }
         },
         {
-          "name": "Tab and Shift+Tab dismiss nonmodal Help without obscuring destination focus",
+          "name": "visible clock Pause preserves the open conversation and draft",
+          "status": "passed"
+        },
+        {
+          "name": "Tab and Shift+Tab preserve visible focus outside nonmodal Help",
           "status": "passed",
           "observations": {
             "forward": {
@@ -2213,15 +2217,16 @@
               "insidePane": false,
               "rect": {
                 "x": 25,
-                "y": 357.109375,
+                "y": 255.140625,
                 "width": 1230,
-                "height": 360.890625
+                "height": 462.859375
               }
-            }
+            },
+            "textTraversal": []
           }
         },
         {
-          "name": "character pane dismisses on background focus and preserves resident pin",
+          "name": "character pane preserves visible background focus and resident pin",
           "status": "passed",
           "observations": {
             "tag": "CANVAS",
@@ -2230,14 +2235,14 @@
             "insidePane": false,
             "rect": {
               "x": 25,
-              "y": 357.109375,
+              "y": 255.140625,
               "width": 1230,
-              "height": 360.890625
+              "height": 462.859375
             }
           }
         },
         {
-          "name": "Town life dismisses on background focus without stealing destination",
+          "name": "Town life preserves visible background focus without stealing destination",
           "status": "passed",
           "observations": {
             "tag": "CANVAS",
@@ -2257,7 +2262,7 @@
           "status": "passed"
         },
         {
-          "name": "Your stamp appearance: keyboard dismissal preserves destination focus through cleanup",
+          "name": "Your stamp appearance: keyboard traversal preserves visible destination focus",
           "status": "passed",
           "observations": {
             "tag": "CANVAS",
@@ -2266,14 +2271,14 @@
             "insidePane": false,
             "rect": {
               "x": 25,
-              "y": 357.109375,
+              "y": 255.140625,
               "width": 1230,
-              "height": 360.890625
+              "height": 462.859375
             }
           }
         },
         {
-          "name": "Agent wallets: keyboard dismissal preserves destination focus through cleanup",
+          "name": "Agent wallets: keyboard traversal preserves visible destination focus",
           "status": "passed",
           "observations": {
             "tag": "CANVAS",
@@ -2282,9 +2287,9 @@
             "insidePane": false,
             "rect": {
               "x": 25,
-              "y": 357.109375,
+              "y": 255.140625,
               "width": 1230,
-              "height": 360.890625
+              "height": 462.859375
             }
           }
         }
@@ -4182,7 +4187,7 @@
           }
         },
         {
-          "name": "Tab and Shift+Tab dismiss nonmodal Help without obscuring destination focus",
+          "name": "Tab and Shift+Tab preserve visible focus outside nonmodal Help",
           "status": "passed",
           "observations": {
             "forward": {
@@ -4208,11 +4213,12 @@
                 "width": 364,
                 "height": 292.75
               }
-            }
+            },
+            "textTraversal": []
           }
         },
         {
-          "name": "character pane dismisses on background focus and preserves resident pin",
+          "name": "character pane preserves visible background focus and resident pin",
           "status": "passed",
           "observations": {
             "tag": "CANVAS",
@@ -4228,7 +4234,7 @@
           }
         },
         {
-          "name": "Town life dismisses on background focus without stealing destination",
+          "name": "Town life preserves visible background focus without stealing destination",
           "status": "passed",
           "observations": {
             "tag": "CANVAS",
@@ -4248,7 +4254,7 @@
           "status": "passed"
         },
         {
-          "name": "Your stamp appearance: keyboard dismissal preserves destination focus through cleanup",
+          "name": "Your stamp appearance: keyboard traversal preserves visible destination focus",
           "status": "passed",
           "observations": {
             "tag": "CANVAS",
@@ -4264,7 +4270,7 @@
           }
         },
         {
-          "name": "Agent wallets: keyboard dismissal preserves destination focus through cleanup",
+          "name": "Agent wallets: keyboard traversal preserves visible destination focus",
           "status": "passed",
           "observations": {
             "tag": "CANVAS",
@@ -6014,7 +6020,7 @@
           }
         },
         {
-          "name": "Tab and Shift+Tab dismiss nonmodal Help without obscuring destination focus",
+          "name": "Tab and Shift+Tab preserve visible focus outside nonmodal Help",
           "status": "passed",
           "observations": {
             "forward": {
@@ -6024,7 +6030,7 @@
               "insidePane": false,
               "rect": {
                 "x": 141.140625,
-                "y": 783.59375,
+                "y": 682.84375,
                 "width": 236.203125,
                 "height": 16
               }
@@ -6036,11 +6042,37 @@
               "insidePane": false,
               "rect": {
                 "x": 49,
-                "y": 401.8125,
+                "y": 402.0625,
                 "width": 1182,
                 "height": 398
               }
-            }
+            },
+            "textTraversal": [
+              {
+                "tag": "INPUT",
+                "name": "Replay minute",
+                "exposed": true,
+                "insidePane": false,
+                "rect": {
+                  "x": 141.140625,
+                  "y": 682.84375,
+                  "width": 236.203125,
+                  "height": 16
+                }
+              },
+              {
+                "tag": "BUTTON",
+                "name": "Download town",
+                "exposed": true,
+                "insidePane": false,
+                "rect": {
+                  "x": 679.296875,
+                  "y": 724.8125,
+                  "width": 328.78125,
+                  "height": 75.578125
+                }
+              }
+            ]
           }
         }
       ],
@@ -7430,7 +7462,7 @@
     "wcagViolations": 0,
     "bestPracticeViolations": 0,
     "incompleteRuleResults": 54,
-    "essentialChecks": 26,
+    "essentialChecks": 27,
     "failedChecks": 0,
     "failures": 0,
     "externalBrowserNetworkRequests": 0
