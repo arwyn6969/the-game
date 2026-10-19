@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8197/",
+  "node": "v24.19.0",
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "blockedProviderRequests": [],
+      "residentReplacesTool": true,
+      "keyboardTabs": true,
+      "exclusivePanels": true,
+      "boardFocus": true,
+      "moneyUnchangedByPanels": true
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "blockedProviderRequests": [],
+      "residentReplacesTool": true,
+      "keyboardTabs": true,
+      "exclusivePanels": true,
+      "boardFocus": true,
+      "moneyUnchangedByPanels": true,
+      "touchCancellation": true
+    }
+  ],
+  "failures": []
+}

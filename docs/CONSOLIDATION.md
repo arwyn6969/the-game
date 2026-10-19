@@ -1,5 +1,7 @@
 # Product consolidation — 12 October 2026
 
+**Current branches, 19 October:** the [branch and PR record](BRANCHES.md) supersedes the historical branch/workspace inventory below. Gameplay fixes are carried through the identity, stamp and private-wallet stack; the old S1 draft is superseded and its source retained. This document keeps the original consolidation receipt.
+
 **Later implementation, 15 October:** this document preserves the consolidation snapshot. The quality candidate now integrates main through `4a39cdf` and activates the reconciled eight-actor ledger, funded library, durable work, inventory, save guards and provider budget. Its status and remaining gates are in the [delivery notes](implementation/game-quality-delivery.md) and [current roadmap](ROADMAP.md). The inactive-ledger and unbuilt-library statements below describe the earlier snapshot, not this candidate. Hosted publication remains separate.
 
 The consolidation is merged into main through [PR #19](https://github.com/arwyn6969/the-game/pull/19), merge commit `8d15a722b61c09a7dca198ccf49ea8dd0b3f8125`. [PR #23](https://github.com/arwyn6969/the-game/pull/23) then added visible conversations and character cards at `8a35f3c877297b7a588aa8d38d6590e486f917cd`. Publishing that commit is still a separate action; a GitHub merge is not a live release.

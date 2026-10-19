@@ -1,0 +1,570 @@
+{
+  "url": "http://127.0.0.1:8235/",
+  "node": "v24.19.0",
+  "wallet": "wonder",
+  "builtPreview": true,
+  "mockedStampchainGetOnly": true,
+  "liveWalletRequests": 0,
+  "liveExternalNetwork": 0,
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "externalBrowserRequests": [
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        }
+      ],
+      "walletCalls": [
+        "wonder:requestAccounts",
+        "wonder:getAccounts",
+        "wonder:getAccounts",
+        "wonder:signMessage",
+        "wonder:requestAccounts",
+        "wonder:getAccounts",
+        "wonder:getAccounts",
+        "wonder:signMessage",
+        "wonder:requestAccounts",
+        "wonder:getAccounts",
+        "wonder:getAccounts",
+        "wonder:signMessage",
+        "wonder:getAccounts",
+        "wonder:requestAccounts",
+        "wonder:getAccounts",
+        "wonder:getAccounts",
+        "wonder:signMessage",
+        "wonder:getAccounts",
+        "wonder:requestAccounts",
+        "wonder:getAccounts",
+        "wonder:getAccounts",
+        "wonder:signMessage",
+        "wonder:requestAccounts",
+        "wonder:getAccounts",
+        "wonder:getAccounts",
+        "wonder:signMessage",
+        "wonder:getAccounts",
+        "wonder:requestAccounts",
+        "wonder:getAccounts",
+        "wonder:getAccounts",
+        "wonder:signMessage",
+        "wonder:requestAccounts",
+        "wonder:getAccounts",
+        "wonder:getAccounts",
+        "wonder:signMessage",
+        "wonder:getAccounts",
+        "wonder:requestAccounts",
+        "wonder:getAccounts",
+        "wonder:getAccounts",
+        "wonder:signMessage"
+      ],
+      "serverPosts": [
+        "/_serverFn/54250a57c0abc65238810275612aed022216dba155843eeb0150db15d62cdbee",
+        "/_serverFn/54250a57c0abc65238810275612aed022216dba155843eeb0150db15d62cdbee",
+        "/_serverFn/54250a57c0abc65238810275612aed022216dba155843eeb0150db15d62cdbee",
+        "/_serverFn/0574b6acefef46bcae2f9067ee8add858d81236cefb9d5d7206086c8faac9880",
+        "/_serverFn/261525c5451c11ed4cfc50875a16c59feebfb2d450ecee1d955c43677c7e745d",
+        "/_serverFn/261525c5451c11ed4cfc50875a16c59feebfb2d450ecee1d955c43677c7e745d",
+        "/_serverFn/208f29744a3a9502f685a8acc69b8f54ce9a0d242ca85401d72e57fdf8fd9f82",
+        "/_serverFn/208f29744a3a9502f685a8acc69b8f54ce9a0d242ca85401d72e57fdf8fd9f82",
+        "/_serverFn/5480af7e727d91921f6a99c03732c31be849186dae233f053c17d828292d38cf",
+        "/_serverFn/208f29744a3a9502f685a8acc69b8f54ce9a0d242ca85401d72e57fdf8fd9f82",
+        "/_serverFn/a2d90d0ea253aa1a4fd96c5ac215353e04bcb7c008270c1e425724331b9a7d8e",
+        "/_serverFn/a2d90d0ea253aa1a4fd96c5ac215353e04bcb7c008270c1e425724331b9a7d8e",
+        "/_serverFn/54250a57c0abc65238810275612aed022216dba155843eeb0150db15d62cdbee",
+        "/_serverFn/0574b6acefef46bcae2f9067ee8add858d81236cefb9d5d7206086c8faac9880",
+        "/_serverFn/261525c5451c11ed4cfc50875a16c59feebfb2d450ecee1d955c43677c7e745d",
+        "/_serverFn/208f29744a3a9502f685a8acc69b8f54ce9a0d242ca85401d72e57fdf8fd9f82",
+        "/_serverFn/54250a57c0abc65238810275612aed022216dba155843eeb0150db15d62cdbee",
+        "/_serverFn/54250a57c0abc65238810275612aed022216dba155843eeb0150db15d62cdbee",
+        "/_serverFn/0574b6acefef46bcae2f9067ee8add858d81236cefb9d5d7206086c8faac9880",
+        "/_serverFn/261525c5451c11ed4cfc50875a16c59feebfb2d450ecee1d955c43677c7e745d",
+        "/_serverFn/208f29744a3a9502f685a8acc69b8f54ce9a0d242ca85401d72e57fdf8fd9f82",
+        "/_serverFn/54250a57c0abc65238810275612aed022216dba155843eeb0150db15d62cdbee",
+        "/_serverFn/54250a57c0abc65238810275612aed022216dba155843eeb0150db15d62cdbee",
+        "/_serverFn/0574b6acefef46bcae2f9067ee8add858d81236cefb9d5d7206086c8faac9880",
+        "/_serverFn/261525c5451c11ed4cfc50875a16c59feebfb2d450ecee1d955c43677c7e745d",
+        "/_serverFn/208f29744a3a9502f685a8acc69b8f54ce9a0d242ca85401d72e57fdf8fd9f82",
+        "/_serverFn/54250a57c0abc65238810275612aed022216dba155843eeb0150db15d62cdbee"
+      ],
+      "expectedAbortedRequests": ["Failed to load resource: net::ERR_FAILED"],
+      "assertions": [
+        "optional entry works without a wallet",
+        "declining a message leaves the town and appearance intact",
+        "cancelled wallet responses cannot connect or apply a late result",
+        "real server proof verifies a disposable BIP322 signature",
+        "holdings paginate and exclude unsupported artwork",
+        "safe raster preview and keyboard crop controls work",
+        "selected head and toolbar portrait display",
+        "portrait mode restores the authored canvas head while keeping its portrait",
+        "Original clears cosmetics while preserving verified wallet and draft",
+        "reload rechecks server-held selection without wallet proofs or pixels in the town save",
+        "the same saved identity in a new browser session cannot inherit wallet proof or appearance",
+        "a fork and its reload cannot inherit a cosmetic link, while restoring the source retains its original scope",
+        "disconnect clears draft, display and server link, including on reopen",
+        "failed disconnect stays hidden after close and reload until explicit retry succeeds",
+        "wallet-selection during signing clears an active head and holds it hidden through reload without a late server finish",
+        "accountsChanged during signing clears an active head and holds it hidden through reload without a late server finish",
+        "disconnect during signing clears an active head and holds it hidden through reload without a late server finish"
+      ],
+      "cookie": {
+        "httpOnly": true,
+        "secure": true,
+        "sameSite": "Strict",
+        "scriptReadable": false
+      },
+      "wonderConnection": {
+        "replyShapes": ["object", "array", "array"],
+        "ignoredConnectProof": true
+      },
+      "headPixels": {
+        "active": {
+          "pinkPixels": 91,
+          "pixels": 182
+        },
+        "portraitOnly": {
+          "pinkPixels": 0,
+          "pixels": 182
+        }
+      },
+      "walletMethods": ["wonder:getAccounts", "wonder:requestAccounts", "wonder:signMessage"]
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "externalBrowserRequests": [
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://fonts.googleapis.com",
+          "method": "GET"
+        },
+        {
+          "origin": "https://grok.com",
+          "method": "GET"
+        }
+      ],
+      "walletCalls": [
+        "wonder:requestAccounts",
+        "wonder:getAccounts",
+        "wonder:getAccounts",
+        "wonder:signMessage",
+        "wonder:requestAccounts",
+        "wonder:getAccounts",
+        "wonder:getAccounts",
+        "wonder:signMessage",
+        "wonder:requestAccounts",
+        "wonder:getAccounts",
+        "wonder:getAccounts",
+        "wonder:signMessage",
+        "wonder:getAccounts",
+        "wonder:requestAccounts",
+        "wonder:getAccounts",
+        "wonder:getAccounts",
+        "wonder:signMessage",
+        "wonder:getAccounts",
+        "wonder:requestAccounts",
+        "wonder:getAccounts",
+        "wonder:getAccounts",
+        "wonder:signMessage",
+        "wonder:requestAccounts",
+        "wonder:getAccounts",
+        "wonder:getAccounts",
+        "wonder:signMessage",
+        "wonder:getAccounts",
+        "wonder:requestAccounts",
+        "wonder:getAccounts",
+        "wonder:getAccounts",
+        "wonder:signMessage",
+        "wonder:requestAccounts",
+        "wonder:getAccounts",
+        "wonder:getAccounts",
+        "wonder:signMessage",
+        "wonder:getAccounts",
+        "wonder:requestAccounts",
+        "wonder:getAccounts",
+        "wonder:getAccounts",
+        "wonder:signMessage"
+      ],
+      "serverPosts": [
+        "/_serverFn/54250a57c0abc65238810275612aed022216dba155843eeb0150db15d62cdbee",
+        "/_serverFn/54250a57c0abc65238810275612aed022216dba155843eeb0150db15d62cdbee",
+        "/_serverFn/54250a57c0abc65238810275612aed022216dba155843eeb0150db15d62cdbee",
+        "/_serverFn/0574b6acefef46bcae2f9067ee8add858d81236cefb9d5d7206086c8faac9880",
+        "/_serverFn/261525c5451c11ed4cfc50875a16c59feebfb2d450ecee1d955c43677c7e745d",
+        "/_serverFn/261525c5451c11ed4cfc50875a16c59feebfb2d450ecee1d955c43677c7e745d",
+        "/_serverFn/208f29744a3a9502f685a8acc69b8f54ce9a0d242ca85401d72e57fdf8fd9f82",
+        "/_serverFn/208f29744a3a9502f685a8acc69b8f54ce9a0d242ca85401d72e57fdf8fd9f82",
+        "/_serverFn/5480af7e727d91921f6a99c03732c31be849186dae233f053c17d828292d38cf",
+        "/_serverFn/208f29744a3a9502f685a8acc69b8f54ce9a0d242ca85401d72e57fdf8fd9f82",
+        "/_serverFn/a2d90d0ea253aa1a4fd96c5ac215353e04bcb7c008270c1e425724331b9a7d8e",
+        "/_serverFn/a2d90d0ea253aa1a4fd96c5ac215353e04bcb7c008270c1e425724331b9a7d8e",
+        "/_serverFn/54250a57c0abc65238810275612aed022216dba155843eeb0150db15d62cdbee",
+        "/_serverFn/0574b6acefef46bcae2f9067ee8add858d81236cefb9d5d7206086c8faac9880",
+        "/_serverFn/261525c5451c11ed4cfc50875a16c59feebfb2d450ecee1d955c43677c7e745d",
+        "/_serverFn/208f29744a3a9502f685a8acc69b8f54ce9a0d242ca85401d72e57fdf8fd9f82",
+        "/_serverFn/54250a57c0abc65238810275612aed022216dba155843eeb0150db15d62cdbee",
+        "/_serverFn/54250a57c0abc65238810275612aed022216dba155843eeb0150db15d62cdbee",
+        "/_serverFn/0574b6acefef46bcae2f9067ee8add858d81236cefb9d5d7206086c8faac9880",
+        "/_serverFn/261525c5451c11ed4cfc50875a16c59feebfb2d450ecee1d955c43677c7e745d",
+        "/_serverFn/208f29744a3a9502f685a8acc69b8f54ce9a0d242ca85401d72e57fdf8fd9f82",
+        "/_serverFn/54250a57c0abc65238810275612aed022216dba155843eeb0150db15d62cdbee",
+        "/_serverFn/54250a57c0abc65238810275612aed022216dba155843eeb0150db15d62cdbee",
+        "/_serverFn/0574b6acefef46bcae2f9067ee8add858d81236cefb9d5d7206086c8faac9880",
+        "/_serverFn/261525c5451c11ed4cfc50875a16c59feebfb2d450ecee1d955c43677c7e745d",
+        "/_serverFn/208f29744a3a9502f685a8acc69b8f54ce9a0d242ca85401d72e57fdf8fd9f82",
+        "/_serverFn/54250a57c0abc65238810275612aed022216dba155843eeb0150db15d62cdbee"
+      ],
+      "expectedAbortedRequests": ["Failed to load resource: net::ERR_FAILED"],
+      "assertions": [
+        "optional entry works without a wallet",
+        "declining a message leaves the town and appearance intact",
+        "cancelled wallet responses cannot connect or apply a late result",
+        "real server proof verifies a disposable BIP322 signature",
+        "holdings paginate and exclude unsupported artwork",
+        "safe raster preview and keyboard crop controls work",
+        "selected head and toolbar portrait display",
+        "portrait mode restores the authored canvas head while keeping its portrait",
+        "Original clears cosmetics while preserving verified wallet and draft",
+        "reload rechecks server-held selection without wallet proofs or pixels in the town save",
+        "the same saved identity in a new browser session cannot inherit wallet proof or appearance",
+        "a fork and its reload cannot inherit a cosmetic link, while restoring the source retains its original scope",
+        "disconnect clears draft, display and server link, including on reopen",
+        "failed disconnect stays hidden after close and reload until explicit retry succeeds",
+        "wallet-selection during signing clears an active head and holds it hidden through reload without a late server finish",
+        "accountsChanged during signing clears an active head and holds it hidden through reload without a late server finish",
+        "disconnect during signing clears an active head and holds it hidden through reload without a late server finish"
+      ],
+      "cookie": {
+        "httpOnly": true,
+        "secure": true,
+        "sameSite": "Strict",
+        "scriptReadable": false
+      },
+      "wonderConnection": {
+        "replyShapes": ["object", "array", "array"],
+        "ignoredConnectProof": true
+      },
+      "headPixels": {
+        "active": {
+          "pinkPixels": 91,
+          "pixels": 182
+        },
+        "portraitOnly": {
+          "pinkPixels": 0,
+          "pixels": 182
+        }
+      },
+      "walletMethods": ["wonder:getAccounts", "wonder:requestAccounts", "wonder:signMessage"]
+    }
+  ],
+  "fixtureRequests": [
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/stamps/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/stamps/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.png",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    },
+    {
+      "path": "/api/v2/stamps/balance/bc1qtlnvhhggr9lfkftufy8h2su374yu787ynqy58w",
+      "method": "GET"
+    }
+  ],
+  "failures": []
+}

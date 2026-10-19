@@ -1,5 +1,7 @@
 # THE GAME: current delivery and next gates
 
+The [19 October branch record](BRANCHES.md) gives the current review order, refreshed dependencies and verification receipt. PR #16 is superseded; its recovery source remains preserved. Merge and hosted release remain separate decisions.
+
 Updated 19 October 2026. The current game backlog is implemented in the quality candidate, integrating main through `4a39cdf`. A source candidate and its checks do not establish hosted publication or player enjoyment. The [delivery notes](implementation/game-quality-delivery.md) explain the resulting behavior; the dated [quality review](reviews/2026-10-13-game-quality.md) records the problems that prompted it.
 
 **Product promise: “I come back because of what I did yesterday.”** The seven residents and the player can now contribute to a small common project, inspect its funding, test whether it helped, and encounter its consequences on later game days. The player remains a resident with voluntary choices.

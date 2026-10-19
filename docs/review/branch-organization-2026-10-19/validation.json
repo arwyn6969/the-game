@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-19",
+  "node": "24.19.0",
+  "runtimeSource": "039faf4ffb23406163b145ae9452bac3be32b6a6",
+  "laterChanges": "browser focus harness plus merge/documentation records; no runtime or build-input changes",
+  "install": {
+    "lockedOffline": true,
+    "packages": 453
+  },
+  "tests": {
+    "script": 827,
+    "appAuth": 55,
+    "total": 882,
+    "failures": 0,
+    "skipped": 0
+  },
+  "typecheck": "passed",
+  "lint": {
+    "errors": 0,
+    "inheritedWarnings": 1
+  },
+  "diagnostics": {
+    "worldAudit": [],
+    "measuredExports": 6
+  },
+  "builds": {
+    "normal": "passed",
+    "authEnabled": "passed",
+    "liveDatabaseCredentials": false,
+    "liveProviderCredentials": false,
+    "productionMigration": "skipped"
+  },
+  "authInvariant": "dev and build agree: sign-in on",
+  "browserReports": [
+    "gameplay.json",
+    "ui-edges.json",
+    "ui-interruptions.json",
+    "readings.json",
+    "delayed-ai.json",
+    "stamps.json",
+    "private-wallets.json"
+  ],
+  "ci": "Consult exact delivery heads and immutable workflow links in PR30\u201333 descriptions; all final heads must pass before the organization handoff."
+}
