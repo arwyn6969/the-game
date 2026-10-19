@@ -1,6 +1,6 @@
 # THE GAME: current delivery and next gates
 
-The [19 October branch record](BRANCHES.md) records the completed #30 → #31 → #32 → #33 main integration, merge commits, verification and pending checkpoint CI receipt. New work starts from current `origin/main`; the implementation integration checkpoint is `426b00b`. PR #16 is superseded; its recovery source remains preserved. Hosted release remains a separate decision.
+The [19 October branch record](BRANCHES.md) records the completed #30 → #31 → #32 → #33 main integration, merge commits, verification and checkpoint CI receipt. New work starts from current `origin/main`; the implementation integration checkpoint is `426b00b`. PR #16 is superseded; its recovery source remains preserved. Hosted release remains a separate decision.
 
 Updated 19 October 2026. The current game backlog and the reviewed identity/appearance/private-wallet stack are implemented on main. Implementation integration checkpoint `426b00b` has the same tree as verified stack head `c84f69ed`. Merged source and its checks do not establish hosted publication or player enjoyment. The [delivery notes](implementation/game-quality-delivery.md) explain the gameplay behavior; the dated [quality review](reviews/2026-10-13-game-quality.md) records the problems that prompted it.
 
@@ -37,7 +37,7 @@ The S1 source in PR #16 was an inactive six-actor foundation. Main now reconcile
 
 ## Next actions
 
-1. Use merged main as the source baseline and confirm the pending [main CI receipt](https://github.com/arwyn6969/the-game/actions/runs/39254628213). Source review found no blocker; 153 focused private-wallet tests passed alongside the recorded full-stack checks. Keep the current cast, art, character cards, per-resident drafts, auth, PWA and provider/hosting contracts.
+1. Use merged main as the source baseline and confirm the [main CI receipt](https://github.com/arwyn6969/the-game/actions/runs/39254628213). Source review found no blocker; 153 focused private-wallet tests passed alongside the recorded full-stack checks. Keep the current cast, art, character cards, per-resident drafts, auth, PWA and provider/hosting contracts.
 2. Run the [five-person playtest](implementation/game-quality-playtest.md): uncoached 10–15 minute sessions across desktop and phone, then reopen the next game day. Targets are four of five explaining their consequence, four recognizing it later and three voluntarily choosing a further visit. Record actual confusion and quotes; do not infer retention from automation.
 3. Perform physical-phone keyboard and screen-reader checks. Resolve any lost payment, unintended obligation, inaccessible essential action or private disclosure before release.
 4. Configure and verify the shared AI-budget migration and conservative tariffs in the intended environment. Check failed accounting falls back locally. No production keys, migrations or paid calls were used for the candidate's local validation.

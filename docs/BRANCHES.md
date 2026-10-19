@@ -9,7 +9,7 @@ Updated 19 October 2026. The reviewed gameplay → identity → stamp appearance
 | 3     | [#32](https://github.com/arwyn6969/the-game/pull/32) | `codex/stamp-wallet-selection`   | `a43b1cdb08b841d4289546e932c1155a85e9a9ae` | Verified read-only stamp appearance and optional heads             |
 | 4     | [#33](https://github.com/arwyn6969/the-game/pull/33) | `codex/agent-receiving-registry` | `426b00bdadd656b8f3d2ae9abb61c6e45f1e5170` | Private ownership/receiving drafts, observations and Wonder Wallet |
 
-Implementation integration checkpoint `426b00bdadd656b8f3d2ae9abb61c6e45f1e5170` has the same tree as verified stack head `c84f69ed851b57843aa47387ab084572d3b1d20c`. The [main CI run](https://github.com/arwyn6969/the-game/actions/runs/39254628213) for that checkpoint is pending; passing branch checks and the earlier local receipt do not replace that result.
+Implementation integration checkpoint `426b00bdadd656b8f3d2ae9abb61c6e45f1e5170` has the same tree as verified stack head `c84f69ed851b57843aa47387ab084572d3b1d20c`. The [main CI run](https://github.com/arwyn6969/the-game/actions/runs/39254628213) records verification of that checkpoint; consult its result alongside the branch checks and earlier local receipt.
 
 PR #16 is closed as superseded by the reconciled eight-actor accounting now on main through #30. Keep `codex/funded-project-accounts` at `53bd9ac` for experimental version-1 ledger recovery. PR #29 is closed because its caption change is incorporated into #30 with original ancestry. Its source ref, all four merged source refs and their checkouts remain preserved; this integration performs no further cleanup.
 
