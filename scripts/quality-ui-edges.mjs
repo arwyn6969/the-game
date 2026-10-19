@@ -355,6 +355,12 @@ export async function runUiEdgeChecks(browser, url, outputDirectory) {
       await page
         .getByRole("dialog", { name: "Replace the live town?", exact: true })
         .waitFor({ state: "hidden" });
+      // Import restores its opener on the next frame. Complete that transition
+      // before beginning the separate caption-focus/Escape interaction.
+      await assertFocus(
+        page.getByRole("button", { name: "Import", exact: true }),
+        "Cancelling caption import review should restore Import focus",
+      );
       await caption.waitFor();
       await caption.getByRole("button", { name: "Next", exact: true }).focus();
       await page.keyboard.press("Escape");

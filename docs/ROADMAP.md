@@ -45,6 +45,16 @@ The S1 source in PR #16 was an inactive six-actor foundation. This candidate rec
 
 If players understand the outcome but do not care, improve its stakes before adding more residents or map area. The original qualitative 5/10 review is historical; no new enjoyment score is claimed merely because code and tests were added.
 
+## Shared server world and AI avatar continuity
+
+The 19 October direction makes opt-in [AI control while the player is away](implementation/offline-avatar-control.md) a core feature of the future shared server world. The current browser-local release does not implement it. Build the controller, permission and recovery contracts at the start of shared-world engineering so logout, reconnect and background workers share one authority model.
+
+The [delivery gates](implementation/offline-avatar-control.md#timing-and-delivery-gates) are OA0 planning complete → OA1 authoritative server and human/AI handoff → OA2 unpaid trial with one tested model → OA3 prepaid Bitcoin time → OA4 qualified model choices and cloud/Spark hosting evaluation. A limited server alpha may precede AI continuity; the first full public shared-world release should include the working opt-in feature. Model selection can join paid launch if multiple models pass the same quality, capacity and billing checks.
+
+Players choose goals, limits and maximum duration, then reclaim control immediately on return and receive a factual activity journal. Purchased time means real elapsed service time per avatar; queued or unavailable service preserves credit. Keep service credits separate from town coins and resident BTC/stamp holdings. AI control never grants wallet signing authority, and outgoing real-asset transfers still require owner approval.
+
+This is future shared-world work, outside the current S1–S5 playable-week delivery. The separate identity/wallet candidates supply possible foundations; this documentation update does not merge their code. At the start of the world milestone, the simulation/backend and player-experience owners must take OA1/OA2 from the [implementation handoff](implementation/offline-avatar-control.md#next-implementation-handoff), beginning with fake inference and free credits. Payment activation follows its own acceptance gate. Prices, production models and hardware remain decisions to make from measured service quality and cost.
+
 ## Deferred by scope
 
 Cross-device saves and a continuously running shared town remain outside the current quality delivery. The user has approved the [stamp identity and wallet tooling sequence](implementation/stamp-identity-tooling.md), starting from `codex/game-quality-review` at `80ee299`: permanent identities → verified stamp selection/optional heads → agent receiving wallets → owner-approved outgoing proposals/transfers → tested trading → shared multiplayer/PvP. Packet 1 is implemented for review as an additive Town v2 identity registry with restore/fork imports; its [verification receipt](implementation/stamp-identity-tooling.md#implementation-receipt) records its identity and save checks. The [packet 2 appearance preview](implementation/stamp-wallet-selection.md) adds optional Leather mainnet P2WPKH proof, read-only classic stamp selection and player portraits/heads in a separate private session.
