@@ -1,0 +1,295 @@
+{
+  "date": "2026-10-21",
+  "baseline": "7ddda79a91784228586a6536ec9abd565175f79f",
+  "authorized_by": "Arwyn approved the branch review recommendations in Review GitHub branch strategy.",
+  "branches_before": [
+    {
+      "branch": "codex/agent-receiving-registry",
+      "sha": "c84f69ed851b57843aa47387ab084572d3b1d20c",
+      "contained_in_main": true,
+      "archive_tag": null,
+      "decision": "retired remote ref; source preserved",
+      "reason": "Already contained in main."
+    },
+    {
+      "branch": "codex/ai-playtest-readiness",
+      "sha": "0bd3e3b1401ebf6b460d9d71f287c4b474b2452b",
+      "contained_in_main": true,
+      "archive_tag": null,
+      "decision": "retired remote ref; source preserved",
+      "reason": "Already contained in main."
+    },
+    {
+      "branch": "codex/candidate-ai-quality-20261021",
+      "sha": "0bd3e3b1401ebf6b460d9d71f287c4b474b2452b",
+      "contained_in_main": true,
+      "archive_tag": null,
+      "decision": "retired remote ref; source preserved",
+      "reason": "Already contained in main."
+    },
+    {
+      "branch": "codex/dismiss-exchange-caption",
+      "sha": "0f28226cf5bb0150d2628b0db5f5f5d905a9058f",
+      "contained_in_main": true,
+      "archive_tag": null,
+      "decision": "retired remote ref; source preserved",
+      "reason": "Already contained in main."
+    },
+    {
+      "branch": "codex/funded-project-accounts",
+      "sha": "53bd9ac5b4354ac00195685cca429d7ca0681944",
+      "contained_in_main": false,
+      "archive_tag": "archive/2026-10-21/funded-project-accounts",
+      "decision": "retained remote ref pending explicit user decision",
+      "reason": "Unique experimental v1 ledger; preserve for recovery, do not merge wholesale."
+    },
+    {
+      "branch": "codex/game-quality-review",
+      "sha": "2a851faa18f67ac2e57bb89f3e2bc0f7295a34c0",
+      "contained_in_main": true,
+      "archive_tag": null,
+      "decision": "retired remote ref; source preserved",
+      "reason": "Already contained in main."
+    },
+    {
+      "branch": "codex/github-sync-20261021",
+      "sha": "9cc23920226adf70bad518881c5a31f125c06870",
+      "contained_in_main": true,
+      "archive_tag": null,
+      "decision": "retired remote ref; source preserved",
+      "reason": "Already contained in main."
+    },
+    {
+      "branch": "codex/hosted-ai-rollout-20261021",
+      "sha": "46fd6f514e2850882dfe98e6a4f6a31871abb992",
+      "contained_in_main": true,
+      "archive_tag": null,
+      "decision": "retained remote ref pending explicit user decision",
+      "reason": "Already contained in main."
+    },
+    {
+      "branch": "codex/offline-avatar-plan",
+      "sha": "db17ee896a3bc70bfe7c42119cf14118fb6f7b57",
+      "contained_in_main": false,
+      "archive_tag": "archive/2026-10-21/offline-avatar-plan",
+      "decision": "retained remote ref pending explicit user decision",
+      "reason": "Original planning source represented by merged avatar roadmap."
+    },
+    {
+      "branch": "codex/offline-avatar-roadmap",
+      "sha": "217c354f7d855abf39852f1df32ebaf26c1b429f",
+      "contained_in_main": false,
+      "archive_tag": "archive/2026-10-21/offline-avatar-roadmap",
+      "decision": "retained remote ref pending explicit user decision",
+      "reason": "PR #34 squash-merged; current main contains the later plan."
+    },
+    {
+      "branch": "codex/player-acceptance-20261021",
+      "sha": "cb3528330d995b9827727586b64ed6c165a62197",
+      "contained_in_main": true,
+      "archive_tag": null,
+      "decision": "retired remote ref; source preserved",
+      "reason": "Already contained in main."
+    },
+    {
+      "branch": "codex/playtest-accessibility",
+      "sha": "5001b22f9cc581598fa7e98828aa912d0bdc4dab",
+      "contained_in_main": true,
+      "archive_tag": null,
+      "decision": "retired remote ref; source preserved",
+      "reason": "Already contained in main."
+    },
+    {
+      "branch": "codex/production-roadmap-agent-world",
+      "sha": "c411425b940bd207067b2d8511ca7197cdd201eb",
+      "contained_in_main": true,
+      "archive_tag": null,
+      "decision": "retired remote ref; source preserved",
+      "reason": "Already contained in main."
+    },
+    {
+      "branch": "codex/server-adapter-20261021",
+      "sha": "350d0b51dbfe91cb7581963a8af9825e4041380c",
+      "contained_in_main": true,
+      "archive_tag": null,
+      "decision": "retired remote ref; source preserved",
+      "reason": "Already contained in main."
+    },
+    {
+      "branch": "codex/server-foundation-20261021",
+      "sha": "07cdb5363c802542265a086a481660cc1307b758",
+      "contained_in_main": false,
+      "archive_tag": "archive/2026-10-21/server-foundation-20261021",
+      "decision": "retained remote ref pending explicit user decision",
+      "reason": "Two original commits are patch-equivalent to integrated source."
+    },
+    {
+      "branch": "codex/stack-integration-record",
+      "sha": "43b367f659a9d5f545e5f3266fc98b5065a2727f",
+      "contained_in_main": true,
+      "archive_tag": null,
+      "decision": "retired remote ref; source preserved",
+      "reason": "Already contained in main."
+    },
+    {
+      "branch": "codex/stamp-identity-tooling",
+      "sha": "b1540346a818edf7e3a03162182ddbda19346007",
+      "contained_in_main": true,
+      "archive_tag": null,
+      "decision": "retired remote ref; source preserved",
+      "reason": "Already contained in main."
+    },
+    {
+      "branch": "codex/stamp-wallet-selection",
+      "sha": "9f5102b2407650d46d2fe544fb37558460efc993",
+      "contained_in_main": true,
+      "archive_tag": null,
+      "decision": "retired remote ref; source preserved",
+      "reason": "Already contained in main."
+    },
+    {
+      "branch": "main",
+      "sha": "7ddda79a91784228586a6536ec9abd565175f79f",
+      "contained_in_main": true,
+      "archive_tag": null,
+      "decision": "keep canonical main",
+      "reason": "Canonical development baseline."
+    }
+  ],
+  "candidate_tag": "candidate/2026-10-21-ai-quality",
+  "preservation": "All checkout folders and ignored/private files retained. Active codex/cloudflare-hosted-ai checkout excluded from modifications. Bundles preserve committed refs, not private files or working changes.",
+  "settings_target": {
+    "main_require_pull_requests": true,
+    "required_check": "verify",
+    "required_check_app_id": 15368,
+    "strict_status_checks": true,
+    "enforce_admins": true,
+    "required_approving_review_count": 0,
+    "allow_force_pushes": false,
+    "allow_deletions": false,
+    "delete_branch_on_merge": true
+  },
+  "bundle": {
+    "local_path": "github-sync-20261021/artifacts/branch-alignment-2026-10-21/pre-cleanup.bundle",
+    "sha256": "672518562b7ee1f7af88ac863647d1e6bedf5cb30e661c4ca21ec0938fa26a69",
+    "scope": "All committed refs in the shared product repository before remote retirement. No ignored/private files or working changes."
+  },
+  "local_planning_preservation": {
+    "original_source_hashes_verified": true,
+    "backup_directory": "product/artifacts/branch-alignment-2026-10-21/original-planning",
+    "stash_commit": "59a34104a2e55edac836b491b8e004c12127cb48",
+    "local_archive_ref": "refs/archive/2026-10-21/product-original-planning",
+    "files": [
+      {
+        "source": "product/README.md",
+        "destination": "README.md",
+        "sha256": "14de0c94e5a4eb3f6ebbf8730c44d9a7d3a1aa01dcb312af06a870c385b85210"
+      },
+      {
+        "source": "product/docs/ROADMAP.md",
+        "destination": "docs/ROADMAP.md",
+        "sha256": "21107dad27d4f4486b0429b0843a234643cfd268598f2fb26d4117b2bfb42a71"
+      },
+      {
+        "source": "product/docs/implementation/offline-avatar-control.md",
+        "destination": "docs/implementation/offline-avatar-control.md",
+        "sha256": "b132a8e443b5e35ea29415cd595d32d8f9b04a3ab07da19fe4f0d8a52c18e423"
+      },
+      {
+        "source": "product/docs/PRODUCTION_PLAN.md",
+        "destination": "docs/PRODUCTION_PLAN.md",
+        "sha256": "1bab2d899a74a4fe8dca21c3641181bcd546845269f3101715639f7d97f379c8"
+      },
+      {
+        "source": "product/docs/implementation/agent-created-world.md",
+        "destination": "docs/implementation/agent-created-world.md",
+        "sha256": "50219c3a40ab10350b3c4c6c967f1c7631455bf79fa62d3a656aaba3b34d1977"
+      }
+    ],
+    "primary_checkout": "product/ restored to main with fast-forward only"
+  },
+  "retired_remote_branches": [
+    {
+      "branch": "codex/agent-receiving-registry",
+      "expected_head": "c84f69ed851b57843aa47387ab084572d3b1d20c"
+    },
+    {
+      "branch": "codex/ai-playtest-readiness",
+      "expected_head": "0bd3e3b1401ebf6b460d9d71f287c4b474b2452b"
+    },
+    {
+      "branch": "codex/candidate-ai-quality-20261021",
+      "expected_head": "0bd3e3b1401ebf6b460d9d71f287c4b474b2452b"
+    },
+    {
+      "branch": "codex/dismiss-exchange-caption",
+      "expected_head": "0f28226cf5bb0150d2628b0db5f5f5d905a9058f"
+    },
+    {
+      "branch": "codex/game-quality-review",
+      "expected_head": "2a851faa18f67ac2e57bb89f3e2bc0f7295a34c0"
+    },
+    {
+      "branch": "codex/github-sync-20261021",
+      "expected_head": "9cc23920226adf70bad518881c5a31f125c06870"
+    },
+    {
+      "branch": "codex/player-acceptance-20261021",
+      "expected_head": "cb3528330d995b9827727586b64ed6c165a62197"
+    },
+    {
+      "branch": "codex/playtest-accessibility",
+      "expected_head": "5001b22f9cc581598fa7e98828aa912d0bdc4dab"
+    },
+    {
+      "branch": "codex/production-roadmap-agent-world",
+      "expected_head": "c411425b940bd207067b2d8511ca7197cdd201eb"
+    },
+    {
+      "branch": "codex/server-adapter-20261021",
+      "expected_head": "350d0b51dbfe91cb7581963a8af9825e4041380c"
+    },
+    {
+      "branch": "codex/stack-integration-record",
+      "expected_head": "43b367f659a9d5f545e5f3266fc98b5065a2727f"
+    },
+    {
+      "branch": "codex/stamp-identity-tooling",
+      "expected_head": "b1540346a818edf7e3a03162182ddbda19346007"
+    },
+    {
+      "branch": "codex/stamp-wallet-selection",
+      "expected_head": "9f5102b2407650d46d2fe544fb37558460efc993"
+    }
+  ],
+  "retirement_method": "One atomic push with explicit expected-head leases after ancestry, archive-tag and open-PR checks.",
+  "retained_remote_branches": [
+    "codex/funded-project-accounts",
+    "codex/hosted-ai-rollout-20261021",
+    "codex/offline-avatar-plan",
+    "codex/offline-avatar-roadmap",
+    "codex/server-foundation-20261021"
+  ],
+  "approval_review": "Automatic approval review rejected the broader deletion. A narrowed 13-branch cleanup succeeded. Explicit user choice is pending for the five retained remote references; the active local codex/cloudflare-hosted-ai branch is excluded.",
+  "closed_pr": {
+    "number": 37,
+    "reason": "Incorporated through #38; original head contained in main."
+  },
+  "settings_applied": {
+    "main_require_pull_requests": true,
+    "required_check": "verify",
+    "required_check_app_id": 15368,
+    "strict_status_checks": true,
+    "enforce_admins": true,
+    "required_approving_review_count": 0,
+    "allow_force_pushes": false,
+    "allow_deletions": false,
+    "delete_branch_on_merge": true
+  },
+  "validation": {
+    "local_markdown_links_checked": 152,
+    "link_errors": 0,
+    "runtime_files_changed": false,
+    "review": "Independent read-only documentation review accompanies the PR; consult its description for final findings."
+  }
+}

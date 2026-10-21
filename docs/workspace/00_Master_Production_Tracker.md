@@ -1,5 +1,7 @@
 # The Freeman Show production tracker
 
+**Historical assessment:** use [current project status](../CURRENT_STATUS.md) for later source, live-check evidence and current assignments. The dated observations below retain their original scope.
+
 **GitHub snapshot — 21 October:** this preserves the local record and its dated observations. Repository links are normalized for this combined branch; private runtime evidence remains local. See the [synchronization record](../GITHUB_SYNC.md) for current source coverage and publication status.
 
 **21 October game execution:** the [active game delivery tracker](../DELIVERY_TRACKER.md) now records the user-authorized parallel agents, blockers and integration queue. This file continues to own show production; no episode stage changed during game-lane setup.

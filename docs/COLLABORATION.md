@@ -1,20 +1,28 @@
-# Working with Sol and Grok
+# Collaboration workflow
 
-## Active parallel round — 21 October 2026
+## Current workflow
 
-The user has authorized the lanes in [DELIVERY_TRACKER.md](DELIVERY_TRACKER.md). That board supersedes historical lane assignments for this round: Kevin's fix stays with the existing AI chat; `player_acceptance` owns bounded UI/acceptance work in its isolated checkout; `server_foundation` owns only an isolated authority prototype; the coordinating chat owns integration and the shared board. Follow the exact base revisions, file boundaries, ports and acceptance evidence in the board. Agents maintain separate handoffs; the coordinator alone updates status. The earlier Sol/Grok role labels describe previous milestones and do not dispatch or wake chats.
+[CURRENT_STATUS.md](CURRENT_STATUS.md) owns live source/deployment status and named assignments. Use one owner, one bounded task, one isolated checkout and one short-lived `codex/` branch from current main. Record the base/head, PR, write boundary, blocker and next evidence. Use stacking only for an explicit dependency; no permanent `develop` branch is needed. Preserve user changes and private files. Follow the [branch lifecycle](BRANCHES.md) for integration and retirement.
 
-## Current integration — 19 October 2026
+Main requires a PR, the passing current `verify` check and resolved conversations. Merge, spending and hosted publication still follow the user's authorization. After a merge, update CURRENT_STATUS and retire the completed head; preserve recovery checkpoints with tags and dated receipts. Only current named owners edit their lane; historical role labels and queues do not dispatch or wake chats.
+
+The sections below preserve earlier collaboration arrangements. Their source revisions, acceptance limits and assignments describe those past rounds; consult CURRENT_STATUS for later integration, successful narrow AI checks and active hosting work.
+
+## Completed parallel round — 21 October 2026
+
+The user authorized the lanes recorded in the [completed delivery-round receipt](DELIVERY_TRACKER.md). That dated board superseded earlier lane assignments during the round: Kevin's fix stayed with the existing AI chat; `player_acceptance` owned bounded UI/acceptance work in its isolated checkout; `server_foundation` owned only an isolated authority prototype; the coordinating chat owned integration and the shared board. The board records those base revisions, file boundaries, ports and acceptance evidence. Agents maintained separate handoffs and the coordinator recorded status. The earlier Sol/Grok role labels describe previous milestones and do not dispatch or wake chats.
+
+## Historical integration — 19 October 2026
 
 The reviewed stack is merged into main: [PR #30](https://github.com/arwyn6969/the-game/pull/30) (gameplay and caption controls) → [PR #31](https://github.com/arwyn6969/the-game/pull/31) (permanent identities) → [PR #32](https://github.com/arwyn6969/the-game/pull/32) (stamp appearance) → [PR #33](https://github.com/arwyn6969/the-game/pull/33) (private wallet tooling and Wonder Wallet). The user approved integration in that order with merge commits; implementation integration checkpoint `426b00b` has the verified `c84f69ed` tree. Start new work on feature branches from current `origin/main`. The [branch record](BRANCHES.md) identifies merge commits, the checkpoint CI receipt and preserved source/recovery refs.
 
-PR #16 is closed as superseded by the reconciled eight-actor implementation in PR #30. Its original branch remains for experimental version-1 ledger recovery. PR #29's caption change is incorporated into PR #30 with source ancestry preserved. Neither old draft should be merged independently. Keep existing refs and checkouts; no further cleanup accompanies this integration. Hosted publication, human/accessibility checks, live provider/operator acceptance, actual Wonder extension signing and receiving/recovery/asset reconciliation remain pending. Public funding stays disabled; every eventual outgoing transfer requires owner approval.
+PR #16 is closed as superseded by the reconciled eight-actor implementation in PR #30. Its original implementation is preserved for experimental version-1 ledger recovery at tag `archive/2026-10-21/funded-project-accounts`. PR #29's caption change is incorporated into PR #30 with source ancestry preserved. Neither old draft should be merged independently. That integration preserved source refs and checkouts. The later [21 October alignment](review/branch-alignment-2026-10-21/README.md) records remote retirement and recovery tags; all checkout folders remain preserved. Hosted publication, human/accessibility checks, live provider/operator acceptance, actual Wonder extension signing and receiving/recovery/asset reconciliation remain pending. Public funding stays disabled; every eventual outgoing transfer requires owner approval.
 
 ## Integration snapshot — 12 October 2026
 
-The following paragraphs preserve the earlier status; use the current integration above for new work.
+The following paragraphs preserve the earlier status; use CURRENT_STATUS for new work.
 
-Use [the consolidation record](CONSOLIDATION.md) as the current source and cleanup entry point. PR #19 merged PRs #5, #6, #9, #13 and #14 into main. The 17 incorporated remote branches are retired; start new work from current `origin/main`. The existing graphics are retained. Do not restart their historical lanes or copy an older whole-project export over this candidate.
+The [consolidation record](CONSOLIDATION.md) records that historical source and cleanup checkpoint. PR #19 merged PRs #5, #6, #9, #13 and #14 into main. The 17 incorporated remote branches are retired; start new work from current `origin/main`. The existing graphics are retained. Do not restart their historical lanes or copy an older whole-project export over this candidate.
 
 PR #16 remains the separate, inactive S1 economy foundation. Its six-actor version-1 ledger needs reconciliation with the eight-actor version-2 save, including new resident accounts and opening totals. Only then should S2 activate every cash path and matching player terms together. PR #23 is merged. Assign an owner and use a fresh branch from current main.
 
