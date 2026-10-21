@@ -1,5 +1,13 @@
 # Sol handoff
 
+## 21 October 2026 — actual-game interruption and save session
+
+Eight real requests in the normal authenticated saved town passed at $0: four standard Cohere Command A and four Flash-Lite minimal. Local token-quota switching and one controlled Cohere 429 fallback worked. Three real responses had eight-second delivery holds: local-reply substitution produced one exchange, replay retained the draft without applying the late result, and reload discarded its abandoned result. An idle local server restart preserved authentication, town state and accounting; both providers answered afterward. Final reload shows 20 exchanges (14 prior plus five AI and one local), unchanged journal money/debt/shift, and a paused clock at 13:56.
+
+All old ledger rows are unchanged. Totals are 33 budget/37 pool rows, all settled; eight real calls plus one simulated attempt in this continuation. No timeout, background generation, application-source change or paid request occurred. The finite private routes are closed and all providers disabled. A6 remains partial: this six-minute player session does not qualify long soaks, concurrent tabs, continuous scheduling or crash-in-flight accounting. [Review and evidence](../review/ai-game-session-2026-10-21.md) records those limits and the private audit.
+
+Existing NVIDIA credentials work for read-only model discovery. Super's free endpoint is deprecated; Ultra's is currently available and remains an unqualified backup candidate. OpenRouter reports zero free requests remaining today at a $0 paid cap. Neither reserve was used for generation. No new account or activation was needed; the coordinating chat still owns the canonical delivery tracker.
+
 ## 21 October 2026 — timeout diagnosis and completed live fix checks
 
 Both narrow fixes now have accepted live output and save round-trips. Standard Cohere `command-a-03-2025` produced Baba's complete plan in 4,114 ms: grocery hours 08:00–17:00 all target the grocery with `out`, and home rest targets townhouses. Flash-Lite `gemini-3.5-flash-lite` at minimal reasoning produced Kevin's reflections in 1,002 ms: he offered to start the kettle and does not know whether anyone drank. Two reflections retain their provenance through save/load. Synthetic finances, identity and the saved player shift remain unchanged.
