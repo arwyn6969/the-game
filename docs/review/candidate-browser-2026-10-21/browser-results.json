@@ -1,0 +1,235 @@
+{
+  "url": "http://127.0.0.1:8102/",
+  "node": "v24.19.0",
+  "builtPreview": false,
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "movement": {
+        "before": {
+          "x": 26,
+          "y": 22
+        },
+        "after": {
+          "x": 27,
+          "y": 22
+        },
+        "input": "keyboard"
+      },
+      "offlineConversation": true,
+      "reload": true,
+      "competingTabs": true,
+      "v1Migration": true,
+      "identities": {
+        "stableLegacyRestore": true,
+        "explicitFork": true,
+        "forkReload": true,
+        "corruptImportRejected": true
+      }
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "movement": {
+        "before": {
+          "x": 26,
+          "y": 22
+        },
+        "after": {
+          "x": 27,
+          "y": 22
+        },
+        "input": "touch"
+      },
+      "offlineConversation": true,
+      "reload": true,
+      "competingTabs": true,
+      "v1Migration": true,
+      "identities": {
+        "stableLegacyRestore": true,
+        "explicitFork": true,
+        "forkReload": true,
+        "corruptImportRejected": true
+      }
+    }
+  ],
+  "failures": [],
+  "library": [
+    {
+      "viewport": "desktop",
+      "result": "success",
+      "feesPaid": 6,
+      "custody": 2,
+      "totalCoins": 90,
+      "ordinaryControls": true,
+      "portableRoundTrip": true,
+      "reload": true,
+      "errors": []
+    },
+    {
+      "viewport": "phone",
+      "result": "failure",
+      "feesPaid": 6,
+      "custody": 2,
+      "totalCoins": 90,
+      "ordinaryControls": true,
+      "portableRoundTrip": true,
+      "reload": true,
+      "errors": []
+    }
+  ],
+  "readings": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "blockedProviderRequests": [],
+      "readings": [
+        {
+          "venue": "park",
+          "guests": 2,
+          "participation": "listen",
+          "optionalPurchase": "bread",
+          "paid": 2,
+          "totalCoins": 90,
+          "portableImportReload": true,
+          "scene": "The first page\nNorthern rests his page on the park bench. ‘I thought I needed a proper room before I could begin.’\nNorthern reads: ‘There was a town where nobody asked what you had finished. They asked what you had begun.’ His hands stop shaking halfway through.\nSub: ‘Two listeners count. A first page does not need a grand opening.’\nThey pass round Baba's bread tray. Your coins have become something shared."
+        },
+        {
+          "venue": "library",
+          "guests": 3,
+          "participation": "read",
+          "optionalPurchase": "tea",
+          "paid": 2,
+          "totalCoins": 90,
+          "portableImportReload": true,
+          "scene": "The first page\nArwyn opens the library's reading nook using the corroborated room record. Three neighbours pull their chairs together.\nReading desktop: ‘I only moved here recently. Today I am glad I did.’\nNorthern reads: ‘There was a town where nobody asked what you had finished. They asked what you had begun.’ His hands stop shaking halfway through.\nArwyn: ‘The room mattered. So did keeping the uncertainty in the record until we could check it.’\nThey pass round Kevin's tea tray. Your coins have become something shared."
+        }
+      ],
+      "observedMappingsSubmittedWithoutTranscription": true
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "blockedProviderRequests": [],
+      "readings": [
+        {
+          "venue": "park",
+          "guests": 2,
+          "participation": "listen",
+          "optionalPurchase": "bread",
+          "paid": 2,
+          "totalCoins": 90,
+          "portableImportReload": true,
+          "scene": "The first page\nNorthern rests his page on the park bench. ‘I thought I needed a proper room before I could begin.’\nNorthern reads: ‘There was a town where nobody asked what you had finished. They asked what you had begun.’ His hands stop shaking halfway through.\nSub: ‘Two listeners count. A first page does not need a grand opening.’\nThey pass round Baba's bread tray. Your coins have become something shared."
+        },
+        {
+          "venue": "library",
+          "guests": 3,
+          "participation": "read",
+          "optionalPurchase": "tea",
+          "paid": 2,
+          "totalCoins": 90,
+          "portableImportReload": true,
+          "scene": "The first page\nArwyn opens the library's reading nook using the corroborated room record. Three neighbours pull their chairs together.\nReading phone: ‘I only moved here recently. Today I am glad I did.’\nNorthern reads: ‘There was a town where nobody asked what you had finished. They asked what you had begun.’ His hands stop shaking halfway through.\nArwyn: ‘The room mattered. So did keeping the uncertainty in the record until we could check it.’\nThey pass round Kevin's tea tray. Your coins have become something shared."
+        }
+      ],
+      "observedMappingsSubmittedWithoutTranscription": true
+    }
+  ],
+  "uiEdges": {
+    "url": "http://127.0.0.1:8102/",
+    "node": "v24.19.0",
+    "journeys": [
+      {
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "errors": [],
+        "blockedProviderRequests": [],
+        "escapeFocus": true,
+        "replayMovement": true,
+        "routeCancellation": true,
+        "importModesKeyboard": true,
+        "importDialog": true,
+        "oldClosedProject": true,
+        "captionDismissal": true,
+        "captionImportEscapePriority": true,
+        "captionHistoryAndReload": true
+      },
+      {
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "errors": [],
+        "blockedProviderRequests": [],
+        "escapeFocus": true,
+        "replayMovement": true,
+        "routeCancellation": true,
+        "importModesKeyboard": true,
+        "importDialog": true,
+        "oldClosedProject": true,
+        "captionDismissal": true,
+        "captionImportEscapePriority": true,
+        "captionHistoryAndReload": true
+      }
+    ],
+    "failures": []
+  },
+  "uiInterruptions": {
+    "url": "http://127.0.0.1:8102/",
+    "node": "v24.19.0",
+    "journeys": [
+      {
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "errors": [],
+        "blockedProviderRequests": [],
+        "residentReplacesTool": true,
+        "keyboardTabs": true,
+        "exclusivePanels": true,
+        "boardFocus": true,
+        "moneyUnchangedByPanels": true
+      },
+      {
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "errors": [],
+        "blockedProviderRequests": [],
+        "residentReplacesTool": true,
+        "keyboardTabs": true,
+        "exclusivePanels": true,
+        "boardFocus": true,
+        "moneyUnchangedByPanels": true,
+        "touchCancellation": true
+      }
+    ],
+    "failures": []
+  }
+}
