@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-21",
+  "note": "Original local document hashes before GitHub link normalization; source files remain in their original checkouts.",
+  "documents": [
+    {
+      "source": "product/README.md",
+      "destination": "README.md",
+      "sha256": "14de0c94e5a4eb3f6ebbf8730c44d9a7d3a1aa01dcb312af06a870c385b85210"
+    },
+    {
+      "source": "product/docs/ROADMAP.md",
+      "destination": "docs/ROADMAP.md",
+      "sha256": "21107dad27d4f4486b0429b0843a234643cfd268598f2fb26d4117b2bfb42a71"
+    },
+    {
+      "source": "product/docs/implementation/offline-avatar-control.md",
+      "destination": "docs/implementation/offline-avatar-control.md",
+      "sha256": "b132a8e443b5e35ea29415cd595d32d8f9b04a3ab07da19fe4f0d8a52c18e423"
+    },
+    {
+      "source": "product/docs/PRODUCTION_PLAN.md",
+      "destination": "docs/PRODUCTION_PLAN.md",
+      "sha256": "1bab2d899a74a4fe8dca21c3641181bcd546845269f3101715639f7d97f379c8"
+    },
+    {
+      "source": "product/docs/implementation/agent-created-world.md",
+      "destination": "docs/implementation/agent-created-world.md",
+      "sha256": "50219c3a40ab10350b3c4c6c967f1c7631455bf79fa62d3a656aaba3b34d1977"
+    },
+    {
+      "source": "START_HERE.md",
+      "destination": "docs/workspace/START_HERE.md",
+      "sha256": "0645f59bc1ee23279638cecf37192b82c2bca10a1064b011ec988828ad6a199e"
+    },
+    {
+      "source": "00_Master_Production_Tracker.md",
+      "destination": "docs/workspace/00_Master_Production_Tracker.md",
+      "sha256": "eb3185cb76d39960235efa96f249d42118646b2993e0337045c31ea48fc6cbfc"
+    },
+    {
+      "source": "01_Game_Readiness_Checklist.md",
+      "destination": "docs/workspace/01_Game_Readiness_Checklist.md",
+      "sha256": "37c2c734cf2de8ec4ce219fbb0110e3e8a288d353497c24e0f043d40c9388c4f"
+    },
+    {
+      "source": "review/ai-recovery-2026-10-20/README.md",
+      "destination": "docs/review/ai-recovery-2026-10-20.md",
+      "sha256": "02d988fac084557e76f4aec98fe55fec5a398a56579ff31c6e323da24e335c39"
+    }
+  ]
+}

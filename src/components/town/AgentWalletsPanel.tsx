@@ -363,7 +363,12 @@ export function AgentWalletsPanel({
     return () => {
       mounted.current = false;
       invalidate();
-      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+      if (
+        document.activeElement === document.body &&
+        previousFocus instanceof HTMLElement &&
+        previousFocus.isConnected
+      )
+        previousFocus.focus();
     };
   }, []);
 
@@ -735,7 +740,7 @@ export function AgentWalletsPanel({
   const held = observation?.observation.holdings;
   const unavailable = (ownerAccess && !ownerAccess.available) || !authEnabled;
   return (
-    <aside
+    <section
       className="mind player-tools"
       role="dialog"
       aria-labelledby={titleId}
@@ -1081,6 +1086,6 @@ export function AgentWalletsPanel({
           </>
         )}
       </div>
-    </aside>
+    </section>
   );
 }

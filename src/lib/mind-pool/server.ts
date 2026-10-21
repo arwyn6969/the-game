@@ -96,7 +96,18 @@ export async function thinkWithPool(
       config,
       env: process.env,
       store: new SqlQuotaStore(await quotaSql()),
-      onAttempt: (provider, model, completion) => attempts.push({ provider, model, completion }),
+      onAttempt: (provider, model, completion) => {
+        attempts.push({ provider, model, completion });
+        if (completion.outcome === "invalid" && completion.response) {
+          // Retain the rejection category in server logs, never prompts, replies,
+          // provider error strings, credentials, user IDs, or private reasoning.
+          try {
+            console.warn("[mind-pool-invalid]", JSON.stringify(completion.response));
+          } catch {
+            /* Diagnostics cannot alter the settled attempt. */
+          }
+        }
+      },
     });
     const last = attempts.at(-1);
     return {
@@ -109,6 +120,7 @@ export async function thinkWithPool(
         elapsedMs: Date.now() - started,
         outcome: last?.completion.outcome ?? null,
         status: last?.completion.status ?? null,
+        response: last?.completion.response,
         totalTokens: attempts.some((a) => a.completion.actualTokens !== null)
           ? attempts.reduce((sum, a) => sum + (a.completion.actualTokens ?? 0), 0)
           : null,

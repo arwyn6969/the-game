@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "pinnedAtUtc": "2026-10-21 10:54:02 UTC",
+  "purpose": "Reviewed local development baseline for browser acceptance and the fake-AI real-engine server adapter",
+  "repository": "arwyn6969/the-game",
+  "source": {
+    "commit": "0bd3e3b1401ebf6b460d9d71f287c4b474b2452b",
+    "tree": "0b68cf176037b436c07a6225a2fdeebb58f0eea1",
+    "branch": "codex/candidate-ai-quality-20261021",
+    "tag": "candidate/2026-10-21-ai-quality",
+    "checkout": "/Users/arwynhughes/Documents/ChatGPT/THE GAME/candidate-20261021",
+    "cleanAtPin": true,
+    "mainBase": "313e9baf626a5ece11ef08f705a7f401ca3608b1",
+    "stackedPrHeads": {
+      "36": "5001b22f9cc581598fa7e98828aa912d0bdc4dab",
+      "37": "215c8c74c7c3b41c5a6f07e921da4552c5498c0d"
+    },
+    "ownedAiCommits": [
+      "9210b78",
+      "0bd3e3b"
+    ]
+  },
+  "verification": {
+    "ownerReceipt": "candidate-20261021/docs/review/ai-job-fixes-2026-10-21.md",
+    "townTests": 348,
+    "fullTests": 929,
+    "typecheck": "passed",
+    "lint": "passed with one inherited auth warning",
+    "townDiagnostics": "passed",
+    "credentialFreeAuthEnabledBuild": "passed; migrations skipped",
+    "coordinatorReview": "Planning/destination and prompt changes inspected; no source-level blocker identified",
+    "diagnosticsReview": {
+      "commit": "618bbc7d96db56cf5b2af3188a96f94e957c07b6",
+      "diffSha256": "09c2ddd2237019981be1ded52d15416b674fe8303adf55dd36cac3feaff74b39",
+      "reviewedFiles": 6,
+      "allFileHashesMatchedAtPin": true,
+      "offlineProbeGroupsPassed": 6,
+      "outboundRequests": 0
+    },
+    "finalCandidateBrowserRecheck": {
+      "status": "passed; zero failures or browser errors",
+      "sourceCommit": "0bd3e3b1401ebf6b460d9d71f287c4b474b2452b",
+      "applicationFingerprint": "5c065816684643b390a48fb914c8195677251b88ee98b111cf48993fe67d890a",
+      "evidenceCommit": "cef72b7adc8109f14b2458d9b06c0df1a5bc89c0",
+      "handoff": "player-acceptance/docs/handoffs/candidate-browser-2026-10-21.md",
+      "viewports": ["1280x800", "390x844 emulation"],
+      "sourceTreeAndFingerprintUnchanged": true,
+      "candidateWorktreeClean": true,
+      "providerCalls": 0,
+      "previewStopped": true,
+      "humanAndPhysicalDeviceSessions": 0
+    }
+  },
+  "liveChecks": {
+    "spendUsd": 0,
+    "realRequests": 2,
+    "localQuotaSkips": 1,
+    "coherePlan": "unreachable at 12008ms; no HTTP response",
+    "flashLiteReflection": "unreachable at 12007ms; no HTTP response",
+    "freshOutputAcceptance": "open",
+    "accounting": "All new reservations settled; earlier rows preserved; no limit reset or increase; normal routes disabled"
+  },
+  "adapter": {
+    "owner": "/root/server_foundation",
+    "state": "bounded real-engine packet complete, independently reviewed and frozen",
+    "branch": "codex/server-adapter-20261021",
+    "commit": "350d0b51dbfe91cb7581963a8af9825e4041380c",
+    "tree": "0550d8dc328164218296a9c4be17de69f2a6eab0",
+    "handoff": "server-foundation/docs/handoffs/server-adapter-2026-10-21.md",
+    "adapterTestsPassed": 26,
+    "priorAuthorityTestsPassed": 16,
+    "combinedTestsPassed": 42,
+    "failedOrSkippedTests": 0,
+    "targetedLintFormattingAndWhitespace": "passed",
+    "independentReview": "final frozen source probes pass; no remaining blocker within bounded local scope",
+    "independentReviewCommit": "cb3528330d995b9827727586b64ed6c165a62197",
+    "independentReviewHandoff": "player-acceptance/docs/handoffs/server-adapter-review-2026-10-21.md",
+    "allSevenReviewedHashesMatchedCommittedAndWorkingTree": true,
+    "fixedReviewFindings": ["missing HEAD must refuse retained-history replacement", "derived job and default completion ID bounds preserve completion liveness"],
+    "guardedNetworkAttempts": 0,
+    "processesRemaining": false,
+    "productionSourceChanges": false,
+    "localMeasurement": {
+      "realTicks": 181,
+      "records": 183,
+      "latestRecordBytes": 2164988,
+      "retainedRecordBytes": 185076392,
+      "sampleElapsedMs": 14469,
+      "scope": "local diagnostic sample, not production capacity evidence"
+    },
+    "nextLocalPacket": ["explicit navigation runtime state and pathing parity", "stale-job revalidation/retry and observation retention", "transactional checkpoint/delta and coherent recovery contract"],
+    "prototypeCommit": "16900ad35f9159127838b22a17b8aa16abf1fd01",
+    "contractCommit": "07cdb5363c802542265a086a481660cc1307b758",
+    "inference": "fake/local only",
+    "productionWiring": false
+  },
+  "releaseGatesOpen": [
+    "fresh live plan/reflection quality",
+    "sustained/concurrent AI operation",
+    "five uncoached human sessions",
+    "physical phone and actual assistive technology",
+    "deployed build, account/billing, auth/accounting and recovery acceptance",
+    "production server auth/storage/network integration"
+  ],
+  "publication": "No main merge, push, deployment, production configuration change or paid service purchase in this coordination round"
+}

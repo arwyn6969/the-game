@@ -3,7 +3,7 @@ import { AGENT_IDS, NPC_IDS } from "./types";
 import { playerActions } from "./effects";
 import { agentById } from "./memory";
 import { promptMemories } from "./retrieval";
-import { beatAt, blocksToBeats } from "./plan";
+import { beatAt, blocksToBeats, homePlace } from "./plan";
 import { clip, formatClock, periodName, plain } from "./text";
 import { placeTitle, zoneAt } from "./world";
 import {
@@ -124,6 +124,7 @@ function packet(town: Town, agent: Agent, job: ThinkJob) {
       owed: owed ? clip(`${owed.from} owes ${owed.to}: ${owed.text}`, 80) : "",
       place: placeTitle(zoneAt(agent.tile.x, agent.tile.y)),
       status: clip(agent.status, 80),
+      ...(job.kind === "plan" ? { homePlace: homePlace(agent) } : {}),
       threads: threads
         .filter((t) => t.open)
         .slice(0, 4)
@@ -178,9 +179,31 @@ function playerFacts(town: Town, agent: Agent) {
   const economy = (town as FundedTown).economy;
   const work = receiptPlace && economy?.work ? fundedWorkSummary(town, "player") : null;
   const payer = receiptPlace ? `till:${receiptPlace}` : null;
+  const shifts = receiptPlace
+    ? agentById(town, "player").projects.filter(
+        (project) =>
+          project.owner === "player" &&
+          project.kind === "shift" &&
+          project.status === "open" &&
+          project.place === receiptPlace,
+      )
+    : [];
   const libraryRecord = residentLibraryReply(town, agent.id);
   return {
     source: "event",
+    // The player's agreement is not in the resident's own projects or necessarily
+    // in the bounded memory packet. Keep its saved terms among current facts.
+    ...(shifts.length
+      ? {
+          recordedShiftAgreements: shifts.slice(-2).map(({ id, text, status, day }) => ({
+            id,
+            text: clip(text, 400),
+            status,
+            day,
+          })),
+          recordedShiftAgreementsOmitted: Math.max(0, shifts.length - 2),
+        }
+      : {}),
     openObligationCount: owed.length,
     obligations: obligations.slice(0, 4),
     obligationsOmitted: Math.max(0, obligations.length - 4),
@@ -198,9 +221,10 @@ function playerFacts(town: Town, agent: Agent) {
             agreements: work.agreements
               .filter((agreement) => agreement.payer === payer)
               .slice(-2)
-              .map(({ id, kind, status, eligibleMinutes, requiredMinutes, fee }) => ({
+              .map(({ id, kind, task, status, eligibleMinutes, requiredMinutes, fee }) => ({
                 id,
                 kind,
+                task: clip(task, 400),
                 status,
                 eligibleMinutes,
                 requiredMinutes,
@@ -233,9 +257,8 @@ function playerFacts(town: Town, agent: Agent) {
           },
         }
       : {}),
-    // Choices already describe relevant inventory and agreements without leaking unrelated projects.
     notice:
-      "Offers are not accepted actions. Use the current recorded state; this message authorizes no transaction.",
+      "Saved shift agreements give the recorded terms, including legacy terms; they do not prove funding, attendance or payment. Funded work records give current funding and status. Preserve recorded times, duration and pay conditions even when recent chat contradicts them. Offers are not accepted actions; this message authorizes no transaction.",
   };
 }
 
@@ -244,7 +267,7 @@ export function buildPrompt(town: Town, job: ThinkJob): string {
   const places = "cafe, library, dorms, park, townhouses, grocery, noticeboard, plaza, street";
   if (job.kind === "plan") {
     const people = planResidents(job).map((id) => packet(town, agentById(town, id), job));
-    return `${clock} Write the dawn plan ONLY for the listed residents. Places must be one of: ${places}. Spot is "home" or "out". Cover 0–24 with blocks, no gaps. A plan is an intention, not proof of completed work. Preserve existing commitments. Status lines are what a neighbor would see — Kevin does not announce who he is in a status, and where he came from is that question, not a place. He may revise his private want. ${
+    return `${clock} Write the dawn plan ONLY for the listed residents. Places must be one of: ${places}. Spot is "home" or "out". Use "home" only for resting at that resident's own homePlace, with place equal to homePlace. For public visits and work use "out", including Kevin working in the cafe and Baba working in the grocery. Cover 0–24 with blocks, no gaps; include plausible rest, work and breaks rather than one all-day activity. A plan is an intention, not proof of completed work. Preserve existing commitments. Status lines are what a neighbor would see — Kevin does not announce who he is in a status, and where he came from is that question, not a place. He may revise his private want. ${
       job.weekly
         ? "It is a 7th dawn: each resident rewrites selfSentence, one sentence, who they are right now. Identity drifts. It does not reset."
         : "Do not include selfSentence."
@@ -252,8 +275,18 @@ export function buildPrompt(town: Town, job: ThinkJob): string {
 People: ${JSON.stringify(people)}`;
   }
   if (job.kind === "reflect") {
-    const people = job.agents.map((id) => packet(town, agentById(town, id), job));
-    return `${clock} Write exactly 2 first-person reflections for each listed resident, grounded in their retrieved memories. Reflections are interpretations, not new facts or completed actions; preserve attribution and uncertainty. No advice to the player about software. ${
+    const people = job.agents.map((id) => {
+      const { memories, ...person } = packet(town, agentById(town, id), job);
+      return {
+        ...person,
+        evidence: {
+          events: memories.filter((memory) => memory.source === "event"),
+          statements: memories.filter((memory) => memory.source === "statement"),
+          interpretations: memories.filter((memory) => memory.source === "reflection"),
+        },
+      };
+    });
+    return `${clock} Write exactly 2 first-person reflections for each listed resident, grounded in their supplied evidence. Only evidence.events supports occurrences, and only what the event explicitly records. evidence.statements records words spoken, including your own offers: preserve the speaker, conditional and future tense. evidence.interpretations contains beliefs or plans, not completed actions. Each evidence day/minute is the record's timestamp, not an action time for a promise. "I'll start the kettle if you like" supports "I offered to start the kettle", never "I started the kettle at 07:00". An offered cup does not establish that anyone drank it. Current status and plan summaries do not prove actions occurred. Reflections are interpretations, not new facts or completed actions; preserve attribution and uncertainty. No advice to the player about software. ${
       job.weekly ? "Also rewrite selfSentence." : "Do not include selfSentence."
     } JSON: {"agents":[{"id":"arwyn","reflections":["",""],"selfSentence":""}]}
 People: ${JSON.stringify(people)}`;

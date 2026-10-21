@@ -1,0 +1,95 @@
+{
+  "date": "2026-10-19",
+  "branch": "codex/playtest-accessibility",
+  "baseCommit": "313e9baf626a5ece11ef08f705a7f401ca3608b1",
+  "testedSourceFingerprint": "0b3778d0598efd5028ba93e8da57b8a3cac542367c3c5ac77d90b43df4aadecf",
+  "testedBuildLabel": "5c32de04c98d + local changes",
+  "build": {
+    "passed": true,
+    "authEnabled": true,
+    "credentialFree": true,
+    "migrationsRun": false
+  },
+  "checks": {
+    "typecheck": "passed",
+    "lint": "passed with one inherited unused eslint-disable warning in src/lib/auth/use-current-user.ts:59",
+    "townTests": {
+      "passed": 338,
+      "failed": 0
+    },
+    "npmTest": {
+      "passed": 892,
+      "failed": 0
+    },
+    "launcherSafetyTests": {
+      "passed": 10,
+      "includedInNpmTest": true
+    },
+    "diagnoseTown": "ran; observations only",
+    "accessibility": {
+      "auditedSurfaces": 54,
+      "wcagViolations": 0,
+      "bestPracticeViolations": 0,
+      "incompleteRuleResults": 54,
+      "essentialChecks": 27,
+      "failedChecks": 0,
+      "failures": 0,
+      "externalBrowserNetworkRequests": 0
+    },
+    "gameplay": {
+      "viewports": [
+        {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "errors": [],
+      "note": "GAME_QA_URL points to the sanitized Nitro built preview. The harness builtPreview flag is false whenever this override is supplied; tested-build.json identifies the actual build."
+    },
+    "delayedAi": {
+      "mockedTransport": true,
+      "liveProviderCalls": 0,
+      "viewports": [
+        {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "failures": [],
+      "scope": "Synthetic delayed transport: manual fallback, pause, walking away, reordered/late replies, replay, import cancellation and draft preservation."
+    }
+  },
+  "screenReader": {
+    "status": "incomplete",
+    "attempt": "User authorized temporary macOS VoiceOver. Settings briefly reported on then later off; speech and screen-reader navigation were not verified. Native Chrome keyboard entry and semantic controls observed in a disposable local town.",
+    "finalVoiceOverSetting": "off"
+  },
+  "humanSessions": {
+    "PT01": "not run",
+    "PT02": "not run",
+    "PT03": "not run",
+    "PT04": "not run",
+    "PT05": "not run"
+  },
+  "pending": [
+    "uncoached human sessions and next-game-day recognition/voluntary return",
+    "physical phone and on-screen keyboard",
+    "native browser 200% zoom",
+    "verified screen-reader/nonvisual gameplay",
+    "live existing-provider AI quality and shared budget/operator acceptance"
+  ],
+  "privacy": "Only synthetic test screenshots/results are archived. No save files, personal browser profiles, credentials, real wallet/account data or human transcripts are committed.",
+  "screenshots": "Representative screenshots archived here; complete automated screenshots remain in ignored artifacts directories and CI artifacts."
+}

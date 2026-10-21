@@ -105,6 +105,76 @@ test("shared reservations enforce cost and call limits across independent store 
   );
 });
 
+test("a literal zero monetary cap requires a zero monetary reserve and preserves positive-cap rules", () => {
+  assert.equal(policy({ dailyMicrousd: 0, interactiveReserveMicrousd: 0 }).dailyMicrousd, 0);
+  for (const changes of [
+    { dailyMicrousd: -1, interactiveReserveMicrousd: 0 },
+    { dailyMicrousd: 0, interactiveReserveMicrousd: 1 },
+    { dailyMicrousd: 0, interactiveReserveMicrousd: -1 },
+    { dailyMicrousd: 1, interactiveReserveMicrousd: 1 },
+  ])
+    assert.throws(() => policy(changes), /Invalid/);
+  assert.equal(policy({ dailyMicrousd: 1, interactiveReserveMicrousd: 0 }).dailyMicrousd, 1);
+});
+
+for (const scope of ["shared", "ephemeral"]) {
+  test(`${scope} zero cap rejects positive cost while free calls retain identity, global and concurrency limits`, async () => {
+    const target = scope === "shared" ? store : new EphemeralMindBudgetStore();
+    const cap = policy({
+      dailyCalls: 4,
+      playerDailyCalls: 2,
+      playerMinuteCalls: 2,
+      playerInteractiveReserveCalls: 0,
+      playerInteractiveReserveMinuteCalls: 0,
+      interactiveReserveCalls: 1,
+      concurrent: 2,
+      backgroundConcurrent: 1,
+      dailyMicrousd: 0,
+      interactiveReserveMicrousd: 0,
+      inputNanousdPerToken: 0,
+      outputNanousdPerToken: 0,
+    });
+    for (const kind of ["player", "talk"])
+      assert.equal(await target.reserve(request({ kind, microusd: 1 }), cap), null);
+    const free = (user) => target.reserve(request({ user, microusd: 0 }), cap);
+    const first = await free("first");
+    const second = await free("first");
+    assert.ok(first);
+    assert.ok(second);
+    assert.equal(await free("second"), null, "concurrency still applies to free work");
+    await target.finish(first, 1);
+    await target.finish(second, 1);
+    assert.equal(await free("first"), null, "identity call limits remain charged after finish");
+    const third = await free("second");
+    const fourth = await free("second");
+    assert.ok(third);
+    assert.ok(fourth);
+    await target.finish(third, 1);
+    await target.finish(fourth, 1);
+    assert.equal(await free("third"), null, "global call allowance remains finite");
+  });
+}
+
+test("a zero cap blocks the provider callback under positive tariffs in both stores", async () => {
+  let calls = 0;
+  for (const scope of ["shared", "ephemeral"]) {
+    const result = await runBudgetedMind(
+      run({
+        scope,
+        store: scope === "shared" ? store : new EphemeralMindBudgetStore(),
+        policy: policy({ dailyMicrousd: 0, interactiveReserveMicrousd: 0 }),
+        run: async () => {
+          calls++;
+          return { ok: true, diagnostics: { attempts: 1 } };
+        },
+      }),
+    );
+    assert.equal(result.ok, false);
+  }
+  assert.equal(calls, 0);
+  assert.equal((await attempts()).length, 0);
+});
+
 test("parallel shared workers cannot allocate the same remaining allowance", async () => {
   const result = await Promise.all([
     store.reserve(request({ user: "a", microusd: 600 }), policy()),

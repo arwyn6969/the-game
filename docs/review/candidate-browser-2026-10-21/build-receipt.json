@@ -1,0 +1,17 @@
+{
+  "source": {
+    "commit": "0bd3e3b1401ebf6b460d9d71f287c4b474b2452b",
+    "dirty": false,
+    "buildId": "0bd3e3b1401e",
+    "fingerprint": "5c065816684643b390a48fb914c8195677251b88ee98b111cf48993fe67d890a"
+  },
+  "tree": "0b68cf176037b436c07a6225a2fdeebb58f0eea1",
+  "tag": "candidate/2026-10-21-ai-quality",
+  "builtAt": "2026-10-21T10:52:59.176Z",
+  "node": "v24.19.0",
+  "credentialFree": true,
+  "authEnabled": true,
+  "applicationInputCount": 250,
+  "servedUrl": "http://127.0.0.1:8102/",
+  "preview": "Sanitized production-stage Vite preview; quality-browser did not auto-launch its default preview"
+}

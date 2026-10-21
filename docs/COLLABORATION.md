@@ -1,5 +1,9 @@
 # Working with Sol and Grok
 
+## Active parallel round — 21 October 2026
+
+The user has authorized the lanes in [DELIVERY_TRACKER.md](DELIVERY_TRACKER.md). That board supersedes historical lane assignments for this round: Kevin's fix stays with the existing AI chat; `player_acceptance` owns bounded UI/acceptance work in its isolated checkout; `server_foundation` owns only an isolated authority prototype; the coordinating chat owns integration and the shared board. Follow the exact base revisions, file boundaries, ports and acceptance evidence in the board. Agents maintain separate handoffs; the coordinator alone updates status. The earlier Sol/Grok role labels describe previous milestones and do not dispatch or wake chats.
+
 ## Current integration — 19 October 2026
 
 The reviewed stack is merged into main: [PR #30](https://github.com/arwyn6969/the-game/pull/30) (gameplay and caption controls) → [PR #31](https://github.com/arwyn6969/the-game/pull/31) (permanent identities) → [PR #32](https://github.com/arwyn6969/the-game/pull/32) (stamp appearance) → [PR #33](https://github.com/arwyn6969/the-game/pull/33) (private wallet tooling and Wonder Wallet). The user approved integration in that order with merge commits; implementation integration checkpoint `426b00b` has the verified `c84f69ed` tree. Start new work on feature branches from current `origin/main`. The [branch record](BRANCHES.md) identifies merge commits, the checkpoint CI receipt and preserved source/recovery refs.

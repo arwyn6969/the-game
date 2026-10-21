@@ -1,0 +1,30 @@
+{
+  "checkedAt": "2026-10-19T14:02:32.471Z",
+  "checks": [
+    {
+      "url": "http://127.0.0.1:8181/",
+      "status": 200,
+      "titlePresent": true
+    },
+    {
+      "url": "http://127.0.0.1:8182/",
+      "status": 200,
+      "titlePresent": true
+    },
+    {
+      "url": "http://127.0.0.1:8183/",
+      "status": 200,
+      "titlePresent": true
+    },
+    {
+      "url": "http://127.0.0.1:8184/",
+      "status": 200,
+      "titlePresent": true
+    },
+    {
+      "url": "http://127.0.0.1:8185/",
+      "status": 200,
+      "titlePresent": true
+    }
+  ]
+}

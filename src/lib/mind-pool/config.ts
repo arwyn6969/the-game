@@ -85,8 +85,9 @@ export function validateConfig(value: unknown): PoolConfig {
       if (
         r.reasoningEffort !== undefined &&
         (typeof r.reasoningEffort !== "string" ||
-          !["low", "medium", "high"].includes(r.reasoningEffort) ||
-          p.protocol === "cohere")
+          !["none", "low", "medium", "high"].includes(r.reasoningEffort) ||
+          p.protocol === "cohere" ||
+          (r.reasoningEffort === "none" && url.origin !== "https://openrouter.ai"))
       ) {
         throw new Error("Invalid mind pool reasoning effort");
       }

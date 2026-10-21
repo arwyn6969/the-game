@@ -4,6 +4,8 @@ Planning direction recorded 19 October 2026. AI continuity is a core requirement
 
 The proposed first release has one tested model, explicit goals and limits, immediate player takeover, and a clear return journal. Trial it with free operator-issued time before selling prepaid time in Bitcoin. Keep model selection and optional NVIDIA DGX Spark inference behind the same service boundary so either can follow measured demand.
 
+**21 October planning extension:** the [production plan](../PRODUCTION_PLAN.md) places OA1/OA2 in the server milestones. Future [agent construction, optional land trading, sandboxed apps and external activities](agent-created-world.md) need the same canonical authority and revocation contracts. Reserve those interfaces in OA1, but retain the initial OA2 restrictions: construction, land spending and app/service permissions are separate capabilities, not implied by leaving with AI. App execution runs outside the world service and submits validated proposals; human reclaim revokes avatar-action authority even while a job is still running.
+
 ## Foundations and missing work
 
 The [roadmap](../ROADMAP.md#shared-server-world-and-ai-avatar-continuity) assigns this work to the future shared server world. The separate [stamp tooling packet 6](https://github.com/arwyn6969/the-game/blob/ea2164318e72b88edd0e26b2ad7e3b9329c87477/docs/implementation/stamp-identity-tooling.md#open-decisions-and-later-gates) already requires one active authority per character. This plan adds control of an absent player's avatar and payment for that service.

@@ -1,0 +1,99 @@
+{
+  "checkedAt": "2026-10-21T10:54:57.790Z",
+  "sourceCommit": "0bd3e3b1401ebf6b460d9d71f287c4b474b2452b",
+  "sourceTree": "0b68cf176037b436c07a6225a2fdeebb58f0eea1",
+  "sourceFingerprint": "5c065816684643b390a48fb914c8195677251b88ee98b111cf48993fe67d890a",
+  "sourceDirty": false,
+  "gitPorcelain": "",
+  "sourceUnchanged": true,
+  "allBrowserGroupsPassed": true,
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "movement": "keyboard",
+      "conversation": true,
+      "reload": true,
+      "competingTabs": true,
+      "v1Migration": true,
+      "identities": {
+        "stableLegacyRestore": true,
+        "explicitFork": true,
+        "forkReload": true,
+        "corruptImportRejected": true
+      }
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "movement": "touch",
+      "conversation": true,
+      "reload": true,
+      "competingTabs": true,
+      "v1Migration": true,
+      "identities": {
+        "stableLegacyRestore": true,
+        "explicitFork": true,
+        "forkReload": true,
+        "corruptImportRejected": true
+      }
+    }
+  ],
+  "library": [
+    {
+      "viewport": "desktop",
+      "result": "success",
+      "feesPaid": 6,
+      "custody": 2,
+      "totalCoins": 90,
+      "ordinaryControls": true,
+      "portableRoundTrip": true,
+      "reload": true,
+      "errors": []
+    },
+    {
+      "viewport": "phone",
+      "result": "failure",
+      "feesPaid": 6,
+      "custody": 2,
+      "totalCoins": 90,
+      "ordinaryControls": true,
+      "portableRoundTrip": true,
+      "reload": true,
+      "errors": []
+    }
+  ],
+  "readingRoutes": [
+    {
+      "viewport": "desktop",
+      "venues": [
+        "park",
+        "library"
+      ],
+      "totalCoins": [
+        90,
+        90
+      ]
+    },
+    {
+      "viewport": "phone",
+      "venues": [
+        "park",
+        "library"
+      ],
+      "totalCoins": [
+        90,
+        90
+      ]
+    }
+  ],
+  "humanSessions": 0,
+  "physicalDeviceSessions": 0,
+  "liveAiCalls": 0
+}

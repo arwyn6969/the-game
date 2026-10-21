@@ -283,7 +283,12 @@ export function StampIdentityPanel({
       mounted.current = false;
       invalidate();
       clearInterval(interval);
-      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+      if (
+        document.activeElement === document.body &&
+        previousFocus instanceof HTMLElement &&
+        previousFocus.isConnected
+      )
+        previousFocus.focus();
     };
     // A new identity invalidates every pending callback and resets only this panel.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -531,7 +536,7 @@ export function StampIdentityPanel({
   const connected = Boolean(view?.connected);
   const holdings = view?.holdings;
   return (
-    <aside
+    <section
       className="mind player-tools"
       role="dialog"
       aria-labelledby={titleId}
@@ -813,6 +818,6 @@ export function StampIdentityPanel({
           </p>
         </section>
       </div>
-    </aside>
+    </section>
   );
 }

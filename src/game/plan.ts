@@ -1,6 +1,6 @@
 import type { Agent, Beat, Block, PlaceId, Plan } from "./types";
 import { PLACE_IDS } from "./types";
-import { ANCHORS, nearestWalkable } from "./world";
+import { ANCHORS, nearestWalkable, placeOfZone, zoneAt } from "./world";
 
 const PLACES = new Set<string>(PLACE_IDS);
 
@@ -55,7 +55,12 @@ export function beatAt(agent: Agent, minute: number): Beat {
   const hour = ((Math.floor(finiteMinute(minute) / 60) % 24) + 24) % 24;
   const beats = agent.plan?.beats;
   const beat = beats && beats[hour];
-  if (beat && isPlace(String(beat.place)) && typeof beat.status === "string") return beat;
+  if (beat && isPlace(String(beat.place)) && typeof beat.status === "string") {
+    // Interpret old saves and model proposals consistently without rewriting history.
+    // A mistaken home flag cannot send a resident away from the named workplace.
+    if (beat.spot === "home" && beat.place !== homePlace(agent)) return { ...beat, spot: "out" };
+    return beat;
+  }
   return {
     hour,
     place: "street",
@@ -68,9 +73,15 @@ function finiteMinute(minute: number): number {
   return Number.isFinite(minute) ? minute : 0;
 }
 
+export function homePlace(agent: Agent): PlaceId {
+  const home = agent.home ?? { x: 26, y: 22 };
+  return placeOfZone(zoneAt(home.x, home.y));
+}
+
 export function goalFor(agent: Agent, beat: Beat): { x: number; y: number } {
   const home = agent.home ?? { x: 26, y: 22 };
-  if (beat.spot === "home") return nearestWalkable(home.x, home.y);
+  if (beat.spot === "home" && beat.place === homePlace(agent))
+    return nearestWalkable(home.x, home.y);
   if (
     beat.place === "townhouses" &&
     (agent.id === "baba" || agent.id === "sub" || agent.id === "player")
