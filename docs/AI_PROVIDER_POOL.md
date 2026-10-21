@@ -52,6 +52,8 @@ Each route has `model`, `rank`, and `maxTokens`. For example:
 
 The output allowance includes any model reasoning that the provider counts against `max_tokens`. Longer reasoning can consume that allowance or hit the timeout before producing JSON. Increase it within your quota after comparing real game results, or use a faster model. Default per-attempt timeout is 12 seconds; the provider I/O deadline is 30 seconds with at most three attempts. Database queries have separate 3-second bounds when using Postgres. Gemini routes use medium reasoning effort for planning/reflection and low effort for dialogue to keep deliberate work within the interactive deadline. Other compatible routes can opt into `reasoningEffort` after checking model support.
 
+For an OpenRouter route, `"reasoningEffort": "none"` explicitly sends `"reasoning": { "enabled": false }`. Omitting `reasoningEffort` preserves the provider's default; it does not prove reasoning is disabled. This explicit option is restricted to the OpenRouter adapter and does not raise output limits, change models, enable a provider or authorize another request. Some models require reasoning and cannot disable it; an unsupported request must fail closed. See [OpenRouter's reasoning controls](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens).
+
 ## How requests work
 
 ```mermaid
@@ -67,6 +69,8 @@ flowchart LR
 ```
 
 The simulation still decides valid actions, money, debts and schedules. Pool JSON is checked for the expected envelope; the existing `parseMind` and effect validation remain the final gate. No town/save schema changes are needed. The legacy `mind: "grok"` save marker currently means an online response in the existing game contract; detailed provider/model attribution is kept in the server ledger.
+
+An HTTP 200 response can still fail the pool's output check. Server response diagnostics distinguish truncation, empty content, oversized content, malformed JSON, a non-object value and a missing job envelope. They include a normalized finish category, final-content character count and reported input/output/reasoning token counts. Invalid attempts also write this bounded summary to the server log after settlement. These summaries contain no prompts, reply text, private reasoning, credentials, user identity or provider-returned IDs. The SQL ledger retains its existing aggregate usage and outcome fields. Total token usage includes input and cannot establish that output was truncated. Truncated output remains rejected even when its JSON happens to parse; prose and private reasoning are not converted into a reply.
 
 Request quotas use rolling 60-second, 24-hour and 31-day windows. This is deliberately conservative around provider reset times and calendar months. Token reservations use UTF-8 input bytes plus an overhead allowance and the maximum output tokens. Failed requests and format retries count, and reservations are not refunded; actual reported usage is recorded separately and can tighten subsequent limits. This is a conservative estimate, not an exact tokenizer or a monetary billing cap.
 

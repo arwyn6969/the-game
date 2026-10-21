@@ -4,7 +4,7 @@ import {
   readJsonBounded,
   requestBody,
   retryAfterMs,
-  validMindJson,
+  mindJsonFailure,
 } from "./transport.ts";
 import type { Completion, MindKind, PoolConfig, PoolResult, QuotaStore } from "./types.ts";
 
@@ -81,7 +81,15 @@ export async function routeMind(input: {
               candidate.provider.protocol,
             );
             completion.actualTokens = decoded.actualTokens;
-            if (!decoded.truncated && validMindJson(kind, decoded.text)) {
+            completion.response = {
+              finishReason: decoded.finishReason,
+              inputTokens: decoded.inputTokens,
+              outputTokens: decoded.outputTokens,
+              reasoningTokens: decoded.reasoningTokens,
+              responseCharacters: decoded.text.length,
+              invalidReason: decoded.truncated ? "truncated" : mindJsonFailure(kind, decoded.text),
+            };
+            if (completion.response.invalidReason === null) {
               text = decoded.text;
               completion = { ...completion, outcome: "ok", modelCooldownMs: 0 };
             } else {
