@@ -28,6 +28,8 @@ The verified local binary is `/Users/arwynhughes/.cache/codex-runtimes/codex-pri
 
 The tests intercept `fetch`, outgoing TCP connections and server-listen attempts from before engine loading through cleanup. All counters remained zero. The abrupt-exit child has the same deny hooks. No live AI, provider gateway, real account, production database, migration, hosting or paid service was used. Test data lives in temporary local directories and is removed on completion.
 
+Outer request IDs retain their 150-character limit; derived `job:` IDs accept the resulting maximum of 154. The default completion request ID uses a deterministic digest so every accepted origin remains completable within the outer limit. Both explicit and default completion IDs are tested at the maximal origin length, including restart and duplicate delivery.
+
 ## Storage contract
 
 `store.mjs` writes a content-addressed immutable **full envelope** record containing the complete JSON-safe Town, membership, controller, outbox and outer receipts. It fsyncs that record and directory, then fsyncs and atomically replaces `HEAD`; that pointer is the commit boundary. Views publish only after durable completion. An uncertain storage write fences the process until reopen/reconciliation.
@@ -38,7 +40,7 @@ Recovery validates the referenced hash/revision chain and loads its full committ
 
 ## Measured sample and limits
 
-One local diagnostic sampled 181 real clock ticks, one shift acceptance and crash/restart checks. It retained **183 full records**, with a **2,164,988-byte latest record** and **185,076,392 bytes of retained record data**. The sampled elapsed time was **14,271 ms**, including serialization, fsync and recovery. These are diagnostic measurements on this workstation, not capacity or latency promises. Pending outbox observations and complete snapshots make this deliberately expensive; there is no compaction or retention policy.
+One local diagnostic sampled 181 real clock ticks, one shift acceptance and crash/restart checks. It retained **183 full records**, with a **2,164,988-byte latest record** and **185,076,392 bytes of retained record data**. The sampled elapsed time was **14,469 ms**, including serialization, fsync and recovery. These are diagnostic measurements on this workstation, not capacity or latency promises. Pending outbox observations and complete snapshots make this deliberately expensive; there is no compaction or retention policy.
 
 Other explicit limits:
 

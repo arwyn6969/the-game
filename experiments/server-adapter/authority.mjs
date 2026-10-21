@@ -11,10 +11,14 @@ export const CLOCK = Object.freeze({ kind: "system", service: "clock" });
 export const NPC_WORKER = Object.freeze({ kind: "system", service: "fake-npc" });
 export const AVATAR_WORKER = Object.freeze({ kind: "worker", workerId: "worker:avatar" });
 const denied = (code, extra = {}) => ({ ok: false, code, ...extra });
-const isId = (value) =>
+const isId = (value, maxLength = 150) =>
   typeof value === "string" &&
-  /^[a-zA-Z0-9:_-]{1,150}$/.test(value) &&
+  value.length > 0 &&
+  value.length <= maxLength &&
+  /^[a-zA-Z0-9:_-]+$/.test(value) &&
   !Object.hasOwn(Object.prototype, value);
+// A valid outer ID can be 150 characters; its derived "job:" ID can be 154.
+const isJobId = (value) => isId(value, 154) && value.startsWith("job:");
 const safeInteger = (value) => Number.isSafeInteger(value) && value >= 0;
 const exact = (value, keys) =>
   value &&
@@ -424,7 +428,8 @@ export class EngineAuthority {
       request.worldId !== this.#state.worldId
     )
       return denied("INVALID_REQUEST");
-    if (request.kind === "complete-job" && !isId(request.jobId)) return denied("INVALID_REQUEST");
+    if (request.kind === "complete-job" && !isJobId(request.jobId))
+      return denied("INVALID_REQUEST");
     if (!authorized(this.#state, principal, request)) return denied("FORBIDDEN");
     const previous = this.#state.receipts[request.requestId];
     if (previous)
@@ -516,7 +521,12 @@ export const tickIntent = (state) => ({
   worldId: state.worldId,
   tick: state.clock.ticks + 1,
 });
-export const completionIntent = (state, jobId, output, requestId = `complete:${jobId}`) => ({
+export const completionIntent = (
+  state,
+  jobId,
+  output,
+  requestId = `complete:${digest(jobId)}`,
+) => ({
   kind: "complete-job",
   requestId,
   worldId: state.worldId,

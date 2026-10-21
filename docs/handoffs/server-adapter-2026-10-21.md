@@ -19,6 +19,8 @@ All eight roles remain; one fake account owns only player control. NPC `ThinkJob
 
 Independent review identified a missing-HEAD admission bug in the initial store. It is fixed: any retained store evidence without `HEAD` requires recovery, never automatic initialization. The regression removes `HEAD` after the real settled wage, attempts a different initializer, then verifies every retained file hash is unchanged and no replacement genesis/pointer appears. Orphan genesis/temp evidence also fails closed.
 
+Final review found a derived-ID boundary issue: a valid 150-character outer request ID creates a 154-character `job:` ID. The follow-up preserves the accepted outer range, validates derived job IDs separately up to 154 characters, and uses a bounded deterministic digest-based default completion ID. Two regressions complete the maximal-origin job with an explicit short ID and the default helper, then prove duplicate rejection after restart. Invalid-type IDs still fail without throwing or changing state. This is a separate fix commit atop `e82c48ccad743801b32a3a68f450251961d74737`; the coordinator records B's final assessment against its exact head.
+
 ## Actual verification
 
 Runtime: Node **v24.19.0** at `/Users/arwynhughes/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node`. Commands below ran from the own checkout using that binary:
@@ -28,7 +30,7 @@ Runtime: Node **v24.19.0** at `/Users/arwynhughes/.cache/codex-runtimes/codex-pr
 /Users/arwynhughes/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node node_modules/eslint/bin/eslint.js experiments/server-adapter/*.mjs experiments/server-authority/*.mjs
 ```
 
-- **40 tests passed, 0 failed, 0 skipped**: 24 new real-engine tests plus the 16 prior authority tests. Actual final combined duration: 17,102 ms.
+- **42 tests passed, 0 failed, 0 skipped**: 26 new real-engine tests plus the 16 prior authority tests. Actual final combined duration: 17,339 ms.
 - **Targeted ESLint passed** with no warnings/errors.
 - **Prettier and staged whitespace checks passed** for all six new files. Source-scope verification against the pin found no application/script/package/migration/server/tooling changes. No full app suite/typecheck/build/browser/device or live-provider checks were claimed for this isolated diff; the coordinator's pinned-source checks remain separate evidence.
 - Tests install deny hooks for `fetch`, outgoing TCP and server-listen calls before engine loading and retain them through cleanup; **zero attempts occurred**. The abruptly exited child has equivalent deny hooks. Vite uses `configFile:false`, `envDir:false`, middleware mode and disabled HMR/websocket/watch; its HTTP server is null.
@@ -46,7 +48,7 @@ The cafe scenario accepts an actual current quote, earns **180 eligible minutes*
 | Physical / committed records | 183 / 183                                              |
 | Latest full record           | 2,164,988 bytes                                        |
 | Retained record bytes        | 185,076,392 bytes                                      |
-| Sampled elapsed time         | 14,271 ms, including persistence and recovery          |
+| Sampled elapsed time         | 14,469 ms, including persistence and recovery          |
 
 The result confirms that retaining full snapshots and pending observations is costly; it is not production sizing or capacity evidence. The [README limitations](../../experiments/server-adapter/README.md#measured-sample-and-limits) are part of this delivery.
 

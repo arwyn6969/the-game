@@ -167,6 +167,38 @@ test("malformed intent discriminators and job IDs fail without throwing or chang
   assert.deepEqual(authority.snapshot(), before);
 });
 
+for (const completionMode of ["explicit", "default"]) {
+  test(`maximal accepted origin ID produces a completable job with ${completionMode} completion ID`, (t) => {
+    const run = setup(t, { raw: planningFixture() });
+    const originId = "x".repeat(150);
+    const original = run.authority.snapshot();
+    const tick = { ...tickIntent(original), requestId: originId };
+    assert.equal(
+      run.authority.submit(CLOCK, { ...tick, requestId: `${originId}x` }).code,
+      "INVALID_REQUEST",
+    );
+    assert.deepEqual(run.authority.snapshot(), original);
+    const queued = success(run.authority.submit(CLOCK, tick));
+    assert.equal(queued.jobId.length, 154);
+    const pending = run.authority.snapshot();
+    const output = run.authority.fakeOutput(queued.jobId);
+    const request =
+      completionMode === "explicit"
+        ? completionIntent(pending, queued.jobId, output, "complete:short")
+        : completionIntent(pending, queued.jobId, output);
+    assert.ok(request.requestId.length <= 150);
+    if (completionMode === "default") {
+      assert.match(request.requestId, /^complete:[0-9a-f]{64}$/);
+      assert.equal(completionIntent(pending, queued.jobId, output).requestId, request.requestId);
+    }
+    success(run.authority.submit(NPC_WORKER, request));
+    const committed = run.authority.snapshot();
+    assert.equal(committed.outbox[queued.jobId].status, "completed");
+    assert.equal(run.restart().submit(NPC_WORKER, request).code, "DUPLICATE_REQUEST");
+    assert.deepEqual(run.authority.snapshot(), committed);
+  });
+}
+
 test("raw v1 migration retains original bytes and normalized history through repeated reopen/export", (t) => {
   const raw = readFileSync(
     new URL("../../scripts/fixtures/legacy-six-resident-town.json", import.meta.url),
