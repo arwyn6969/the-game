@@ -1,14 +1,14 @@
-# THE GAME — active delivery tracker
+# 21 October delivery-round receipt
 
-**GitHub snapshot — 21 October:** this preserves the local record and its dated observations. Repository links are normalized for this combined branch; private runtime evidence remains local. See the [synchronization record](GITHUB_SYNC.md) for current source coverage and publication status.
+Historical receipt of the completed parallel round, recorded at **12:14 BST on 21 October 2026** by **Review project scope and priorities** (chat `01a15df4-11a3-7600-aafd-353d4126f620`). [CURRENT_STATUS.md](CURRENT_STATUS.md) owns live assignments, main/candidate/deployment status and later evidence. This record retains the observations as they stood. PRs #38 and #39 subsequently integrated the source; later narrow live AI checks are linked from CURRENT_STATUS.
 
-Updated **21 October 2026, 12:14 BST**. Coordinator: **Review project scope and priorities** (chat `01a15df4-11a3-7600-aafd-353d4126f620`). This is the single execution board for the parallel round authorized by Arwyn on 21 October. The [production plan](PRODUCTION_PLAN.md) owns release scope and dependencies; this board owns current assignments, blockers and next actions. The Freeman Show retains its separate production tracker.
+The [production plan](PRODUCTION_PLAN.md) owns release scope and dependencies. The Freeman Show retains its separate production tracker. Original source hashes are retained in the [synchronization manifest](review/github-sync-2026-10-21-sources.json).
 
 **Round objective:** make the existing playable loop reliable and reviewable, while investigating server authority in isolation. Product promise: “I come back because of what I did yesterday.”
 
 **Pinned development candidate:** `0bd3e3b1401ebf6b460d9d71f287c4b474b2452b`, tree `0b68cf176037b436c07a6225a2fdeebb58f0eea1`, local tag `candidate/2026-10-21-ai-quality`, clean checkout `candidate-20261021/`. [Pin/evidence manifest](review/candidate-2026-10-21.json). Both code fixes pass the 929-test suite; fresh live plan/reflection acceptance remains open after two $0 timeouts. This pin is the source baseline for the local adapter, not a hosted release.
 
-## Live board
+## Round completion board
 
 | Lane / accountable owner                                                                                                    | Status                                                 | Doing now                                                                                                                                                                                                                          | Blocked / waiting on                                                                                                                                         | Next action / completion evidence                                                                                                                                                                                               |
 | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -29,7 +29,7 @@ Status meanings: **Active** = owner has work in progress; **Ready for review** =
 | Candidate / B recheck | `candidate-20261021/`, `codex/candidate-ai-quality-20261021` | Pinned `0bd3e3b`; tag `candidate/2026-10-21-ai-quality`                                                                                | Application source and Git refs stay pinned. B may build into ignored artifacts using its independent dependencies and writes evidence in its own B checkout.                                      |
 | D                     | `product/`, existing `codex/production-roadmap-agent-world`  | Main `313e9baf626a5ece11ef08f705a7f401ca3608b1` plus preserved planning edits                                                          | This tracker, coordination receipt and entry-point links. Preserve the planning chat's existing uncommitted files.                                                                                 |
 
-All paths are relative to the workspace root unless stated. Canonical board is **`product/docs/DELIVERY_TRACKER.md` in this workspace**; copies in older feature branches are not current. Only the coordinator edits this board. Agents send evidence/blockers and maintain their own lane handoff. No shared development server, browser profile, personal save or writable dependency tree between lanes.
+All paths below are historical workspace paths unless stated. During this round, `product/docs/DELIVERY_TRACKER.md` was the coordinator-owned board. Current ownership is now recorded only in [CURRENT_STATUS.md](CURRENT_STATUS.md); these historical copies do not assign work. Agents used separate development servers, browser profiles, personal saves and writable dependency trees.
 
 The app worktree helper could not resolve the source revision from this chat's repository context. Both new worktrees were instead created explicitly from `product/` using Git. Existing checkouts, branches and private files were preserved.
 
@@ -42,14 +42,14 @@ The app worktree helper could not resolve the source revision from this chat's r
 5. **Arrange the five human sessions and real devices against one candidate.** All sessions remain unrun until people participate. Physical phones require a device-reachable preview of the same build; computer loopback alone is insufficient. Facilitator/participant slots and phone/AT access remain missing inputs.
 6. **Complete operator and live acceptance before release.** Identify deployed source/bill and verify genuine auth, durable accounting, limits, save/recovery and rollback. Keep future construction/apps/trading/paid services on their own gates. No source pin or prototype is hosted-publication evidence.
 
-## Constraints and acceptance still open
+## Constraints and acceptance at the recorded checkpoint
 
 - No new paid calls, purchases, production migrations/secrets, merges or publication are authorized by this coordination round. Lane A retains its existing user-authorized $0 checks; B/C use local-only or simulated AI.
 - Preserve cast, graphics, portable saves, identity, finances, auth/PWA and current runtime provider/hosting contracts.
 - New UI work must be evidence-driven. AI-generated playthroughs are not human enjoyment or physical accessibility acceptance.
 - Actual Wonder/receiving/recovery and asset/trading checks remain a separate track; no owner has been dispatched for those in this round.
 - No new Freeman Show episode stage, land market, paid AI service, sandbox service or external-game integration is started by these assignments.
-- Coordinator records completion, blocker or changed scope when observed. This is an active-session board, not a promise of unattended scheduled monitoring.
+- Coordinator records completion, blocker or changed scope when observed. This was an active-session board, not a promise of unattended scheduled monitoring.
 
 ## Decisions / receipts
 

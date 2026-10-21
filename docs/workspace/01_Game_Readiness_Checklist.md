@@ -1,5 +1,7 @@
 # THE GAME — readiness checklist and recovery plan
 
+**Historical assessment:** use [current project status](../CURRENT_STATUS.md) for later source, live-check evidence and current assignments. The dated observations below retain their original scope.
+
 **GitHub snapshot — 21 October:** this preserves the local record and its dated observations. Repository links are normalized for this combined branch; private runtime evidence remains local. See the [synchronization record](../GITHUB_SYNC.md) for current source coverage and publication status.
 
 Reviewed 20 October 2026; updated after the successful Cohere game test on 21 October. This brings together the current game roadmap, the last session's receipts, the earlier successful AI integration and the remaining acceptance work. It is a planning checkpoint, not a new release or a claim that all historical checks were rerun.
