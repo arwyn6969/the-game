@@ -61,7 +61,7 @@ export function validateBudgetPolicy(value: unknown): BudgetPolicy {
     !whole(policy.concurrent, 1) ||
     !whole(policy.backgroundConcurrent) ||
     !whole(policy.interactiveReserveCalls) ||
-    !whole(policy.dailyMicrousd, 1) ||
+    !whole(policy.dailyMicrousd) ||
     !whole(policy.interactiveReserveMicrousd) ||
     policy.playerDailyCalls > policy.dailyCalls ||
     policy.playerMinuteCalls > policy.playerDailyCalls ||
@@ -69,7 +69,9 @@ export function validateBudgetPolicy(value: unknown): BudgetPolicy {
     policy.playerInteractiveReserveMinuteCalls >= policy.playerMinuteCalls ||
     policy.backgroundConcurrent >= policy.concurrent ||
     policy.interactiveReserveCalls >= policy.dailyCalls ||
-    policy.interactiveReserveMicrousd >= policy.dailyMicrousd ||
+    (policy.dailyMicrousd === 0
+      ? policy.interactiveReserveMicrousd !== 0
+      : policy.interactiveReserveMicrousd >= policy.dailyMicrousd) ||
     (policy.inputNanousdPerToken !== null && !whole(policy.inputNanousdPerToken)) ||
     (policy.outputNanousdPerToken !== null && !whole(policy.outputNanousdPerToken)) ||
     (policy.inputNanousdPerToken === null) !== (policy.outputNanousdPerToken === null)

@@ -53,6 +53,7 @@
 
 .town {
   height: 100dvh;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -301,7 +302,7 @@ kbd {
 .world-frame {
   position: relative;
   flex: 1;
-  min-height: 0;
+  min-height: min(18rem, 50dvh);
   margin: 1rem 1.5rem;
   border: 1px solid #78529e;
   box-shadow:
@@ -544,7 +545,7 @@ kbd {
   background-image:
     radial-gradient(ellipse at 20% 55%, #6a29ac1a, transparent 55%),
     radial-gradient(ellipse at 85% 20%, #c3ff6306, transparent 40%),
-    radial-gradient(#a586ca60 1px, transparent 1px), radial-gradient(#c3ff6340 1px, transparent 1px);
+    radial-gradient(#a586ca18 1px, transparent 1px), radial-gradient(#c3ff6318 1px, transparent 1px);
   background-size:
     auto,
     auto,
@@ -675,7 +676,7 @@ kbd {
   margin-top: 1.25rem !important;
 }
 .gate-bottom {
-  color: #9782b4;
+  color: var(--color-muted);
   font-size: 0.65rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1400,6 +1401,24 @@ textarea.field {
   color: var(--color-muted);
   font-size: 0.7rem;
   line-height: 1.5;
+}
+
+/* Enlarged text can leave too little space below the town toolbars. Keep the
+   world scrollable and move its reading panels into the viewport in that case. */
+.town[data-cramped-world="true"] .mind {
+  position: fixed;
+  inset: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom)) auto;
+  width: min(27rem, calc(100% - 1.5rem));
+  height: auto;
+  max-height: none;
+  border: 1px solid var(--color-purple);
+  z-index: 20;
+}
+.town[data-cramped-world="true"] .mind-say {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 50dvh;
+  overflow-y: auto;
 }
 @media (max-height: 680px) and (max-width: 680px) {
   .welcome-tip > div > p,

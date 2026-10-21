@@ -1,4 +1,4 @@
-import type { Candidate, MindKind } from "./types.ts";
+import type { Candidate, CompletionDiagnostics, MindJsonFailure, MindKind } from "./types.ts";
 
 export function requestBody(
   candidate: Candidate,
@@ -17,7 +17,18 @@ export function requestBody(
     ],
   };
   if (jsonMode) body.response_format = { type: "json_object" };
-  if (candidate.route.reasoningEffort) body.reasoning_effort = candidate.route.reasoningEffort;
+  if (candidate.route.reasoningEffort === "none") {
+    // Omitting reasoning_effort leaves the selected model's default in place.
+    // Disabling optional reasoning is an explicit OpenRouter-only route choice.
+    if (
+      candidate.provider.protocol !== "openai" ||
+      new URL(candidate.provider.baseUrl).origin !== "https://openrouter.ai"
+    )
+      throw new Error("Disabling reasoning requires OpenRouter");
+    body.reasoning = { enabled: false };
+  } else if (candidate.route.reasoningEffort) {
+    body.reasoning_effort = candidate.route.reasoningEffort;
+  }
   return body;
 }
 
@@ -38,45 +49,89 @@ export function decodeCompletion(body: unknown, protocol: "openai" | "cohere") {
     choices?: { message?: { content?: unknown }; finish_reason?: string }[];
     message?: { content?: unknown };
     finish_reason?: string;
-    usage?: { total_tokens?: number; tokens?: { input_tokens?: number; output_tokens?: number } };
+    usage?: {
+      total_tokens?: number;
+      prompt_tokens?: number;
+      completion_tokens?: number;
+      completion_tokens_details?: { reasoning_tokens?: number };
+      tokens?: { input_tokens?: number; output_tokens?: number };
+    };
   } | null;
   const text = textOf(
     protocol === "cohere" ? value?.message?.content : value?.choices?.[0]?.message?.content,
   );
   const usage = value?.usage;
+  const inputTokens = tokenCount(
+    protocol === "cohere" ? usage?.tokens?.input_tokens : usage?.prompt_tokens,
+  );
+  const outputTokens = tokenCount(
+    protocol === "cohere" ? usage?.tokens?.output_tokens : usage?.completion_tokens,
+  );
   const total =
     protocol === "cohere"
-      ? Number(usage?.tokens?.input_tokens) + Number(usage?.tokens?.output_tokens)
+      ? inputTokens !== null && outputTokens !== null
+        ? inputTokens + outputTokens
+        : null
       : usage?.total_tokens;
+  const rawFinish =
+    protocol === "cohere" ? value?.finish_reason : value?.choices?.[0]?.finish_reason;
+  const finishReason = normalizedFinishReason(rawFinish);
   return {
     text,
-    actualTokens:
-      typeof total === "number" && Number.isSafeInteger(total) && total >= 0 ? total : null,
-    truncated: ["length", "MAX_TOKENS"].includes(
-      protocol === "cohere"
-        ? (value?.finish_reason ?? "")
-        : (value?.choices?.[0]?.finish_reason ?? ""),
-    ),
+    actualTokens: tokenCount(total),
+    truncated: finishReason === "length",
+    finishReason,
+    inputTokens,
+    outputTokens,
+    reasoningTokens:
+      protocol === "openai" ? tokenCount(usage?.completion_tokens_details?.reasoning_tokens) : null,
   };
+}
+
+function tokenCount(value: unknown): number | null {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : null;
+}
+
+function normalizedFinishReason(value: unknown): CompletionDiagnostics["finishReason"] {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string") return "other";
+  if (value === "MAX_TOKENS") return "length";
+  if (value === "COMPLETE") return "stop";
+  switch (value) {
+    case "stop":
+    case "length":
+    case "content_filter":
+    case "tool_calls":
+    case "error":
+      return value;
+    default:
+      return "other";
+  }
 }
 
 // Check the envelope here. The game's existing parseMind/applyResult still
 // validate resident identities, schedules and effects before touching the town.
-export function validMindJson(kind: MindKind, text: string): boolean {
-  if (!text.trim() || text.length > 20_000) return false;
+export function mindJsonFailure(kind: MindKind, text: string): MindJsonFailure | null {
+  if (!text.trim()) return "empty";
+  if (text.length > 20_000) return "oversize";
   try {
     const raw = text
       .trim()
       .replace(/^```(?:json)?\s*/, "")
       .replace(/\s*```$/, "");
     const v = JSON.parse(raw);
-    if (!v || typeof v !== "object" || Array.isArray(v)) return false;
-    if (kind === "player") return typeof v.reply === "string" && Boolean(v.reply.trim());
+    if (!v || typeof v !== "object" || Array.isArray(v)) return "not-object";
+    if (kind === "player")
+      return typeof v.reply === "string" && Boolean(v.reply.trim()) ? null : "missing-envelope";
     const field = kind === "plan" ? "plans" : kind === "reflect" ? "agents" : "lines";
-    return Array.isArray(v[field]) && v[field].length > 0;
+    return Array.isArray(v[field]) && v[field].length > 0 ? null : "missing-envelope";
   } catch {
-    return false;
+    return "invalid-json";
   }
+}
+
+export function validMindJson(kind: MindKind, text: string): boolean {
+  return mindJsonFailure(kind, text) === null;
 }
 
 export function retryAfterMs(header: string | null, now: number): number {

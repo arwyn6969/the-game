@@ -13,7 +13,8 @@ export type Limits = {
 export type Route = {
   model: string;
   maxTokens: number;
-  reasoningEffort?: "low" | "medium" | "high";
+  // Explicitly disabling reasoning is supported by the OpenRouter adapter.
+  reasoningEffort?: "none" | "low" | "medium" | "high";
   // Lower ranks are preferred. This is an operator preference, not a benchmark.
   rank: number;
 };
@@ -39,11 +40,23 @@ export type Candidate = { provider: Provider; route: Route };
 export type Lease = { id: string; jsonMode: boolean };
 export type Outcome =
   "ok" | "rate_limit" | "auth" | "config" | "format" | "invalid" | "unreachable";
+export type MindJsonFailure =
+  "empty" | "oversize" | "invalid-json" | "not-object" | "missing-envelope";
+export type CompletionDiagnostics = {
+  finishReason: "stop" | "length" | "content_filter" | "tool_calls" | "error" | "other" | null;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  reasoningTokens: number | null;
+  responseCharacters: number;
+  invalidReason: MindJsonFailure | "truncated" | null;
+};
 export type Completion = {
   outcome: Outcome;
   status: number | null;
   latencyMs: number;
   actualTokens: number | null;
+  // Only normalized categories/counts; never provider text, reasoning, or IDs.
+  response?: CompletionDiagnostics;
   // Account cooldown applies across all models using this provider's key.
   accountCooldownMs?: number;
   modelCooldownMs?: number;
@@ -69,6 +82,7 @@ export type PoolDiagnostics = {
   totalTokens: number | null;
   outcome: Outcome | null;
   status: number | null;
+  response?: CompletionDiagnostics;
 };
 export type PoolResult = (
   { ok: true; text: string } | { ok: false; error: "offline" | "slow" | "unreachable" }
