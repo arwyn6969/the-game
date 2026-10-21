@@ -62,10 +62,54 @@ test("provider-specific reasoning controls reject foreign protocols and hosts", 
   }
 });
 
+test("NVIDIA Ultra thinking-off is explicit and preserves the default request", () => {
+  const f = fixture("nvidia");
+  validateConfig(f.config);
+  const candidate = candidatesFor(f.config, "reflect", f.env)[0];
+  assert.ok(!("chat_template_kwargs" in requestBody(candidate, "s", "u", 1500, true)));
+  candidate.route.reasoningEffort = "none";
+  validateConfig(f.config);
+  const body = requestBody(candidate, "s", "u", 1500, true);
+  assert.deepEqual(body.chat_template_kwargs, { enable_thinking: false });
+  assert.equal(body.max_tokens, 1500);
+  assert.deepEqual(body.response_format, { type: "json_object" });
+  assert.ok(!("reasoning" in body) && !("reasoning_effort" in body));
+  const openrouter = fixture("openrouter", "none");
+  assert.deepEqual(
+    requestBody(
+      candidatesFor(openrouter.config, "reflect", openrouter.env)[0],
+      "s",
+      "u",
+      1500,
+      true,
+    ).reasoning,
+    { enabled: false },
+  );
+});
+
+test("NVIDIA native thinking-off rejects unreviewed models, hosts and protocols", () => {
+  for (const [model, origin, protocol] of [
+    ["other/model", "https://integrate.api.nvidia.com/v1", "openai"],
+    ["nvidia/nemotron-3-ultra-550b-a55b", "https://example.com/v1", "openai"],
+    ["nvidia/nemotron-3-ultra-550b-a55b", "https://integrate.api.nvidia.com.example/v1", "openai"],
+    ["nvidia/nemotron-3-ultra-550b-a55b", "https://integrate.api.nvidia.com/v1", "cohere"],
+  ]) {
+    const f = fixture("nvidia", "none");
+    const provider = f.config.providers[0];
+    Object.assign(provider, { baseUrl: origin, protocol });
+    provider.routes.reflect.model = model;
+    assert.throws(() => validateConfig(f.config));
+    assert.throws(() =>
+      requestBody({ provider, route: provider.routes.reflect }, "s", "u", 1500, true),
+    );
+  }
+});
+
 test("fast reasoning choices still use the existing router, settle once, and never retry", async () => {
   for (const [id, effort] of [
     ["cohere", undefined],
     ["gemini", "minimal"],
+    ["nvidia", "none"],
   ]) {
     const f = fixture(id, effort);
     validateConfig(f.config);
@@ -92,7 +136,8 @@ test("fast reasoning choices still use the existing router, settle once, and nev
         const body = JSON.parse(options.body);
         assert.equal(body.max_tokens, f.config.providers[0].routes.reflect.maxTokens);
         if (id === "cohere") assert.ok(!("thinking" in body));
-        else assert.equal(body.reasoning_effort, "minimal");
+        else if (id === "gemini") assert.equal(body.reasoning_effort, "minimal");
+        else assert.deepEqual(body.chat_template_kwargs, { enable_thinking: false });
         const text =
           '{"agents":[{"id":"kevin","reflections":["I offered to help.","I am still unsure."]}]}';
         return Response.json(

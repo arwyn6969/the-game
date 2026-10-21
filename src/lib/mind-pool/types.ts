@@ -13,7 +13,7 @@ export type Limits = {
 export type Route = {
   model: string;
   maxTokens: number;
-  // none: OpenRouter; minimal: Gemini's OpenAI-compatible API.
+  // none: OpenRouter or NVIDIA Ultra; minimal: Gemini's OpenAI-compatible API.
   reasoningEffort?: "none" | "minimal" | "low" | "medium" | "high";
   // Lower ranks are preferred. This is an operator preference, not a benchmark.
   rank: number;

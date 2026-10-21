@@ -1,5 +1,13 @@
 # Sol handoff
 
+## 21 October 2026 — NVIDIA Ultra player backup
+
+The existing free NVIDIA endpoint/key passed a bounded qualification. Default requests passed role/shift at 5.18/6.11 seconds, then notebook recall timed out at 12.01 seconds. Three consecutive thinking-off checks passed at 2.27/2.35/4.62 seconds: notebook recall, shift recall and controlled Cohere 429 → Flash-Lite 429 → Ultra fallback. Full prompt, strict router/parser, SQL budget/quota, effects and export/import were reused. Finances, agreements and permanent identity survived accepted outputs. A new-town identity-baseline mistake in the harness was corrected and its retained first response verified offline without another call.
+
+The existing optional `reasoningEffort: none` now emits NVIDIA Ultra's native thinking-off body only for its exact official host/protocol/model. Default behavior and OpenRouter payloads remain unchanged. The private local player pool now prepares Cohere → Flash-Lite → Ultra with three attempts; all providers remain disabled after testing. Six real requests, two locally simulated 429s, $0; all previous accounting intact, totals 39 budget/45 pool rows, all settled. No personal browser town or other checkout's config changed.
+
+Fresh Node 24 checks pass 936 tests (881 script + 55 app/auth, including 349 town), typecheck, lint with one inherited warning, diagnostics, credential-free auth-enabled build with migrations skipped, formatting and whitespace. [Review and private evidence](../review/nvidia-ultra-backup-2026-10-21.md) preserve the timeout and distinguish player qualification from actual-game UI, continuous/background or hosted acceptance. The coordinating chat owns the canonical delivery tracker.
+
 ## 21 October 2026 — actual-game interruption and save session
 
 Eight real requests in the normal authenticated saved town passed at $0: four standard Cohere Command A and four Flash-Lite minimal. Local token-quota switching and one controlled Cohere 429 fallback worked. Three real responses had eight-second delivery holds: local-reply substitution produced one exchange, replay retained the draft without applying the late result, and reload discarded its abandoned result. An idle local server restart preserved authentication, town state and accounting; both providers answered afterward. Final reload shows 20 exchanges (14 prior plus five AI and one local), unchanged journal money/debt/shift, and a paused clock at 13:56.
