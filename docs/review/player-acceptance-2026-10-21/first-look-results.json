@@ -1,0 +1,125 @@
+{
+  "scope": "Synthetic ordinary-UI observation; not a human session",
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "blockedModelCalls": [],
+      "arrival": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "welcome": "Northern's first readingNorthern wants to read a first page to his neighbors. Help find a place to begin, or explore on your own.Library projectHow to playThe clock is paused. Press 1× when you want the hour to move. WASD or arrows move one tile. On a phone, hold N W E S. Enter speaks to whoever is beside you. Hobbs is west. Open Choices with Kevin to agree a cafe shift, or with Baba to agree a bread tab. Read the terms before you choose. Or walk on.",
+        "toolButtons": [
+          {
+            "name": "Agent wallets",
+            "left": 24,
+            "right": 132.875,
+            "withinViewport": true
+          },
+          {
+            "name": "Stamp identity",
+            "left": 139.265625,
+            "right": 255.09375,
+            "withinViewport": true
+          },
+          {
+            "name": "Journal",
+            "left": 261.484375,
+            "right": 332.65625,
+            "withinViewport": true
+          },
+          {
+            "name": "Inventory",
+            "left": 339.046875,
+            "right": 422.46875,
+            "withinViewport": true
+          },
+          {
+            "name": "Go to",
+            "left": 428.859375,
+            "right": 486.640625,
+            "withinViewport": true
+          },
+          {
+            "name": "Library",
+            "left": 493.03125,
+            "right": 561.671875,
+            "withinViewport": true
+          },
+          {
+            "name": "Help",
+            "left": 568.0625,
+            "right": 621.34375,
+            "withinViewport": true
+          }
+        ]
+      },
+      "library": "Library project\n\nNorthern's first reading\n\nNorthern has been writing alone in his dorm. He wants to read one page to real neighbours, but the library's room record is lost among old labels. Help him find a place to begin.\n\nNext step\n\nChoose a check that pays 2 coins, decline, or walk on. You do not need your own money.\n\nAvailable choices\nChoose your contribution · 3Current step\n\nRead the equipment and dorm source cards and inspect Cedar; submit one structured report to earn 2. Kevin and Baba commit 4 business coins each after payroll protection. All three task fees are reserved; two coins fund a later correction. Incomplete work earns no fee; completed work earns the full fee even if the later index fails. The town owns the result. You may withdraw without a penalty.\n\nAccept source check · 2\n\nRead Kevin's reference card and inspect Birch, Alder and Cedar; submit one structured report to earn 2. Kevin and Baba commit 4 business coins each after payroll protection. All three task fees are reserved; two coins fund a later correction. Incomplete work earns no fee; completed work earns the full fee even if the later index fails. The town owns the result. You may withdraw without a penalty.\n\nAccept reference check · 2\n\nCreate no obligation, spend nothing, and incur no trust penalty. The same funded work remains available to residents or pending.\n\nDecline the project\nProject progress · offered\n\n0/2 preparation reports; 0/1 independent lookup\n\nProject money & ownership · 8-coin budget\nThe index\n\nVerified: supported by recorded evidence. Provisional: selected without that support. Unresolved: no box selected. A lookup tests the submitted index separately.\n\nHobbs equipment register · unresolved\n\nNo box selected · Public source date confirmed\n\nDormitory repair request · unresolved\n\nNo box selected · Public source date confirmed\n\nCommunity room access note · unresolved\n\nNo box selected · Historical date unknown\n\nPublic evidence\n\nInspected records remain here for you to consult while preparing the index.\n\nRead the equipment source card · not inspected\n\nVisit the library and inspect this record to read it.\n\nRead the dormitory source card · not inspected\n\nVisit the library and inspect this record to read it.\n\nRead the loose access card · not inspected\n\nVisit the library and inspect this record to read it.\n\nRead Kevin's reference card · not inspected\n\nVisit the library and inspect this record to read it.\n\nInspect Birch · not inspected\n\nVisit the library and inspect this record to read it.\n\nInspect Alder · not inspected\n\nVisit the library and inspect this record to read it.\n\nInspect Cedar · not inspected\n\nVisit the library and inspect this record to read it.\n\nLookup result\n\nNo independent lookup completed yet.\n\nHobbs equipment register: No submitted index yet.\nDormitory repair request: No submitted index yet.\nCommunity room access note: No submitted index yet.",
+      "help": "Help & privacy\nStart a day\n\nWalk west from the plaza to Hobbs Cafe and talk to Kevin. Or explore the library, grocery, park and noticeboard. You can ask questions, take work, decline or walk on.\n\nNorthern wants to share a favorite first page with his neighbors. Help find the library record he needs, then choose a small outdoor reading or a later gathering at the library. Read the project to choose a paid contribution or decline it.\n\nLibrary project\nMove and talk\n\nUse WASD or arrow keys to walk. On a phone, hold a direction on the map. Go somewhere offers destination buttons and single-step directions. Press Enter beside a resident, click their sprite, or use Talk nearby.\n\nThe clock starts paused. You can walk while paused. Press 1× or 4× to move town time; Hour skips forward. Pause gives you time to read. A direction stops a destination walk.\n\nYour choices\n\nRead the terms in Choices before accepting bread, work or payment. Conversation alone cannot move your money or commit your time. Journal keeps agreements, recorded events and tabs; Inventory keeps carried items. A loaf can be eaten once and its tab is paid separately.\n\nDialogue & privacy\nUse local dialogue only\n\nLocal dialogue works without a provider and sends no AI requests, including residents’ background conversations. It uses authored responses, so open-ended subjects are limited.\n\nWith AI enabled, your message, relevant memories, recent dialogue and resident profiles are sent to the game’s configured AI service to generate a reply. Replies can be mistaken. Recorded events and explicit choices determine what actually happened.\n\nDialogue preference saved in this browser.\n\nYour saved town\n\nThe town saves in this browser. Download town keeps a portable backup; Import lets you restore the same people or create a separate town with copied histories. Both replace this browser’s current town after keeping a recovery copy. Downloads include conversation history and private resident notes. Keep backups somewhere private. There is no account-based cross-device sync yet.\n\nDeveloper tools\n\nBuild 215c8c74c7c3"
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "blockedModelCalls": [],
+      "arrival": {
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "welcome": "Northern's first readingNorthern wants to read a first page to his neighbors. Help find a place to begin, or explore on your own.Library projectHow to playThe clock is paused. Press 1× when you want the hour to move. WASD or arrows move one tile. On a phone, hold N W E S. Enter speaks to whoever is beside you. Hobbs is west. Open Choices with Kevin to agree a cafe shift, or with Baba to agree a bread tab. Read the terms before you choose. Or walk on.",
+        "toolButtons": [
+          {
+            "name": "Agent wallets",
+            "left": 12,
+            "right": 106.890625,
+            "withinViewport": true
+          },
+          {
+            "name": "Stamp identity",
+            "left": 111.6875,
+            "right": 212.765625,
+            "withinViewport": true
+          },
+          {
+            "name": "Journal",
+            "left": 217.5625,
+            "right": 278.84375,
+            "withinViewport": true
+          },
+          {
+            "name": "Inventory",
+            "left": 283.640625,
+            "right": 355.84375,
+            "withinViewport": true
+          },
+          {
+            "name": "Go to",
+            "left": 360.640625,
+            "right": 409.984375,
+            "withinViewport": false
+          },
+          {
+            "name": "Library",
+            "left": 414.78125,
+            "right": 473.84375,
+            "withinViewport": false
+          },
+          {
+            "name": "Help",
+            "left": 478.640625,
+            "right": 523.9375,
+            "withinViewport": false
+          }
+        ]
+      },
+      "library": "Library project\n\nNorthern's first reading\n\nNorthern has been writing alone in his dorm. He wants to read one page to real neighbours, but the library's room record is lost among old labels. Help him find a place to begin.\n\nNext step\n\nChoose a check that pays 2 coins, decline, or walk on. You do not need your own money.\n\nAvailable choices\nChoose your contribution · 3Current step\n\nRead the equipment and dorm source cards and inspect Cedar; submit one structured report to earn 2. Kevin and Baba commit 4 business coins each after payroll protection. All three task fees are reserved; two coins fund a later correction. Incomplete work earns no fee; completed work earns the full fee even if the later index fails. The town owns the result. You may withdraw without a penalty.\n\nAccept source check · 2\n\nRead Kevin's reference card and inspect Birch, Alder and Cedar; submit one structured report to earn 2. Kevin and Baba commit 4 business coins each after payroll protection. All three task fees are reserved; two coins fund a later correction. Incomplete work earns no fee; completed work earns the full fee even if the later index fails. The town owns the result. You may withdraw without a penalty.\n\nAccept reference check · 2\n\nCreate no obligation, spend nothing, and incur no trust penalty. The same funded work remains available to residents or pending.\n\nDecline the project\nProject progress · offered\n\n0/2 preparation reports; 0/1 independent lookup\n\nProject money & ownership · 8-coin budget\nThe index\n\nVerified: supported by recorded evidence. Provisional: selected without that support. Unresolved: no box selected. A lookup tests the submitted index separately.\n\nHobbs equipment register · unresolved\n\nNo box selected · Public source date confirmed\n\nDormitory repair request · unresolved\n\nNo box selected · Public source date confirmed\n\nCommunity room access note · unresolved\n\nNo box selected · Historical date unknown\n\nPublic evidence\n\nInspected records remain here for you to consult while preparing the index.\n\nRead the equipment source card · not inspected\n\nVisit the library and inspect this record to read it.\n\nRead the dormitory source card · not inspected\n\nVisit the library and inspect this record to read it.\n\nRead the loose access card · not inspected\n\nVisit the library and inspect this record to read it.\n\nRead Kevin's reference card · not inspected\n\nVisit the library and inspect this record to read it.\n\nInspect Birch · not inspected\n\nVisit the library and inspect this record to read it.\n\nInspect Alder · not inspected\n\nVisit the library and inspect this record to read it.\n\nInspect Cedar · not inspected\n\nVisit the library and inspect this record to read it.\n\nLookup result\n\nNo independent lookup completed yet.\n\nHobbs equipment register: No submitted index yet.\nDormitory repair request: No submitted index yet.\nCommunity room access note: No submitted index yet.",
+      "help": "Help & privacy\nStart a day\n\nWalk west from the plaza to Hobbs Cafe and talk to Kevin. Or explore the library, grocery, park and noticeboard. You can ask questions, take work, decline or walk on.\n\nNorthern wants to share a favorite first page with his neighbors. Help find the library record he needs, then choose a small outdoor reading or a later gathering at the library. Read the project to choose a paid contribution or decline it.\n\nLibrary project\nMove and talk\n\nUse WASD or arrow keys to walk. On a phone, hold a direction on the map. Go somewhere offers destination buttons and single-step directions. Press Enter beside a resident, click their sprite, or use Talk nearby.\n\nThe clock starts paused. You can walk while paused. Press 1× or 4× to move town time; Hour skips forward. Pause gives you time to read. A direction stops a destination walk.\n\nYour choices\n\nRead the terms in Choices before accepting bread, work or payment. Conversation alone cannot move your money or commit your time. Journal keeps agreements, recorded events and tabs; Inventory keeps carried items. A loaf can be eaten once and its tab is paid separately.\n\nDialogue & privacy\nUse local dialogue only\n\nLocal dialogue works without a provider and sends no AI requests, including residents’ background conversations. It uses authored responses, so open-ended subjects are limited.\n\nWith AI enabled, your message, relevant memories, recent dialogue and resident profiles are sent to the game’s configured AI service to generate a reply. Replies can be mistaken. Recorded events and explicit choices determine what actually happened.\n\nDialogue preference saved in this browser.\n\nYour saved town\n\nThe town saves in this browser. Download town keeps a portable backup; Import lets you restore the same people or create a separate town with copied histories. Both replace this browser’s current town after keeping a recovery copy. Downloads include conversation history and private resident notes. Keep backups somewhere private. There is no account-based cross-device sync yet.\n\nDeveloper tools\n\nBuild 215c8c74c7c3"
+    }
+  ]
+}
