@@ -1,5 +1,15 @@
 # Sol handoff
 
+## 21 October 2026 — timeout diagnosis and completed live fix checks
+
+Both narrow fixes now have accepted live output and save round-trips. Standard Cohere `command-a-03-2025` produced Baba's complete plan in 4,114 ms: grocery hours 08:00–17:00 all target the grocery with `out`, and home rest targets townhouses. Flash-Lite `gemini-3.5-flash-lite` at minimal reasoning produced Kevin's reflections in 1,002 ms: he offered to start the kettle and does not know whether anyone drank. Two reflections retain their provenance through save/load. Synthetic finances, identity and the saved player shift remain unchanged.
+
+The earlier no-header timeouts cannot be precisely reconstructed. Current diagnosis found A+ planning analysis/output overhead, a copied empty example for the wrong resident, and the exhausted conservative local test quota. Native thinking-disable probes did not qualify A+ planning. The prompt now requests filled field values without misleading resident examples; Gemini minimal effort is an optional host/protocol restricted route setting. Normal defaults and strict parsers remain intact. The checker was corrected to permit a true timestamp for a recorded offer; the accepted retained reflection was applied and saved offline with no extra call.
+
+Five real model requests in this continuation, $0: three rejected outputs and two accepted cases. Only exact private test token reservations were added to the exhausted local allowance; all old accounting and provider request caps remain. Totals: 25 budget/28 pool rows, all settled. Normal runtime routes remain disabled. [Review and receipts](../review/ai-job-fixes-2026-10-21.md#timeout-recovery-and-completed-live-checks) record the failed attempts and the limits of the diagnosis. No production change, publication or merge occurred; the coordinating chat owns the canonical delivery tracker.
+
+Final Node 24 checks pass: 934 tests (879 script + 55 app/auth; 349 town), typecheck, lint with one inherited warning, diagnostics, auth-enabled credential-free build with migrations skipped, and diff whitespace. The narrow A5 fixture acceptance is complete; sustained/concurrent use and the full model/job matrix remain open.
+
 ## 21 October 2026 — planning destinations and reflection evidence
 
 Implemented the two requested follow-ups. `plan.ts` interprets `home` only at the resident's actual home place, so even the captured bad grocery/home plan leads Baba to the grocery after reload. The check also covers direct `goalFor` callers and shared public-counter arrival. Planning packets now supply `homePlace` and explain public work/visits. Reflection packets separate events/statements/interpretations and retain their source/date; instructions preserve conditional tense and distinguish record timestamps from action times. Save schema and existing exported signatures are unchanged. The reflection change guides generation; it does not implement arbitrary prose verification.

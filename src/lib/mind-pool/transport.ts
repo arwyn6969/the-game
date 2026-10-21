@@ -19,13 +19,19 @@ export function requestBody(
   if (jsonMode) body.response_format = { type: "json_object" };
   if (candidate.route.reasoningEffort === "none") {
     // Omitting reasoning_effort leaves the selected model's default in place.
-    // Disabling optional reasoning is an explicit OpenRouter-only route choice.
     if (
       candidate.provider.protocol !== "openai" ||
       new URL(candidate.provider.baseUrl).origin !== "https://openrouter.ai"
     )
       throw new Error("Disabling reasoning requires OpenRouter");
     body.reasoning = { enabled: false };
+  } else if (candidate.route.reasoningEffort === "minimal") {
+    if (
+      candidate.provider.protocol !== "openai" ||
+      new URL(candidate.provider.baseUrl).origin !== "https://generativelanguage.googleapis.com"
+    )
+      throw new Error("Minimal reasoning requires Gemini");
+    body.reasoning_effort = "minimal";
   } else if (candidate.route.reasoningEffort) {
     body.reasoning_effort = candidate.route.reasoningEffort;
   }
