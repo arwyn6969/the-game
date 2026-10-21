@@ -1,0 +1,18 @@
+{
+  "source": {
+    "commit": "215c8c74c7c3b41c5a6f07e921da4552c5498c0d",
+    "dirty": false,
+    "buildId": "215c8c74c7c3",
+    "fingerprint": "8592d746116e1195ab041db936e4b4584789b91b839514977fda93287f6a91d3"
+  },
+  "builtAt": "2026-10-21T10:24:22.794Z",
+  "node": "v24.19.0",
+  "credentialFree": true,
+  "authEnabled": true,
+  "applicationInputCount": 247,
+  "servedUrl": "http://127.0.0.1:8102/",
+  "previewNote": "Existing credential-free stage; custom local QA port, with identical sanitized environment and Vite production preview. quality-browser builtPreview=false means its auto-launch was not used; this URL served the recorded built stage.",
+  "humanSessionsCompleted": 0,
+  "physicalDeviceSessionsCompleted": 0,
+  "liveAiCalls": 0
+}
