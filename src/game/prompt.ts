@@ -271,7 +271,7 @@ export function buildPrompt(town: Town, job: ThinkJob): string {
       job.weekly
         ? "It is a 7th dawn: each resident rewrites selfSentence, one sentence, who they are right now. Identity drifts. It does not reset."
         : "Do not include selfSentence."
-    } Projects have no guaranteed success; they may start or drop one. Threads close or rewrite only if that person decides. Return JSON: {"plans":[{"id":"kevin","summary":"","blocks":[{"from":0,"to":7,"place":"cafe","spot":"home","status":""}],"want":"","selfSentence":"","project":{"owner":"kevin","action":"none","kind":"other","text":"","place":"cafe"},"thread":{"owner":"kevin","action":"none","id":"","text":""}}]}
+    } Projects have no guaranteed success; they may start or drop one. Threads close or rewrite only if that person decides. Return one JSON object with a "plans" array containing exactly one filled plan per listed resident. Each plan needs "id" (that resident's supplied id), a nonempty "summary", and "blocks". Each block needs numeric "from" and "to" hours, "place", "spot", and a nonempty "status". Optional fields are "want", "selfSentence" when requested, and "project" or "thread" edits; omit edits when no change is intended. Generate actual values, not an empty example.
 People: ${JSON.stringify(people)}`;
   }
   if (job.kind === "reflect") {
@@ -288,7 +288,7 @@ People: ${JSON.stringify(people)}`;
     });
     return `${clock} Write exactly 2 first-person reflections for each listed resident, grounded in their supplied evidence. Only evidence.events supports occurrences, and only what the event explicitly records. evidence.statements records words spoken, including your own offers: preserve the speaker, conditional and future tense. evidence.interpretations contains beliefs or plans, not completed actions. Each evidence day/minute is the record's timestamp, not an action time for a promise. "I'll start the kettle if you like" supports "I offered to start the kettle", never "I started the kettle at 07:00". An offered cup does not establish that anyone drank it. Current status and plan summaries do not prove actions occurred. Reflections are interpretations, not new facts or completed actions; preserve attribution and uncertainty. No advice to the player about software. ${
       job.weekly ? "Also rewrite selfSentence." : "Do not include selfSentence."
-    } JSON: {"agents":[{"id":"arwyn","reflections":["",""],"selfSentence":""}]}
+    } Return one JSON object with an "agents" array containing exactly one filled entry per listed resident. Each entry needs "id" (that resident's supplied id) and "reflections" (exactly two nonempty first-person strings). Include "selfSentence" only when requested. Generate actual reflections, not an empty example.
 People: ${JSON.stringify(people)}`;
   }
   if (job.kind === "talk") {

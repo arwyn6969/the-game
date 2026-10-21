@@ -32,6 +32,27 @@ const finances = (town) =>
     player: resident(town, "player"),
     identity: town.identityRegistry,
   });
+
+test("single-resident jobs ask for filled results without an empty example for a different resident", () => {
+  const town = createTown("Test Resident");
+  for (const [kind, id] of [
+    ["plan", "baba"],
+    ["reflect", "kevin"],
+  ]) {
+    const prompt = buildPrompt(town, {
+      kind,
+      agents: [id],
+      weekly: false,
+      day: town.day,
+      minute: town.minute,
+    });
+    const instruction = prompt.split("\nPeople: ")[0];
+    assert.doesNotMatch(instruction, /"id":"(?:kevin|arwyn)"|"summary":""|"reflections":\["",""\]/);
+    assert.match(instruction, /exactly one filled/);
+    assert.match(instruction, /supplied id/);
+    assert.ok(prompt.length <= 14000);
+  }
+});
 function groceryPlan(town) {
   // The actual accepted Flash-Lite work block from the failed behavioral check.
   const job = { kind: "plan", agents: ["baba"], weekly: false, day: town.day, minute: town.minute };

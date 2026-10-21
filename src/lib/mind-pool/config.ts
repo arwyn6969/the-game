@@ -85,9 +85,19 @@ export function validateConfig(value: unknown): PoolConfig {
       if (
         r.reasoningEffort !== undefined &&
         (typeof r.reasoningEffort !== "string" ||
-          !["none", "low", "medium", "high"].includes(r.reasoningEffort) ||
+          !["none", "minimal", "low", "medium", "high"].includes(r.reasoningEffort) ||
           p.protocol === "cohere" ||
-          (r.reasoningEffort === "none" && url.origin !== "https://openrouter.ai"))
+          (r.reasoningEffort === "none" &&
+            !(
+              p.protocol === "openai" &&
+              (url.origin === "https://openrouter.ai" ||
+                (url.origin === "https://integrate.api.nvidia.com" &&
+                  r.model === "nvidia/nemotron-3-ultra-550b-a55b"))
+            )) ||
+          (r.reasoningEffort === "minimal" &&
+            !(
+              p.protocol === "openai" && url.origin === "https://generativelanguage.googleapis.com"
+            )))
       ) {
         throw new Error("Invalid mind pool reasoning effort");
       }

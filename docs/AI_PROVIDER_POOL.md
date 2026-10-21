@@ -54,6 +54,10 @@ The output allowance includes any model reasoning that the provider counts again
 
 For an OpenRouter route, `"reasoningEffort": "none"` explicitly sends `"reasoning": { "enabled": false }`. Omitting `reasoningEffort` preserves the provider's default; it does not prove reasoning is disabled. This explicit option is restricted to the OpenRouter adapter and does not raise output limits, change models, enable a provider or authorize another request. Some models require reasoning and cannot disable it; an unsupported request must fail closed. See [OpenRouter's reasoning controls](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens).
 
+Gemini's OpenAI-compatible endpoint can explicitly select `"reasoningEffort": "minimal"`. The configuration and adapter restrict this option to the official Gemini host/protocol; other providers reject it. It sends `reasoning_effort: "minimal"` while retaining output limits, JSON mode and deadlines. Omission and existing low/medium/high choices keep their previous behavior. See [Google's mapping](https://ai.google.dev/gemini-api/docs/openai).
+
+The 21 October bounded follow-up qualified standard Cohere `command-a-03-2025` for one Baba planning request (4.114 seconds) and Gemini `gemini-3.5-flash-lite` with minimal effort for one Kevin reflection request (1.002 seconds). Both parsed, applied and survived export/import with finances and the saved shift intact. Cohere A+ planning instead produced an empty template or analysis followed by truncated output; a thinking-disable probe did not establish a usable planning route. These results qualify those specific job/model samples, not the full provider/job matrix. [Evidence and limits](review/ai-job-fixes-2026-10-21.md#timeout-recovery-and-completed-live-checks).
+
 ## How requests work
 
 ```mermaid
