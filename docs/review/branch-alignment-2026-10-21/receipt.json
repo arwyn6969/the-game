@@ -40,7 +40,7 @@
       "sha": "53bd9ac5b4354ac00195685cca429d7ca0681944",
       "contained_in_main": false,
       "archive_tag": "archive/2026-10-21/funded-project-accounts",
-      "decision": "retained remote ref pending explicit user decision",
+      "decision": "retired remote ref after explicit user authorization; source preserved",
       "reason": "Unique experimental v1 ledger; preserve for recovery, do not merge wholesale."
     },
     {
@@ -64,7 +64,7 @@
       "sha": "46fd6f514e2850882dfe98e6a4f6a31871abb992",
       "contained_in_main": true,
       "archive_tag": null,
-      "decision": "retained remote ref pending explicit user decision",
+      "decision": "retired remote ref after explicit user authorization; source preserved",
       "reason": "Already contained in main."
     },
     {
@@ -72,7 +72,7 @@
       "sha": "db17ee896a3bc70bfe7c42119cf14118fb6f7b57",
       "contained_in_main": false,
       "archive_tag": "archive/2026-10-21/offline-avatar-plan",
-      "decision": "retained remote ref pending explicit user decision",
+      "decision": "retired remote ref after explicit user authorization; source preserved",
       "reason": "Original planning source represented by merged avatar roadmap."
     },
     {
@@ -80,7 +80,7 @@
       "sha": "217c354f7d855abf39852f1df32ebaf26c1b429f",
       "contained_in_main": false,
       "archive_tag": "archive/2026-10-21/offline-avatar-roadmap",
-      "decision": "retained remote ref pending explicit user decision",
+      "decision": "retired remote ref after explicit user authorization; source preserved",
       "reason": "PR #34 squash-merged; current main contains the later plan."
     },
     {
@@ -120,7 +120,7 @@
       "sha": "07cdb5363c802542265a086a481660cc1307b758",
       "contained_in_main": false,
       "archive_tag": "archive/2026-10-21/server-foundation-20261021",
-      "decision": "retained remote ref pending explicit user decision",
+      "decision": "retired remote ref after explicit user authorization; source preserved",
       "reason": "Two original commits are patch-equivalent to integrated source."
     },
     {
@@ -260,17 +260,31 @@
     {
       "branch": "codex/stamp-wallet-selection",
       "expected_head": "9f5102b2407650d46d2fe544fb37558460efc993"
+    },
+    {
+      "branch": "codex/funded-project-accounts",
+      "expected_head": "53bd9ac5b4354ac00195685cca429d7ca0681944"
+    },
+    {
+      "branch": "codex/hosted-ai-rollout-20261021",
+      "expected_head": "46fd6f514e2850882dfe98e6a4f6a31871abb992"
+    },
+    {
+      "branch": "codex/offline-avatar-plan",
+      "expected_head": "db17ee896a3bc70bfe7c42119cf14118fb6f7b57"
+    },
+    {
+      "branch": "codex/offline-avatar-roadmap",
+      "expected_head": "217c354f7d855abf39852f1df32ebaf26c1b429f"
+    },
+    {
+      "branch": "codex/server-foundation-20261021",
+      "expected_head": "07cdb5363c802542265a086a481660cc1307b758"
     }
   ],
-  "retirement_method": "One atomic push with explicit expected-head leases after ancestry, archive-tag and open-PR checks.",
-  "retained_remote_branches": [
-    "codex/funded-project-accounts",
-    "codex/hosted-ai-rollout-20261021",
-    "codex/offline-avatar-plan",
-    "codex/offline-avatar-roadmap",
-    "codex/server-foundation-20261021"
-  ],
-  "approval_review": "Automatic approval review rejected the broader deletion. A narrowed 13-branch cleanup succeeded. Explicit user choice is pending for the five retained remote references; the active local codex/cloudflare-hosted-ai branch is excluded.",
+  "retirement_method": "Two atomic pushes (13 then 5), each with explicit expected-head leases after preservation and open-PR dependency checks.",
+  "retained_remote_branches": [],
+  "approval_review": "The initial broader deletion was declined. A narrowed 13-ref cleanup succeeded; the user then explicitly authorized the five named remaining refs with archive tags and local folders preserved. Those five refs were subsequently deleted atomically. The active local codex/cloudflare-hosted-ai branch was excluded throughout.",
   "closed_pr": {
     "number": 37,
     "reason": "Incorporated through #38; original head contained in main."
@@ -284,12 +298,45 @@
     "required_approving_review_count": 0,
     "allow_force_pushes": false,
     "allow_deletions": false,
-    "delete_branch_on_merge": true
+    "delete_branch_on_merge": true,
+    "allow_auto_merge": true
   },
   "validation": {
     "local_markdown_links_checked": 152,
     "link_errors": 0,
     "runtime_files_changed": false,
     "review": "Independent read-only documentation review accompanies the PR; consult its description for final findings."
-  }
+  },
+  "retirement_batches": [
+    {
+      "count": 13,
+      "authorization": "Original approved alignment; exact heads already contained in main.",
+      "branches": [
+        "codex/agent-receiving-registry",
+        "codex/ai-playtest-readiness",
+        "codex/candidate-ai-quality-20261021",
+        "codex/dismiss-exchange-caption",
+        "codex/game-quality-review",
+        "codex/github-sync-20261021",
+        "codex/player-acceptance-20261021",
+        "codex/playtest-accessibility",
+        "codex/production-roadmap-agent-world",
+        "codex/server-adapter-20261021",
+        "codex/stack-integration-record",
+        "codex/stamp-identity-tooling",
+        "codex/stamp-wallet-selection"
+      ]
+    },
+    {
+      "count": 5,
+      "authorization": "User explicitly said: yeah go ahead and delete those five old remote branch references, keeping the archive tags and all the local folders safe.",
+      "branches": [
+        "codex/funded-project-accounts",
+        "codex/hosted-ai-rollout-20261021",
+        "codex/offline-avatar-plan",
+        "codex/offline-avatar-roadmap",
+        "codex/server-foundation-20261021"
+      ]
+    }
+  ]
 }

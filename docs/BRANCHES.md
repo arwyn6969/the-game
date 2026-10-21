@@ -22,7 +22,7 @@ The candidate tag `candidate/2026-10-21-ai-quality` retains source `0bd3e3b` for
 | `archive/2026-10-21/offline-avatar-roadmap`     | `217c354`       | Original PR #34 source; squash-merged and subsequently revised on main.                                                                   |
 | `archive/2026-10-21/server-foundation-20261021` | `07cdb53`       | Original prototype/contract commits; their patches are represented in the integrated experiments.                                         |
 
-The alignment receipt distinguishes retired refs from retained preservation refs. Retaining a branch or tag does not make it an active merge candidate. Restore only the specifically needed recovery source after checking that a proposed branch name has not been reused.
+All 18 old remote branch references were retired after preservation and the user's authorization. Main and genuinely active work branches remain; the archive tags are recovery checkpoints, not active merge candidates. Restore only the specifically needed recovery source after checking that a proposed branch name has not been reused.
 
 ## 19 October integration receipt
 
