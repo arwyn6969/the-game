@@ -4,7 +4,7 @@
 
 ## Ownership and tested source
 
-- Owner: `player_acceptance`, coordinated by the [canonical delivery tracker](../../../product/docs/DELIVERY_TRACKER.md).
+- Owner: `player_acceptance`, coordinated by the [canonical delivery tracker](../DELIVERY_TRACKER.md).
 - Checkout: `player-acceptance/`; branch: `codex/player-acceptance-20261021`.
 - Base and tested application head: `215c8c74c7c3b41c5a6f07e921da4552c5498c0d` (committed PR #36/#37 candidate).
 - Application source fingerprint: `8592d746116e1195ab041db936e4b4584789b91b839514977fda93287f6a91d3`.
@@ -15,14 +15,14 @@ The [build receipt](../review/player-acceptance-2026-10-21/build-receipt.json) i
 
 ## Result and evidence
 
-| Automated check | Result and limit |
-| --- | --- |
-| Desktop 1280×800 and phone viewport 390×844 | Keyboard/touch movement, pause, Journal/Inventory/Help, local conversation, nonempty download, import and reload passed; no browser errors or page-wide horizontal overflow. Phone is desktop Chromium touch emulation. |
-| Save safety and identity | Stale-tab conflict preserves the latest save; version-1 migration, repeated identity restoration, explicit new-town fork, reload and corrupt-identity rejection passed. The nearby-conversation fixture is synthetic, not a naturally discovered human journey. |
-| Library using ordinary controls | Successful desktop and deliberately unsuccessful phone lookup paths passed. Both paid all 6 earned coins, retained 2 project coins and conserved the world total of 90. Export/import/reload preserved outcomes. |
-| First reading using ordinary controls | Park and library routes passed at both sizes, with 2/3 guests, listen/read participation, optional bread/tea, conserved money and portable import/reload. Automated scene completion is not evidence of enjoyment or comprehension. |
-| UI edge and interruption checks | Escape/focus restoration, route cancellation, replay movement protection, keyboard import modes, modal cancellation, caption preservation, resident/tool exclusivity, keyboard tabs and phone touch cancellation passed. Panels alone changed no money. |
-| Fresh arrival observation | Two additional empty synthetic contexts captured entry, arrival and first Library view using ordinary controls. No errors or attempted model calls. Measured and visually inspected the first-screen layout. |
+| Automated check                             | Result and limit                                                                                                                                                                                                                                                |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Desktop 1280×800 and phone viewport 390×844 | Keyboard/touch movement, pause, Journal/Inventory/Help, local conversation, nonempty download, import and reload passed; no browser errors or page-wide horizontal overflow. Phone is desktop Chromium touch emulation.                                         |
+| Save safety and identity                    | Stale-tab conflict preserves the latest save; version-1 migration, repeated identity restoration, explicit new-town fork, reload and corrupt-identity rejection passed. The nearby-conversation fixture is synthetic, not a naturally discovered human journey. |
+| Library using ordinary controls             | Successful desktop and deliberately unsuccessful phone lookup paths passed. Both paid all 6 earned coins, retained 2 project coins and conserved the world total of 90. Export/import/reload preserved outcomes.                                                |
+| First reading using ordinary controls       | Park and library routes passed at both sizes, with 2/3 guests, listen/read participation, optional bread/tea, conserved money and portable import/reload. Automated scene completion is not evidence of enjoyment or comprehension.                             |
+| UI edge and interruption checks             | Escape/focus restoration, route cancellation, replay movement protection, keyboard import modes, modal cancellation, caption preservation, resident/tool exclusivity, keyboard tabs and phone touch cancellation passed. Panels alone changed no money.         |
+| Fresh arrival observation                   | Two additional empty synthetic contexts captured entry, arrival and first Library view using ordinary controls. No errors or attempted model calls. Measured and visually inspected the first-screen layout.                                                    |
 
 Saved receipts: [browser journeys](../review/player-acceptance-2026-10-21/browser-results.json), [fresh arrival observations](../review/player-acceptance-2026-10-21/first-look-results.json). The browser receipt's `builtPreview: false` means the harness did not auto-launch its default server; the supplied URL served the production build identified above.
 
@@ -64,12 +64,12 @@ Use [the existing protocol](../implementation/game-quality-playtest.md); do not 
 
 ## Blockers and next action
 
-| Gate | Status / exact missing input | Owner / next action |
-| --- | --- | --- |
-| This local automated packet | Ready for review; zero failing journeys | Coordinator reviews evidence; no runtime delta to integrate. |
-| Five human sessions and voluntary return | **Not run:** participants/facilitator slots and final candidate are not assigned | Coordinator pins candidate and records actual session ownership; then conduct the existing protocol. |
-| Physical phone | **Not run:** no physical device session or authorized device-reachable preview | Coordinator arranges same-build phone access; facilitator records touch, on-screen keyboard, download/import and reload on hardware. |
-| Real screen reader / native zoom | **Not run in this packet:** no actual assistive-technology session | Facilitator performs and records the protocol's device/AT paths; prior incomplete VoiceOver work remains incomplete. |
-| AI quality and Kevin repair | **Outside this local-only evidence:** final A handoff and relevant auth/accounting/$0 prerequisites | Existing A owner finishes Kevin; coordinator integrates/rechecks affected paths and scopes the separate AI-quality round. |
+| Gate                                     | Status / exact missing input                                                                        | Owner / next action                                                                                                                  |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| This local automated packet              | Ready for review; zero failing journeys                                                             | Coordinator reviews evidence; no runtime delta to integrate.                                                                         |
+| Five human sessions and voluntary return | **Not run:** participants/facilitator slots and final candidate are not assigned                    | Coordinator pins candidate and records actual session ownership; then conduct the existing protocol.                                 |
+| Physical phone                           | **Not run:** no physical device session or authorized device-reachable preview                      | Coordinator arranges same-build phone access; facilitator records touch, on-screen keyboard, download/import and reload on hardware. |
+| Real screen reader / native zoom         | **Not run in this packet:** no actual assistive-technology session                                  | Facilitator performs and records the protocol's device/AT paths; prior incomplete VoiceOver work remains incomplete.                 |
+| AI quality and Kevin repair              | **Outside this local-only evidence:** final A handoff and relevant auth/accounting/$0 prerequisites | Existing A owner finishes Kevin; coordinator integrates/rechecks affected paths and scopes the separate AI-quality round.            |
 
 The next useful work is to put this known candidate in front of people and collect the specific observations above. Additional generated playthroughs cannot resolve the remaining comprehension, return-intent and physical-accessibility gates.

@@ -23,6 +23,8 @@ jobs:
       - run: npm run lint
       - run: npm run test:town
       - run: npm test
+      - name: Local authority and recovery experiments
+        run: node --test experiments/server-authority/authority.test.mjs experiments/server-adapter/adapter.test.mjs
       - run: npm run diagnose:town
       - run: npm run build
       - run: npx playwright install --with-deps chromium

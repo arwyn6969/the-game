@@ -17,10 +17,10 @@ The app's managed-worktree request returned `invalid reference` in this chat's r
 
 Read directly from the GitHub connector on 21 October:
 
-| PR | State and dependency | Pinned head | Observed CI |
-| --- | --- | --- | --- |
-| [#36 — Keep town panels readable and prepare isolated playtests](https://github.com/arwyn6969/the-game/pull/36) | Open draft, mergeable at observation; base `main` / `313e9ba` | `5001b22f9cc581598fa7e98828aa912d0bdc4dab` | Verify run [39271688755](https://github.com/arwyn6969/the-game/actions/runs/39271688755): completed, success |
-| [#37 — Add zero-spend AI playtest preflight](https://github.com/arwyn6969/the-game/pull/37) | Open draft, mergeable at observation; base `codex/playtest-accessibility` / `5001b22` | `215c8c74c7c3b41c5a6f07e921da4552c5498c0d` | Verify run [39282979176](https://github.com/arwyn6969/the-game/actions/runs/39282979176): completed, success |
+| PR                                                                                                              | State and dependency                                                                  | Pinned head                                | Observed CI                                                                                                  |
+| --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| [#36 — Keep town panels readable and prepare isolated playtests](https://github.com/arwyn6969/the-game/pull/36) | Open draft, mergeable at observation; base `main` / `313e9ba`                         | `5001b22f9cc581598fa7e98828aa912d0bdc4dab` | Verify run [39271688755](https://github.com/arwyn6969/the-game/actions/runs/39271688755): completed, success |
+| [#37 — Add zero-spend AI playtest preflight](https://github.com/arwyn6969/the-game/pull/37)                     | Open draft, mergeable at observation; base `codex/playtest-accessibility` / `5001b22` | `215c8c74c7c3b41c5a6f07e921da4552c5498c0d` | Verify run [39282979176](https://github.com/arwyn6969/the-game/actions/runs/39282979176): completed, success |
 
 These receipts cover those committed heads only. They do not cover A's current uncommitted changes, B's later delta, human/device acceptance or hosted behavior. Neither PR was changed or merged.
 
@@ -32,13 +32,13 @@ The coordinator attempted a read-only HTTPS GET of `https://thegame.grok.me/` wi
 
 Remaining operator evidence:
 
-| Item | Evidence available / missing | Next action |
-| --- | --- | --- |
-| Host and deployed source | Grok is the recorded host; exact current revision is unverified. | Inspect the existing operator deployment view or Help/build ID through an authenticated session without publishing. Record immutable ID if available and asset fingerprints. |
-| Current bill and account limits | Not available from repository or public response. | Operator records actual hosting charges and provider tiers; do not treat the show budget as an additional hosting allowance. |
-| Authentication and accounting | Main implements verified auth and shared reservations; local tests and recent $0 game receipts exist. | Verify genuine deployed auth, migration state and conservative global/per-user policy with read-only checks before controlled hosted acceptance. |
-| Durable storage and restart | Local browser saves are implemented; canonical shared world is future work. | Keep browser-local promise explicit for beta; review lane C before server implementation. |
-| Recovery and rollback | Historical local save tests and release recovery instructions exist. | Rehearse export/import/recovery on the final candidate; identify a recoverable deployed source and backup before publication. |
+| Item                            | Evidence available / missing                                                                          | Next action                                                                                                                                                                  |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Host and deployed source        | Grok is the recorded host; exact current revision is unverified.                                      | Inspect the existing operator deployment view or Help/build ID through an authenticated session without publishing. Record immutable ID if available and asset fingerprints. |
+| Current bill and account limits | Not available from repository or public response.                                                     | Operator records actual hosting charges and provider tiers; do not treat the show budget as an additional hosting allowance.                                                 |
+| Authentication and accounting   | Main implements verified auth and shared reservations; local tests and recent $0 game receipts exist. | Verify genuine deployed auth, migration state and conservative global/per-user policy with read-only checks before controlled hosted acceptance.                             |
+| Durable storage and restart     | Local browser saves are implemented; canonical shared world is future work.                           | Keep browser-local promise explicit for beta; review lane C before server implementation.                                                                                    |
+| Recovery and rollback           | Historical local save tests and release recovery instructions exist.                                  | Rehearse export/import/recovery on the final candidate; identify a recoverable deployed source and backup before publication.                                                |
 
 The budget boundary is documented in [mind-budget README](../../src/lib/mind-budget/README.md). Production requires existing authentication, shared Postgres accounting and the budget migration/configuration. Local process-lifetime limits do not establish production enforcement. This audit neither inspected secret values nor changed environment configuration, migrations, billing, provider mode or hosting.
 
@@ -66,7 +66,7 @@ No new external collaborator messages, paid calls, deployments, database changes
 
 Arwyn explicitly authorized messaging the existing AI agent to finish the two findings, pinning the reviewed candidate, starting the adapter and maintaining the tracker at $0. The coordinator observed that the direct fix instruction was already active and sent a source/receipt handoff request without duplicating implementation.
 
-The owner completed local commits `9210b78` (safe provider diagnostics) and `0bd3e3b1401ebf6b460d9d71f287c4b474b2452b` (saved agreements, plan destinations and reflection evidence). The worktree is clean. Source tree: `0b68cf176037b436c07a6225a2fdeebb58f0eea1`. Its [verification receipt](../../../candidate-20261021/docs/review/ai-job-fixes-2026-10-21.md) records 348 town / 929 full tests, typecheck, lint with one inherited warning, diagnostics, formatting and an auth-enabled credential-free build with migrations skipped.
+The owner completed local commits `9210b78` (safe provider diagnostics) and `0bd3e3b1401ebf6b460d9d71f287c4b474b2452b` (saved agreements, plan destinations and reflection evidence). The worktree is clean. Source tree: `0b68cf176037b436c07a6225a2fdeebb58f0eea1`. Its [verification receipt](../review/ai-job-fixes-2026-10-21.md) records 348 town / 929 full tests, typecheck, lint with one inherited warning, diagnostics, formatting and an auth-enabled credential-free build with migrations skipped.
 
 B independently reviewed the frozen provider delta in commit `618bbc7d96db56cf5b2af3188a96f94e957c07b6`, found no blocker, and passed six offline probe groups including parser equivalence, privacy and settlement-before-fallback. At pin time the coordinator rehashed all six files and confirmed equality with that reviewed snapshot. The coordinator separately inspected the final planning/grounding source and regression coverage.
 
