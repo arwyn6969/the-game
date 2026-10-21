@@ -75,6 +75,8 @@ Still unproved: real Town/economy atomicity, network disconnect/retry reconcilia
 
 Owner: simulation/backend lane, after coordinator review. Begin from the chosen integrated candidate so Kevin's fix and the player-experience work are not overwritten.
 
+The [prepared adapter contract](ADAPTER_PACKET.md) inventories the exact engine imports, existing fixtures, synthetic membership, transaction boundaries and acceptance cases. It remains gated on the coordinator's candidate pin; its preparation does not start engine implementation.
+
 1. Add an isolated adapter harness around **real** `createTown`, `readTownFile`, `stepMinute`, `applyPlayerAction` and `auditEconomy`, preserving public signatures and Town v2. Keep provider responses deterministic and fake. Use no live DB or host.
 2. Commit the complete Town draft and outer action receipt together; capture returned `ThinkJob` as an outbox proposal. Re-run existing financial/save invariants against commands, tick and replay. Use existing money paths; never award synthetic free coins to demonstrate persistence.
 3. Test v1/v2 import/export round trips; names/memories/favors/identity/economy preserved; failed import retains all bytes; crash at effects/receipt/outbox boundaries; duplicate paid work does not double-pay; stale result after human reclaim cannot change Town.
