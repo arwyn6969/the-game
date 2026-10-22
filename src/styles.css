@@ -1,5 +1,42 @@
 @import "tailwindcss";
 
+.manuscript-tools {
+  border-block: 1px solid #493064;
+  padding-block: 1rem;
+  margin-block: 0.75rem;
+}
+.manuscript-tools p {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.manuscript-tools select {
+  display: block;
+  max-width: 100%;
+  color: #f3ecff;
+  background: #2a1942;
+  border: 1px solid #79638d;
+  border-radius: 0.35rem;
+  padding: 0.5rem;
+  margin-block: 0.35rem;
+}
+.manuscript-tools summary {
+  cursor: pointer;
+  padding-block: 0.5rem;
+}
+.manuscript-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block: 0.5rem;
+}
+.manuscript-trial {
+  margin-block: 1rem;
+}
+.manuscript-diagnostics {
+  color: #b6a5cf;
+  font-size: 0.85rem;
+}
+
 @theme {
   --color-bg: #10091c;
   --color-surface: #1b102d;

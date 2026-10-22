@@ -15,6 +15,7 @@ import {
 import type { Scenery } from "../components/town/WorldArt";
 import type { StampAppearance } from "../lib/stamps/types";
 import { stampArt } from "./stamp-art";
+import type { PhysicalItem } from "./physical-types";
 
 type Appearance = {
   skin: string;
@@ -175,6 +176,49 @@ function drawSpace(g: CanvasRenderingContext2D, viewW: number, viewH: number) {
 
 type Face = "n" | "s" | "e" | "w";
 type Activity = "cup" | "book" | "bread" | null;
+type ManuscriptPose = { open: boolean };
+
+function drawManuscript(g: CanvasRenderingContext2D, face: Face, open: boolean, skin: string) {
+  const side = face === "e" || face === "w";
+  const x = face === "n" ? -11 : side ? 6 : 1;
+  rect(g, skin, x - 2, -20, 4, 5);
+  if (open) {
+    rect(g, "#493064", x - 5, -22, 16, 10);
+    rect(g, "#fff0bf", x - 4, -23, 6, 9);
+    rect(g, "#fff0bf", x + 3, -23, 6, 9);
+    rect(g, "#a5a397", x + 2, -23, 1, 9);
+  } else {
+    rect(g, "#493064", x, -23, 9, 12);
+    rect(g, "#b48aff", x + 1, -22, 6, 9);
+    rect(g, "#fff0bf", x + 7, -21, 2, 9);
+    rect(g, "#e4d5ba", x + 2, -19, 3, 1);
+  }
+}
+
+/** Bounds shared by canvas inspection and ground rendering, in world pixels. */
+function manuscriptBounds(item: PhysicalItem) {
+  if (item.location.kind !== "ground") return null;
+  return { x: item.location.tile.x * TILE + 9, y: item.location.tile.y * TILE + 11, w: 15, h: 16 };
+}
+
+export function pickPhysicalItem(
+  sx: number,
+  sy: number,
+  camX: number,
+  camY: number,
+  town: Town,
+): string | null {
+  const x = sx + camX,
+    y = sy + camY;
+  return (
+    town.physicalItems?.items.find((item) => {
+      const box = manuscriptBounds(item);
+      return (
+        box && x >= box.x - 7 && x <= box.x + box.w + 7 && y >= box.y - 7 && y <= box.y + box.h + 7
+      );
+    })?.id ?? null
+  );
+}
 
 function activityFor(id: AgentId, town: Town, x: number, y: number): Activity {
   const agent = town.agents.find((a) => a.id === id);
@@ -200,6 +244,7 @@ function drawPerson(
   idle: number,
   activity: Activity,
   stampHead?: StampAppearance | null,
+  manuscript?: ManuscriptPose | null,
 ) {
   const p = PALETTE[id];
   if (!p) return;
@@ -226,6 +271,7 @@ function drawPerson(
   rect(g, "#a495aa", -6 - wide / 2, leg, 5, 1);
   rect(g, "#a495aa", 1 + wide / 2, -leg, 5, 1);
   g.translate(0, lift);
+  if (manuscript && back) drawManuscript(g, face, manuscript.open, p.skin);
   rect(g, "#30253c", bx - 3, -26 + arm, 5, 15);
   rect(g, "#30253c", bx + bodyW - 2, -26 - arm, 5, 15);
   rect(g, p.shirt, bx - 2, -25 + arm, 4, 8);
@@ -322,7 +368,7 @@ function drawPerson(
       rect(g, p.extra, -2, -41, 3, 4);
     }
   }
-  if (activity && !back && stride === 0) {
+  if (activity && !manuscript && !back && stride === 0) {
     const handY = -19 - (activity === "cup" ? Math.round(Math.max(0, idle) * 2) : 0);
     rect(g, p.skin, side ? 5 : 2, handY, 6, 3);
     if (activity === "cup") {
@@ -339,6 +385,7 @@ function drawPerson(
       rect(g, "#f8ddaa", 5, handY - 3, 2, 2);
     }
   }
+  if (manuscript && !back) drawManuscript(g, face, manuscript.open, p.skin);
   g.restore();
 }
 
@@ -362,6 +409,7 @@ export type PaintOpts = {
   camY: number;
   positions: Record<AgentId, { x: number; y: number; face: Face }>;
   selected?: AgentId | null;
+  selectedItem?: string | null;
   names: Record<AgentId, string>;
   replay?: boolean;
   stampAppearance?: StampAppearance | null;
@@ -592,7 +640,7 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
   }
   // Objects and residents share a foot-depth order. Ground remains cached;
   // only visible sprites are drawn on each frame.
-  const layers: { depth: number; prop?: Scenery; id?: AgentId }[] = [];
+  const layers: { depth: number; prop?: Scenery; id?: AgentId; item?: PhysicalItem }[] = [];
   for (const prop of scenery) {
     if (isVisible(prop.x * TILE, prop.y * TILE, opts))
       layers.push({ depth: prop.y * TILE + 29, prop });
@@ -607,6 +655,11 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
     )
       layers.push({ depth: pos.y * TILE + 24, id });
   }
+  if (!opts.replay)
+    for (const item of town.physicalItems?.items ?? []) {
+      const box = manuscriptBounds(item);
+      if (box && isVisible(box.x, box.y, opts)) layers.push({ depth: box.y + 11, item });
+    }
   layers.sort((a, b) => a.depth - b.depth);
   for (const layer of layers) {
     if (layer.prop) {
@@ -615,6 +668,18 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
       if (prop.kind === "board" && (town.notices ?? []).length) {
         rect(ctx, "#f7e6c9", prop.x * TILE + 10, prop.y * TILE - 6, 10, 14);
         rect(ctx, "#bf818b", prop.x * TILE + 12, prop.y * TILE - 3, 6, 2);
+      }
+    } else if (layer.item) {
+      const box = manuscriptBounds(layer.item)!;
+      rect(ctx, "rgba(17,14,27,.3)", box.x - 1, box.y + 10, 17, 5);
+      rect(ctx, "#493064", box.x, box.y, 13, 14);
+      rect(ctx, "#b48aff", box.x + 1, box.y + 1, 9, 11);
+      rect(ctx, "#fff0bf", box.x + 10, box.y + 2, 3, 11);
+      rect(ctx, "#e4d5ba", box.x + 3, box.y + 4, 5, 1);
+      if (opts.selectedItem === layer.item.id) {
+        ctx.strokeStyle = "#c8ff6a";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(box.x - 4, box.y - 4, box.w + 6, box.h + 5);
       }
     } else if (layer.id) {
       const id = layer.id;
@@ -625,6 +690,23 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
       const idle =
         reduced || opts.replay ? 0 : Math.sin(t * 1.6 + AGENT_IDS.indexOf(id) * 1.3) * 0.55;
       const activity = !opts.replay && !moving ? activityFor(id, town, pos.x, pos.y) : null;
+      const held = !opts.replay
+        ? town.physicalItems?.items.find(
+            (item) => item.location.kind === "held" && item.location.holder === id,
+          )
+        : null;
+      const reading = town.physicalItems?.reading;
+      const manuscript = held
+        ? {
+            open: Boolean(
+              reading &&
+              reading.actor === id &&
+              reading.itemId === held.id &&
+              reading.contentRevision === held.contentRevision &&
+              reading.until >= absMinute(town.day, town.minute),
+            ),
+          }
+        : null;
       drawPerson(
         ctx,
         id,
@@ -640,6 +722,7 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
           opts.stampAppearance.characterId === town.identityRegistry?.characters.player.characterId
           ? opts.stampAppearance
           : null,
+        manuscript,
       );
     }
   }
