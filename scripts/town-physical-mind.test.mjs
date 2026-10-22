@@ -16,8 +16,13 @@ after(() => server.close());
 const { createTown } = await server.ssrLoadModule("/src/game/town.ts");
 const { buildPrompt, parseMind } = await server.ssrLoadModule("/src/game/prompt.ts");
 const { offlineResult } = await server.ssrLoadModule("/src/game/offline.ts");
-const { validatePhysicalItems, physicalObservation, applyPhysicalCommand } =
-  await server.ssrLoadModule("/src/game/physical-items.ts");
+const {
+  validatePhysicalItems,
+  physicalObservation,
+  applyPhysicalCommand,
+  startPhysicalSession,
+  stopPhysicalSession,
+} = await server.ssrLoadModule("/src/game/physical-items.ts");
 const { ANCHORS } = await server.ssrLoadModule("/src/game/world.ts");
 
 function fixture() {
@@ -93,6 +98,16 @@ function currentContext(town, job) {
   };
 }
 
+function itemCommand(town, kind, fields = {}) {
+  const item = town.physicalItems.items[0];
+  return applyPhysicalCommand(town, "northern", {
+    kind,
+    itemId: item.id,
+    itemRevision: item.revision,
+    ...fields,
+  });
+}
+
 test("act prompts disclose item metadata and actual read results, never global contents or another resident's memory", () => {
   const { town, job } = fixture();
   const initial = buildPrompt(town, job);
@@ -102,21 +117,116 @@ test("act prompts disclose item metadata and actual read results, never global c
   assert.doesNotMatch(initial, /ACTUAL_SAVED_CONTENT|PRIVATE_OTHER_RESIDENT_FACT/);
   assert.match(initial, /player has not spoken/);
   assert.match(initial, /not a completed one/);
-  town.physicalItems.session.lastResult = {
-    ok: true,
-    kind: "read",
-    itemId: "manuscript:town:1",
-    message: "Read current content",
-    content: {
-      title: "Private content fixture",
-      text: "ACTUAL_SAVED_CONTENT",
-      revision: 1,
-      author: "northern",
-    },
-  };
-  const read = buildPrompt(town, job);
+  assert.equal(itemCommand(town, "read").ok, true);
+  const read = currentContext(town, job).prompt;
   assert.match(read, /ACTUAL_SAVED_CONTENT/);
   assert.doesNotMatch(read, /PRIVATE_OTHER_RESIDENT_FACT/);
+});
+
+test("known unchanged read words remain available without choosing a replacement action", () => {
+  const { town, job } = fixture();
+  town.physicalItems.items[0].location = { kind: "ground", tile: { ...ANCHORS.library } };
+  assert.equal(itemCommand(town, "read").ok, true);
+  let context = currentContext(town, job);
+  assert.equal(context.observation.knownManuscript.text, "ACTUAL_SAVED_CONTENT");
+  assert.equal(context.observation.knownManuscript.contentRevision, 1);
+  assert.equal(context.observation.session.readContentRevision, 1);
+  assert.equal(Object.hasOwn(context.observation.session.lastResult, "content"), false);
+  assert.equal(
+    context.observation.availableActions.some((option) => option.kind === "read"),
+    false,
+  );
+  assert.ok(context.observation.availableActions.some((option) => option.kind === "wait"));
+  assert.equal(context.observation.actor.heldItemId, null);
+  assert.match(context.prompt, /Custody\/itemRevision changes do not change words/);
+  assert.match(context.prompt, /new content or an explicit new trial permits rereading/);
+  assert.match(context.prompt, /Choose any remaining option freely, including wait/);
+  assert.equal(parseMind(context.job, '{"decision":{"kind":"wait"}}').decision.kind, "wait");
+  assert.doesNotMatch(context.prompt, /PRIVATE_OTHER_RESIDENT_FACT/);
+  // A custody-only revision must not make old words new or hide already read text.
+  assert.equal(itemCommand(town, "pick-up").ok, true);
+  context = currentContext(town, job);
+  assert.equal(context.observation.knownManuscript.text, "ACTUAL_SAVED_CONTENT");
+  assert.equal(
+    context.observation.availableActions.some((option) => option.kind === "read"),
+    false,
+  );
+  assert.equal(context.observation.actor.heldItemId, "manuscript:town:1");
+  assert.equal(town.physicalItems.items[0].contentRevision, 1);
+  // Another resident gets neither the receipt nor its actual words.
+  town.agents.find((agent) => agent.id === "baba").tile = { ...ANCHORS.library };
+  const other = physicalObservation(town, "baba");
+  assert.equal(other.knownManuscript == null, true);
+  assert.doesNotMatch(JSON.stringify(other), /ACTUAL_SAVED_CONTENT/);
+});
+
+test("reading a blank ground manuscript records content revision zero as known", () => {
+  const { town, job } = fixture();
+  Object.assign(town.physicalItems.items[0], {
+    title: "Blank manuscript",
+    text: "",
+    author: null,
+    revision: 0,
+    contentRevision: 0,
+    location: { kind: "ground", tile: { ...ANCHORS.library } },
+  });
+  assert.deepEqual(validatePhysicalItems(town), []);
+  assert.equal(itemCommand(town, "read").ok, true);
+  const { observation } = currentContext(town, job);
+  assert.equal(observation.session.readContentRevision, 0);
+  assert.equal(observation.knownManuscript.contentRevision, 0);
+  assert.equal(observation.knownManuscript.text, "");
+  assert.equal(
+    observation.availableActions.some((option) => option.kind === "read"),
+    false,
+  );
+  assert.equal(observation.actor.heldItemId, null);
+});
+
+test("new content and an explicit later trial permit rereading without prescribing a plot", () => {
+  const { town, job } = fixture();
+  assert.equal(itemCommand(town, "read").ok, true);
+  assert.equal(
+    itemCommand(town, "write", {
+      title: "Fictional self",
+      text: "FICTION: Another Northern owns a flying bus and 900 imaginary coins.",
+    }).ok,
+    true,
+  );
+  let context = currentContext(town, job);
+  assert.equal(context.observation.knownManuscript == null, true);
+  assert.ok(context.observation.availableActions.some((option) => option.kind === "read"));
+  assert.equal(itemCommand(town, "read").ok, true);
+  context = currentContext(town, job);
+  assert.equal(context.observation.knownManuscript.text, town.physicalItems.items[0].text);
+  assert.equal(
+    context.observation.availableActions.some((option) => option.kind === "read"),
+    false,
+  );
+  stopPhysicalSession(town);
+  assert.equal(startPhysicalSession(town, "northern", 8).ok, true);
+  context = currentContext(town, job);
+  assert.equal(context.observation.knownManuscript == null, true);
+  assert.ok(context.observation.availableActions.some((option) => option.kind === "read"));
+  assert.match(context.prompt, /freely write fiction/);
+  assert.match(context.prompt, /No genre, story, destination or event is required/);
+});
+
+test("an unchanged read proposed again parks without another read result or fabricated alternative", () => {
+  const { town, job } = fixture();
+  const before = currentContext(town, job);
+  const option = before.observation.availableActions.find((candidate) => candidate.kind === "read");
+  assert.equal(itemCommand(town, "read").ok, true);
+  // A fresh request can still return a proposal omitted from its current options.
+  const parsed = parseMind(currentContext(town, job).job, JSON.stringify({ decision: option }));
+  const item = structuredClone(town.physicalItems.items[0]);
+  const memories = structuredClone(town.agents.find((agent) => agent.id === "northern").memories);
+  const result = applyPhysicalCommand(town, "northern", parsed.decision);
+  assert.equal(result.ok, false);
+  assert.equal(Object.hasOwn(result, "content"), false);
+  assert.equal(town.physicalItems.session.enabled, false);
+  assert.deepEqual(town.physicalItems.items[0], item);
+  assert.deepEqual(town.agents.find((agent) => agent.id === "northern").memories, memories);
 });
 
 test("act options distinguish a held manuscript from reachable, distant and unseen ground items", () => {

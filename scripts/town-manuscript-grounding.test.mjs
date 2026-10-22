@@ -278,8 +278,15 @@ test("long own records and a maximum read remain bounded without dropping actual
   const { prompt, resident, observation } = context(town);
   assert.ok(prompt.length <= 8000, `prompt ${prompt.length}`);
   assert.equal(observation.nearbyResidents.length, town.agents.length - 1);
-  for (const kind of ["read", "write", "put-down", "bring"])
+  for (const kind of ["write", "put-down", "bring"])
     assert.ok(observation.availableActions.some((action) => action.kind === kind));
+  assert.equal(
+    observation.availableActions.some((action) => action.kind === "read"),
+    false,
+  );
+  assert.equal(observation.knownManuscript.contentRevision, 1);
+  assert.equal(observation.knownManuscript.text, "C".repeat(1200));
+  assert.equal(Object.hasOwn(observation.session.lastResult, "content"), false);
   assert.equal(
     observation.availableActions.find((action) => action.kind === "bring").destinations.length,
     9,
@@ -290,4 +297,5 @@ test("long own records and a maximum read remain bounded without dropping actual
   assert.ok(resident.authoritativeFacts.omitted.ownObligations > 0);
   assert.ok(resident.authoritativeFacts.omitted.recordedShiftProjects > 0);
   assert.match(prompt, new RegExp("C".repeat(1200)));
+  assert.equal(prompt.split("C".repeat(1200)).length - 1, 1);
 });
