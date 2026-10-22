@@ -61,13 +61,17 @@ export async function loadPoolConfig(env = process.env): Promise<PoolConfig> {
   }
 }
 
-export async function poolAvailable(configSnapshot?: PoolConfig): Promise<boolean> {
+export async function poolAvailable(
+  configSnapshot?: PoolConfig,
+  kind?: MindKind,
+): Promise<boolean> {
   try {
     const config = configSnapshot ?? (await loadPoolConfig());
     // PGLite is process-local; a deployed pool must use shared Postgres.
     if (process.env.GROK_PROJECT_ID && !process.env.DATABASE_URL?.trim()) return false;
     if (process.env.VERCEL && !process.env.DATABASE_URL?.trim()) return false;
-    return MIND_KINDS.every((kind) => candidatesFor(config, kind, process.env).length > 0);
+    const required = kind === "act" ? ["act" as const] : MIND_KINDS;
+    return required.every((routeKind) => candidatesFor(config, routeKind, process.env).length > 0);
   } catch {
     return false;
   }
@@ -88,7 +92,7 @@ export async function thinkWithPool(
     const config = configSnapshot
       ? validateConfig(structuredClone(configSnapshot))
       : await loadPoolConfig();
-    if (!(await poolAvailable(config))) return { ok: false, error: "offline" };
+    if (!(await poolAvailable(config, kind))) return { ok: false, error: "offline" };
     const result = await routeMind({
       kind,
       system,

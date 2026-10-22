@@ -1,3 +1,4 @@
+import { parsePhysicalDecision } from "../mind-actions.ts";
 import type { Candidate, CompletionDiagnostics, MindJsonFailure, MindKind } from "./types.ts";
 
 export function requestBody(
@@ -131,6 +132,10 @@ export function mindJsonFailure(kind: MindKind, text: string): MindJsonFailure |
       .replace(/\s*```$/, "");
     const v = JSON.parse(raw);
     if (!v || typeof v !== "object" || Array.isArray(v)) return "not-object";
+    if (kind === "act")
+      return Object.keys(v).length === 1 && parsePhysicalDecision(v.decision)
+        ? null
+        : "missing-envelope";
     if (kind === "player")
       return typeof v.reply === "string" && Boolean(v.reply.trim()) ? null : "missing-envelope";
     const field = kind === "plan" ? "plans" : kind === "reflect" ? "agents" : "lines";

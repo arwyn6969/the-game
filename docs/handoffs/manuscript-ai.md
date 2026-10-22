@@ -1,0 +1,22 @@
+# Manuscript AI backend packet — 22 October 2026
+
+Owner: AI backend lane, checkout `manuscript-ai/`, branch `codex/manuscript-ai-20261022`, base `dd50d26`. This packet provides an optional physical-decision job. It does not activate a provider, modify operator configuration, make a model request, run a production migration, deploy, or replace local dialogue for the four existing jobs.
+
+## Implemented contract
+
+- `ThinkJob.act` / `MindResult.act` use the frozen shared contracts from the base. `buildPrompt` binds one NPC and session revision, includes a short own-role/voice/want packet, at most two short memories from that NPC, and the real `physicalObservation` supplied by the core lane. Item contents are never read from the global item registry for the prompt. Successful read results and the author's actual writing remain knowledge; a prior read is not proof of later revisions.
+- The model returns exactly `{"decision":{...}}`. The shared pure validator accepts one supported `bring`, `pick-up`, `put-down`, `read`, `write`, `speak`, or `wait` decision. It rejects unknown/extra authority fields, multiple decisions, invalid revisions/destinations, control characters and overlong content. Body/title/speech limits match the core's 1200/80/400 characters. `parseMind` supplies the actor/session from the request, never from model output. The core must still revalidate current custody, revision, access and reach at commit.
+- `bring` is one high-level intention. Existing navigation executes approach/pickup/travel; no model request is made per movement step. The backend itself does not execute or assume an action succeeded. Core/UI integration owns completion, feedback, persistence and relevance checks.
+- `offlineResult(act)` deliberately throws without changing the town. There is no authored action, text, speech or fake player turn when action inference is unavailable.
+- `routes.act` is optional. Existing four-route configurations, the disabled public catalog and existing CLI commands remain valid. `mindAvailability` adds `actions: boolean`; ordinary `online/configured` still describe the four original routes. No legacy/Grok speech route can silently supply action inference.
+- An action decision permits **one transmitted attempt**, including format retries and provider failover. Eligible action output is runtime-capped at **1200 tokens**, and both budget estimation and transport use that same cap. Existing jobs keep their original behavior.
+- Authentication and shared cost/quota reservations remain mandatory. `act` is a background job and cannot spend the interactive reserve or bypass `backgroundConcurrent: 0`. The forward migration `20261022_mind_actions.sql` preserves old rows and replaces only the kind allowlist in the existing reservation function/constraint. It does not enable inference or alter limits, settlement or existing migration files.
+- Existing normalized pool diagnostics retain attempts, elapsed time and known aggregate tokens for UI usage accounting. Missing accounting/diagnostics must remain unknown in the UI; no estimated token count is fabricated.
+
+## Validation and integration boundary
+
+Node 24.19.0; independent locked offline install completed. Backend action/pool/budget tests passed **47/47**, with no live network/provider calls. This includes the forward migration against disposable PGlite, preservation of a pre-existing charged row, background denial/concurrency, optional-route compatibility, strict envelopes and the one-attempt limit. Targeted ESLint and whitespace checks passed.
+
+The initial larger test command also loaded `mind-pool-validation.test.mjs`; its eight cases could not load the not-yet-integrated real `physical-items.ts` module. They were reported as failures, not skipped. No fake core module was created. The three new prompt/parser/no-fallback tests in `town-physical-mind.test.mjs` await the real core dependency. Whole-project typecheck currently reaches the expected base `effects.ts` act fallthrough and the missing core import; no edited backend-file type errors were reported. The core owner owns that discriminant fix.
+
+After merging the core, rerun prompt/parser tests, existing provider validation, town/full suites and typecheck on the integrated candidate. The parent owns normal UI orchestration, stale-response relevance, browser checks and any hosting-adapter conflict resolution. No real AI quality, provider capacity, production migration or hosted acceptance is claimed by these mocked/local checks.

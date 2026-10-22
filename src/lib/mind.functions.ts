@@ -4,16 +4,17 @@ import { authMiddleware } from "./auth/middleware";
 
 export const mindAvailability = createServerFn({ method: "GET" }).handler(async () => {
   const { budgetConfigured } = await import("./mind-budget/server.server");
-  if (!budgetConfigured(process.env)) return { online: false, configured: false };
+  if (!budgetConfigured(process.env)) return { online: false, configured: false, actions: false };
   if (process.env.MIND_PROVIDER_MODE === "pool") {
     const { poolAvailable } = await import("./mind-pool/server");
     const configured = await poolAvailable();
-    return { online: configured, configured };
+    const actions = await poolAvailable(undefined, "act");
+    return { online: configured, configured, actions };
   }
   if (process.env.MIND_PROVIDER_MODE && process.env.MIND_PROVIDER_MODE !== "legacy")
-    return { online: false, configured: false };
+    return { online: false, configured: false, actions: false };
   const configured = Boolean(process.env.XAI_API_KEY);
-  return { online: configured, configured };
+  return { online: configured, configured, actions: false };
 });
 
 export const thinkTown = createServerFn({ method: "POST" })
@@ -32,6 +33,7 @@ export const thinkTown = createServerFn({ method: "POST" })
       const { candidatesFor } = await import("./mind-pool/config");
       try {
         const config = await loadPoolConfig();
+        if (data.kind === "act") config.maxAttempts = 1;
         const candidates = candidatesFor(config, data.kind, process.env);
         if (!candidates.length) return { ok: false as const, error: "offline" };
         return withMindBudget({
@@ -44,6 +46,7 @@ export const thinkTown = createServerFn({ method: "POST" })
         return { ok: false as const, error: "unreachable" };
       }
     }
+    if (data.kind === "act") return { ok: false as const, error: "offline" };
     if (process.env.MIND_PROVIDER_MODE && process.env.MIND_PROVIDER_MODE !== "legacy")
       return { ok: false as const, error: "offline" };
     const apiKey = process.env.XAI_API_KEY;

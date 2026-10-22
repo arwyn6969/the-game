@@ -24,6 +24,8 @@ export async function routeMind(input: {
   const now = input.now ?? Date.now;
   const candidates = candidatesFor(config, kind, env);
   if (!candidates.length) return { ok: false, error: "offline" };
+  // One physical decision has at most one transmitted attempt, including format retries.
+  const maxAttempts = kind === "act" ? 1 : config.maxAttempts;
   // Bytes + max output is intentionally conservative and includes every retry.
   // Report actual usage separately; never refund a possibly executed attempt.
   const inputBytes = new TextEncoder().encode(system + user).byteLength + 256;
@@ -34,7 +36,7 @@ export async function routeMind(input: {
       const tokens = candidate.route.maxTokens;
       const reservedTokens = inputBytes + tokens;
       let formatRetry = false;
-      while (attempts < config.maxAttempts && now() < deadline) {
+      while (attempts < maxAttempts && now() < deadline) {
         const timeout = Math.min(config.timeoutMs, deadline - now());
         const lease = await store.reserve(candidate, kind, reservedTokens, timeout + 10_000);
         if (!lease) break;
@@ -138,7 +140,7 @@ export async function routeMind(input: {
         if (!retryFormat || formatRetry) break;
         formatRetry = true;
       }
-      if (attempts >= config.maxAttempts || now() >= deadline) break;
+      if (attempts >= maxAttempts || now() >= deadline) break;
     }
     return { ok: false, error: attempts ? "unreachable" : "slow" };
   } catch {

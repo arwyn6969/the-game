@@ -107,7 +107,7 @@ export function validReservation(request: BudgetReservation): boolean {
     typeof request.user === "string" &&
     request.user.length > 0 &&
     request.user.length <= 128 &&
-    ["plan", "reflect", "talk", "player"].includes(request.kind) &&
+    ["plan", "reflect", "talk", "player", "act"].includes(request.kind) &&
     whole(request.calls, 1) &&
     request.calls <= 4 &&
     whole(request.microusd) &&
