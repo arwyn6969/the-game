@@ -67,6 +67,67 @@ async function seed(page, { item = false, near = true } = {}) {
 async function closeInventory(page) {
   await page.getByRole("button", { name: "Close What you carry", exact: true }).click();
 }
+async function seedGroundRead(page, layout) {
+  await page.goto(target.href, { waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => Boolean(globalThis.__manuscriptMindMock));
+  await page.evaluate(async (layout) => {
+    const { createTown } = await import("/src/game/town.ts");
+    const { exportTown } = await import("/src/game/save.ts");
+    const { initializePhysicalItems, applyPhysicalCommand } =
+      await import("/src/game/physical-items.ts");
+    const value = createTown("Ground reader QA");
+    value.paused = true;
+    value.sawHint = true;
+    value.guide = 3;
+    initializePhysicalItems(value);
+    const actor = value.agents.find((person) => person.id === "northern");
+    const player = value.agents.find((person) => person.id === "player");
+    actor.tile = { x: 40, y: 20 };
+    const item = () => value.physicalItems.items[0];
+    if (
+      !applyPhysicalCommand(value, "northern", {
+        kind: "pick-up",
+        itemId: item().id,
+        itemRevision: item().revision,
+      }).ok
+    )
+      throw new Error("Synthetic pickup failed");
+    if (
+      !applyPhysicalCommand(value, "northern", {
+        kind: "write",
+        itemId: item().id,
+        itemRevision: item().revision,
+        title: "Ground reading fixture",
+        text: "FICTION: A small paper boat decides to stay exactly where it is.",
+      }).ok
+    )
+      throw new Error("Synthetic writing failed");
+    if (layout !== "other-held") {
+      if (
+        !applyPhysicalCommand(value, "northern", {
+          kind: "put-down",
+          itemId: item().id,
+          itemRevision: item().revision,
+        }).ok
+      )
+        throw new Error("Synthetic placement failed");
+      actor.tile = { x: 39, y: 20 };
+    }
+    player.tile =
+      layout === "same"
+        ? { x: 40, y: 20 }
+        : layout === "far"
+          ? { x: 40, y: 23 }
+          : layout === "diagonal"
+            ? { x: 41, y: 21 }
+            : { x: 40, y: 21 };
+    localStorage.setItem("the-game-town-v2", exportTown(value));
+    localStorage.setItem("the-game-local-dialogue-only", "false");
+  }, layout);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => Boolean(window.__game && window.__controlsTest));
+  await page.evaluate(() => document.fonts.ready);
+}
 async function openInventory(page) {
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
 }
@@ -120,6 +181,71 @@ try {
     });
     const page = (active = await context.newPage());
     page.on("pageerror", (error) => result.errors.push(error.message));
+    for (const layout of ["same", "adjacent", "diagonal", "far", "other-held"]) {
+      await seedGroundRead(page, layout);
+      await openInventory(page);
+      await page
+        .locator(".manuscript-tools")
+        .getByText("Inspect manuscript", { exact: true })
+        .click();
+      const read = page.getByRole("button", { name: "Read manuscript", exact: true });
+      if (layout === "same" || layout === "adjacent") {
+        assert.equal(await read.isEnabled(), true);
+        const before = (await town(page)).physicalItems.items[0];
+        const beforeCanvas = await page
+          .locator("canvas[data-camx]")
+          .evaluate((canvas) => canvas.toDataURL());
+        await read.click();
+        await page
+          .getByText("FICTION: A small paper boat decides to stay exactly where it is.", {
+            exact: true,
+          })
+          .waitFor();
+        await page.waitForFunction(() =>
+          JSON.parse(localStorage.getItem("the-game-town-v2"))
+            .town.agents.find((person) => person.id === "player")
+            .memories.some((memory) => memory.text.includes("read “Ground reading fixture”")),
+        );
+        assert.deepEqual((await town(page)).physicalItems.items[0], before);
+        assert.equal(
+          await page.locator("canvas[data-camx]").evaluate((canvas) => canvas.toDataURL()),
+          beforeCanvas,
+          "Ground reading must not draw a held manuscript or change the paused world image",
+        );
+        await closeInventory(page);
+        await capture(page, `${viewport.name}-ground-read-${layout}.png`);
+        if (layout === "adjacent") {
+          await page.locator("canvas[data-camx]").focus();
+          await page.keyboard.press("Enter");
+          await page
+            .getByLabel("Your line to Northern", { exact: true })
+            .fill("May I read this here?");
+          await page.getByRole("button", { name: "Close conversation", exact: true }).click();
+          await page.locator("canvas[data-camx]").focus();
+          await page.keyboard.press("Enter");
+          assert.equal(
+            await page.getByLabel("Your line to Northern", { exact: true }).inputValue(),
+            "May I read this here?",
+          );
+          await page.getByRole("button", { name: "Close conversation", exact: true }).click();
+          assert.deepEqual((await town(page)).physicalItems.items[0], before);
+        }
+      } else {
+        assert.equal(await read.isDisabled(), true);
+        assert.equal(
+          await page
+            .getByText("FICTION: A small paper boat decides to stay exactly where it is.", {
+              exact: true,
+            })
+            .count(),
+          0,
+        );
+        await closeInventory(page);
+      }
+    }
+    result.assertions.push(
+      "Same/cardinal-adjacent ground reads reveal actual text without transfer, item revision or paused canvas changes; diagonal/distant/other-held reads are disabled; conversation entry preserves its draft and item custody",
+    );
     await seed(page, { near: false });
     await openInventory(page);
     await page.getByRole("button", { name: "Introduce manuscript", exact: true }).click();

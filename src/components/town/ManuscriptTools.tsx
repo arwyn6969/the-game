@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { NpcId, Town } from "@/game/types";
 import { NPC_IDS } from "@/game/types";
 import type { PhysicalActionResult, PhysicalDecision, PhysicalItem } from "@/game/physical-types";
-import { heldItem, nearbyPhysicalItems } from "@/game/physical-items";
+import { canReadPhysicalItem, heldItem, nearbyPhysicalItems } from "@/game/physical-items";
 import { placeTitle, zoneAt } from "@/game/world";
 
 export type ManuscriptControls = {
@@ -29,6 +29,7 @@ export function ManuscriptTools({ town, controls }: { town: Town; controls: Manu
     item && (carried?.id === item.id || nearby.some((row: PhysicalItem) => row.id === item.id)),
   );
   const disabled = controls.busy || controls.replaying;
+  const canRead = Boolean(item && canReadPhysicalItem(town, "player", item));
   const holderId = item?.location.kind === "held" ? item.location.holder : null;
   const holder = holderId
     ? (town.agents.find((person) => person.id === holderId)?.name ?? "a resident")
@@ -86,7 +87,7 @@ export function ManuscriptTools({ town, controls }: { town: Town; controls: Manu
                 {controls.readContent?.revision === item.contentRevision
                   ? controls.readContent.text ||
                     "The pages are blank. Nobody has written in it yet."
-                  : "Hold the manuscript and choose Read to inspect its pages."}
+                  : "Stand on or beside the manuscript on the ground, or hold it, then choose Read to inspect its pages."}
               </p>
               {item.author && (
                 <p className="text-muted">
@@ -131,7 +132,7 @@ export function ManuscriptTools({ town, controls }: { town: Town; controls: Manu
                 <button
                   className="btn"
                   type="button"
-                  disabled={disabled || carried?.id !== item.id}
+                  disabled={disabled || !canRead}
                   onClick={() =>
                     controls.onCommand({
                       kind: "read",
@@ -143,6 +144,13 @@ export function ManuscriptTools({ town, controls }: { town: Town; controls: Manu
                   Read manuscript
                 </button>
               </div>
+              {!canRead && (
+                <p className="text-muted">
+                  {holderId && holderId !== "player"
+                    ? "Another resident holds the manuscript. You cannot read it from their hands."
+                    : "Move onto the manuscript’s tile or one tile north, south, east or west of it to read without picking it up."}
+                </p>
+              )}
             </details>
           ) : (
             <p className="text-muted">Walk beside it to inspect the pages.</p>
