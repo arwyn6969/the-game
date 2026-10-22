@@ -263,7 +263,8 @@ export function PlayerTools({
         {page === "journal" && (
           <>
             <p>
-              Day {town.day}, {formatClock(town.minute)} · {player.money} on you
+              Day {town.day}, {formatClock(town.minute)} · {player.money}{" "}
+              {player.money === 1 ? "coin" : "coins"}
             </p>
             <section>
               <h3>Agreements</h3>

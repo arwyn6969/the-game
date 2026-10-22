@@ -21,6 +21,10 @@ Updated 21 October 2026. This is the live entry point for the development baseli
 
 The earlier player-acceptance and server-adapter round is complete within its bounded local scope. Its next packet is queued, not dispatched. The [delivery-round receipt](DELIVERY_TRACKER.md) preserves the assignments and observations as they stood. This status file does not message, wake or assign another chat.
 
+### Coin balance wording
+
+Owner: this coin-label chat, `01a1645b-b94d-7b90-8ec1-074018dd0bd5`. Checkout `coin-balance-label/`, branch `codex/coin-balance-label`, base `dab257b` from current `origin/main`. Replace the player's ambiguous “on you” balance label with “coins” in the header, player details and journal, with singular “coin” for one. Scope is presentation copy only. Desktop (1280×800) and phone (390×844) local browser checks passed, including the visible “4 coins” label, movement, pause, local conversation, reload and synthetic town export/import. Typecheck and changed-file lint passed; see [the handoff](handoffs/coin-balance-label.md) for final verification and delivery status. Hosted publication remains separate.
+
 ## Evidence and remaining gates
 
 The preserved candidate has [browser and source evidence](review/candidate-2026-10-21.json). Later main includes [successful narrow planning/reflection checks](review/ai-job-fixes-2026-10-21.md#timeout-recovery-and-completed-live-checks), [eight actual-game reply/interruption/save checks](review/ai-game-session-2026-10-21.md) and [small synthetic NVIDIA backup qualification](review/nvidia-ultra-backup-2026-10-21.md). Each receipt retains its source revision and limits; the older delivery board's two-timeout observation is historical.
