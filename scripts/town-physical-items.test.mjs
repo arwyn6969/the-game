@@ -17,7 +17,7 @@ const physical = await server.ssrLoadModule("/src/game/physical-items.ts");
 const { createTown } = await server.ssrLoadModule("/src/game/town.ts");
 const save = await server.ssrLoadModule("/src/game/save.ts");
 const { forkTown } = await server.ssrLoadModule("/src/game/identity.ts");
-const { AGENT_IDS } = await server.ssrLoadModule("/src/game/types.ts");
+const { AGENT_IDS, PLACE_IDS } = await server.ssrLoadModule("/src/game/types.ts");
 const { stepMinute } = await server.ssrLoadModule("/src/game/sim.ts");
 const { activateFundedTown } = await server.ssrLoadModule("/src/game/payroll-runtime.ts");
 const { auditEconomy } = await server.ssrLoadModule("/src/game/economy.ts");
@@ -164,6 +164,174 @@ test("reading reveals exact content to its reader, not nearby observers or an un
   assert.equal(JSON.stringify(physical.physicalObservation(town, "data")).includes(secret), true);
   assert.equal(JSON.stringify(physical.physicalObservation(town, "sub")).includes(secret), false);
   assert.equal(JSON.stringify(person(town, "sub").memories), subBefore);
+});
+
+test("ground reading works on the same or cardinal-adjacent tile without moving or revising the manuscript", () => {
+  for (const tile of [
+    { x: 40, y: 20 },
+    { x: 39, y: 20 },
+    { x: 41, y: 20 },
+    { x: 40, y: 19 },
+    { x: 40, y: 21 },
+  ]) {
+    const town = fixture();
+    atBook(town, "northern");
+    ok(act(town, "northern", "pick-up"));
+    const words = "Fiction: £85 buys a dragon a cup of moonlight.\nThe dragon keeps the receipt.";
+    ok(act(town, "northern", "write", { title: "An original story", text: words }));
+    ok(act(town, "northern", "put-down"));
+    person(town, "player").tile = tile;
+    const itemBefore = structuredClone(item(town));
+    const financeBefore = JSON.stringify(town.economy);
+    const othersBefore = town.agents
+      .filter((agent) => agent.id !== "player")
+      .map((agent) => JSON.stringify(agent.memories));
+    assert.equal(physical.canReadPhysicalItem(town, "player", item(town)), true);
+    assert.ok(
+      physical
+        .physicalObservation(town, "player")
+        .availableActions.some((action) => action.kind === "read"),
+    );
+    const result = ok(act(town, "player", "read"));
+    assert.equal(result.content.text, words);
+    assert.deepEqual(
+      item(town),
+      itemBefore,
+      "reading changes neither custody nor item/content revision",
+    );
+    assert.equal(JSON.stringify(town.economy), financeBefore);
+    assert.deepEqual(
+      town.agents
+        .filter((agent) => agent.id !== "player")
+        .map((agent) => JSON.stringify(agent.memories)),
+      othersBefore,
+    );
+    assert.ok(
+      person(town, "player").memories.some(
+        (memory) =>
+          memory.source === "statement" &&
+          /Quoted, unverified authored/.test(memory.text) &&
+          memory.text.includes("£85"),
+      ),
+    );
+    assert.ok(
+      !person(town, "player").memories.some(
+        (memory) => memory.source === "event" && memory.text.includes("£85"),
+      ),
+    );
+    const restored = save.parseTownFile(save.exportTown(town));
+    assert.ok(restored);
+    assert.deepEqual(item(restored), itemBefore);
+    assert.equal(physical.canReadPhysicalItem(restored, "player", item(restored)), true);
+  }
+});
+
+test("diagonal, distant, across-zone and other-held manuscripts cannot be read", () => {
+  for (const setup of [
+    (town) => {
+      person(town, "player").tile = { x: 41, y: 21 };
+    },
+    (town) => {
+      person(town, "player").tile = { x: 43, y: 20 };
+    },
+    (town) => {
+      item(town).location = { kind: "ground", tile: { x: 23, y: 17 } };
+      person(town, "player").tile = { x: 24, y: 17 };
+    },
+    (town) => {
+      atBook(town, "northern");
+      ok(act(town, "northern", "pick-up"));
+      person(town, "player").tile = { ...person(town, "northern").tile };
+    },
+  ]) {
+    const town = fixture();
+    setup(town);
+    assert.deepEqual(physical.validatePhysicalItems(town), []);
+    const before = JSON.stringify(town);
+    assert.equal(physical.canReadPhysicalItem(town, "player", item(town)), false);
+    assert.ok(
+      !physical
+        .physicalObservation(town, "player")
+        .availableActions.some((action) => action.kind === "read"),
+    );
+    assert.equal(act(town, "player", "read").ok, false);
+    assert.equal(JSON.stringify(town), before);
+  }
+});
+
+test("a stale ground-read quote cannot reveal newly revised text", () => {
+  const town = fixture();
+  atBook(town, "northern");
+  ok(act(town, "northern", "pick-up"));
+  ok(act(town, "northern", "write", { title: "First revision", text: "The first actual words." }));
+  ok(act(town, "northern", "put-down"));
+  const old = structuredClone(item(town));
+  ok(act(town, "northern", "pick-up"));
+  ok(
+    act(town, "northern", "write", { title: "Second revision", text: "The changed actual words." }),
+  );
+  ok(act(town, "northern", "put-down"));
+  person(town, "player").tile = { x: 39, y: 20 };
+  assert.equal(physical.canReadPhysicalItem(town, "player", old), false);
+  const before = JSON.stringify(town);
+  const stale = physical.applyPhysicalCommand(town, "player", {
+    kind: "read",
+    itemId: old.id,
+    itemRevision: old.revision,
+  });
+  assert.equal(stale.ok, false);
+  assert.equal(stale.content, undefined);
+  assert.equal(JSON.stringify(town), before);
+  const current = ok(act(town, "player", "read"));
+  assert.equal(current.content.text, "The changed actual words.");
+});
+
+test("available actions match executable current offers and reveal no unseen item or body", () => {
+  const town = fixture();
+  atBook(town, "northern");
+  ok(physical.startPhysicalSession(town, "northern"));
+  const options = physical.physicalObservation(town, "northern").availableActions;
+  assert.deepEqual(
+    options.map((action) => action.kind),
+    ["speak", "wait", "read", "pick-up", "bring"],
+  );
+  assert.deepEqual(options.find((action) => action.kind === "bring").destinations, [...PLACE_IDS]);
+  for (const option of options) {
+    const copy = structuredClone(town);
+    const { destinations, ...decision } = option;
+    if (destinations) decision.destination = destinations[0];
+    if (decision.kind === "speak") decision.text = "I can see a blank manuscript.";
+    ok(physical.applyPhysicalCommand(copy, "northern", decision));
+  }
+  const hidden = physical.physicalObservation(town, "baba");
+  assert.deepEqual(hidden.availableActions, [{ kind: "speak" }, { kind: "wait" }]);
+  assert.deepEqual(hidden.items, []);
+  assert.ok(!JSON.stringify(hidden).includes(item(town).id));
+  ok(act(town, "northern", "pick-up"));
+  ok(
+    act(town, "northern", "write", {
+      title: "Kept words",
+      text: "ONLY_THE_ACTUAL_READER_RECEIVES_THIS_TEXT",
+    }),
+  );
+  const held = physical.physicalObservation(town, "northern");
+  assert.deepEqual(
+    held.availableActions.map((action) => action.kind),
+    ["speak", "wait", "read", "write", "put-down", "bring"],
+  );
+  assert.ok(!JSON.stringify(held).includes("ONLY_THE_ACTUAL_READER_RECEIVES_THIS_TEXT"));
+  for (const option of held.availableActions) {
+    const copy = structuredClone(town);
+    const { destinations, ...decision } = option;
+    if (destinations) decision.destination = destinations[0];
+    if (decision.kind === "speak") decision.text = "I am holding this manuscript.";
+    if (decision.kind === "write")
+      Object.assign(decision, { title: "Another draft", text: "Another original piece." });
+    ok(physical.applyPhysicalCommand(copy, "northern", decision));
+  }
+  ok(act(town, "northern", "bring", { destination: "park" }));
+  assert.deepEqual(physical.physicalObservation(town, "northern").availableActions, []);
+  assert.equal(physical.canReadPhysicalItem(town, "northern", item(town)), false);
 });
 
 for (const sourceVersion of [1, 2])

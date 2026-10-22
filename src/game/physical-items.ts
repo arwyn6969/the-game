@@ -269,6 +269,22 @@ function itemTile(town: Town, item: PhysicalItem): Tile | null {
 function close(a: Tile, b: Tile, reach = 1) {
   return distance(a, b) <= reach && zoneAt(a.x, a.y) === zoneAt(b.x, b.y);
 }
+/** Reading can inspect a nearby page without transferring custody. */
+export function canReadPhysicalItem(town: Town, actor: AgentId, item: PhysicalItem): boolean {
+  const person = resident(town, actor);
+  const current = physicalItem(town, item.id);
+  const session = town.physicalItems?.session;
+  if (
+    !person ||
+    !current ||
+    current.revision !== item.revision ||
+    (session?.actor === actor && session.intent)
+  )
+    return false;
+  return current.location.kind === "held"
+    ? current.location.holder === actor
+    : floorTile(current.location.tile) && close(person.tile, current.location.tile);
+}
 export function nearbyPhysicalItems(town: Town, actor: AgentId): PhysicalItem[] {
   const person = resident(town, actor);
   if (!person) return [];
@@ -459,8 +475,12 @@ export function applyPhysicalCommand(
           message: `${person.name} picked up the manuscript.`,
         };
       } else {
-        if (!holding)
-          throw new Error("Hold the manuscript before putting it down, reading or writing it.");
+        if (decision.kind === "read" ? !canReadPhysicalItem(draft, actor, item) : !holding)
+          throw new Error(
+            decision.kind === "read"
+              ? "Hold the manuscript or stand beside its ground tile in the same place before reading."
+              : "Hold the manuscript before putting it down or writing it.",
+          );
         if (decision.kind === "put-down") {
           if (!floorTile(person.tile))
             throw new Error("Move to a clear floor tile before putting the manuscript down.");
@@ -808,6 +828,45 @@ export function recordPhysicalUsage(town: Town, job: ActJob, sample: PhysicalUsa
   if (!sample.success) usage.failures++;
 }
 
+type AvailablePhysicalAction = {
+  kind: PhysicalDecision["kind"];
+  itemId?: string;
+  itemRevision?: number;
+  destinations?: PlaceId[];
+};
+function availablePhysicalActions(town: Town, actor: AgentId): AvailablePhysicalAction[] {
+  const person = resident(town, actor);
+  const session = town.physicalItems?.session;
+  if (
+    !person ||
+    !town.physicalItems ||
+    validatePhysicalItems(town).length ||
+    (session?.actor === actor && session.intent)
+  )
+    return [];
+  const actions: AvailablePhysicalAction[] = [{ kind: "speak" }, { kind: "wait" }];
+  const held = heldItem(town, actor);
+  const controlled = session?.enabled && session.actor === actor;
+  for (const item of nearbyPhysicalItems(town, actor)) {
+    const quote = { itemId: item.id, itemRevision: item.revision };
+    const holding = item.location.kind === "held" && item.location.holder === actor;
+    if (canReadPhysicalItem(town, actor, item)) actions.push({ kind: "read", ...quote });
+    if (
+      item.location.kind === "ground" &&
+      !held &&
+      (controlled || close(person.tile, item.location.tile))
+    )
+      actions.push({ kind: "pick-up", ...quote });
+    if (holding) {
+      actions.push({ kind: "write", ...quote });
+      if (floorTile(person.tile)) actions.push({ kind: "put-down", ...quote });
+    }
+    if (controlled && (holding || (item.location.kind === "ground" && !held)))
+      actions.push({ kind: "bring", ...quote, destinations: [...PLACE_IDS] });
+  }
+  return actions;
+}
+
 /** The model sees visible metadata; only an actual read returns manuscript text. */
 export function physicalObservation(town: Town, actor: AgentId): Record<string, unknown> {
   const person = resident(town, actor);
@@ -825,6 +884,7 @@ export function physicalObservation(town: Town, actor: AgentId): Record<string, 
     items: nearbyPhysicalItems(town, actor).map(({ text: _body, ...item }) =>
       structuredClone(item),
     ),
+    availableActions: availablePhysicalActions(town, actor),
     nearbyResidents: town.agents
       .filter((other) => other.id !== actor && close(person.tile, other.tile, 3))
       .map((other) => ({
@@ -843,6 +903,5 @@ export function physicalObservation(town: Town, actor: AgentId): Record<string, 
             lastResult: structuredClone(session.lastResult),
           }
         : null,
-    destinations: PLACE_IDS.map((place) => ({ id: place, name: placeTitleOf(place) })),
   };
 }
