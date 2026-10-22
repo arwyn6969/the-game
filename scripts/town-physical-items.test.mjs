@@ -7,6 +7,7 @@ import { createServer } from "vite";
 const server = await createServer({
   root: fileURLToPath(new URL("..", import.meta.url)),
   configFile: false,
+  envDir: false,
   appType: "custom",
   logLevel: "error",
   optimizeDeps: { noDiscovery: true },
