@@ -1491,6 +1491,132 @@ textarea.field {
   background: #180d27;
   border-bottom: 1px solid var(--color-line);
 }
+.social-sections {
+  display: flex;
+  flex: none;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-line);
+}
+.social-sections .btn {
+  flex: 1;
+  min-width: 0;
+}
+.social-sections .btn[aria-pressed="true"] {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.discussion-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.discussion-body {
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.discussion-body > * + * {
+  margin-top: 0.75rem;
+}
+.discussion-body h4,
+.discussion-proposal label,
+.discussion-compose label {
+  color: var(--color-fg);
+  font-weight: 600;
+}
+.discussion-option {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 44px;
+}
+.discussion-option input {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.discussion-feedback:empty {
+  display: none;
+}
+.discussion-feedback,
+.discussion-floor {
+  color: var(--color-primary);
+}
+.discussion-proposal {
+  display: grid;
+  gap: 0.75rem;
+}
+.discussion-proposal textarea,
+.discussion-compose textarea {
+  min-height: 64px;
+  max-height: 120px;
+  resize: vertical;
+}
+.discussion-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.discussion-roster summary {
+  min-height: 44px;
+  cursor: pointer;
+  padding: 0.5rem 0;
+}
+.discussion-roster ul {
+  margin: 0.5rem 0;
+}
+.discussion-transcript {
+  overflow-y: auto;
+  max-height: 22rem;
+  min-height: 5rem;
+  border: 1px solid var(--color-line);
+  padding: 0.6rem;
+  overflow-anchor: none;
+}
+.discussion-transcript li {
+  border-left: 2px solid var(--color-purple);
+  padding: 0.5rem 0.65rem;
+  overflow-wrap: anywhere;
+}
+.discussion-transcript li + li {
+  margin-top: 0.5rem;
+}
+.discussion-transcript small {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+}
+.discussion-compose {
+  display: grid;
+  gap: 0.45rem;
+  flex: none;
+  padding: 0.75rem;
+  max-height: 42dvh;
+  overflow: auto;
+  border-top: 1px solid var(--color-line);
+  background: #25163b;
+}
+.discussion-compose-toggle {
+  flex: none;
+  margin: 0.35rem 0.75rem;
+  align-self: flex-start;
+  font-size: 0.8rem;
+}
+.discussion-compose .btn {
+  justify-self: start;
+}
+@media (max-width: 680px) {
+  .social-sections .btn {
+    font-size: 0.75rem;
+  }
+  .discussion-transcript {
+    max-height: 18rem;
+  }
+  .discussion-compose {
+    padding-bottom: calc(0.75rem + var(--vv-bottom, 0px));
+  }
+}
 .resident-strip {
   display: flex;
   flex: 1;

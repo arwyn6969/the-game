@@ -301,16 +301,27 @@ try {
     assert.equal(chatCount(await readTown(page), first), 1);
     const second = `Second pending ${viewport.name}`;
     await send(page, second);
+    assert.equal(
+      (await calls(page)).length,
+      2,
+      "A cancelled request still in transport must settle before another model call starts",
+    );
+    assert.equal(
+      await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(),
+      second,
+      "A blocked send retains its draft for explicit resend",
+    );
+    await resolveRequest(page, 1, reply(`LATE-FIRST-${viewport.name}`));
+    await send(page, second);
     await requestCount(page, 3);
     await resolveRequest(page, 2, reply(`Second accepted ${viewport.name}`));
     await page.waitForFunction(() => document.querySelector("#mind-line")?.value === "");
-    await resolveRequest(page, 1, reply(`LATE-FIRST-${viewport.name}`));
     await pause(page);
     const reordered = await readTown(page);
     assert.equal(chatCount(reordered, first), 1);
     assert.equal(chatCount(reordered, second), 1);
     assert.equal(JSON.stringify(reordered).includes(`LATE-FIRST-${viewport.name}`), false);
-    result.manualFallbackAndReordering = true;
+    result.manualFallbackAndSerialRetry = true;
     const walkDraft = `Walk away ${viewport.name}`;
     await send(page, walkDraft);
     await requestCount(page, 4);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Eye, MessageCircle, Pin, X } from "lucide-react";
 import type { Agent, AgentId, SocialEvent, Town } from "@/game/types";
 import { characterProfile } from "@/game/characters";
@@ -327,6 +327,7 @@ export function SocialPanel({
   onFollow,
   onProfile,
   replay,
+  discussion,
 }: {
   town: Town;
   events: SocialEvent[];
@@ -336,7 +337,9 @@ export function SocialPanel({
   onFollow: (id: AgentId) => void;
   onProfile: (id: AgentId) => void;
   replay: boolean;
+  discussion?: ReactNode;
 }) {
+  const [section, setSection] = useState<"history" | "meeting">("history");
   const [chosen, setChosen] = useState<string | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -372,17 +375,39 @@ export function SocialPanel({
           <X size={18} />
         </button>
       </div>
-      <label className="watch-town-control">
+      {discussion && (
+        <div className="social-sections" role="group" aria-label="Town life sections">
+          <button
+            className="btn"
+            type="button"
+            aria-pressed={section === "history"}
+            onClick={() => setSection("history")}
+          >
+            Conversation history
+          </button>
+          <button
+            className="btn"
+            type="button"
+            aria-pressed={section === "meeting"}
+            onClick={() => setSection("meeting")}
+          >
+            Library meeting
+          </button>
+        </div>
+      )}
+      {section === "meeting" && discussion}
+      <label className="watch-town-control" hidden={section === "meeting"}>
         <input type="checkbox" checked={watch} onChange={(e) => onWatch(e.target.checked)} />
         Watch town conversations
       </label>
-      <p className="social-scope">
+      <p className="social-scope" hidden={section === "meeting"}>
         {watch
           ? "Watching public town life. This does not add knowledge to your resident."
           : "Your conversations and nearby exchanges you witnessed."}
       </p>
       <div
         className="mind-body social-body"
+        hidden={section === "meeting"}
         role="region"
         aria-label="Town life conversations"
         tabIndex={0}
@@ -486,8 +511,8 @@ export function SocialPanel({
             <section className="social-effects">
               <h3>Remembered</h3>
               <p>
-                Recorded in {current.memories.map((m) => nameOf(town, m.agentId)).join(" and ")}'s
-                conversation history.
+                Recorded in {current.memories.map((m) => nameOf(town, m.agentId)).join(" and ")}
+                's conversation history.
               </p>
             </section>
             {Boolean(current.intentions?.length) && (

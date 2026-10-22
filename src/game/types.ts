@@ -242,12 +242,23 @@ export type Town = {
   social?: SocialEvent[];
   /** Optional one-manuscript physical interaction prototype. */
   physicalItems?: import("./physical-types").PhysicalItemsState;
+  /** Optional opt-in local meeting history; old towns have no discussion state. */
+  discussions?: import("./discussion-types").DiscussionState;
 };
 
 export type ThinkKind = "plan" | "reflect" | "talk" | "player" | "act";
 
+export type PhysicalActJob = {
+  kind: "act";
+  task?: "physical";
+  day: number;
+  minute: number;
+  agentId: NpcId;
+  sessionRevision: number;
+};
 export type ThinkJob =
-  | { kind: "act"; day: number; minute: number; agentId: NpcId; sessionRevision: number }
+  | PhysicalActJob
+  | import("./discussion-types").DiscussionJob
   | { kind: "plan"; day: number; minute: number; weekly: boolean; agents?: AgentId[] }
   | { kind: "reflect"; day: number; minute: number; agents: AgentId[]; weekly: boolean }
   | { kind: "talk"; day: number; minute: number; a: AgentId; b: AgentId }
@@ -306,8 +317,10 @@ export type PlanDraft = {
 };
 
 export type MindResult =
+  | import("./discussion-types").DiscussionResult
   | {
       kind: "act";
+      task?: "physical";
       mind: "grok";
       agentId: NpcId;
       sessionRevision: number;

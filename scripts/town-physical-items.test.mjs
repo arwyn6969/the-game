@@ -444,7 +444,7 @@ for (const sourceVersion of [1, 2])
     assert.deepEqual(physical.validatePhysicalItems(restored), []);
   });
 
-test("speak records model-chosen words for actual nearby listeners and parks inference; wait is quiet", () => {
+test("speak preserves the actor's words without giving inattentive bystanders knowledge; wait is quiet", () => {
   const town = fixture();
   atBook(town, "data");
   atBook(town, "sub");
@@ -458,7 +458,12 @@ test("speak records model-chosen words for actual nearby listeners and parks inf
   });
   ok(act(town, "data", "speak", { text }));
   assert.equal(person(town, "data").bubble.text, text);
-  assert.ok(person(town, "sub").memories.some((memory) => memory.text.includes(text)));
+  assert.ok(person(town, "data").memories.some((memory) => memory.text.includes(text)));
+  assert.equal(
+    person(town, "sub").memories.some((memory) => memory.text.includes(text)),
+    false,
+    "Nearby residents need deliberate context-specific attention; a speech bubble is not knowledge",
+  );
   assert.equal(physical.nextPhysicalJob(town), null);
   assert.equal(town.physicalItems.session.usage.elapsedMs, 12);
   physical.stopPhysicalSession(town);

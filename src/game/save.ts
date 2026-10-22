@@ -11,6 +11,7 @@ import type { FundedTown } from "./economy-types";
 import { cleanSocial } from "./social";
 import { legacyTownIdentity, validateTownIdentity } from "./identity";
 import { validatePhysicalItems } from "./physical-items";
+import { validateDiscussions, recoverDiscussions } from "./discussions";
 
 export const TOWN_STORAGE_KEY = "the-game-town-v2";
 export const LEGACY_TOWN_STORAGE_KEY = "the-game-town-v1";
@@ -230,6 +231,8 @@ export function validateTown(value: unknown): value is Town {
   const town = value as Town;
   const version = (value as { version?: unknown }).version;
   if (version !== 1 && version !== 2) return false;
+  if (Object.hasOwn(value, "discussions") && (version !== 2 || validateDiscussions(town).length))
+    return false;
   // Validate optional physical custody before any legacy normalization can hide
   // damage. Absence remains valid for every existing town.
   if (
@@ -405,6 +408,9 @@ export function validateTown(value: unknown): value is Town {
     town.social = cleanSocial(town.social);
     for (const event of town.social) bump(event.id);
   }
+  // Meeting IDs share the allocator but include a namespace. Account for them
+  // before repairing a damaged/older nextId, just as for memories and notices.
+  for (const meeting of town.discussions?.sessions ?? []) bump(meeting.id);
   for (const note of town.notices) bump(note.id);
   const financialIds = hasEconomy
     ? [
@@ -514,6 +520,8 @@ function economyProblem(town: Town): string | null {
 }
 
 function serialize(town: Town, omitReplay = false): string {
+  const discussionErrors = validateDiscussions(town);
+  if (discussionErrors.length) throw new Error(discussionErrors.join(" "));
   const physicalErrors = validatePhysicalItems(town);
   if (physicalErrors.length) throw new Error(physicalErrors.join(" "));
   if (!Object.hasOwn(town, "identityRegistry"))
@@ -623,6 +631,9 @@ export function readTownConflicts(): { key: string; raw: string }[] {
 
 function writeTown(town: Town, intent: "save" | "initialize" | "replace"): SaveResult {
   const done = (result: SaveResult) => (lastSaveResult = result);
+  const discussionErrors = validateDiscussions(town);
+  if (discussionErrors.length)
+    return done({ ok: false, reason: "serialization", explanation: discussionErrors.join(" ") });
   const physicalErrors = validatePhysicalItems(town);
   if (physicalErrors.length)
     return done({ ok: false, reason: "serialization", explanation: physicalErrors.join(" ") });
@@ -785,6 +796,7 @@ export function parseTownFile(text: string): Town | null {
       return null;
     const town = data && typeof data === "object" && "town" in data ? data.town : data;
     if (!validateTown(town)) return null;
+    recoverDiscussions(town);
     return town;
   } catch {
     return null;
@@ -808,6 +820,12 @@ function townFileProblem(text: string): string | null {
   try {
     const data = JSON.parse(text);
     const town = data && typeof data === "object" && "town" in data ? data.town : data;
+    if (town && typeof town === "object" && Object.hasOwn(town, "discussions")) {
+      if (town.version !== 2)
+        return "Discussion records require a version-2 town; preserve the original file for recovery.";
+      const errors = validateDiscussions(town as Town);
+      if (errors.length) return errors.join(" ");
+    }
     if (town && typeof town === "object" && Object.hasOwn(town, "physicalItems")) {
       if (town.version !== 2)
         return "The physical manuscript requires a version-2 town; the original file has been retained for recovery.";

@@ -11,6 +11,7 @@ import { absMinute, agentById, makeMemory, pushMemory } from "./memory";
 import { offlineResult } from "./offline";
 import { moveResidents } from "./navigation";
 import { physicalMovementGoals, advancePhysicalIntents } from "./physical-items";
+import { meetingMovementGoals, advanceDiscussions } from "./discussions";
 import { formatClock, mentionsSeed } from "./text";
 import { canConverse, placeTitle, walkable, zoneAt } from "./world";
 
@@ -222,10 +223,13 @@ export function stepMinute(town: Town, online: boolean): ThinkJob | null {
   }
   prepareLibraryAppointment(town);
   nudgeApart(town);
-  const reserved = libraryMovementGoals(town);
-  moveResidents(town, hourStart, { ...physicalMovementGoals(town, reserved), ...reserved });
+  const libraryReserved = libraryMovementGoals(town);
+  const physicalReserved = { ...physicalMovementGoals(town, libraryReserved), ...libraryReserved };
+  const reserved = { ...meetingMovementGoals(town, physicalReserved), ...physicalReserved };
+  moveResidents(town, hourStart, reserved);
   advanceLibraryProject(town);
-  advancePhysicalIntents(town, reserved);
+  advancePhysicalIntents(town, libraryReserved);
+  advanceDiscussions(town, physicalReserved);
   if (hourStart) observe(town);
   updateColocation(town);
   if (!job) {

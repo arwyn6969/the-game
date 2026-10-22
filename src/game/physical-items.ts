@@ -1,4 +1,4 @@
-import type { Agent, AgentId, NpcId, PlaceId, ThinkJob, Town } from "./types";
+import type { Agent, AgentId, NpcId, PlaceId, PhysicalActJob, Town } from "./types";
 import { AGENT_IDS, NPC_IDS, PLACE_IDS } from "./types";
 import type {
   PhysicalActionResult,
@@ -13,7 +13,7 @@ import { findPath } from "./path";
 import { wageInterval } from "./funded-work";
 
 type Tile = { x: number; y: number };
-type ActJob = Extract<ThinkJob, { kind: "act" }>;
+type ActJob = PhysicalActJob;
 export const MANUSCRIPT_ID = "manuscript:town:1";
 const MAX_TITLE = 80;
 const MAX_TEXT = 1200;
@@ -299,7 +299,10 @@ export function nearbyPhysicalItems(town: Town, actor: AgentId): PhysicalItem[] 
 function record(town: Town, actor: AgentId, message: string, privateRead = false, speech = false) {
   const person = resident(town, actor)!;
   const recipients = town.agents.filter(
-    (other) => other.id === actor || (!privateRead && close(person.tile, other.tile, 3)),
+    // Unaddressed physical speech is not blanket knowledge. Deliberate meeting
+    // speech has its own context-specific delivery; other visible actions keep
+    // their existing observation rule.
+    (other) => other.id === actor || (!speech && !privateRead && close(person.tile, other.tile, 3)),
   );
   for (const recipient of recipients)
     pushMemory(
@@ -427,7 +430,11 @@ export function applyPhysicalCommand(
       const spoken = decision.text.trim();
       person.bubble = { text: spoken, until: now(draft) + 8 };
       record(draft, actor, `${person.name} said: “${spoken}”`, false, true);
-      result = { ok: true, kind, message: `${person.name} spoke to the people within earshot.` };
+      result = {
+        ok: true,
+        kind,
+        message: `${person.name} spoke. Nearby residents do not automatically retain the words.`,
+      };
     } else {
       const item = physicalItem(draft, decision.itemId);
       if (!item || item.revision !== decision.itemRevision)
