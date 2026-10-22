@@ -1,10 +1,13 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { test } from "node:test";
-import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
+import { PGlite } from "@electric-sql/pglite";
+import { createServer } from "vite";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 // Isolated fake network only. No existing key, environment file or provider is
@@ -22,9 +25,189 @@ globalThis.fetch = async (url, init) => {
     if (body.model !== 'nvidia/nemotron-3-ultra-550b-a55b:free') throw new Error('Wrong model');
     return Response.json({choices:[{message:{content:JSON.stringify({task:'discussion',decision:{kind:'decline'}})},finish_reason:'stop'}],usage:{prompt_tokens:30,completion_tokens:14,total_tokens:44,cost:0}});
   }
+  if (url === 'https://openrouter.ai/api/v1/chat/completions' && process.env.FIXTURE_GENERATE==='empty')
+    return Response.json({choices:[{message:{content:''},finish_reason:null}]});
   throw new Error('Unexpected network operation; generation forbidden');
 };
 `;
+
+async function evidenceDigest(path) {
+  const hash = createHash("sha256");
+  async function add(directory) {
+    for (const entry of (await readdir(directory, { withFileTypes: true })).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    )) {
+      const child = join(directory, entry.name);
+      hash.update(child.slice(path.length));
+      if (entry.isDirectory()) await add(child);
+      else hash.update(await readFile(child));
+    }
+  }
+  await add(path);
+  return hash.digest("hex");
+}
+
+// Construct a synthetic five-attempt paused meeting with the real engine and
+// SQL schema. Every acceptance here is test setup, never production dialogue.
+async function prepareResume(dir, previousText, overrides) {
+  const pausedDir = join(dir, "paused");
+  await mkdir(pausedDir);
+  const server = await createServer({
+    root,
+    configFile: false,
+    envDir: false,
+    appType: "custom",
+    logLevel: "error",
+    optimizeDeps: { noDiscovery: true },
+    server: { middlewareMode: true, hmr: false, ws: false, watch: null },
+  });
+  let town;
+  try {
+    const { createTown } = await server.ssrLoadModule("/src/game/town.ts");
+    const save = await server.ssrLoadModule("/src/game/save.ts");
+    const d = await server.ssrLoadModule("/src/game/discussions.ts");
+    town = save.parseTownFile(save.exportTown(createTown("Observer")));
+    for (const [id, tile] of Object.entries({
+      northern: { x: 42, y: 21 },
+      arwyn: { x: 44, y: 21 },
+      sub: { x: 43, y: 20 },
+      player: { x: 43, y: 22 },
+      baba: { x: 42, y: 22 },
+    }))
+      town.agents.find((agent) => agent.id === id).tile = tile;
+    assert.ok(d.createLibraryDiscussion(town, "A possible shared reading", "arwyn").ok);
+    const meeting = town.discussions.sessions[0];
+    for (const invitee of ["northern", "arwyn", "sub"])
+      assert.ok(
+        d.applyDiscussionCommand(town, "player", {
+          kind: "invite",
+          invitee,
+          meetingId: meeting.id,
+          expectedRevision: meeting.members.find((member) => member.id === "player").revision,
+          commandId: `fixture-invite:${invitee}`,
+        }).ok,
+      );
+    for (let index = 0; index < 5; index++) {
+      d.advanceDiscussions(town);
+      const job = d.nextDiscussionJob(town);
+      assert.ok(d.markDiscussionRequest(town, job));
+      if (index < 4)
+        assert.ok(
+          d.applyDiscussionResult(town, {
+            ...job,
+            mind: "grok",
+            decision: { kind: index < 3 ? "accept" : "participate" },
+          }).ok,
+        );
+      else
+        d.pauseDiscussion(town, "Real AI unavailable or invalid; no retry or substitute dialogue.");
+      d.recordDiscussionUsage(town, job, {
+        elapsedMs: 10,
+        attempts: 1,
+        totalTokens: index < 4 ? 40 : null,
+        success: index < 4,
+      });
+    }
+    d.pauseDiscussion(town, "unreachable");
+    const saved = save.exportTown(town);
+    await writeFile(join(pausedDir, "final-town.json"), saved);
+    const rawInvitation = JSON.parse(saved)
+      .town.agents.find((agent) => agent.id === "arwyn")
+      .memories.at(-1);
+    assert.equal(
+      Object.hasOwn(rawInvitation, "seed"),
+      false,
+      "Saved invitation omits default flags just as the real final town does",
+    );
+    town = save.parseTownFile(saved);
+    assert.equal(town.agents.find((agent) => agent.id === "arwyn").memories.at(-1).seed, false);
+  } finally {
+    await server.close();
+  }
+  const db = new PGlite({ dataDir: join(pausedDir, "ledger") });
+  try {
+    for (const name of [
+      "20261012_mind_pool.sql",
+      "20261013_mind_budget.sql",
+      "20261022_mind_actions.sql",
+    ])
+      await db.exec(await readFile(new URL(`../migrations/${name}`, import.meta.url), "utf8"));
+    const userHash = createHash("sha256")
+      .update(`operator-library-meeting:${pausedDir}`)
+      .digest("hex");
+    for (let index = 0; index < 5; index++) {
+      const at = Date.now() - 120_000 - index;
+      await db.query("insert into mind_budget_attempts values ($1,$2,'act',$3,$3,$3,1,1,0,0)", [
+        `budget-${index}`,
+        userHash,
+        at,
+      ]);
+      await db.query(
+        "insert into mind_pool_attempts values ($1,'openrouter',$2,'act',$3,$3,$3,1500,$4,$5,200,10)",
+        [
+          `pool-${index}`,
+          "nvidia/nemotron-3-ultra-550b-a55b:free",
+          at,
+          index < 4 ? 40 : null,
+          index < 4 ? "ok" : "invalid",
+        ],
+      );
+    }
+  } finally {
+    await db.close();
+  }
+  const original = JSON.parse(previousText);
+  const carryForward = {
+    priorReportSha256: createHash("sha256").update(previousText).digest("hex"),
+    previousTrialSourceHead: original.sourceHead,
+    originalAuthorizedCalls: 12,
+    previousTransmissions: 1,
+    remainingAuthorizedCalls: 11,
+    inheritedAccountCeiling: 37,
+  };
+  const report = {
+    sourceHead: "b".repeat(40),
+    model: original.model,
+    maxCalls: 11,
+    carryForward,
+    preflight: { experimentAccountCeiling: 37 },
+    transmissions: 5,
+    finishedAt: new Date().toISOString(),
+    meeting: town.discussions.sessions[0],
+    playerAttention: [],
+    stopReason: "unreachable",
+    decisions: Array.from({ length: 5 }, (_, index) => ({
+      transmissions: 1,
+      ok: index < 4,
+      at: new Date(Date.now() - 120_000).toISOString(),
+      ...(index < 4
+        ? { result: { ok: true } }
+        : {
+            attempts: [
+              {
+                status: 200,
+                outcome: "invalid",
+                response: { invalidReason: "empty", responseCharacters: 0 },
+              },
+            ],
+          }),
+    })),
+    ledger: {
+      budget: Array.from({ length: 5 }, () => ({ charged_calls: 1, settled: true })),
+      pool: Array.from({ length: 5 }, (_, index) => ({
+        settled: true,
+        actual_tokens: index < 4 ? 40 : null,
+        outcome: index < 4 ? "ok" : "invalid",
+        status: 200,
+      })),
+    },
+    ...(typeof overrides === "object" ? overrides : {}),
+  };
+  const path = join(pausedDir, "report.json");
+  await writeFile(path, JSON.stringify(report));
+  return { path, town, digest: await evidenceDigest(pausedDir) };
+}
+
 async function invoke({
   used = 25,
   extra = "0",
@@ -36,6 +219,7 @@ async function invoke({
   remaining = 25,
   facilitator = "northern",
   replay = false,
+  resume = false,
 } = {}) {
   const dir = await mkdtemp(join(tmpdir(), "meeting-real-gate-"));
   const preload = join(dir, "network-fixture.mjs");
@@ -47,6 +231,7 @@ async function invoke({
     await mkdir(join(dir, "previous"));
     previousPath = join(dir, "previous", "report.json");
     previousText = JSON.stringify({
+      sourceHead: "a".repeat(40),
       model: "nvidia/nemotron-3-ultra-550b-a55b:free",
       maxCalls: 12,
       preflight: {
@@ -63,6 +248,7 @@ async function invoke({
     });
     await writeFile(previousPath, previousText);
   }
+  const paused = resume ? await prepareResume(dir, previousText, resume) : null;
   if (existing) {
     await writeFile(join(dir, "marker"), "preserved");
     // An already occupied path, even a file, must reject before generation.
@@ -82,9 +268,10 @@ async function invoke({
         MEETING_TRIAL_AUTHORIZED_EXTRA_FREE_CALLS: extra,
         MEETING_TRIAL_PRIOR_REPORT: previousPath,
         MEETING_TRIAL_FACILITATOR: facilitator,
+        MEETING_TRIAL_RESUME_REPORT: paused?.path ?? "",
         FIXTURE_USED: String(used),
         FIXTURE_REMAINING: String(remaining),
-        FIXTURE_GENERATE: generate ? "yes" : "no",
+        FIXTURE_GENERATE: generate === "empty" ? "empty" : generate ? "yes" : "no",
         FIXTURE_PRICE: price,
       },
     };
@@ -95,6 +282,7 @@ async function invoke({
         options,
       );
     const result = execute();
+    if (paused && generate) assert.equal(result.status, 0, result.stderr);
     let report = null;
     if (result.status === 0 && mode === "--run")
       report = JSON.parse(await readFile(join(out, "report.json"), "utf8"));
@@ -107,6 +295,12 @@ async function invoke({
         previousText,
         "The first trial's evidence must remain byte-for-byte unchanged",
       );
+    if (paused)
+      assert.equal(
+        await evidenceDigest(join(dir, "paused")),
+        paused.digest,
+        "Resume must not change the paused report, town or original ledger",
+      );
     if (replay) {
       options.env.MEETING_TRIAL_OUT = join(dir, "another-output");
       const replayed = execute();
@@ -117,7 +311,13 @@ async function invoke({
         JSON.stringify(report, null, 2),
       );
     }
-    return { ...result, report };
+    const initialTown = report
+      ? JSON.parse(await readFile(join(out, "initial-town.json"), "utf8")).town
+      : null;
+    const finalTown = report
+      ? JSON.parse(await readFile(join(out, "final-town.json"), "utf8")).town
+      : null;
+    return { ...result, report, initialTown, finalTown, pausedTown: paused?.town };
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -182,6 +382,78 @@ test("one-use Arwyn continuation preserves the prior trial and cannot restart th
   assert.equal(report.meeting.facilitator, "arwyn");
   assert.equal(report.meeting.status, "closed");
   assert.equal(report.outcome, "no-speech-hearing-unqualified");
+});
+test("same-meeting resume allows six remaining calls, never refreshing the original grant", async () => {
+  for (const [used, allowance] of [
+    [30, 6],
+    [32, 5],
+    [37, 0],
+  ]) {
+    const result = await invoke({ prior: true, resume: true, facilitator: "arwyn", used });
+    assert.equal(result.status, 0, result.stderr);
+    const data = JSON.parse(result.stdout);
+    assert.equal(data.requestedMaxCalls, 6);
+    assert.equal(data.callAllowance, allowance);
+    assert.equal(data.experimentAccountCeiling, 37);
+    assert.equal(data.resumption.previouslySpentCalls, 6);
+    assert.equal(data.resumption.remainingAuthorizedCalls, 6);
+  }
+});
+test("explicit resume preserves the same residents and copies five ledger charges without restart", async () => {
+  const result = await invoke({
+    prior: true,
+    resume: true,
+    facilitator: "arwyn",
+    used: 30,
+    mode: "--run",
+    generate: "empty",
+    replay: true,
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const { report, initialTown, finalTown, pausedTown } = result;
+  assert.equal(report.maxCalls, 6);
+  assert.equal(report.ledgerCallLimit, 11);
+  assert.equal(report.resumption.copiedLedgerCharges, 5);
+  assert.equal(report.resumption.copiedLedgerAttempts, 5);
+  assert.equal(report.resumption.priorChoicesAndMemoriesPreserved, true);
+  assert.equal(report.transmissions, 1, "Any further invalid response stops this explicit resume");
+  assert.equal(report.decisions[0].actor, "northern");
+  assert.equal(report.cumulativeTransmissions, 7);
+  assert.equal(report.cumulativeMeetingTransmissions, 6);
+  assert.equal(report.cumulativeLedgerCharges, 6);
+  assert.equal(report.ledger.pool.length, 6);
+  assert.equal(report.meeting.id, pausedTown.discussions.sessions[0].id);
+  assert.equal(
+    initialTown.discussions.sessions[0].epoch,
+    pausedTown.discussions.sessions[0].epoch + 1,
+  );
+  assert.deepEqual(initialTown.agents, JSON.parse(JSON.stringify(pausedTown.agents)));
+  assert.deepEqual(finalTown.agents, JSON.parse(JSON.stringify(pausedTown.agents)));
+  assert.deepEqual(
+    initialTown.discussions.sessions[0].members,
+    pausedTown.discussions.sessions[0].members,
+  );
+  assert.deepEqual(report.meeting.utterances, []);
+  assert.equal(
+    report.meeting.usage.tokensUnknown,
+    2,
+    "The original unknown sample remains unknown",
+  );
+  assert.equal(
+    report.meeting.usage.knownTokens,
+    pausedTown.discussions.sessions[0].usage.knownTokens,
+  );
+});
+test("resume rejects changed parent authority, changed failure evidence and exhausted account", async () => {
+  for (const options of [
+    { resume: { transmissions: 6 } },
+    { resume: { stopReason: "manual stop" } },
+    { resume: { carryForward: {} } },
+    { resume: true, used: 37, mode: "--run" },
+  ]) {
+    const result = await invoke({ prior: true, facilitator: "arwyn", ...options });
+    assert.notEqual(result.status, 0);
+  }
 });
 test("exhausted authority prevents any ledger or generation", async () => {
   const result = await invoke({ mode: "--run" });

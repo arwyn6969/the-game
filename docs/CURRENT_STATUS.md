@@ -12,6 +12,8 @@ Integrated Node 24 verification passed: **961 script + 55 typed tests; 410 town 
 
 **Arwyn continuation — explicitly authorized:** the user subsequently requested another local meeting with Arwyn invited to facilitate, using the remaining eleven free calls. The [continuation receipt](review/library-arwyn-real-ai-2026-10-22/README.md) records the narrow optional facilitator extension and inherited account ceiling of 37. All acceptance, attention and speech remain voluntary AI choices. Fifty focused tests and integrated **982 script + 55 typed tests, 415 town tests**, typecheck, lint with zero errors, diagnostics and credential-free build pass before the one real continuation. Original evidence and production settings remain unchanged.
 
+Its initial stage at `3edcc6a` applied Arwyn/Northern/Sub acceptance and Arwyn participation, then received an empty fifth response and paused without any speech. Five requests are charged, with 4,957 known tokens and one unknown sample. The same saved meeting is explicitly resumed once with the remaining six calls, a copy of the charged ledger and the unchanged account ceiling; no character choices or prior evidence are rewritten. Fifty-three focused tests and independent resume review pass before that dispatch.
+
 Updated 22 October 2026 for the manuscript prototype assignment. This is the live entry point for the development baseline, tested candidates, deployed-version evidence and active ownership. Dated delivery boards, reviews and handoffs record their stated source and scope. Update this file in the same PR when work changes owner, completes, merges or deploys; a historical checkout is not a new assignment.
 
 ## Manuscript prototype — 22 October

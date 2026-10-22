@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, relative, resolve } from "node:path";
 import { parseEnv } from "node:util";
 import { PGlite } from "@electric-sql/pglite";
 import { createServer } from "vite";
@@ -29,7 +29,8 @@ assert.ok(
   [0, ORIGINAL_ALLOWANCE].includes(extraCalls),
   "Additional calls need explicit bounded authority",
 );
-const facilitator = process.env.MEETING_TRIAL_FACILITATOR || "northern";
+const resumePath = process.env.MEETING_TRIAL_RESUME_REPORT;
+const facilitator = process.env.MEETING_TRIAL_FACILITATOR || (resumePath ? "arwyn" : "northern");
 assert.ok(["northern", "arwyn"].includes(facilitator), "Choose a supported proposed facilitator");
 const previousPath = process.env.MEETING_TRIAL_PRIOR_REPORT;
 const previousBytes = previousPath ? await readFile(previousPath) : null;
@@ -59,17 +60,83 @@ if (previous) {
     "Carry-forward is authorized for the original UTC day only",
   );
 }
-const MAX_CALLS = previous ? ORIGINAL_ALLOWANCE - previous.transmissions : ORIGINAL_ALLOWANCE;
+const initialRemaining = previous
+  ? ORIGINAL_ALLOWANCE - previous.transmissions
+  : ORIGINAL_ALLOWANCE;
 const carryForward = previous
   ? {
       priorReportSha256: createHash("sha256").update(previousBytes).digest("hex"),
       previousTrialSourceHead: previous.sourceHead,
       originalAuthorizedCalls: ORIGINAL_ALLOWANCE,
       previousTransmissions: previous.transmissions,
-      remainingAuthorizedCalls: MAX_CALLS,
+      remainingAuthorizedCalls: initialRemaining,
       inheritedAccountCeiling: previous.preflight.experimentAccountCeiling,
     }
   : null;
+const resumeBytes = resumePath ? await readFile(resumePath) : null;
+const resumed = resumeBytes ? JSON.parse(resumeBytes.toString("utf8")) : null;
+if (resumePath) {
+  assert.ok(previous && resumed, "Resume requires both original and paused meeting receipts");
+  assert.equal(facilitator, "arwyn");
+  assert.equal(extraCalls, 0, "Resume cannot create a fresh allowance");
+  assert.equal(resumed.model, MODEL);
+  assert.deepEqual(
+    resumed.carryForward,
+    carryForward,
+    "Resume must inherit the verified original grant",
+  );
+  assert.equal(resumed.preflight.experimentAccountCeiling, 37);
+  assert.equal(resumed.maxCalls, 11);
+  assert.equal(resumed.transmissions, 5, "Resume only the recorded five-call Arwyn meeting");
+  assert.equal(resumed.meeting.facilitator, "arwyn");
+  assert.equal(resumed.meeting.status, "paused");
+  assert.equal(resumed.meeting.pending, null);
+  assert.equal(resumed.meeting.utterances.length, 0);
+  assert.equal(resumed.playerAttention.length, 0);
+  assert.equal(resumed.stopReason, "unreachable");
+  assert.equal(resumed.decisions.length, 5);
+  assert.ok(resumed.decisions.every((row) => row.transmissions === 1));
+  assert.ok(resumed.decisions.slice(0, -1).every((row) => row.ok && row.result?.ok));
+  const failure = resumed.decisions.at(-1);
+  assert.equal(failure.ok, false);
+  assert.equal(failure.attempts.length, 1);
+  assert.equal(failure.attempts[0].status, 200);
+  assert.equal(failure.attempts[0].outcome, "invalid");
+  assert.equal(failure.attempts[0].response.invalidReason, "empty");
+  assert.equal(failure.attempts[0].response.responseCharacters, 0);
+  assert.equal(resumed.ledger.budget.length, resumed.transmissions);
+  assert.ok(resumed.ledger.budget.every((row) => row.charged_calls === 1 && row.settled));
+  assert.equal(resumed.ledger.pool.length, resumed.transmissions);
+  assert.ok(resumed.ledger.pool.every((row) => row.settled));
+  assert.equal(
+    new Date(resumed.finishedAt).toISOString().slice(0, 10),
+    new Date().toISOString().slice(0, 10),
+    "Resume is authorized for the original UTC day only",
+  );
+}
+const MAX_CALLS = initialRemaining - (resumed?.transmissions ?? 0);
+assert.ok(Number.isSafeInteger(MAX_CALLS) && MAX_CALLS > 0 && MAX_CALLS <= ORIGINAL_ALLOWANCE);
+const resumption = resumed
+  ? {
+      pausedReportSha256: createHash("sha256").update(resumeBytes).digest("hex"),
+      pausedTrialSourceHead: resumed.sourceHead,
+      meetingId: resumed.meeting.id,
+      originalAuthorizedCalls: ORIGINAL_ALLOWANCE,
+      originalTrialTransmissions: previous.transmissions,
+      pausedMeetingTransmissions: resumed.transmissions,
+      previouslySpentCalls: previous.transmissions + resumed.transmissions,
+      remainingAuthorizedCalls: MAX_CALLS,
+      inheritedAccountCeiling: carryForward.inheritedAccountCeiling,
+    }
+  : null;
+const resumeTownPath = resumed ? resolve(dirname(resolve(resumePath)), "final-town.json") : null;
+const resumeTownBytes = resumeTownPath ? await readFile(resumeTownPath) : null;
+const savedResumeTown = resumeTownBytes ? JSON.parse(resumeTownBytes.toString("utf8")) : null;
+if (resumed) {
+  assert.equal(savedResumeTown.version, 2);
+  assert.equal(savedResumeTown.town.discussions.sessions.length, 1);
+  assert.deepEqual(savedResumeTown.town.discussions.sessions[0], resumed.meeting);
+}
 const envFile = process.env.MEETING_TRIAL_ENV_FILE;
 const key = (
   process.env.OPENROUTER_API_KEY ||
@@ -140,6 +207,7 @@ const preflight = {
   savedDailyCeiling: SAVED_DAILY_CEILING,
   authorizedAdditionalFreeCalls: extraCalls,
   carryForward,
+  resumption,
   experimentAccountCeiling: trialCeiling,
   callAllowance,
 };
@@ -152,20 +220,36 @@ assert.ok(
   "The complete bounded meeting needs free headroom and authority",
 );
 const RUN_CALLS = callAllowance;
+// A resumed ledger already contains five charged requests. Its original
+// eleven-call cap remains in force while the separate dispatch guard allows six.
+const LEDGER_CALL_LIMIT = resumed ? initialRemaining : RUN_CALLS;
 assert.ok(process.env.MEETING_TRIAL_OUT, "One fixed exclusive output directory is required");
 const out = resolve(process.env.MEETING_TRIAL_OUT);
+for (const evidencePath of [previousPath, resumePath].filter(Boolean)) {
+  const fromEvidence = relative(dirname(resolve(evidencePath)), out);
+  assert.ok(
+    fromEvidence === ".." || fromEvidence.startsWith("../"),
+    "New output must be outside preserved evidence directories",
+  );
+}
 await mkdir(dirname(out), { recursive: true });
 await mkdir(out, { recursive: false }); // An interrupted trial cannot restart its allowance.
-if (carryForward) {
+if (carryForward || resumption) {
   // Claim the one authorized continuation outside the original evidence folder.
   // Another output path cannot reset the inherited eleven-call allowance.
   const claim = resolve(
-    dirname(dirname(resolve(previousPath))),
-    `.meeting-continuation-${carryForward.priorReportSha256}.json`,
+    dirname(dirname(resolve(resumePath || previousPath))),
+    resumption
+      ? `.meeting-resume-${resumption.pausedReportSha256}.json`
+      : `.meeting-continuation-${carryForward.priorReportSha256}.json`,
   );
   await writeFile(
     claim,
-    JSON.stringify({ claimedAt: new Date().toISOString(), output: out, ...carryForward }),
+    JSON.stringify({
+      claimedAt: new Date().toISOString(),
+      output: out,
+      ...(resumption || carryForward),
+    }),
     { flag: "wx" },
   );
 }
@@ -177,6 +261,8 @@ const report = {
   model: MODEL,
   maxCalls: RUN_CALLS,
   carryForward,
+  resumption,
+  ledgerCallLimit: LEDGER_CALL_LIMIT,
   preflight,
   transmissions: 0,
   decisions: [],
@@ -202,8 +288,8 @@ const config = validateConfig({
       jsonMode: false,
       limits: {
         rpm: 2,
-        rpd: RUN_CALLS,
-        monthly: RUN_CALLS,
+        rpd: LEDGER_CALL_LIMIT,
+        monthly: LEDGER_CALL_LIMIT,
         tpm: 20_000,
         tpd: 100_000,
         concurrent: 1,
@@ -224,9 +310,9 @@ const config = validateConfig({
 });
 const policy = validateBudgetPolicy({
   ...DEFAULT_BUDGET,
-  dailyCalls: RUN_CALLS,
-  playerDailyCalls: RUN_CALLS,
-  playerMinuteCalls: Math.min(2, RUN_CALLS),
+  dailyCalls: LEDGER_CALL_LIMIT,
+  playerDailyCalls: LEDGER_CALL_LIMIT,
+  playerMinuteCalls: Math.min(2, LEDGER_CALL_LIMIT),
   playerInteractiveReserveCalls: 0,
   playerInteractiveReserveMinuteCalls: 0,
   concurrent: 2,
@@ -237,14 +323,60 @@ const policy = validateBudgetPolicy({
   inputNanousdPerToken: 0,
   outputNanousdPerToken: 0,
 });
+if (resumed)
+  await cp(resolve(dirname(resolve(resumePath)), "ledger"), resolve(out, "ledger"), {
+    recursive: true,
+    errorOnExist: true,
+    force: false,
+  });
 const db = new PGlite({ dataDir: resolve(out, "ledger"), parsers: { 20: Number } });
-for (const name of [
-  "20261012_mind_pool.sql",
-  "20261013_mind_budget.sql",
-  "20261022_mind_actions.sql",
-])
-  await db.exec(await readFile(new URL(`../migrations/${name}`, import.meta.url), "utf8"));
+if (!resumed)
+  for (const name of [
+    "20261012_mind_pool.sql",
+    "20261013_mind_budget.sql",
+    "20261022_mind_actions.sql",
+  ])
+    await db.exec(await readFile(new URL(`../migrations/${name}`, import.meta.url), "utf8"));
 const sql = { query: async (query, params) => (await db.query(query, params)).rows };
+const budgetUserHash = createHash("sha256")
+  .update(`operator-library-meeting:${resumed ? dirname(resolve(resumePath)) : out}`)
+  .digest("hex");
+if (resumed) {
+  const budget = await sql.query(
+    "select user_hash, charged_calls, charged_microusd, completed_at is not null as settled from mind_budget_attempts",
+  );
+  const pool = await sql.query(
+    "select provider, model, actual_tokens, outcome, status, completed_at is not null as settled from mind_pool_attempts",
+  );
+  assert.equal(
+    budget.length,
+    resumed.transmissions,
+    "Copied ledger must retain every prior charge",
+  );
+  assert.ok(
+    budget.every(
+      (row) =>
+        row.user_hash === budgetUserHash &&
+        row.charged_calls === 1 &&
+        row.charged_microusd === 0 &&
+        row.settled,
+    ),
+  );
+  assert.equal(pool.length, resumed.transmissions);
+  assert.ok(
+    pool.every((row) => row.provider === "openrouter" && row.model === MODEL && row.settled),
+  );
+  assert.deepEqual(
+    pool.map(({ actual_tokens, outcome, status }) => ({ actual_tokens, outcome, status })),
+    resumed.ledger.pool.map(({ actual_tokens, outcome, status }) => ({
+      actual_tokens,
+      outcome,
+      status,
+    })),
+  );
+  report.resumption.copiedLedgerCharges = budget.reduce((sum, row) => sum + row.charged_calls, 0);
+  report.resumption.copiedLedgerAttempts = pool.length;
+}
 const quotaStore = new SqlQuotaStore(sql);
 const budgetStore = new SqlMindBudgetStore(sql);
 const server = await createServer({
@@ -260,17 +392,57 @@ const { buildPrompt, parseMind } = await server.ssrLoadModule("/src/game/prompt.
 const d = await server.ssrLoadModule("/src/game/discussions.ts");
 const { canHear } = await server.ssrLoadModule("/src/game/attention.ts");
 const { exportTown, parseTownFile } = await server.ssrLoadModule("/src/game/save.ts");
-const town = parseTownFile(exportTown(createTown("Observer")));
+const town = resumed
+  ? parseTownFile(resumeTownBytes.toString("utf8"))
+  : parseTownFile(exportTown(createTown("Observer")));
+assert.ok(town, "The preserved final town must load without replacement");
 const person = (id) => town.agents.find((agent) => agent.id === id);
-for (const [id, tile] of Object.entries({
-  northern: { x: 42, y: 21 },
-  arwyn: { x: 44, y: 21 },
-  sub: { x: 43, y: 20 },
-  player: { x: 43, y: 22 },
-  baba: { x: 42, y: 22 },
-}))
-  person(id).tile = tile;
+if (!resumed)
+  for (const [id, tile] of Object.entries({
+    northern: { x: 42, y: 21 },
+    arwyn: { x: 44, y: 21 },
+    sub: { x: 43, y: 20 },
+    player: { x: 43, y: 22 },
+    baba: { x: 42, y: 22 },
+  }))
+    person(id).tile = tile;
 const meeting = () => town.discussions.sessions.at(-1);
+if (resumed) {
+  assert.deepEqual(
+    meeting(),
+    resumed.meeting,
+    "Saved meeting choices must match the paused receipt",
+  );
+  const memoryFacts = (value) =>
+    value.agents.map(({ id, memories }) => ({
+      id,
+      memories: memories.map((memory) =>
+        JSON.parse(
+          JSON.stringify({
+            ...memory,
+            protected: Boolean(memory.protected),
+            seed: Boolean(memory.seed),
+          }),
+        ),
+      ),
+    }));
+  assert.deepEqual(memoryFacts(town), memoryFacts(savedResumeTown.town));
+  const before = structuredClone(town);
+  const result = d.resumeDiscussion(town);
+  assert.ok(result.ok, result.message);
+  assert.equal(meeting().id, resumed.meeting.id);
+  assert.equal(meeting().epoch, resumed.meeting.epoch + 1);
+  assert.deepEqual(meeting().members, resumed.meeting.members);
+  assert.deepEqual(meeting().utterances, resumed.meeting.utterances);
+  assert.deepEqual(meeting().usage, resumed.meeting.usage);
+  assert.deepEqual(
+    town.agents,
+    before.agents,
+    "Resuming must preserve all resident state and memories",
+  );
+  report.resumption.resumedEpoch = meeting().epoch;
+  report.resumption.priorChoicesAndMemoriesPreserved = true;
+}
 const finance = (value) =>
   JSON.stringify({
     agents: value.agents.map(({ id, money }) => ({ id, money })),
@@ -289,30 +461,33 @@ const command = (decision) =>
     expectedRevision: meeting().members.find((member) => member.id === "player").revision,
     commandId: `operator:${report.playerAttention.length}:${decision.kind}:${decision.invitee ?? "self"}`,
   });
-assert.ok(
-  d.createLibraryDiscussion(
-    town,
-    "Would a short shared reading at the library be worthwhile, and what would make it welcoming?",
-    facilitator,
-  ).ok,
-);
-for (const invitee of ["northern", "arwyn", "sub"]) {
-  const result = command({ kind: "invite", invitee });
-  assert.ok(result.ok, result.message);
+if (!resumed) {
+  assert.ok(
+    d.createLibraryDiscussion(
+      town,
+      "Would a short shared reading at the library be worthwhile, and what would make it welcoming?",
+      facilitator,
+    ).ok,
+  );
+  for (const invitee of ["northern", "arwyn", "sub"]) {
+    const result = command({ kind: "invite", invitee });
+    assert.ok(result.ok, result.message);
+  }
 }
 report.setup = {
   proposedFacilitator: facilitator,
   positions: town.agents.map(({ id, tile }) => ({ id, tile })),
-  npcChoices:
-    "Invitations delivered by the player; all acceptance, attention and speech remain AI choices",
+  npcChoices: resumed
+    ? "Existing AI acceptance and attention choices preserved; same meeting resumed explicitly once"
+    : "Invitations delivered by the player; all acceptance, attention and speech remain AI choices",
   observer:
     "Player initially off; joins after first actual speech and stops after second if those turns occur",
   nearbyNonmember: "baba",
   gameTime: { day: town.day, minute: town.minute },
 };
 await writeFile(resolve(out, "initial-town.json"), exportTown(town));
-let lastTransmission = 0;
-let retainedReceipts = [];
+let lastTransmission = resumed ? Date.parse(resumed.decisions.at(-1).at) || 0 : 0;
+let retainedReceipts = structuredClone(meeting().utterances);
 try {
   while (report.transmissions < RUN_CALLS && meeting().status !== "closed") {
     d.advanceDiscussions(town);
@@ -328,6 +503,11 @@ try {
       await new Promise((done) => setTimeout(done, waitMs));
     }
     const currentAccount = await account();
+    assert.equal(
+      currentAccount.at.slice(0, 10),
+      preflight.at.slice(0, 10),
+      "The same-day allowance has expired; no request transmitted",
+    );
     assert.ok(
       currentAccount.freeRequests.used < trialCeiling && currentAccount.freeRequests.remaining > 0,
       "Account headroom exhausted; no request transmitted",
@@ -362,7 +542,7 @@ try {
     const started = performance.now();
     const result = await runBudgetedMind({
       kind: "act",
-      userHash: createHash("sha256").update(`operator-library-meeting:${out}`).digest("hex"),
+      userHash: budgetUserHash,
       system: MIND_SYSTEM,
       user: prompt,
       maxAttempts: 1,
@@ -552,6 +732,16 @@ try {
       "select kind, actual_tokens, outcome, status, latency_ms, completed_at is not null as settled from mind_pool_attempts",
     ),
   };
+  report.cumulativeTransmissions =
+    (previous?.transmissions ?? 0) + (resumed?.transmissions ?? 0) + report.transmissions;
+  report.cumulativeMeetingTransmissions = (resumed?.transmissions ?? 0) + report.transmissions;
+  report.cumulativeLedgerCharges = report.ledger.budget.reduce(
+    (sum, row) => sum + row.charged_calls,
+    0,
+  );
+  assert.ok(report.cumulativeTransmissions <= ORIGINAL_ALLOWANCE);
+  assert.ok(report.cumulativeLedgerCharges >= report.cumulativeMeetingTransmissions);
+  assert.ok(report.cumulativeLedgerCharges <= LEDGER_CALL_LIMIT);
   try {
     report.afterAccount = await account();
   } catch {
