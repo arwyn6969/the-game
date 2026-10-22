@@ -1,6 +1,6 @@
 # Northern's Park Players — next community release brief
 
-Planning record: 22 October 2026. Status: proposed release scope, with the user's creative direction recorded below. This is a planning-only branch based on local implementation checkpoint `7ddda79`; no runtime changes, live checks, model calls, deployment or implementation dispatch accompany it. The hosting owner's separate changes remain in their checkout.
+Planning record: 22 October 2026. Status: proposed community release scope, with the user's creative direction recorded below. The branch now contains the separate bounded physical-manuscript prototype over current main `dab257b`; its [implementation receipt](../review/manuscript-prototype-2026-10-22.md) distinguishes tested mechanics from this larger programme. No live checks, model calls or deployment accompany it. The hosting owner's separate changes remain in their checkout.
 
 **Immediate next packet revised:** start with [CP0: one physical manuscript](physical-interaction-foundation.md). It specifies the actual sprites/poses, movement, pickup/carry/put-down/read commands, minimal inventory view and saved object state. CP1–CP9 below describe the larger programme, not a single first sprint. Prove this connection before adding theatre props, construction or general furniture movement.
 
