@@ -20,6 +20,7 @@ import { runBudgetedMind } from "../src/lib/mind-budget/runner.ts";
 const MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
 const BASE = "https://openrouter.ai/api/v1";
 const MAX_CALLS = 8;
+const DAILY_CEILING = 24;
 const args = process.argv.slice(2);
 assert.ok(args.length === 1 && ["--preflight", "--run"].includes(args[0]));
 const envFile = process.env.MANUSCRIPT_TRIAL_ENV_FILE;
@@ -59,13 +60,27 @@ assert.ok(model, "Exact free model unavailable");
 assert.equal(model.pricing.prompt, "0");
 assert.equal(model.pricing.completion, "0");
 assert.ok(model.pricing.request === undefined || Number(model.pricing.request) === 0);
-const preflight = { ...beforeAccount, model: MODEL, pricing: model.pricing };
+const callAllowance = Math.max(
+  0,
+  Math.min(
+    MAX_CALLS,
+    beforeAccount.freeRequests.remaining,
+    DAILY_CEILING - beforeAccount.freeRequests.used,
+  ),
+);
+const preflight = {
+  ...beforeAccount,
+  model: MODEL,
+  pricing: model.pricing,
+  requestedMaxCalls: MAX_CALLS,
+  dailyCeiling: DAILY_CEILING,
+  callAllowance,
+};
 if (args[0] === "--preflight") {
   console.log(JSON.stringify(preflight));
   process.exit(0);
 }
-assert.ok(beforeAccount.freeRequests.remaining >= MAX_CALLS, "Insufficient free headroom");
-assert.ok(beforeAccount.freeRequests.used + MAX_CALLS <= 24, "Preserve the saved 24/day ceiling");
+assert.ok(callAllowance > 0, "No headroom within the saved 24/day ceiling");
 const out = resolve(
   process.env.MANUSCRIPT_TRIAL_OUT || `artifacts/manuscript-real-ai/${Date.now()}`,
 );
@@ -76,7 +91,7 @@ const report = {
   startedAt: new Date().toISOString(),
   scope: "operator headless real-model/engine trial; local SQL budget and quota ledger",
   model: MODEL,
-  maxCalls: MAX_CALLS,
+  maxCalls: callAllowance,
   preflight,
   decisions: [],
   movement: [],
@@ -99,7 +114,14 @@ const config = validateConfig({
       apiKeyEnv: "OPENROUTER_API_KEY",
       protocol: "openai",
       jsonMode: false,
-      limits: { rpm: 2, rpd: 24, monthly: 744, tpm: 20_000, tpd: 100_000, concurrent: 1 },
+      limits: {
+        rpm: 2,
+        rpd: DAILY_CEILING,
+        monthly: 744,
+        tpm: 20_000,
+        tpd: 100_000,
+        concurrent: 1,
+      },
       routes: Object.fromEntries(
         ["plan", "reflect", "talk", "player", "act"].map((kind) => [
           kind,
@@ -111,9 +133,9 @@ const config = validateConfig({
 });
 const policy = validateBudgetPolicy({
   ...DEFAULT_BUDGET,
-  dailyCalls: MAX_CALLS,
-  playerDailyCalls: MAX_CALLS,
-  playerMinuteCalls: 2,
+  dailyCalls: callAllowance,
+  playerDailyCalls: callAllowance,
+  playerMinuteCalls: Math.min(2, callAllowance),
   playerInteractiveReserveCalls: 0,
   playerInteractiveReserveMinuteCalls: 0,
   concurrent: 2,
@@ -151,7 +173,7 @@ let town = parseTownFile(exportTown(createTown("Observer")));
 physical.initializePhysicalItems(town);
 town.agents.find((person) => person.id === "northern").tile = { x: 39, y: 20 };
 town.agents.find((person) => person.id === "player").tile = { x: 40, y: 22 };
-assert.equal(physical.startPhysicalSession(town, "northern", MAX_CALLS).ok, true);
+assert.equal(physical.startPhysicalSession(town, "northern", callAllowance).ok, true);
 const startFinance = JSON.stringify({
   money: town.agents.map(({ id, money }) => ({ id, money })),
   tills: town.tills,
@@ -175,7 +197,9 @@ try {
       await new Promise((done) => setTimeout(done, remainingWait));
     }
     const currentAccount = await account();
-    assert.ok(currentAccount.freeRequests.used < 24 && currentAccount.freeRequests.remaining > 0);
+    assert.ok(
+      currentAccount.freeRequests.used < DAILY_CEILING && currentAccount.freeRequests.remaining > 0,
+    );
     const job = physical.nextPhysicalJob(town);
     assert.ok(job && physical.markPhysicalRequest(town, job));
     const prompt = buildPrompt(town, job);
@@ -220,7 +244,7 @@ try {
             assert.equal(body.max_tokens, 1200);
             assert.deepEqual(body.reasoning, { enabled: false });
             assert.ok(!body.response_format && !body.tools);
-            assert.ok(report.transmissions < MAX_CALLS && row.attempts.length === 0);
+            assert.ok(report.transmissions < callAllowance && row.attempts.length === 0);
             report.transmissions++;
             row.transmissions++;
             previousTransmission = Date.now();
@@ -304,7 +328,7 @@ try {
     await checkpoint();
     if (report.stopReason) break;
   }
-  report.stopReason ??= "Eight-decision allowance exhausted.";
+  report.stopReason ??= `${callAllowance}-decision allowance exhausted within the saved daily ceiling.`;
 } catch {
   report.stopReason = "Qualification guard or network/ledger failure; no retry or fallback.";
   physical.pausePhysicalSession(town, report.stopReason);
