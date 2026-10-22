@@ -769,8 +769,17 @@ try {
     await page.evaluate(() => {
       window.__stampWalletMock.mode = "approve";
     });
+    const walletCallsBeforeConnect = result.walletCalls.length;
     await connectButton(page).click();
     await panel(page).getByRole("heading", { name: "Choose a stamp", exact: true }).waitFor();
+    if (walletId === "leather") {
+      assert.deepEqual(result.walletCalls.slice(walletCallsBeforeConnect), [
+        "leather:getAddresses",
+        "leather:signMessage",
+      ]);
+      result.assertions.push("Leather connects with one address request and one message signature");
+    }
+    const walletCallsAfterConnect = result.walletCalls.length;
     await panel(page)
       .getByText(/^Verified address/)
       .waitFor();
@@ -835,6 +844,14 @@ try {
       await assertPollingKeepsEditing(page, result, headStats);
     } finally {
       expectingAbort = false;
+    }
+    if (walletId === "leather") {
+      assert.equal(
+        result.walletCalls.length,
+        walletCallsAfterConnect,
+        "Holdings, preview, crop, Apply and periodic renewal must not reopen Leather",
+      );
+      result.assertions.push("stamp editing and holdings renewals need no new Leather approvals");
     }
 
     await panel(page)

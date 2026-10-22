@@ -628,6 +628,9 @@ export function StampIdentityPanel({
             </a>
           )}
           . Use a mainnet Native SegWit address. Wallet changes require a new verification.
+          {walletId === "leather" && (
+            <> Leather asks you to choose an account, then sign one verification message.</>
+          )}
           {walletId === "wonder" && (
             <>
               {" "}
