@@ -1,6 +1,6 @@
 # Physical interaction foundation — one manuscript before a theatre system
 
-Revision: 22 October 2026. This narrows the immediate task in [Northern's Park Players](northern-park-players.md). The community brief describes the programme; **CP0 is the bounded technical proof**, not a commitment to implement every programme packet at once. The source audit below records the pre-prototype implementation. The current feature branch implements the ground/held manuscript, real saved text, procedural carrying/reading art and optional eight-decision AI trial; see the [implementation receipt](../review/manuscript-prototype-2026-10-22.md) for validation and remaining release gates. No live platform or provider check was performed.
+Revision: 22 October 2026. This narrows the immediate task in [Northern's Park Players](northern-park-players.md). The community brief describes the programme; **CP0 is the bounded technical proof**, not a commitment to implement every programme packet at once. The source audit below records the pre-prototype implementation. The current feature branch implements the ground/held manuscript, real saved text, procedural carrying/reading art and optional eight-decision AI trial; see the [implementation receipt](../review/manuscript-prototype-2026-10-22.md) for local validation. A later authorized [real-model trial](../review/northern-real-ai-2026-10-22/README.md) demonstrated the tool loop but failed factual grounding. Hosted publication and broader event acceptance remain open.
 
 ## What was missing from the earlier plan
 
