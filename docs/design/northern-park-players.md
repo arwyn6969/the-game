@@ -2,6 +2,8 @@
 
 Planning record: 22 October 2026. Status: proposed release scope, with the user's creative direction recorded below. This is a planning-only branch based on local implementation checkpoint `7ddda79`; no runtime changes, live checks, model calls, deployment or implementation dispatch accompany it. The hosting owner's separate changes remain in their checkout.
 
+**Immediate next packet revised:** start with [CP0: one physical manuscript](physical-interaction-foundation.md). It specifies the actual sprites/poses, movement, pickup/carry/put-down/read commands, minimal inventory view and saved object state. CP1–CP9 below describe the larger programme, not a single first sprint. Prove this connection before adding theatre props, construction or general furniture movement.
+
 ## Product direction agreed with Arwyn
 
 - Develop the existing cast before adding residents.
