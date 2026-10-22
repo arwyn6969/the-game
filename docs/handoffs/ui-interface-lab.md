@@ -35,3 +35,7 @@ Thirteen incomplete automated accessibility rule results require manual review. 
 The original world/sprite/portrait renderer is retained. Generated concept scenery and large illustrated portraits are separate future artwork. Draggable windows, simultaneous utility panels and bubbles following moving residents are also separate features. The shared reply-composer improvement is present in Original as well as the three candidates.
 
 The live game, authentication/provider configuration, save schema, simulation and wallet spending rules were not changed. No merge or production publication has been performed.
+
+## Source review delivery
+
+Implementation commit `a2e2246` was pushed to `origin/codex/ui-interface-lab`. Creating the draft PR was then rejected by automatic approval review: it considered publishing source/assets/documentation in a PR beyond the user's local-preview authorization. No PR was created, and no alternate PR-creation path was attempted. The local comparison and checks are complete; opening the draft PR awaits explicit user authorization.
