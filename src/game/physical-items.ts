@@ -358,7 +358,10 @@ export function applyPhysicalCommand(
   actor: AgentId,
   decision: PhysicalDecision,
 ): PhysicalActionResult {
-  const kind = decision?.kind ?? "wait";
+  const supportedKinds = ["bring", "pick-up", "put-down", "read", "write", "speak", "wait"];
+  const kind: PhysicalDecision["kind"] = supportedKinds.includes(decision?.kind)
+    ? decision.kind
+    : "wait";
   const fail = (message: string): PhysicalActionResult => {
     const result = { ok: false, kind, message };
     finishDecision(town, actor, result);
