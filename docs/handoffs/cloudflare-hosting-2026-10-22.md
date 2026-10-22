@@ -49,10 +49,31 @@ Before the test both production attempt tables were empty. The read-only provide
 
 Private screenshot evidence: `live-ai-20261022.png` and `live-ai-reloaded-20261022.png` in the ignored hosting artifacts folder. This establishes one real authenticated reply, game acceptance, durable accounting and local reload persistence. It does not establish sustained model availability or account-wide capacity.
 
-## Remaining delivery and acceptance
+## Reviewed source delivery and second live check
 
-The reviewed source must be pushed with its own upstream and PR, pass the current Verify check, and record any subsequent reviewed-source Worker version separately from the initial acceptance above. Main integration is a separate action. Retain the old Grok origin and browser save export/import path.
+Source commit: `cc186b2868d4f5396be96668905b576e4de42dcd`.
+Pushed branch with its own upstream: `origin/codex/cloudflare-hosted-ai`.
+Review: [PR #41](https://github.com/arwyn6969/the-game/pull/41).
+The exact source commit's [Verify run](https://github.com/arwyn6969/the-game/actions/runs/39767941785) passed, including the added Cloudflare build, application tests and all existing browser checks.
 
-Production desktop/phone viewport, export/import, logout/account switching, real hosted stamp transformation, human/device sessions, sustained AI and operator recovery/rollback remain separately scoped unless later evidence below closes a named check. The application keeps its finite free-only quotas and disables background AI. A paused browser town is an intentional supported release scope.
+The production Cloudflare build and Wrangler 4.151.3 packaging dry run passed. The reviewed source was deployed to existing Worker `the-game-production` as version **`72863242-780e-4738-a379-50fb5ddc1814`**, tagged `cc186b2868d4`. The existing Hyperdrive/Images bindings and remote secrets were retained; there was no secret upload, database migration or new route configuration. The previous version `112cdeb0-2a07-458e-842e-1b712bb138cf` remains the recorded rollback point. The live Help panel displayed **Build cc186b2868d4** without the local-changes suffix.
+
+Fresh entry: <https://www.arwyn.party/thegame/?deployment=cc186b2868d4>.
+
+A second ordinary authenticated player question asked what Kevin noticed about the kettle's sound in the quiet cafe. The accepted generated reply described its lower hum and cycling element, coherently continuing the saved exchange. PostgreSQL recorded HTTP 200 / `ok`, **2,112 ms**, **1,764 tokens**, one settled call and **0 microusd**. Across both checks there are exactly two successful player attempts and two settled budget rows, no outstanding reservations, no retries and no background AI calls. The clock stayed paused at day 1, 07:00 with 4 coins. Reload retained both exchanges, including the complete second reply marked **AI dialogue**. The per-page AI badge correctly returns to unverified after reload; it reports that page session's provider observation, not deletion of saved history.
+
+The reviewed build was checked at 1280×800 and 390×844. Document scroll width matched each viewport; the phone conversation textbox remained within the viewport (x 25–365, y 704.5–764.5). Temporary viewport settings were reset. Earlier phone direction-button use moved the synthetic player; normal destination navigation returned them to Kevin without advancing town time.
+
+Normal sign-out hid private owner details and returned the owner tools to a sign-in requirement. Google account selection then created the expected production session again. This Chrome profile still followed its historical cached www-to-apex redirect on the bare callback destination; opening the fresh versioned www link restored the signed-in game without clearing a town or changing site security. Separate-account switching is not verified.
+
+Public curl checks returned 200 for the game, privacy page, mounted manifest and unauthenticated session endpoint. Manifest ID/scope/start URL are all `/thegame/`; the anonymous session is null. HTTP game entry upgrades to HTTPS with 308, and the pre-existing bitcoinart www-to-apex redirect remains 308. Python's default HTTP client was separately blocked with 403; this was not treated as a Worker runtime failure or bypassed by weakening site security.
+
+Private final evidence: `live-ai-reviewed-20261022.jpg`, `live-ai-reviewed-phone-20261022.jpg`, `reviewed-live-build-20261022.png`, the production deployment log and HTTP receipts under ignored `artifacts/hosted-ai-rollout/`. Later commits in this PR that only update these receipts do not change the deployed runtime commit above.
+
+## Remaining acceptance
+
+The reviewed hosting source is pushed, reviewed, CI-verified and deployed, with real live AI acceptance above. Main integration is a separate action. Each subsequent PR head still needs its own required check before merge. Retain the old Grok origin and browser save export/import path.
+
+Production export/import, separate-account switching, real hosted stamp transformation, human/physical-device sessions, sustained AI and operator recovery/rollback remain separately scoped. The browser viewport checks and same-account logout/relogin evidence above are bounded; they do not close physical-device or broader authentication acceptance. The application keeps its finite free-only quotas and disables background AI. A paused browser town is an intentional supported release scope.
 
 Build/deploy, existing resource identifiers, secret handling, isolated preview and rollback details are in [Cloudflare hosting](../implementation/cloudflare-hosting.md).

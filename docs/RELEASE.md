@@ -1,3 +1,16 @@
+# Cloudflare browser hosting — 22 October 2026
+
+The browser game is live at <https://www.arwyn.party/thegame/?deployment=cc186b2868d4>.
+Reviewed source `cc186b2868d4f5396be96668905b576e4de42dcd` is pushed in [PR #41](https://github.com/arwyn6969/the-game/pull/41) and deployed as Worker `72863242-780e-4738-a379-50fb5ddc1814`. The exact source commit's [Verify run passed](https://github.com/arwyn6969/the-game/actions/runs/39767941785), including the Cloudflare target and existing browser checks. Main integration is separate.
+
+Two normal authenticated player requests generated accepted NVIDIA Ultra replies through OpenRouter at $0; both accounting ledgers settled and both exchanges survived reload. The second request verified the exact reviewed live build in 2,112 ms. The synthetic town retained its paused day-1 07:00 clock and 4 coins. Direct Google authentication, mounted PWA paths, Hyperdrive accounting and the existing Grok target are preserved.
+
+The [delivery handoff](handoffs/cloudflare-hosting-2026-10-22.md) records independent review, 945 tests, both builds, exact source/deployment IDs, bounded desktop/phone and same-account auth evidence, cached-redirect limitations, recovery references and open acceptance gates. Existing Grok-origin saves remain available and require explicit export/import to change origins. No shared continuous world, background AI, paid fallback, funding or outgoing wallet action is introduced.
+
+The older Grok publications below retain their historical source and scope.
+
+---
+
 # Character social UI release — 12 October 2026
 
 The character cards and town conversation view are live at https://thegame.grok.me. The user asked Codex to finish PR #23 and get it live. PR #23 was already merged; Codex republished the existing Grok project at approximately **21:12 UTC** and observed **Published / Live**, then independently reloaded the public site. The existing host, access setting, provider configuration and platform assets were preserved.

@@ -193,3 +193,14 @@ without connecting to a database.
 Keep the initial acceptance Worker version separate from any later deployment
 of the reviewed Git commit. The handoff records source delivery and subsequent
 hosted evidence without changing the agreed free-only model limits.
+
+Reviewed runtime commit `cc186b2868d4f5396be96668905b576e4de42dcd` is pushed in
+[PR #41](https://github.com/arwyn6969/the-game/pull/41); its full
+[Verify run](https://github.com/arwyn6969/the-game/actions/runs/39767941785) passed.
+It is deployed on production Worker version
+`72863242-780e-4738-a379-50fb5ddc1814`, with tag `cc186b2868d4`. Use
+<https://www.arwyn.party/thegame/?deployment=cc186b2868d4> for the fresh entry.
+A second real player reply on that exact build passed in 2,112 ms and settled
+at $0. Both exchanges survived reload; all reservations are settled. The handoff
+records viewport, logout/relogin, HTTP evidence and the retained cached-redirect
+limitation. The prior Worker version remains the rollback reference above.
