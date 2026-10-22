@@ -187,6 +187,7 @@ try {
       promptCharacters: prompt.length,
       promptSha256: createHash("sha256").update(prompt).digest("hex"),
       attempts: [],
+      transmissions: 0,
       reportedCostUSD: null,
     };
     report.decisions.push(row);
@@ -221,6 +222,7 @@ try {
             assert.ok(!body.response_format && !body.tools);
             assert.ok(report.transmissions < MAX_CALLS && row.attempts.length === 0);
             report.transmissions++;
+            row.transmissions++;
             previousTransmission = Date.now();
             await checkpoint();
             const response = await fetch(url, init);
@@ -237,7 +239,7 @@ try {
           onAttempt: (provider, model, completion) =>
             row.attempts.push({ provider, model, ...completion }),
         });
-        return { ...routed, diagnostics: { attempts: row.attempts.length } };
+        return { ...routed, diagnostics: { attempts: row.transmissions } };
       },
     });
     row.elapsedMs = Math.round(performance.now() - started);
@@ -246,7 +248,7 @@ try {
     const completion = row.attempts[0];
     physical.recordPhysicalUsage(town, job, {
       elapsedMs: row.elapsedMs,
-      attempts: row.attempts.length,
+      attempts: row.transmissions,
       totalTokens: completion?.actualTokens ?? null,
       success: Boolean(parsed),
     });
@@ -308,6 +310,8 @@ try {
   physical.pausePhysicalSession(town, report.stopReason);
 } finally {
   report.finishedAt = new Date().toISOString();
+  report.wallTimeMs = Date.parse(report.finishedAt) - Date.parse(report.startedAt);
+  report.aiWaitMs = report.decisions.reduce((sum, row) => sum + (row.elapsedMs ?? 0), 0);
   report.finalItem = structuredClone(town.physicalItems.items[0]);
   report.session = structuredClone(town.physicalItems.session);
   report.financeUnchanged =
@@ -318,6 +322,17 @@ try {
       favors: town.favors,
       economy: town.economy,
     });
+  report.cashUnchanged =
+    JSON.stringify({
+      money: JSON.parse(startFinance).money,
+      tills: JSON.parse(startFinance).tills,
+    }) ===
+    JSON.stringify({
+      money: town.agents.map(({ id, money }) => ({ id, money })),
+      tills: town.tills,
+    });
+  report.clockScope =
+    "Game time advances only during physical travel; wall-clock pacing is not simulated game time.";
   report.saveRoundTrip =
     JSON.stringify(parseTownFile(exportTown(town)).physicalItems) ===
     JSON.stringify(town.physicalItems);
