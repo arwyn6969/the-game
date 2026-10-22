@@ -212,6 +212,7 @@ try {
           beforeCanvas,
           "Ground reading must not draw a held manuscript or change the paused world image",
         );
+        await capture(page, `${viewport.name}-ground-read-${layout}-panel.png`);
         await closeInventory(page);
         await capture(page, `${viewport.name}-ground-read-${layout}.png`);
         if (layout === "adjacent") {
@@ -227,7 +228,10 @@ try {
             await page.getByLabel("Your line to Northern", { exact: true }).inputValue(),
             "May I read this here?",
           );
-          await page.getByRole("button", { name: "Close conversation", exact: true }).click();
+          await page.keyboard.press("Escape");
+          await page
+            .getByRole("button", { name: "Close conversation", exact: true })
+            .waitFor({ state: "hidden" });
           assert.deepEqual((await town(page)).physicalItems.items[0], before);
         }
       } else {

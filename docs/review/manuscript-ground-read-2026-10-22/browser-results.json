@@ -1,0 +1,107 @@
+{
+  "sourceHead": "457322c7a835126bbc68a5c1c5b5f8f72ad6db24",
+  "target": "http://127.0.0.1:8126/",
+  "syntheticTransport": true,
+  "liveCalls": 0,
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "assertions": [
+        "Same/cardinal-adjacent ground reads reveal actual text without transfer, item revision or paused canvas changes; diagonal/distant/other-held reads are disabled; conversation entry preserves its draft and item custody",
+        "Blank introduction once; distant resident invitation is disabled",
+        "Canvas and accessible inspection; pickup/read/place; all four facing directions; reload/export/import preserve one item",
+        "Actual act parser/executor through synthetic transport: pickup, original write, read, wait parks; unknown usage remains unknown",
+        "Stopped trial rejects its delayed response without changing custody/content",
+        "Touch/keyboard carrying and replay exclusion; valid delayed action survives player/time changes; hidden tabs dispatch no new request; unavailable inference pauses without fallback"
+      ],
+      "errors": [],
+      "externalRequests": [
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com"
+      ],
+      "mockedModules": 15
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "assertions": [
+        "Same/cardinal-adjacent ground reads reveal actual text without transfer, item revision or paused canvas changes; diagonal/distant/other-held reads are disabled; conversation entry preserves its draft and item custody",
+        "Blank introduction once; distant resident invitation is disabled",
+        "Canvas and accessible inspection; pickup/read/place; all four facing directions; reload/export/import preserve one item",
+        "Actual act parser/executor through synthetic transport: pickup, original write, read, wait parks; unknown usage remains unknown",
+        "Stopped trial rejects its delayed response without changing custody/content",
+        "Touch/keyboard carrying and replay exclusion; valid delayed action survives player/time changes; hidden tabs dispatch no new request; unavailable inference pauses without fallback"
+      ],
+      "errors": [],
+      "externalRequests": [
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com"
+      ],
+      "mockedModules": 15
+    }
+  ],
+  "failures": []
+}
