@@ -2,6 +2,7 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import appCss from "../styles.css?url";
+import { appPath } from "../lib/app-path";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -13,14 +14,14 @@ export const Route = createRootRoute({
       { name: "color-scheme", content: "dark" },
     ],
     links: [
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "icon", type: "image/svg+xml", href: appPath("/favicon.svg") },
       { rel: "stylesheet", href: appCss },
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Space+Grotesk:wght@400;500;600;700&display=swap",
       },
-      { rel: "manifest", href: "/__grok/manifest.webmanifest" },
-      { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
+      { rel: "manifest", href: appPath("/__grok/manifest.webmanifest") },
+      { rel: "apple-touch-icon", href: appPath("/__grok/icon-180.png") },
     ],
   }),
   component: () => (

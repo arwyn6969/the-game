@@ -69,7 +69,9 @@ export async function routeMind(input: {
             {
               method: "POST",
               headers,
-              redirect: "error",
+              // Workers supports manual/follow only. Never follow a provider
+              // redirect with its credential; a 3xx is handled as unreachable.
+              redirect: "manual",
               body: JSON.stringify(requestBody(candidate, system, user, tokens, jsonMode)),
               signal: AbortSignal.timeout(Math.max(1, Math.floor(remaining))),
             },

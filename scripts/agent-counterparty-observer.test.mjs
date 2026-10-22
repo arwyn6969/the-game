@@ -133,7 +133,7 @@ test("fixed HTTPS GET feeds produce raw confirmed and pending protocol observati
     h.calls.every(
       ({ init }) =>
         init.method === "GET" &&
-        init.redirect === "error" &&
+        init.redirect === "manual" &&
         init.cache === "no-store" &&
         init.credentials === "omit",
     ),

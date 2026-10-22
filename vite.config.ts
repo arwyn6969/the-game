@@ -35,6 +35,12 @@ function gameBuildId(): string {
   }
 }
 
+const cloudflareTarget = process.env.GAME_HOSTING_TARGET === "cloudflare";
+const appBase = process.env.GAME_BASE_PATH || "/";
+if (!/^\/(?:[a-z0-9_-]+\/)*[a-z0-9_-]*\/?$/i.test(appBase))
+  throw new Error("GAME_BASE_PATH must be a simple absolute path");
+const appBasePath = appBase.replace(/\/$/, "");
+
 /** The files `src/lib/db.ts` globs — same directory, same non-recursive scope. */
 function hasGlobbedMigrations(root: string): boolean {
   try {
@@ -169,6 +175,7 @@ function authPopupPlugin(): Plugin {
 // The dev server starts once `src/router.tsx` and `src/routes/` exist — see
 // AGENTS.md § "First scaffold".
 export default defineConfig(({ command, isPreview }) => ({
+  base: `${appBasePath}/`,
   define: { __GAME_BUILD_ID__: JSON.stringify(gameBuildId()) },
   server: {
     host: "0.0.0.0",
@@ -194,7 +201,45 @@ export default defineConfig(({ command, isPreview }) => ({
     ...(command === "build" || isPreview
       ? [
           nitro({
-            preset: "vercel",
+            preset: cloudflareTarget ? "cloudflare_module" : "vercel",
+            ...(cloudflareTarget
+              ? {
+                  baseURL: `${appBasePath}/`,
+                  compatibilityDate: "2026-10-21",
+                  cloudflare: {
+                    wrangler: {
+                      name: process.env.GAME_WORKER_NAME || "the-game-preview",
+                      account_id: "dcde0fefc3f48090702893970a1b9145",
+                      workers_dev: true,
+                      preview_urls: false,
+                      observability: {
+                        enabled: true,
+                        redact_query_string: true,
+                        traces: { enabled: true, head_sampling_rate: 0.01 },
+                      },
+                      images: { binding: "IMAGES" },
+                      hyperdrive: [
+                        {
+                          binding: "HYPERDRIVE",
+                          id: process.env.GAME_HYPERDRIVE_ID || "b8b5746b13f34c07acd24616ed6338d6",
+                        },
+                      ],
+                      vars: {
+                        GAME_HOSTING_TARGET: "cloudflare",
+                        GAME_BASE_PATH: appBasePath,
+                        DATABASE_URL: "hyperdrive://HYPERDRIVE",
+                        VITE_AUTH_ENABLED: "true",
+                        VITE_AUTH_MODE: "standalone",
+                        VITE_GROK_EXTENSIONS: "0",
+                        NODE_ENV: "production",
+                        BETTER_AUTH_URL:
+                          process.env.GAME_PUBLIC_ORIGIN ||
+                          "https://the-game-preview.mrarwyn.workers.dev",
+                      },
+                    },
+                  },
+                }
+              : {}),
             // Auto-registers server/middleware/* (the PWA install page +
             // manifest + head-tag middleware). Nitro v3 defaults serverDir to
             // false, so removing this silently unwires /?install=1 on deploys.
@@ -202,18 +247,22 @@ export default defineConfig(({ command, isPreview }) => ({
           }),
           // Must not be a nitro `compiled` hook: that replaces the preset hook
           // which writes .vercel/output/config.json, and Vercel then looks for dist.
-          {
-            name: "app-builder:pglite-assets",
-            apply: "build",
-            buildApp: {
-              order: "post",
-              async handler() {
-                await copyPgliteAssets(
-                  join(process.cwd(), ".vercel/output/functions/__server.func"),
-                );
-              },
-            },
-          },
+          ...(!cloudflareTarget
+            ? [
+                {
+                  name: "app-builder:pglite-assets",
+                  apply: "build",
+                  buildApp: {
+                    order: "post",
+                    async handler() {
+                      await copyPgliteAssets(
+                        join(process.cwd(), ".vercel/output/functions/__server.func"),
+                      );
+                    },
+                  },
+                } satisfies Plugin,
+              ]
+            : []),
         ]
       : []),
     viteReact(),

@@ -16,6 +16,7 @@
  */
 import installPageTemplate from "../../scripts/install-page.html?raw";
 import { grokOgIdentity } from "virtual:grok-og-identity";
+import { APP_BASE_PATH } from "../../src/lib/app-path";
 import {
   acceptsHtml,
   createHeadInjector,
@@ -39,6 +40,8 @@ function requestHost(event: GrokPwaEvent): string {
 function injectHeadStreaming(response: Response, host: string): Response {
   const injector = createHeadInjector({
     host,
+    basePath: APP_BASE_PATH,
+    ...(APP_BASE_PATH ? { appName: "THE GAME" } : {}),
     site: grokOgIdentity.site,
   });
   const transformed = response.body!.pipeThrough(
@@ -67,16 +70,26 @@ export default async function grokPwaMiddleware(
   const method = (event.req.method ?? "GET").toUpperCase();
   if (method !== "GET") return next();
 
-  const path = event.url.pathname;
-  const urlWithQuery = path + event.url.search;
+  const externalPath = event.url.pathname;
+  const path =
+    APP_BASE_PATH && externalPath.startsWith(`${APP_BASE_PATH}/`)
+      ? externalPath.slice(APP_BASE_PATH.length)
+      : externalPath;
+  const urlWithQuery = externalPath + event.url.search;
 
   if (path === "/__grok/manifest.webmanifest" || path === "/__grok/manifest.json") {
-    return new Response(renderWebManifest(requestHost(event)), {
-      headers: {
-        "content-type": "application/manifest+json; charset=utf-8",
-        "cache-control": "no-cache",
+    return new Response(
+      renderWebManifest(requestHost(event), {
+        basePath: APP_BASE_PATH,
+        ...(APP_BASE_PATH ? { appName: "THE GAME" } : {}),
+      }),
+      {
+        headers: {
+          "content-type": "application/manifest+json; charset=utf-8",
+          "cache-control": "no-cache",
+        },
       },
-    });
+    );
   }
 
   if (
@@ -87,6 +100,8 @@ export default async function grokPwaMiddleware(
     const html = renderInstallPageHtml(installPageTemplate, {
       host: requestHost(event),
       url: urlWithQuery,
+      basePath: APP_BASE_PATH,
+      ...(APP_BASE_PATH ? { appName: "THE GAME" } : {}),
     });
     return new Response(html, {
       headers: {
