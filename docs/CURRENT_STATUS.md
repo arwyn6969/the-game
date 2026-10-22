@@ -1,6 +1,21 @@
 # Current project status
 
-Updated 21 October 2026. This is the live entry point for the development baseline, tested candidates, deployed-version evidence and active ownership. Dated delivery boards, reviews and handoffs record their stated source and scope. Update this file in the same PR when work changes owner, completes, merges or deploys; a historical checkout is not a new assignment.
+Updated 22 October 2026 for the manuscript prototype assignment. This is the live entry point for the development baseline, tested candidates, deployed-version evidence and active ownership. Dated delivery boards, reviews and handoffs record their stated source and scope. Update this file in the same PR when work changes owner, completes, merges or deploys; a historical checkout is not a new assignment.
+
+## Manuscript prototype — 22 October
+
+Arwyn authorized the first [physical manuscript slice](design/physical-interaction-foundation.md) after a source audit and compute review. The current chat coordinates implementation on `codex/northern-community-evening-20261022` in `community-evening-plan/`. Current main was checked through GitHub at `dab257b` (documentation alignment); that exact committed revision is integrated locally without copying the hosting owner's working files. The shared additive item/action type contract is `dd50d26`, explicitly stacked over the planning commits and runtime checkpoint `7ddda79`.
+
+| Owner | Checkout / branch | Scope and current state | Next evidence |
+| --- | --- | --- | --- |
+| Core subagent `identity_economy_inventory` | `manuscript-core/`, `codex/manuscript-core-20261022` | Implementing one communal manuscript, atomic validated custody, bounded bring intentions, existing navigation integration, pure save/recovery validation and focused regressions. | Scoped commit and `handoffs/manuscript-core.md`; save/reload, collision/commitment and duplicate/stale action evidence. |
+| UI subagent `gameplay_inventory` | `manuscript-ui/`, `codex/manuscript-ui-20261022` | Implementing real ground/held/read art, all-direction walking attachments, accessible inventory/inspection and bounded trial UI. Owns TownApp integration. | Scoped commit and `handoffs/manuscript-ui.md`; local desktop/phone browser evidence with synthetic transport. |
+| AI subagent `platform_inventory` | `manuscript-ai/`, `codex/manuscript-ai-20261022` | Implementing optional `act` routing/parser/envelope, compatibility-preserving budget migration source and call/usage diagnostics. Existing four routes remain valid. | Scoped commit and `handoffs/manuscript-ai.md`; parser, config, budget and unavailable-service regressions. |
+| Current chat / integration | `community-evening-plan/`, `codex/northern-community-evening-20261022` | Frozen contract, isolated lane coordination, current-main alignment, independent source review and combined validation. | Integrate lane commits, run relevant/full checks and local UI journeys, leave reviewable source and honest remaining gates. |
+
+No live provider requests, production migration, publication, spending-limit changes or hosting-secret edits are part of this prototype run. Real-provider compute measurements remain a separate bounded qualification; synthetic tests can establish mechanics and call cadence only. The new activity never invents local NPC decisions or speech when AI is unavailable. This scope does not implement the whole park performance or continuous shared-server life. Existing authored/offline behavior outside the opt-in prototype remains a separate release-wide migration.
+
+The source/deployment and hosting-owner table below retains its 21 October observation. The later hosting handoff in the owner's checkout reports Cloudflare publication and Google login, with post-quota-reset AI acceptance still open; this implementation does not retest or supersede that receipt.
 
 ## Source and deployment
 
