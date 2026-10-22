@@ -71,7 +71,7 @@ fallbacks when a free provider is unavailable.
 
 Run one bounded authenticated hosted check, verify that the actual provider was
 used and that PostgreSQL recorded the charge/reservation, then check reload.
-An authored local reply is useful fallback behavior, not proof of AI activation.
+Player AI failures retain the draft and show a persistent reason instead of creating an authored reply. Availability rechecks automatically without generating or resending messages. Authored player dialogue requires the explicit local-only preference; it is never proof of AI activation.
 
 The current Cloudflare configuration selects only
 `nvidia/nemotron-3-ultra-550b-a55b:free` through OpenRouter. There is no paid

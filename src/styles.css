@@ -246,6 +246,22 @@ kbd {
   color: var(--color-fg);
   border-color: var(--color-pink);
 }
+.ai-warning .btn {
+  margin-top: 0.3rem;
+}
+.mind-say .ai-warning {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+}
+.mind-say:has(.ai-warning) {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
 .welcome-tip {
   position: relative;
   display: flex;

@@ -1,6 +1,10 @@
 # Cloudflare browser hosting — 22 October 2026
 
-The browser game is live at <https://www.arwyn.party/thegame/?deployment=cc186b2868d4>.
+The browser game is live at <https://www.arwyn.party/thegame/>. Recovery runtime `cfe997e39b55dedcc8b7900fdde9eeb78a1ae4a0` is deployed as Worker `e7893cf2-9c08-4cb8-9f94-cd82a38b15f0` in [PR #41](https://github.com/arwyn6969/the-game/pull/41). Availability checks retry automatically; failed player AI requests retain the draft and show a persistent reason, without substituting local dialogue. Background failures no longer overwrite player AI status. Only an explicit local-only preference uses authored player replies.
+
+This focused follow-up passed 18 targeted unit regressions, typecheck, changed-file lint, mocked desktop/phone recovery and warning checks, the Cloudflare production build and packaging. Live public assets match that build. No full local suite rerun, new live AI request, migration, quota or secret change. Required CI for the new PR head remains separate; main is not merged.
+
+Earlier hosting acceptance follows.
 Reviewed source `cc186b2868d4f5396be96668905b576e4de42dcd` is pushed in [PR #41](https://github.com/arwyn6969/the-game/pull/41) and deployed as Worker `72863242-780e-4738-a379-50fb5ddc1814`. The exact source commit's [Verify run passed](https://github.com/arwyn6969/the-game/actions/runs/39767941785), including the Cloudflare target and existing browser checks. Main integration is separate.
 
 Two normal authenticated player requests generated accepted NVIDIA Ultra replies through OpenRouter at $0; both accounting ledgers settled and both exchanges survived reload. The second request verified the exact reviewed live build in 2,112 ms. The synthetic town retained its paused day-1 07:00 clock and 4 coins. Direct Google authentication, mounted PWA paths, Hyperdrive accounting and the existing Grok target are preserved.
