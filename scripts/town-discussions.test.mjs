@@ -27,7 +27,7 @@ const ok = (result) => {
   assert.equal(result.ok, true, result.message);
   return result;
 };
-function fixture() {
+function fixture(facilitator) {
   const town = createTown("Mira");
   for (const [id, tile] of Object.entries({
     player: { x: 43, y: 22 },
@@ -37,7 +37,7 @@ function fixture() {
     baba: { x: 42, y: 22 },
   }))
     person(town, id).tile = tile;
-  ok(d.createLibraryDiscussion(town, "A possible shared reading"));
+  ok(d.createLibraryDiscussion(town, "A possible shared reading", facilitator));
   return town;
 }
 function command(town, id, kind, fields = {}) {
@@ -95,6 +95,91 @@ test("old towns stay opt out and proposal creates no NPC choice or speech", () =
   );
   assert.equal(meeting(town).utterances.length, 0);
   assert.deepEqual(d.validateDiscussions(town), []);
+});
+
+test("Arwyn is only proposed to facilitate, with acceptance and listening still independent", () => {
+  const town = fixture("arwyn");
+  assert.equal(meeting(town).facilitator, "arwyn");
+  assert.equal(member(town, "arwyn").role, "facilitator");
+  assert.equal(member(town, "northern").role, "participant");
+  assert.equal(member(town, "arwyn").choice, "pending");
+  assert.equal(member(town, "arwyn").mode, "off");
+  assert.equal(d.nextDiscussionJob(town).agentId, "arwyn");
+  for (const id of ["northern", "arwyn", "sub"]) invite(town, id);
+  assert.equal(
+    d.nextDiscussionJob(town).agentId,
+    "arwyn",
+    "the proposed facilitator gets the first delivered-invitation choice",
+  );
+  ok(ai(town, { kind: "accept" }).result);
+  assert.equal(member(town, "arwyn").choice, "accepted");
+  assert.equal(member(town, "arwyn").mode, "off");
+  assert.equal(meeting(town).status, "gathering");
+});
+
+test("read invitations name Arwyn while ignored notices still permit other residents' choices", () => {
+  const town = fixture("arwyn");
+  ok(ai(town, { kind: "read-invitation" }).result);
+  assert.match(person(town, "arwyn").memories.at(-1).text, /proposed facilitator is Arwyn;/);
+  assert.doesNotMatch(person(town, "arwyn").memories.at(-1).text, /facilitator is Northern/);
+  const ignored = fixture("arwyn");
+  ok(ai(ignored, { kind: "ignore" }).result);
+  assert.equal(
+    d.nextDiscussionJob(ignored).agentId,
+    "northern",
+    "choosing another facilitator must not introduce a scheduler wait gate",
+  );
+});
+
+test("Arwyn quorum and scoped hearing depend on Arwyn actually joining, not Northern's role", () => {
+  const town = fixture("arwyn");
+  join(town, "northern", "participate");
+  join(town, "sub");
+  assert.equal(
+    meeting(town).status,
+    "gathering",
+    "two other residents cannot substitute for the proposed facilitator",
+  );
+  invite(town, "arwyn");
+  ok(command(town, "arwyn", "accept"));
+  assert.equal(meeting(town).status, "gathering", "facilitator acceptance is not attention");
+  ok(command(town, "arwyn", "listen"));
+  assert.equal(meeting(town).status, "active");
+  ok(command(town, "northern", "speak", { text: "A proposal for the people actually listening." }));
+  assert.deepEqual(meeting(town).utterances[0].recipientIds.sort(), ["arwyn", "sub"]);
+  assert.deepEqual(d.discussionObservation(town, "player").receivedTurns, []);
+  assert.deepEqual(d.discussionObservation(town, "baba").receivedTurns, []);
+  assert.equal(person(town, "arwyn").memories.at(-1).source, "statement");
+});
+
+test("participant decline keeps Arwyn's proposal open; Arwyn's own decline closes it", () => {
+  const town = fixture("arwyn");
+  invite(town, "northern");
+  ok(command(town, "northern", "decline"));
+  assert.equal(meeting(town).status, "gathering");
+  invite(town, "arwyn");
+  ok(command(town, "arwyn", "decline"));
+  assert.equal(meeting(town).status, "closed");
+  assert.equal(meeting(town).utterances.length, 0);
+  assert.ok(meeting(town).members.every((m) => m.mode === "off"));
+});
+
+test("Arwyn and legacy Northern facilitator records round trip and reject a forged extra role", () => {
+  for (const facilitator of [undefined, "arwyn"]) {
+    const town = fixture(facilitator);
+    assert.equal(meeting(town).facilitator, facilitator ?? "northern");
+    const restored = save.parseTownFile(save.exportTown(town));
+    assert.ok(restored);
+    assert.deepEqual(restored.discussions, town.discussions);
+    member(town, facilitator === "arwyn" ? "northern" : "arwyn").role = "facilitator";
+    const raw = JSON.stringify({ version: 2, town });
+    const report = save.readTownFile(raw);
+    assert.equal(report.status, "unreadable");
+    assert.equal(report.raw, raw);
+  }
+  const unsupported = createTown("Mira");
+  assert.equal(d.createLibraryDiscussion(unsupported, "A proposal", "sub").ok, false);
+  assert.equal(unsupported.discussions, undefined);
 });
 
 test("acoustics merge outdoor labels but walls and room boundaries block hearing", () => {

@@ -20,12 +20,56 @@ import { auditDiscussionDelivery, auditDiscussionReload } from "./library-meetin
 // is extracted; every budget/quota write is to a new local disposable ledger.
 const BASE = "https://openrouter.ai/api/v1";
 const MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
-const MAX_CALLS = 12;
+const ORIGINAL_ALLOWANCE = 12;
 const SAVED_DAILY_CEILING = 24;
 const mode = process.argv[2];
 assert.ok(process.argv.length === 3 && ["--preflight", "--run"].includes(mode));
 const extraCalls = Number(process.env.MEETING_TRIAL_AUTHORIZED_EXTRA_FREE_CALLS || 0);
-assert.ok([0, MAX_CALLS].includes(extraCalls), "Additional calls need explicit bounded authority");
+assert.ok(
+  [0, ORIGINAL_ALLOWANCE].includes(extraCalls),
+  "Additional calls need explicit bounded authority",
+);
+const facilitator = process.env.MEETING_TRIAL_FACILITATOR || "northern";
+assert.ok(["northern", "arwyn"].includes(facilitator), "Choose a supported proposed facilitator");
+const previousPath = process.env.MEETING_TRIAL_PRIOR_REPORT;
+const previousBytes = previousPath ? await readFile(previousPath) : null;
+const previous = previousBytes ? JSON.parse(previousBytes.toString("utf8")) : null;
+if (previous) {
+  assert.equal(extraCalls, 0, "Carry-forward cannot also create a fresh allowance");
+  assert.equal(previous.model, MODEL);
+  assert.equal(previous.maxCalls, ORIGINAL_ALLOWANCE);
+  assert.equal(previous.preflight.authorizedAdditionalFreeCalls, ORIGINAL_ALLOWANCE);
+  assert.equal(previous.preflight.freeRequests.used, 25);
+  assert.equal(previous.preflight.experimentAccountCeiling, 37);
+  assert.equal(previous.transmissions, 1, "Continue only the recorded one-call original trial");
+  assert.equal(previous.meeting.status, "closed");
+  assert.equal(previous.meeting.pending, null);
+  assert.equal(
+    previous.decisions.reduce((sum, row) => sum + row.transmissions, 0),
+    1,
+  );
+  assert.equal(previous.ledger.budget.length, 1);
+  assert.equal(previous.ledger.budget[0].charged_calls, 1);
+  assert.equal(previous.ledger.budget[0].settled, true);
+  assert.equal(previous.ledger.pool.length, 1);
+  assert.equal(previous.ledger.pool[0].settled, true);
+  assert.equal(
+    new Date(previous.finishedAt).toISOString().slice(0, 10),
+    new Date().toISOString().slice(0, 10),
+    "Carry-forward is authorized for the original UTC day only",
+  );
+}
+const MAX_CALLS = previous ? ORIGINAL_ALLOWANCE - previous.transmissions : ORIGINAL_ALLOWANCE;
+const carryForward = previous
+  ? {
+      priorReportSha256: createHash("sha256").update(previousBytes).digest("hex"),
+      previousTrialSourceHead: previous.sourceHead,
+      originalAuthorizedCalls: ORIGINAL_ALLOWANCE,
+      previousTransmissions: previous.transmissions,
+      remainingAuthorizedCalls: MAX_CALLS,
+      inheritedAccountCeiling: previous.preflight.experimentAccountCeiling,
+    }
+  : null;
 const envFile = process.env.MEETING_TRIAL_ENV_FILE;
 const key = (
   process.env.OPENROUTER_API_KEY ||
@@ -75,8 +119,9 @@ assert.ok(knownZero(model.pricing.prompt));
 assert.ok(knownZero(model.pricing.completion));
 // A new user-authorized allowance is per experiment. It never changes the
 // saved ceiling, another experiment, an environment file or production policy.
-const trialCeiling =
-  extraCalls === MAX_CALLS
+const trialCeiling = previous
+  ? previous.preflight.experimentAccountCeiling
+  : extraCalls === ORIGINAL_ALLOWANCE
     ? Math.max(SAVED_DAILY_CEILING, beforeAccount.freeRequests.used + extraCalls)
     : SAVED_DAILY_CEILING;
 const callAllowance = Math.max(
@@ -94,6 +139,7 @@ const preflight = {
   requestedMaxCalls: MAX_CALLS,
   savedDailyCeiling: SAVED_DAILY_CEILING,
   authorizedAdditionalFreeCalls: extraCalls,
+  carryForward,
   experimentAccountCeiling: trialCeiling,
   callAllowance,
 };
@@ -101,22 +147,36 @@ if (mode === "--preflight") {
   console.log(JSON.stringify(preflight));
   process.exit(0);
 }
-assert.equal(
-  callAllowance,
-  MAX_CALLS,
+assert.ok(
+  previous ? callAllowance > 0 : callAllowance === MAX_CALLS,
   "The complete bounded meeting needs free headroom and authority",
 );
+const RUN_CALLS = callAllowance;
 assert.ok(process.env.MEETING_TRIAL_OUT, "One fixed exclusive output directory is required");
 const out = resolve(process.env.MEETING_TRIAL_OUT);
 await mkdir(dirname(out), { recursive: true });
 await mkdir(out, { recursive: false }); // An interrupted trial cannot restart its allowance.
+if (carryForward) {
+  // Claim the one authorized continuation outside the original evidence folder.
+  // Another output path cannot reset the inherited eleven-call allowance.
+  const claim = resolve(
+    dirname(dirname(resolve(previousPath))),
+    `.meeting-continuation-${carryForward.priorReportSha256}.json`,
+  );
+  await writeFile(
+    claim,
+    JSON.stringify({ claimedAt: new Date().toISOString(), output: out, ...carryForward }),
+    { flag: "wx" },
+  );
+}
 const report = {
   sourceHead: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
   startedAt: new Date().toISOString(),
   scope:
     "One operator headless local meeting, real model and engine, synthetic town, local SQL accounting",
   model: MODEL,
-  maxCalls: MAX_CALLS,
+  maxCalls: RUN_CALLS,
+  carryForward,
   preflight,
   transmissions: 0,
   decisions: [],
@@ -142,8 +202,8 @@ const config = validateConfig({
       jsonMode: false,
       limits: {
         rpm: 2,
-        rpd: MAX_CALLS,
-        monthly: MAX_CALLS,
+        rpd: RUN_CALLS,
+        monthly: RUN_CALLS,
         tpm: 20_000,
         tpd: 100_000,
         concurrent: 1,
@@ -164,9 +224,9 @@ const config = validateConfig({
 });
 const policy = validateBudgetPolicy({
   ...DEFAULT_BUDGET,
-  dailyCalls: MAX_CALLS,
-  playerDailyCalls: MAX_CALLS,
-  playerMinuteCalls: 2,
+  dailyCalls: RUN_CALLS,
+  playerDailyCalls: RUN_CALLS,
+  playerMinuteCalls: Math.min(2, RUN_CALLS),
   playerInteractiveReserveCalls: 0,
   playerInteractiveReserveMinuteCalls: 0,
   concurrent: 2,
@@ -233,6 +293,7 @@ assert.ok(
   d.createLibraryDiscussion(
     town,
     "Would a short shared reading at the library be worthwhile, and what would make it welcoming?",
+    facilitator,
   ).ok,
 );
 for (const invitee of ["northern", "arwyn", "sub"]) {
@@ -240,6 +301,7 @@ for (const invitee of ["northern", "arwyn", "sub"]) {
   assert.ok(result.ok, result.message);
 }
 report.setup = {
+  proposedFacilitator: facilitator,
   positions: town.agents.map(({ id, tile }) => ({ id, tile })),
   npcChoices:
     "Invitations delivered by the player; all acceptance, attention and speech remain AI choices",
@@ -252,7 +314,7 @@ await writeFile(resolve(out, "initial-town.json"), exportTown(town));
 let lastTransmission = 0;
 let retainedReceipts = [];
 try {
-  while (report.transmissions < MAX_CALLS && meeting().status !== "closed") {
+  while (report.transmissions < RUN_CALLS && meeting().status !== "closed") {
     d.advanceDiscussions(town);
     const job = d.nextDiscussionJob(town);
     if (!job) {
@@ -325,7 +387,7 @@ try {
             assert.equal(body.max_tokens, 1200);
             assert.deepEqual(body.reasoning, { enabled: false });
             assert.ok(!body.tools && !body.response_format);
-            assert.ok(report.transmissions < MAX_CALLS && row.transmissions === 0);
+            assert.ok(report.transmissions < RUN_CALLS && row.transmissions === 0);
             report.transmissions++;
             row.transmissions++;
             lastTransmission = Date.now();
@@ -419,7 +481,7 @@ try {
   report.stopReason ??=
     meeting().status === "closed"
       ? meeting().reason
-      : "Twelve-call allowance exhausted; no restart or further trial.";
+      : `${RUN_CALLS}-call allowance exhausted; no restart or further trial.`;
 } catch (error) {
   report.stopReason = `Qualification stopped: ${error instanceof Error ? error.message : "guard failure"}`;
   d.pauseDiscussion(town, "Qualification stopped without retry or fallback.");

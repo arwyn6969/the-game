@@ -128,19 +128,26 @@ function prune(town: Town) {
   state.sessions = state.sessions.filter((meeting) => !remove.has(meeting.id));
 }
 
-export function createLibraryDiscussion(town: Town, topic: string): DiscussionActionResult {
+export function createLibraryDiscussion(
+  town: Town,
+  topic: string,
+  facilitator: "northern" | "arwyn" = "northern",
+): DiscussionActionResult {
   if (!safeText(topic, 160))
     return { ok: false, message: "Give the meeting a topic of 1–160 characters." };
+  if (!["northern", "arwyn"].includes(facilitator))
+    return { ok: false, message: "Choose Northern or Arwyn as the proposed facilitator." };
   if (town.discussions?.sessions.some((meeting) => meeting.status !== "closed"))
     return { ok: false, message: "Finish or close the current meeting first." };
   const usedIds = new Set(town.discussions?.sessions.map((meeting) => meeting.id) ?? []);
   let id = `discussion:${town.nextId++}`;
   while (usedIds.has(id)) id = `discussion:${town.nextId++}`;
-  const members: DiscussionMember[] = [...CAST, "player" as const].map((id) => ({
+  const proposedCast = [facilitator, ...CAST.filter((id) => id !== facilitator)];
+  const members: DiscussionMember[] = [...proposedCast, "player" as const].map((id) => ({
     id,
     invitation: id === "player" ? "delivered" : "unseen",
     choice: id === "player" ? "accepted" : "pending",
-    role: id === "northern" ? "facilitator" : "participant",
+    role: id === facilitator ? "facilitator" : "participant",
     revision: 1,
     mode: "off",
     arrived: false,
@@ -153,7 +160,7 @@ export function createLibraryDiscussion(town: Town, topic: string): DiscussionAc
     epoch: 1,
     topic: topic.trim(),
     venue: "library",
-    facilitator: "northern",
+    facilitator,
     status: "gathering",
     reason:
       "Deliver the invitation face to face, or let residents choose to read the library notice.",
@@ -299,7 +306,7 @@ export function applyDiscussionCommand(
             town.day,
             town.minute,
             "observe",
-            `I read an invitation to a library discussion: ${meeting.topic}. The proposed facilitator is Northern; nobody's attendance is guaranteed.`,
+            `I read an invitation to a library discussion: ${meeting.topic}. The proposed facilitator is ${actor(town, meeting.facilitator)!.name}; nobody's attendance is guaranteed.`,
             5,
             { source: "statement" },
           ),
@@ -790,7 +797,7 @@ export function validateDiscussions(town: Town): string[] {
         meeting.epoch < 1 ||
         !safeText(meeting.topic, 160) ||
         meeting.venue !== "library" ||
-        meeting.facilitator !== "northern" ||
+        !["northern", "arwyn"].includes(meeting.facilitator) ||
         !["gathering", "active", "paused", "closed"].includes(meeting.status) ||
         typeof meeting.reason !== "string" ||
         meeting.reason.length > 240 ||
