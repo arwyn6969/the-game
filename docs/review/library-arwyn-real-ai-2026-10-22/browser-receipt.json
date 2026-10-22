@@ -1,0 +1,136 @@
+{
+  "sourceHead": "7d869eee66e8c0783e53939458d8359fd66ebaee",
+  "inputPath": "/Users/arwynhughes/Documents/ChatGPT/THE GAME/library-meeting/artifacts/library-meeting-real-ai-20261022-arwyn-floor-once/final-town.json",
+  "inputSha256": "6ed37506097dc4c66657b3573663bd117b508c6c58296dab9512052894e8ab8d",
+  "target": "http://127.0.0.1:8134/",
+  "actualSavedDialogue": true,
+  "generatedDialogue": false,
+  "liveModelCalls": 0,
+  "meetingId": "discussion:10",
+  "facilitator": "arwyn",
+  "meetingStatus": "paused",
+  "utterances": [
+    {
+      "id": "discussion:10:speech:1",
+      "seq": 1,
+      "speaker": "arwyn",
+      "text": "I'd attend a short shared reading if the selections were brief enough to discuss properly. What makes it welcoming? Knowing the time limit in advance, and that silence between readings is allowed.",
+      "at": {
+        "day": 1,
+        "minute": 420
+      }
+    },
+    {
+      "id": "discussion:10:speech:2",
+      "seq": 2,
+      "speaker": "arwyn",
+      "text": "I've found that a clear ending time matters more than the starting one. If people know they can leave after thirty minutes without apology, they show up. And a facilitator who's comfortable with silence — who doesn't rush to fill it — changes what gets said.",
+      "at": {
+        "day": 1,
+        "minute": 420
+      }
+    }
+  ],
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "blockedExternal": [
+        {
+          "origin": "https://fonts.googleapis.com",
+          "type": "stylesheet"
+        },
+        {
+          "origin": "https://grok.com",
+          "type": "script"
+        }
+      ],
+      "blockedRpc": [],
+      "blockedSockets": 2,
+      "errors": [],
+      "clockPausedThroughUi": true,
+      "playerState": {
+        "id": "player",
+        "invitation": "delivered",
+        "choice": "accepted",
+        "role": "participant",
+        "revision": 4,
+        "mode": "off",
+        "arrived": true,
+        "decisionNeeded": false,
+        "noticedCue": false
+      },
+      "explanation": [
+        "A small, nonbinding discussion. Watching the transcript does not mean your resident is listening. Joining is free; speaking creates no work or payment agreement.",
+        "You are at the meeting place. You are not listening to this discussion.",
+        "Requested turns: Arwyn."
+      ],
+      "visibleWordsMatchSaved": true,
+      "receiptsUnchanged": true,
+      "viewportWidth": 1280,
+      "documentWidth": 1280,
+      "readingBodyHeight": 166,
+      "readingSpaceRestricted": true,
+      "supplementalReadingViewport": {
+        "width": 1280,
+        "height": 1100
+      },
+      "transport": {
+        "attempts": 0,
+        "capabilityChecks": 2
+      }
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "blockedExternal": [
+        {
+          "origin": "https://fonts.googleapis.com",
+          "type": "stylesheet"
+        },
+        {
+          "origin": "https://grok.com",
+          "type": "script"
+        }
+      ],
+      "blockedRpc": [],
+      "blockedSockets": 2,
+      "errors": [],
+      "clockPausedThroughUi": true,
+      "playerState": {
+        "id": "player",
+        "invitation": "delivered",
+        "choice": "accepted",
+        "role": "participant",
+        "revision": 4,
+        "mode": "off",
+        "arrived": true,
+        "decisionNeeded": false,
+        "noticedCue": false
+      },
+      "explanation": [
+        "A small, nonbinding discussion. Watching the transcript does not mean your resident is listening. Joining is free; speaking creates no work or payment agreement.",
+        "You are at the meeting place. You are not listening to this discussion.",
+        "Requested turns: Arwyn."
+      ],
+      "visibleWordsMatchSaved": true,
+      "receiptsUnchanged": true,
+      "viewportWidth": 390,
+      "documentWidth": 390,
+      "readingBodyHeight": 641,
+      "readingSpaceRestricted": false,
+      "transport": {
+        "attempts": 0,
+        "capabilityChecks": 2
+      }
+    }
+  ],
+  "failures": [],
+  "inputUnchanged": true
+}

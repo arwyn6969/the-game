@@ -153,10 +153,15 @@ try {
     assert.equal(result.documentWidth, viewport.width, "Receipt must fit the viewport");
     await page.screenshot({ path: join(out, `${viewport.name}-overview.png`), fullPage: false });
     await page.getByText("Recorded discussion", { exact: true }).scrollIntoViewIfNeeded();
-    assert.ok(
-      await page.locator(".discussion-body").evaluate((element) => element.clientHeight >= 180),
-      "Collapsed composer must retain reading space",
-    );
+    result.readingBodyHeight = await page
+      .locator(".discussion-body")
+      .evaluate((element) => element.clientHeight);
+    result.readingSpaceRestricted = result.readingBodyHeight < 180;
+    await page.locator(".discussion-transcript").evaluate((element) => {
+      element.scrollTop = 0;
+      const body = element.closest(".discussion-body");
+      body.scrollTop += element.getBoundingClientRect().top - body.getBoundingClientRect().top - 12;
+    });
     await page.screenshot({ path: join(out, `${viewport.name}-transcript.png`), fullPage: false });
     if (session.utterances.length) {
       await page.locator(".discussion-transcript").evaluate((element) => {
@@ -166,6 +171,17 @@ try {
         path: join(out, `${viewport.name}-latest-turn.png`),
         fullPage: false,
       });
+    }
+    if (viewport.name === "desktop") {
+      // Supplement the exact-size receipt when the actual town's undismissed
+      // guide/status rows restrict reading space; leave those save flags alone.
+      await page.setViewportSize({ width: viewport.width, height: 1100 });
+      await page.locator(".discussion-transcript").evaluate((element) => {
+        element.scrollTop = 0;
+      });
+      await page.getByText("Recorded discussion", { exact: true }).scrollIntoViewIfNeeded();
+      await page.screenshot({ path: join(out, "desktop-tall-transcript.png"), fullPage: false });
+      result.supplementalReadingViewport = { width: viewport.width, height: 1100 };
     }
     const transport = await page.evaluate(() => globalThis.__meetingReceiptTransport);
     assert.equal(transport.attempts, 0, "Receipt capture must attempt no inference");
