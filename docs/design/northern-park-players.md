@@ -4,6 +4,8 @@ Planning record: 22 October 2026. Status: proposed community release scope, with
 
 **Immediate next packet revised:** start with [CP0: one physical manuscript](physical-interaction-foundation.md). It specifies the actual sprites/poses, movement, pickup/carry/put-down/read commands, minimal inventory view and saved object state. CP1–CP9 below describe the larger programme, not a single first sprint. Prove this connection before adding theatre props, construction or general furniture movement.
 
+The [grounding correction and second real trial](../review/northern-grounding-repeat-2026-10-22/README.md) preserve free fiction and demonstrate grounded notes plus actual manuscript travel/placement. Its final unsupported ground-read identifies state-aware action selection as the next small gate. The full programme below is still planned, not delivered.
+
 ## Product direction agreed with Arwyn
 
 - Develop the existing cast before adding residents.

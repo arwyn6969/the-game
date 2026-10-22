@@ -1,0 +1,55 @@
+{
+  "first": {
+    "requests": 4,
+    "inputTokens": 5305,
+    "outputTokens": 439,
+    "totalTokens": 5744,
+    "aiWaitMs": 19986,
+    "wallTimeMs": 102012,
+    "reportedCostUSD": 0
+  },
+  "groundedRepeat": {
+    "requests": 7,
+    "inputTokens": 11399,
+    "outputTokens": 303,
+    "totalTokens": 11702,
+    "aiWaitMs": 12843,
+    "wallTimeMs": 198493,
+    "reportedCostUSD": 0
+  },
+  "sameInitialFields": {
+    "day": true,
+    "minute": true,
+    "playerName": true,
+    "agents": true,
+    "notices": true,
+    "favors": true,
+    "tills": true,
+    "nextId": true,
+    "economy": true,
+    "physicalItems": true
+  },
+  "sameHarnessSha256": "9382935fb681b6f1d462eb69c7c820400358a819d934b1e2b020141ccfb1206a",
+  "engineActionsSucceeded": 6,
+  "engineActionsRejected": 1,
+  "transportFailures": 0,
+  "matchedFirstThree": {
+    "actions": [
+      "pick-up",
+      "read blank",
+      "write"
+    ],
+    "firstTotalTokens": 4236,
+    "repeatTotalTokens": 5022,
+    "extraInputTokensPerRequest": [
+      312,
+      312,
+      312
+    ]
+  },
+  "notes": [
+    "Different trajectories; overall totals are not a pure grounding overhead comparison.",
+    "Fiction allowed by code/prompt/regressions but not chosen in either real trial.",
+    "Full economy metadata changed; seven-tick no-provider control exactly reproduces it."
+  ]
+}

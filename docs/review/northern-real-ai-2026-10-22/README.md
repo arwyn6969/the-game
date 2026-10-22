@@ -4,6 +4,8 @@
 
 **The physical AI/action connection worked. Factual grounding failed.** Northern used the blank manuscript as a budget notebook, then repeated invented personal finances aloud. This is useful negative evidence; the trial was not restarted, steered toward a performance or rerun to obtain a better result.
 
+Arwyn subsequently authorized a separate [grounding correction and second bounded trial](../northern-grounding-repeat-2026-10-22/README.md). This first trial and its raw evidence remain unchanged; its recorded next packet was implemented and measured in that follow-up.
+
 ## Actual choices and compute
 
 | Decision | Engine result | Input tokens | Output tokens | Request wait |

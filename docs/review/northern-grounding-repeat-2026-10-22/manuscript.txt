@@ -1,0 +1,12 @@
+Day 1 ledger: cash on hand
+
+Cash: 2 town coins.
+No funded work accepted.
+No obligations recorded.
+No work payments recorded.
+No offered work recorded.
+No recorded shift projects.
+
+Missing: rent amount, food prices, job listings, wage rates, due dates.
+
+Plan: check noticeboard for postings. Ask Data if they know of any paid tasks. Keep manuscript to track changes.

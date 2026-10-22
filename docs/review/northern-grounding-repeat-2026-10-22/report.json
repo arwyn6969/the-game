@@ -1,0 +1,1303 @@
+{
+  "sourceHead": "fac60f23cc7904c99b4f83f4a006aea5d3ac07b9",
+  "startedAt": "2026-10-22T13:43:39.056Z",
+  "scope": "operator headless real-model/engine trial; local SQL budget and quota ledger",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "maxCalls": 8,
+  "preflight": {
+    "at": "2026-10-22T13:43:38.501Z",
+    "freeTier": true,
+    "freeRequests": {
+      "used": 13,
+      "limit": 50,
+      "remaining": 37
+    },
+    "monetaryUsageToday": 0,
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "pricing": {
+      "prompt": "0",
+      "completion": "0"
+    }
+  },
+  "decisions": [
+    {
+      "number": 1,
+      "at": "2026-10-22T13:43:40.438Z",
+      "gameTime": {
+        "day": 1,
+        "minute": 420
+      },
+      "observation": {
+        "actor": {
+          "id": "northern",
+          "name": "Northern",
+          "role": "Student",
+          "tile": {
+            "x": 39,
+            "y": 20
+          },
+          "place": "library",
+          "heldItemId": null
+        },
+        "items": [
+          {
+            "id": "manuscript:town:1",
+            "kind": "manuscript",
+            "title": "Blank manuscript",
+            "author": null,
+            "owner": "town",
+            "revision": 0,
+            "contentRevision": 0,
+            "location": {
+              "kind": "ground",
+              "tile": {
+                "x": 40,
+                "y": 20
+              }
+            }
+          }
+        ],
+        "nearbyResidents": [
+          {
+            "id": "player",
+            "name": "Observer",
+            "tile": {
+              "x": 40,
+              "y": 22
+            },
+            "place": "library"
+          },
+          {
+            "id": "data",
+            "name": "Data",
+            "tile": {
+              "x": 38,
+              "y": 20
+            },
+            "place": "library"
+          }
+        ],
+        "session": {
+          "revision": 1,
+          "decisions": 1,
+          "maxDecisions": 8,
+          "intent": null,
+          "lastResult": null
+        },
+        "destinations": [
+          {
+            "id": "cafe",
+            "name": "Hobbs Cafe"
+          },
+          {
+            "id": "library",
+            "name": "Library"
+          },
+          {
+            "id": "dorms",
+            "name": "College Dorms"
+          },
+          {
+            "id": "park",
+            "name": "Park"
+          },
+          {
+            "id": "townhouses",
+            "name": "Townhouse Row"
+          },
+          {
+            "id": "grocery",
+            "name": "Grocery"
+          },
+          {
+            "id": "noticeboard",
+            "name": "Noticeboard"
+          },
+          {
+            "id": "plaza",
+            "name": "Plaza"
+          },
+          {
+            "id": "street",
+            "name": "The street"
+          }
+        ]
+      },
+      "promptCharacters": 5372,
+      "promptSha256": "c89610e42ae725943b68bef88e25439b36a53858469244908c9a05d6df30017a",
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 1369,
+          "actualTokens": 1593,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1567,
+            "outputTokens": 26,
+            "reasoningTokens": 0,
+            "responseCharacters": 77,
+            "invalidReason": null
+          }
+        }
+      ],
+      "transmissions": 1,
+      "reportedCostUSD": 0,
+      "elapsedMs": 1380,
+      "ok": true,
+      "rawDecisionJSON": "{\"decision\":{\"kind\":\"pick-up\",\"itemId\":\"manuscript:town:1\",\"itemRevision\":0}}",
+      "decision": {
+        "kind": "pick-up",
+        "itemId": "manuscript:town:1",
+        "itemRevision": 0
+      },
+      "result": {
+        "ok": true,
+        "kind": "pick-up",
+        "itemId": "manuscript:town:1",
+        "message": "Northern picked up the manuscript."
+      }
+    },
+    {
+      "number": 2,
+      "at": "2026-10-22T13:44:13.629Z",
+      "gameTime": {
+        "day": 1,
+        "minute": 420
+      },
+      "observation": {
+        "actor": {
+          "id": "northern",
+          "name": "Northern",
+          "role": "Student",
+          "tile": {
+            "x": 39,
+            "y": 20
+          },
+          "place": "library",
+          "heldItemId": "manuscript:town:1"
+        },
+        "items": [
+          {
+            "id": "manuscript:town:1",
+            "kind": "manuscript",
+            "title": "Blank manuscript",
+            "author": null,
+            "owner": "town",
+            "revision": 1,
+            "contentRevision": 0,
+            "location": {
+              "kind": "held",
+              "holder": "northern"
+            }
+          }
+        ],
+        "nearbyResidents": [
+          {
+            "id": "player",
+            "name": "Observer",
+            "tile": {
+              "x": 40,
+              "y": 22
+            },
+            "place": "library"
+          },
+          {
+            "id": "data",
+            "name": "Data",
+            "tile": {
+              "x": 38,
+              "y": 20
+            },
+            "place": "library"
+          }
+        ],
+        "session": {
+          "revision": 2,
+          "decisions": 2,
+          "maxDecisions": 8,
+          "intent": null,
+          "lastResult": {
+            "ok": true,
+            "kind": "pick-up",
+            "itemId": "manuscript:town:1",
+            "message": "Northern picked up the manuscript."
+          }
+        },
+        "destinations": [
+          {
+            "id": "cafe",
+            "name": "Hobbs Cafe"
+          },
+          {
+            "id": "library",
+            "name": "Library"
+          },
+          {
+            "id": "dorms",
+            "name": "College Dorms"
+          },
+          {
+            "id": "park",
+            "name": "Park"
+          },
+          {
+            "id": "townhouses",
+            "name": "Townhouse Row"
+          },
+          {
+            "id": "grocery",
+            "name": "Grocery"
+          },
+          {
+            "id": "noticeboard",
+            "name": "Noticeboard"
+          },
+          {
+            "id": "plaza",
+            "name": "Plaza"
+          },
+          {
+            "id": "street",
+            "name": "The street"
+          }
+        ]
+      },
+      "promptCharacters": 5606,
+      "promptSha256": "49ecef2cb2f7480fdaf7ae8d6b96406fd38ebdc994aa28786f1b9e88b949a08d",
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 1215,
+          "actualTokens": 1655,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1630,
+            "outputTokens": 25,
+            "reasoningTokens": 0,
+            "responseCharacters": 74,
+            "invalidReason": null
+          }
+        }
+      ],
+      "transmissions": 1,
+      "reportedCostUSD": 0,
+      "elapsedMs": 1229,
+      "ok": true,
+      "rawDecisionJSON": "{\"decision\":{\"kind\":\"read\",\"itemId\":\"manuscript:town:1\",\"itemRevision\":1}}",
+      "decision": {
+        "kind": "read",
+        "itemId": "manuscript:town:1",
+        "itemRevision": 1
+      },
+      "result": {
+        "ok": true,
+        "kind": "read",
+        "itemId": "manuscript:town:1",
+        "message": "The manuscript is blank. Nobody has written its text yet.",
+        "content": {
+          "title": "Blank manuscript",
+          "text": "",
+          "revision": 0,
+          "author": null
+        }
+      }
+    },
+    {
+      "number": 3,
+      "at": "2026-10-22T13:44:48.320Z",
+      "gameTime": {
+        "day": 1,
+        "minute": 420
+      },
+      "observation": {
+        "actor": {
+          "id": "northern",
+          "name": "Northern",
+          "role": "Student",
+          "tile": {
+            "x": 39,
+            "y": 20
+          },
+          "place": "library",
+          "heldItemId": "manuscript:town:1"
+        },
+        "items": [
+          {
+            "id": "manuscript:town:1",
+            "kind": "manuscript",
+            "title": "Blank manuscript",
+            "author": null,
+            "owner": "town",
+            "revision": 1,
+            "contentRevision": 0,
+            "location": {
+              "kind": "held",
+              "holder": "northern"
+            }
+          }
+        ],
+        "nearbyResidents": [
+          {
+            "id": "player",
+            "name": "Observer",
+            "tile": {
+              "x": 40,
+              "y": 22
+            },
+            "place": "library"
+          },
+          {
+            "id": "data",
+            "name": "Data",
+            "tile": {
+              "x": 38,
+              "y": 20
+            },
+            "place": "library"
+          }
+        ],
+        "session": {
+          "revision": 3,
+          "decisions": 3,
+          "maxDecisions": 8,
+          "intent": null,
+          "lastResult": {
+            "ok": true,
+            "kind": "read",
+            "itemId": "manuscript:town:1",
+            "message": "The manuscript is blank. Nobody has written its text yet.",
+            "content": {
+              "title": "Blank manuscript",
+              "text": "",
+              "revision": 0,
+              "author": null
+            }
+          }
+        },
+        "destinations": [
+          {
+            "id": "cafe",
+            "name": "Hobbs Cafe"
+          },
+          {
+            "id": "library",
+            "name": "Library"
+          },
+          {
+            "id": "dorms",
+            "name": "College Dorms"
+          },
+          {
+            "id": "park",
+            "name": "Park"
+          },
+          {
+            "id": "townhouses",
+            "name": "Townhouse Row"
+          },
+          {
+            "id": "grocery",
+            "name": "Grocery"
+          },
+          {
+            "id": "noticeboard",
+            "name": "Noticeboard"
+          },
+          {
+            "id": "plaza",
+            "name": "Plaza"
+          },
+          {
+            "id": "street",
+            "name": "The street"
+          }
+        ]
+      },
+      "promptCharacters": 5697,
+      "promptSha256": "2c22d1be284b578e3f3010de6c514fa599ae33aa12fab0f6cb8b44e72e8d4532",
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 2449,
+          "actualTokens": 1774,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1652,
+            "outputTokens": 122,
+            "reasoningTokens": 0,
+            "responseCharacters": 468,
+            "invalidReason": null
+          }
+        }
+      ],
+      "transmissions": 1,
+      "reportedCostUSD": 0,
+      "elapsedMs": 2459,
+      "ok": true,
+      "rawDecisionJSON": "{\"decision\":{\"kind\":\"write\",\"itemId\":\"manuscript:town:1\",\"itemRevision\":1,\"title\":\"Day 1 ledger: cash on hand\",\"text\":\"Cash: 2 town coins.\\nNo funded work accepted.\\nNo obligations recorded.\\nNo work payments recorded.\\nNo offered work recorded.\\nNo recorded shift projects.\\n\\nMissing: rent amount, food prices, job listings, wage rates, due dates.\\n\\nPlan: check noticeboard for postings. Ask Data if they know of any paid tasks. Keep manuscript to track changes.\"}}",
+      "decision": {
+        "kind": "write",
+        "itemId": "manuscript:town:1",
+        "itemRevision": 1,
+        "title": "Day 1 ledger: cash on hand",
+        "text": "Cash: 2 town coins.\nNo funded work accepted.\nNo obligations recorded.\nNo work payments recorded.\nNo offered work recorded.\nNo recorded shift projects.\n\nMissing: rent amount, food prices, job listings, wage rates, due dates.\n\nPlan: check noticeboard for postings. Ask Data if they know of any paid tasks. Keep manuscript to track changes."
+      },
+      "result": {
+        "ok": true,
+        "kind": "write",
+        "itemId": "manuscript:town:1",
+        "message": "Northern wrote the actual manuscript text; content revision 1."
+      }
+    },
+    {
+      "number": 4,
+      "at": "2026-10-22T13:45:19.976Z",
+      "gameTime": {
+        "day": 1,
+        "minute": 420
+      },
+      "observation": {
+        "actor": {
+          "id": "northern",
+          "name": "Northern",
+          "role": "Student",
+          "tile": {
+            "x": 39,
+            "y": 20
+          },
+          "place": "library",
+          "heldItemId": "manuscript:town:1"
+        },
+        "items": [
+          {
+            "id": "manuscript:town:1",
+            "kind": "manuscript",
+            "title": "Day 1 ledger: cash on hand",
+            "author": "northern",
+            "owner": "town",
+            "revision": 2,
+            "contentRevision": 1,
+            "location": {
+              "kind": "held",
+              "holder": "northern"
+            }
+          }
+        ],
+        "nearbyResidents": [
+          {
+            "id": "player",
+            "name": "Observer",
+            "tile": {
+              "x": 40,
+              "y": 22
+            },
+            "place": "library"
+          },
+          {
+            "id": "data",
+            "name": "Data",
+            "tile": {
+              "x": 38,
+              "y": 20
+            },
+            "place": "library"
+          }
+        ],
+        "session": {
+          "revision": 4,
+          "decisions": 4,
+          "maxDecisions": 8,
+          "intent": null,
+          "lastResult": {
+            "ok": true,
+            "kind": "write",
+            "itemId": "manuscript:town:1",
+            "message": "Northern wrote the actual manuscript text; content revision 1."
+          }
+        },
+        "destinations": [
+          {
+            "id": "cafe",
+            "name": "Hobbs Cafe"
+          },
+          {
+            "id": "library",
+            "name": "Library"
+          },
+          {
+            "id": "dorms",
+            "name": "College Dorms"
+          },
+          {
+            "id": "park",
+            "name": "Park"
+          },
+          {
+            "id": "townhouses",
+            "name": "Townhouse Row"
+          },
+          {
+            "id": "grocery",
+            "name": "Grocery"
+          },
+          {
+            "id": "noticeboard",
+            "name": "Noticeboard"
+          },
+          {
+            "id": "plaza",
+            "name": "Plaza"
+          },
+          {
+            "id": "street",
+            "name": "The street"
+          }
+        ]
+      },
+      "promptCharacters": 5643,
+      "promptSha256": "9b91e70d1dfd9f49be6d8e7888b12d27eb4a8a634f27d055162638b6b6a43d26",
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 1333,
+          "actualTokens": 1671,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1640,
+            "outputTokens": 31,
+            "reasoningTokens": 0,
+            "responseCharacters": 80,
+            "invalidReason": null
+          }
+        }
+      ],
+      "transmissions": 1,
+      "reportedCostUSD": 0,
+      "elapsedMs": 1338,
+      "ok": true,
+      "rawDecisionJSON": "{\"decision\": {\"kind\": \"read\", \"itemId\": \"manuscript:town:1\", \"itemRevision\": 2}}",
+      "decision": {
+        "kind": "read",
+        "itemId": "manuscript:town:1",
+        "itemRevision": 2
+      },
+      "result": {
+        "ok": true,
+        "kind": "read",
+        "itemId": "manuscript:town:1",
+        "message": "Northern read the manuscript.",
+        "content": {
+          "title": "Day 1 ledger: cash on hand",
+          "text": "Cash: 2 town coins.\nNo funded work accepted.\nNo obligations recorded.\nNo work payments recorded.\nNo offered work recorded.\nNo recorded shift projects.\n\nMissing: rent amount, food prices, job listings, wage rates, due dates.\n\nPlan: check noticeboard for postings. Ask Data if they know of any paid tasks. Keep manuscript to track changes.",
+          "revision": 1,
+          "author": "northern"
+        }
+      }
+    },
+    {
+      "number": 5,
+      "at": "2026-10-22T13:45:51.719Z",
+      "gameTime": {
+        "day": 1,
+        "minute": 420
+      },
+      "observation": {
+        "actor": {
+          "id": "northern",
+          "name": "Northern",
+          "role": "Student",
+          "tile": {
+            "x": 39,
+            "y": 20
+          },
+          "place": "library",
+          "heldItemId": "manuscript:town:1"
+        },
+        "items": [
+          {
+            "id": "manuscript:town:1",
+            "kind": "manuscript",
+            "title": "Day 1 ledger: cash on hand",
+            "author": "northern",
+            "owner": "town",
+            "revision": 2,
+            "contentRevision": 1,
+            "location": {
+              "kind": "held",
+              "holder": "northern"
+            }
+          }
+        ],
+        "nearbyResidents": [
+          {
+            "id": "player",
+            "name": "Observer",
+            "tile": {
+              "x": 40,
+              "y": 22
+            },
+            "place": "library"
+          },
+          {
+            "id": "data",
+            "name": "Data",
+            "tile": {
+              "x": 38,
+              "y": 20
+            },
+            "place": "library"
+          }
+        ],
+        "session": {
+          "revision": 5,
+          "decisions": 5,
+          "maxDecisions": 8,
+          "intent": null,
+          "lastResult": {
+            "ok": true,
+            "kind": "read",
+            "itemId": "manuscript:town:1",
+            "message": "Northern read the manuscript.",
+            "content": {
+              "title": "Day 1 ledger: cash on hand",
+              "text": "Cash: 2 town coins.\nNo funded work accepted.\nNo obligations recorded.\nNo work payments recorded.\nNo offered work recorded.\nNo recorded shift projects.\n\nMissing: rent amount, food prices, job listings, wage rates, due dates.\n\nPlan: check noticeboard for postings. Ask Data if they know of any paid tasks. Keep manuscript to track changes.",
+              "revision": 1,
+              "author": "northern"
+            }
+          }
+        },
+        "destinations": [
+          {
+            "id": "cafe",
+            "name": "Hobbs Cafe"
+          },
+          {
+            "id": "library",
+            "name": "Library"
+          },
+          {
+            "id": "dorms",
+            "name": "College Dorms"
+          },
+          {
+            "id": "park",
+            "name": "Park"
+          },
+          {
+            "id": "townhouses",
+            "name": "Townhouse Row"
+          },
+          {
+            "id": "grocery",
+            "name": "Grocery"
+          },
+          {
+            "id": "noticeboard",
+            "name": "Noticeboard"
+          },
+          {
+            "id": "plaza",
+            "name": "Plaza"
+          },
+          {
+            "id": "street",
+            "name": "The street"
+          }
+        ]
+      },
+      "promptCharacters": 6047,
+      "promptSha256": "afb27345a436aa8409ae498e3d4e7818fd2da7b27b683e83108c51248f84e934",
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 2459,
+          "actualTokens": 1791,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1743,
+            "outputTokens": 48,
+            "reasoningTokens": 0,
+            "responseCharacters": 135,
+            "invalidReason": null
+          }
+        }
+      ],
+      "transmissions": 1,
+      "reportedCostUSD": 0,
+      "elapsedMs": 2462,
+      "ok": true,
+      "rawDecisionJSON": "{\n  \"decision\": {\n    \"kind\": \"bring\",\n    \"itemId\": \"manuscript:town:1\",\n    \"itemRevision\": 2,\n    \"destination\": \"noticeboard\"\n  }\n}",
+      "decision": {
+        "kind": "bring",
+        "itemId": "manuscript:town:1",
+        "itemRevision": 2,
+        "destination": "noticeboard"
+      },
+      "result": {
+        "ok": true,
+        "kind": "bring",
+        "itemId": "manuscript:town:1",
+        "message": "Northern will bring the manuscript to Noticeboard using normal paths, after earlier commitments."
+      }
+    },
+    {
+      "number": 6,
+      "at": "2026-10-22T13:46:23.368Z",
+      "gameTime": {
+        "day": 1,
+        "minute": 427
+      },
+      "observation": {
+        "actor": {
+          "id": "northern",
+          "name": "Northern",
+          "role": "Student",
+          "tile": {
+            "x": 23,
+            "y": 17
+          },
+          "place": "noticeboard",
+          "heldItemId": "manuscript:town:1"
+        },
+        "items": [
+          {
+            "id": "manuscript:town:1",
+            "kind": "manuscript",
+            "title": "Day 1 ledger: cash on hand",
+            "author": "northern",
+            "owner": "town",
+            "revision": 2,
+            "contentRevision": 1,
+            "location": {
+              "kind": "held",
+              "holder": "northern"
+            }
+          }
+        ],
+        "nearbyResidents": [],
+        "session": {
+          "revision": 6,
+          "decisions": 6,
+          "maxDecisions": 8,
+          "intent": null,
+          "lastResult": {
+            "ok": true,
+            "kind": "bring",
+            "itemId": "manuscript:town:1",
+            "message": "Northern arrived at Noticeboard holding the manuscript. It has not been put down or read automatically."
+          }
+        },
+        "destinations": [
+          {
+            "id": "cafe",
+            "name": "Hobbs Cafe"
+          },
+          {
+            "id": "library",
+            "name": "Library"
+          },
+          {
+            "id": "dorms",
+            "name": "College Dorms"
+          },
+          {
+            "id": "park",
+            "name": "Park"
+          },
+          {
+            "id": "townhouses",
+            "name": "Townhouse Row"
+          },
+          {
+            "id": "grocery",
+            "name": "Grocery"
+          },
+          {
+            "id": "noticeboard",
+            "name": "Noticeboard"
+          },
+          {
+            "id": "plaza",
+            "name": "Plaza"
+          },
+          {
+            "id": "street",
+            "name": "The street"
+          }
+        ]
+      },
+      "promptCharacters": 5517,
+      "promptSha256": "bdabfba1183f9317f37ac8786d597d955c61250785290f5191f6da5cc2318e05",
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 1592,
+          "actualTokens": 1614,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1588,
+            "outputTokens": 26,
+            "reasoningTokens": 0,
+            "responseCharacters": 78,
+            "invalidReason": null
+          }
+        }
+      ],
+      "transmissions": 1,
+      "reportedCostUSD": 0,
+      "elapsedMs": 1595,
+      "ok": true,
+      "rawDecisionJSON": "{\"decision\":{\"kind\":\"put-down\",\"itemId\":\"manuscript:town:1\",\"itemRevision\":2}}",
+      "decision": {
+        "kind": "put-down",
+        "itemId": "manuscript:town:1",
+        "itemRevision": 2
+      },
+      "result": {
+        "ok": true,
+        "kind": "put-down",
+        "itemId": "manuscript:town:1",
+        "message": "The manuscript is on the ground at your current tile."
+      }
+    },
+    {
+      "number": 7,
+      "at": "2026-10-22T13:46:55.166Z",
+      "gameTime": {
+        "day": 1,
+        "minute": 427
+      },
+      "observation": {
+        "actor": {
+          "id": "northern",
+          "name": "Northern",
+          "role": "Student",
+          "tile": {
+            "x": 23,
+            "y": 17
+          },
+          "place": "noticeboard",
+          "heldItemId": null
+        },
+        "items": [
+          {
+            "id": "manuscript:town:1",
+            "kind": "manuscript",
+            "title": "Day 1 ledger: cash on hand",
+            "author": "northern",
+            "owner": "town",
+            "revision": 3,
+            "contentRevision": 1,
+            "location": {
+              "kind": "ground",
+              "tile": {
+                "x": 23,
+                "y": 17
+              }
+            }
+          }
+        ],
+        "nearbyResidents": [],
+        "session": {
+          "revision": 7,
+          "decisions": 7,
+          "maxDecisions": 8,
+          "intent": null,
+          "lastResult": {
+            "ok": true,
+            "kind": "put-down",
+            "itemId": "manuscript:town:1",
+            "message": "The manuscript is on the ground at your current tile."
+          }
+        },
+        "destinations": [
+          {
+            "id": "cafe",
+            "name": "Hobbs Cafe"
+          },
+          {
+            "id": "library",
+            "name": "Library"
+          },
+          {
+            "id": "dorms",
+            "name": "College Dorms"
+          },
+          {
+            "id": "park",
+            "name": "Park"
+          },
+          {
+            "id": "townhouses",
+            "name": "Townhouse Row"
+          },
+          {
+            "id": "grocery",
+            "name": "Grocery"
+          },
+          {
+            "id": "noticeboard",
+            "name": "Noticeboard"
+          },
+          {
+            "id": "plaza",
+            "name": "Plaza"
+          },
+          {
+            "id": "street",
+            "name": "The street"
+          }
+        ]
+      },
+      "promptCharacters": 5445,
+      "promptSha256": "b8685c26cd6c2a3d2b8b0b770935cb9eaee578bf78d2005ef6e316060a585ae0",
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 2378,
+          "actualTokens": 1604,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1579,
+            "outputTokens": 25,
+            "reasoningTokens": 0,
+            "responseCharacters": 74,
+            "invalidReason": null
+          }
+        }
+      ],
+      "transmissions": 1,
+      "reportedCostUSD": 0,
+      "elapsedMs": 2380,
+      "ok": true,
+      "rawDecisionJSON": "{\"decision\":{\"kind\":\"read\",\"itemId\":\"manuscript:town:1\",\"itemRevision\":3}}",
+      "decision": {
+        "kind": "read",
+        "itemId": "manuscript:town:1",
+        "itemRevision": 3
+      },
+      "result": {
+        "ok": false,
+        "kind": "read",
+        "message": "Hold the manuscript before putting it down, reading or writing it."
+      }
+    }
+  ],
+  "movement": [
+    {
+      "day": 1,
+      "minute": 421,
+      "actor": {
+        "x": 37,
+        "y": 19
+      },
+      "location": {
+        "kind": "held",
+        "holder": "northern"
+      }
+    },
+    {
+      "day": 1,
+      "minute": 422,
+      "actor": {
+        "x": 35,
+        "y": 20
+      },
+      "location": {
+        "kind": "held",
+        "holder": "northern"
+      }
+    },
+    {
+      "day": 1,
+      "minute": 423,
+      "actor": {
+        "x": 32,
+        "y": 20
+      },
+      "location": {
+        "kind": "held",
+        "holder": "northern"
+      }
+    },
+    {
+      "day": 1,
+      "minute": 424,
+      "actor": {
+        "x": 29,
+        "y": 20
+      },
+      "location": {
+        "kind": "held",
+        "holder": "northern"
+      }
+    },
+    {
+      "day": 1,
+      "minute": 425,
+      "actor": {
+        "x": 27,
+        "y": 19
+      },
+      "location": {
+        "kind": "held",
+        "holder": "northern"
+      }
+    },
+    {
+      "day": 1,
+      "minute": 426,
+      "actor": {
+        "x": 26,
+        "y": 17
+      },
+      "location": {
+        "kind": "held",
+        "holder": "northern"
+      }
+    },
+    {
+      "day": 1,
+      "minute": 427,
+      "actor": {
+        "x": 23,
+        "y": 17
+      },
+      "location": {
+        "kind": "held",
+        "holder": "northern"
+      }
+    }
+  ],
+  "suppressedOtherJobs": {
+    "talk": 1
+  },
+  "transmissions": 7,
+  "simulationMinutes": 7,
+  "stopReason": "Hold the manuscript before putting it down, reading or writing it.",
+  "setup": {
+    "northern": {
+      "id": "northern",
+      "name": "Northern",
+      "role": "Student",
+      "tile": {
+        "x": 39,
+        "y": 20
+      },
+      "place": "library",
+      "heldItemId": null
+    },
+    "knowledge": "Original current character/profile/goals; no supplied story or manuscript text",
+    "observer": {
+      "x": 40,
+      "y": 22
+    },
+    "item": {
+      "id": "manuscript:town:1",
+      "kind": "manuscript",
+      "title": "Blank manuscript",
+      "text": "",
+      "author": null,
+      "owner": "town",
+      "revision": 0,
+      "contentRevision": 0,
+      "location": {
+        "kind": "ground",
+        "tile": {
+          "x": 40,
+          "y": 20
+        }
+      }
+    }
+  },
+  "finishedAt": "2026-10-22T13:46:57.549Z",
+  "wallTimeMs": 198493,
+  "aiWaitMs": 12843,
+  "finalItem": {
+    "id": "manuscript:town:1",
+    "kind": "manuscript",
+    "title": "Day 1 ledger: cash on hand",
+    "text": "Cash: 2 town coins.\nNo funded work accepted.\nNo obligations recorded.\nNo work payments recorded.\nNo offered work recorded.\nNo recorded shift projects.\n\nMissing: rent amount, food prices, job listings, wage rates, due dates.\n\nPlan: check noticeboard for postings. Ask Data if they know of any paid tasks. Keep manuscript to track changes.",
+    "author": "northern",
+    "owner": "town",
+    "revision": 3,
+    "contentRevision": 1,
+    "location": {
+      "kind": "ground",
+      "tile": {
+        "x": 23,
+        "y": 17
+      }
+    }
+  },
+  "session": {
+    "actor": "northern",
+    "revision": 10,
+    "enabled": false,
+    "waiting": false,
+    "decisions": 7,
+    "maxDecisions": 8,
+    "intent": null,
+    "lastResult": {
+      "ok": false,
+      "kind": "wait",
+      "message": "Hold the manuscript before putting it down, reading or writing it."
+    },
+    "usage": {
+      "requests": 7,
+      "providerAttempts": 7,
+      "attemptsUnknown": 0,
+      "knownTokens": 11702,
+      "tokenSamples": 7,
+      "tokensUnknown": 0,
+      "elapsedMs": 12843,
+      "failures": 0
+    }
+  },
+  "financeUnchanged": false,
+  "cashUnchanged": true,
+  "clockScope": "Game time advances only during physical travel; wall-clock pacing is not simulated game time.",
+  "saveRoundTrip": true,
+  "ledger": {
+    "budget": [
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      }
+    ],
+    "pool": [
+      {
+        "kind": "act",
+        "actual_tokens": 1593,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 1369,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": 1655,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 1215,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": 1774,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 2449,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": 1671,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 1333,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": 1791,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 2459,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": 1614,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 1592,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": 1604,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 2378,
+        "settled": true
+      }
+    ]
+  },
+  "afterAccount": {
+    "at": "2026-10-22T13:46:57.983Z",
+    "freeTier": true,
+    "freeRequests": {
+      "used": 19,
+      "limit": 50,
+      "remaining": 31
+    },
+    "monetaryUsageToday": 0
+  }
+}
