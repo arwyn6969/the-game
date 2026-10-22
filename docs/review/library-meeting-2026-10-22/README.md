@@ -45,7 +45,7 @@ Design: [town meetings](../../design/town-meetings.md). Lane handoffs: [core](..
 
 Use Node 24. Start the credential-free local dev server in this feature checkout and run `DISCUSSION_QA_URL=http://127.0.0.1:8134/ npm run test:browser:meetings`. The URL must be localhost. The harness uses a fresh synthetic browser context and does not overwrite a human town. The local prototype starts disabled and never starts NPC calls automatically.
 
-The draft PR targets `codex/northern-community-evening-20261022`, keeping the review diff scoped to meetings. Main integration and hosted release require their own current verification and authorization.
+[Draft PR #44](https://github.com/arwyn6969/the-game/pull/44) targets `codex/northern-community-evening-20261022`, keeping the review diff scoped to meetings. Main integration and hosted release require their own current verification and authorization.
 
 Screenshots below contain visibly synthetic test speech.
 
