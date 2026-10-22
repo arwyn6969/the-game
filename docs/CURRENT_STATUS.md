@@ -4,6 +4,8 @@ Updated 22 October 2026 for the manuscript prototype assignment. This is the liv
 
 ## Manuscript prototype — 22 October
 
+**Real-AI qualification follow-up:** Arwyn subsequently authorized one bounded Northern/manuscript experiment before the wider reading/play work. The current chat owns the operator-driven local trial on this explicitly dependent PR branch. It uses a fresh synthetic town, exact game prompts/parser/executor and SQL budget/quota stores, the existing OpenRouter Ultra `:free` credential, one transmission per decision and eight decisions maximum. The model is not steered toward a particular outcome. Live provider requests are authorized for this qualification; production routes, budgets, databases and deployment remain unchanged. Next evidence: an attributed action transcript, measured provider tokens/latency/cost and the actual saved outcome. This does not claim hosted authentication or end-user UI acceptance.
+
 Arwyn authorized the first [physical manuscript slice](design/physical-interaction-foundation.md) after a source audit and compute review. The current chat coordinates implementation on `codex/northern-community-evening-20261022` in `community-evening-plan/`. Current main was checked through GitHub at `dab257b` (documentation alignment); that exact committed revision is integrated locally without copying the hosting owner's working files. The shared additive item/action type contract is `dd50d26`, explicitly stacked over the planning commits and runtime checkpoint `7ddda79`.
 
 | Owner | Checkout / branch | Scope and current state | Next evidence |
