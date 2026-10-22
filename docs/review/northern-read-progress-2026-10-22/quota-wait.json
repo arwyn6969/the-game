@@ -1,0 +1,1 @@
+{"status":"waiting-for-quota","preflight":{"at":"2026-10-22T14:50:34.049Z","freeTier":true,"freeRequests":{"used":25,"limit":50,"remaining":25},"monetaryUsageToday":0,"model":"nvidia/nemotron-3-ultra-550b-a55b:free","pricing":{"prompt":"0","completion":"0"},"requestedMaxCalls":8,"dailyCeiling":24,"callAllowance":0}}

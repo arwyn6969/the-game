@@ -361,6 +361,137 @@ try {
     await page.getByRole("button", { name: "Watch Northern try", exact: true }).click();
     await calls(page, 1);
     await page.getByRole("button", { name: "Pause", exact: true }).click();
+    const blankItem = (await town(page)).physicalItems.items[0];
+    const blankRead = {
+      kind: "read",
+      itemId: blankItem.id,
+      itemRevision: blankItem.revision,
+    };
+    await respond(page, 0, blankRead);
+    await waitTown(
+      page,
+      () =>
+        JSON.parse(localStorage.getItem("the-game-town-v2")).town.physicalItems.session
+          .readContentRevision === 0,
+    );
+    const afterFirstRead = await town(page);
+    const northernReads = (value) =>
+      value.agents
+        .find((person) => person.id === "northern")
+        .memories.filter((memory) => memory.text.includes("read “Blank manuscript”"))
+        // Save validation can add false legacy flags; compare the actual event
+        // identity and evidence rather than those normalization defaults.
+        .map(({ id, day, minute, type, source, text }) => ({
+          id,
+          day,
+          minute,
+          type,
+          source,
+          text,
+        }));
+    assert.equal(northernReads(afterFirstRead).length, 1);
+    assert.deepEqual(afterFirstRead.physicalItems.items[0], blankItem);
+    await page.getByRole("button", { name: "1×", exact: true }).click();
+    await calls(page, 2);
+    const reconsideration = await page.evaluate(() =>
+      JSON.parse(window.__manuscriptMindMock.calls[1].user.split("Current observation: ")[1]),
+    );
+    assert.deepEqual(reconsideration.knownManuscript, {
+      itemId: blankItem.id,
+      title: blankItem.title,
+      text: "",
+      author: null,
+      contentRevision: 0,
+    });
+    assert.equal(reconsideration.session.readContentRevision, 0);
+    assert.equal(Object.hasOwn(reconsideration.session.lastResult, "content"), false);
+    assert.equal(
+      reconsideration.availableActions.some((option) => option.kind === "read"),
+      false,
+    );
+    assert.ok(reconsideration.availableActions.some((option) => option.kind === "wait"));
+    // Deliberately return an omitted proposal: the real parser/controller/core
+    // must pause without inventing a replacement or forgetting its request cost.
+    await respond(page, 1, blankRead);
+    await waitTown(
+      page,
+      () =>
+        JSON.parse(localStorage.getItem("the-game-town-v2")).town.physicalItems.session.enabled ===
+        false,
+    );
+    await page
+      .locator(".status-message")
+      .filter({
+        hasText: "This manuscript content was already read in this trial. The trial is paused",
+      })
+      .waitFor();
+    await page.waitForTimeout(1250);
+    assert.equal(await page.evaluate(() => window.__manuscriptMindMock.calls.length), 2);
+    const repeated = await town(page);
+    assert.deepEqual(repeated.physicalItems.items[0], blankItem);
+    assert.deepEqual(northernReads(repeated), northernReads(afterFirstRead));
+    assert.deepEqual(repeated.physicalItems.reading, afterFirstRead.physicalItems.reading);
+    assert.equal(repeated.physicalItems.session.decisions, 2);
+    assert.equal(repeated.physicalItems.session.usage.requests, 2);
+    assert.equal(repeated.physicalItems.session.usage.providerAttempts, 2);
+    assert.equal(repeated.physicalItems.session.usage.knownTokens, 88);
+    assert.equal(repeated.physicalItems.session.usage.tokensUnknown, 0);
+    await capture(page, `${viewport.name}-read-repeat-paused.png`);
+    await openInventory(page);
+    await page
+      .locator(".manuscript-tools")
+      .getByText("Inspect manuscript", { exact: true })
+      .click();
+    for (const count of [1, 2]) {
+      const read = page.getByRole("button", { name: "Read manuscript", exact: true });
+      assert.equal(await read.isEnabled(), true);
+      await read.click();
+      await page.waitForFunction(
+        (count) =>
+          JSON.parse(localStorage.getItem("the-game-town-v2"))
+            .town.agents.find((person) => person.id === "player")
+            .memories.filter((memory) => memory.text.includes("read “Blank manuscript”")).length ===
+          count,
+        count,
+      );
+    }
+    await page
+      .getByText("The pages are blank. Nobody has written in it yet.", { exact: true })
+      .waitFor();
+    const manualReads = await town(page);
+    assert.deepEqual(manualReads.physicalItems.items[0], blankItem);
+    assert.deepEqual(manualReads.physicalItems.session.usage, repeated.physicalItems.session.usage);
+    assert.equal(manualReads.physicalItems.session.enabled, false);
+    assert.deepEqual(northernReads(manualReads), northernReads(afterFirstRead));
+    assert.equal(await page.evaluate(() => window.__manuscriptMindMock.calls.length), 2);
+    await capture(page, `${viewport.name}-manual-reread.png`);
+    result.readProgress = {
+      knownBlank: reconsideration.knownManuscript,
+      offeredRead: reconsideration.availableActions.some((option) => option.kind === "read"),
+      pausedReason: repeated.physicalItems.session.lastResult.message,
+      automaticCalls: 2,
+      northernReadMemories: northernReads(repeated).length,
+      deliberatePlayerReads: 2,
+      usage: repeated.physicalItems.session.usage,
+      itemUnchanged: true,
+    };
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.waitForFunction(() => Boolean(window.__game && window.__manuscriptMindMock));
+    await page.waitForTimeout(1250);
+    const restoredRepeat = await town(page);
+    assert.equal(restoredRepeat.physicalItems.session.enabled, false);
+    assert.equal(restoredRepeat.physicalItems.session.readContentRevision, 0);
+    assert.equal(restoredRepeat.physicalItems.session.usage.requests, 2);
+    assert.equal(await page.evaluate(() => window.__manuscriptMindMock.calls.length), 0);
+    result.assertions.push(
+      "After one actual blank read, the next AI context retains known blank words and omits read; a repeated proposal pauses visibly, counts both requests/tokens, changes no item or read memory, dispatches no third call, survives reload, and still permits two deliberate player rereads",
+    );
+
+    await seed(page, { item: true, near: true });
+    await openInventory(page);
+    await page.getByRole("button", { name: "Watch Northern try", exact: true }).click();
+    await calls(page, 1);
+    await page.getByRole("button", { name: "Pause", exact: true }).click();
     let item = (await town(page)).physicalItems.items[0];
     await respond(page, 0, { kind: "pick-up", itemId: item.id, itemRevision: item.revision });
     await waitTown(
