@@ -22,7 +22,7 @@ const BASE = "https://openrouter.ai/api/v1";
 const MAX_CALLS = 8;
 const DAILY_CEILING = 24;
 const args = process.argv.slice(2);
-assert.ok(args.length === 1 && ["--preflight", "--run"].includes(args[0]));
+assert.ok(args.length === 1 && ["--preflight", "--run", "--run-when-ready"].includes(args[0]));
 const envFile = process.env.MANUSCRIPT_TRIAL_ENV_FILE;
 const key = (
   process.env.OPENROUTER_API_KEY ||
@@ -79,6 +79,16 @@ const preflight = {
 if (args[0] === "--preflight") {
   console.log(JSON.stringify(preflight));
   process.exit(0);
+}
+// A scheduled repeat waits for the full original allowance without reserving
+// anything or transmitting a generation. The fixed output directory below is
+// an exclusive, durable one-run guard, including after interruption.
+if (args[0] === "--run-when-ready") {
+  assert.ok(process.env.MANUSCRIPT_TRIAL_OUT, "Scheduled trials require a fixed output directory");
+  if (callAllowance < MAX_CALLS) {
+    console.log(JSON.stringify({ status: "waiting-for-quota", preflight }));
+    process.exit(0);
+  }
 }
 assert.ok(callAllowance > 0, "No headroom within the saved 24/day ceiling");
 const out = resolve(
