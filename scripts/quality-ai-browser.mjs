@@ -340,6 +340,10 @@ try {
       assert.equal(await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(), line);
       assert.equal(chatCount(await readTown(page), line), 0);
       await pause(page);
+      const warningBox = await page.locator("[data-ai-warning]").boundingBox();
+      const composerBox = await page.locator(".mind-say").boundingBox();
+      assert.ok(warningBox && composerBox && warningBox.y >= composerBox.y - 1);
+      assert.ok(warningBox.y + warningBox.height <= viewport.height);
       const close = page.getByRole("button", { name: "Close conversation", exact: true });
       const closeBox = await close.boundingBox();
       assert.ok(closeBox && closeBox.y >= 0 && closeBox.y + closeBox.height <= viewport.height);

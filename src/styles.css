@@ -250,6 +250,9 @@ kbd {
   margin-top: 0.3rem;
 }
 .mind-say .ai-warning {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   padding: 0.4rem 0.6rem;
   margin-bottom: 0.5rem;
   font-size: 0.75rem;
