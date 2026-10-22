@@ -134,17 +134,21 @@ export function validatePhysicalItems(town: Town): string[] {
   if (session !== null) {
     if (
       !object(session) ||
-      !keys(session, [
-        "actor",
-        "revision",
-        "enabled",
-        "waiting",
-        "decisions",
-        "maxDecisions",
-        "intent",
-        "lastResult",
-        "usage",
-      ]) ||
+      !keys(
+        session,
+        [
+          "actor",
+          "revision",
+          "enabled",
+          "waiting",
+          "decisions",
+          "maxDecisions",
+          "intent",
+          "lastResult",
+          "usage",
+        ],
+        ["readContentRevision"],
+      ) ||
       !npcId(session.actor) ||
       !town.agents?.some((agent) => agent.id === session.actor) ||
       !integer(session.revision, 1) ||
@@ -154,6 +158,9 @@ export function validatePhysicalItems(town: Town): string[] {
       session.maxDecisions > 20 ||
       !integer(session.decisions) ||
       session.decisions > session.maxDecisions ||
+      (session.readContentRevision !== undefined &&
+        (!integer(session.readContentRevision) ||
+          session.readContentRevision > Number(item.contentRevision))) ||
       (session.lastResult !== null && !resultValid(session.lastResult, item as PhysicalItem)) ||
       !object(session.usage)
     )
@@ -357,6 +364,14 @@ function finishDecision(town: Town, actor: AgentId, result: PhysicalActionResult
     }
   }
 }
+function readInActiveSequence(town: Town, actor: AgentId, item: PhysicalItem): boolean {
+  const session = town.physicalItems?.session;
+  return Boolean(
+    session?.enabled &&
+    session.actor === actor &&
+    session.readContentRevision === item.contentRevision,
+  );
+}
 function decisionShape(decision: unknown): decision is PhysicalDecision {
   if (!object(decision)) return false;
   if (decision.kind === "wait") return keys(decision, ["kind"]);
@@ -411,6 +426,19 @@ export function applyPhysicalCommand(
     return fail("Choose one supported action with exact current item terms and bounded text.");
   if (town.physicalItems.session?.intent && town.physicalItems.session.actor === actor)
     return fail("Finish or stop the current item movement before choosing another action.");
+  if (decision.kind === "read") {
+    const item = physicalItem(town, decision.itemId);
+    if (
+      item?.revision === decision.itemRevision &&
+      canReadPhysicalItem(town, actor, item) &&
+      readInActiveSequence(town, actor, item)
+    ) {
+      const message =
+        "This manuscript content was already read in this trial. The trial is paused; changed words or an explicit new trial allow another read.";
+      pausePhysicalSession(town, message);
+      return { ok: false, kind, message };
+    }
+  }
   const draft = structuredClone(town);
   const person = resident(draft, actor)!;
   const state = draft.physicalItems!;
@@ -499,6 +527,8 @@ export function applyPhysicalCommand(
             message: "The manuscript is on the ground at your current tile.",
           };
         } else if (decision.kind === "read") {
+          if (state.session?.enabled && state.session.actor === actor)
+            state.session.readContentRevision = item.contentRevision;
           state.reading = {
             actor,
             itemId: item.id,
@@ -850,7 +880,8 @@ function availablePhysicalActions(town: Town, actor: AgentId): AvailablePhysical
   for (const item of nearbyPhysicalItems(town, actor)) {
     const quote = { itemId: item.id, itemRevision: item.revision };
     const holding = item.location.kind === "held" && item.location.holder === actor;
-    if (canReadPhysicalItem(town, actor, item)) actions.push({ kind: "read", ...quote });
+    if (canReadPhysicalItem(town, actor, item) && !readInActiveSequence(town, actor, item))
+      actions.push({ kind: "read", ...quote });
     if (
       item.location.kind === "ground" &&
       !held &&
@@ -867,11 +898,18 @@ function availablePhysicalActions(town: Town, actor: AgentId): AvailablePhysical
   return actions;
 }
 
-/** The model sees visible metadata; only an actual read returns manuscript text. */
+/** Only actual reads make visible manuscript words known to this actor's sequence. */
 export function physicalObservation(town: Town, actor: AgentId): Record<string, unknown> {
   const person = resident(town, actor);
   if (!person) return { unavailable: "That resident is not in this town." };
   const session = town.physicalItems?.session;
+  const visibleItems = nearbyPhysicalItems(town, actor);
+  const knownItem =
+    session?.actor === actor
+      ? visibleItems.find((item) => session.readContentRevision === item.contentRevision)
+      : undefined;
+  const lastResult = session?.actor === actor ? structuredClone(session.lastResult) : null;
+  if (knownItem && lastResult) delete lastResult.content;
   return {
     actor: {
       id: actor,
@@ -881,9 +919,16 @@ export function physicalObservation(town: Town, actor: AgentId): Record<string, 
       place: physicalPlace(person.tile),
       heldItemId: heldItem(town, actor)?.id ?? null,
     },
-    items: nearbyPhysicalItems(town, actor).map(({ text: _body, ...item }) =>
-      structuredClone(item),
-    ),
+    items: visibleItems.map(({ text: _body, ...item }) => structuredClone(item)),
+    knownManuscript: knownItem
+      ? {
+          itemId: knownItem.id,
+          title: knownItem.title,
+          text: knownItem.text,
+          author: knownItem.author,
+          contentRevision: knownItem.contentRevision,
+        }
+      : null,
     availableActions: availablePhysicalActions(town, actor),
     nearbyResidents: town.agents
       .filter((other) => other.id !== actor && close(person.tile, other.tile, 3))
@@ -899,8 +944,11 @@ export function physicalObservation(town: Town, actor: AgentId): Record<string, 
             revision: session.revision,
             decisions: session.decisions,
             maxDecisions: session.maxDecisions,
+            ...(session.readContentRevision !== undefined
+              ? { readContentRevision: session.readContentRevision }
+              : {}),
             intent: structuredClone(session.intent),
-            lastResult: structuredClone(session.lastResult),
+            lastResult,
           }
         : null,
   };

@@ -68,6 +68,9 @@ function storage(raw) {
 }
 function marked(town, actor = "data", max = 8) {
   ok(physical.startPhysicalSession(town, actor, max));
+  return markNext(town);
+}
+function markNext(town) {
   const job = physical.nextPhysicalJob(town);
   assert.ok(job);
   assert.equal(physical.markPhysicalRequest(town, job), true);
@@ -334,6 +337,227 @@ test("available actions match executable current offers and reveal no unseen ite
   assert.equal(physical.canReadPhysicalItem(town, "northern", item(town)), false);
 });
 
+test("unchanged AI reads are omitted and a repeated proposal parks without another read effect", () => {
+  const town = fixture();
+  atBook(town, "northern");
+  marked(town, "northern");
+  ok(act(town, "northern", "read"));
+  const observation = physical.physicalObservation(town, "northern");
+  assert.equal(observation.session.readContentRevision, 0);
+  assert.deepEqual(observation.knownManuscript, {
+    itemId: item(town).id,
+    title: "Blank manuscript",
+    text: "",
+    author: null,
+    contentRevision: 0,
+  });
+  assert.equal(observation.session.lastResult.content, undefined);
+  assert.ok(!observation.availableActions.some((option) => option.kind === "read"));
+  assert.equal(physical.canReadPhysicalItem(town, "northern", item(town)), true);
+  const job = markNext(town);
+  physical.recordPhysicalUsage(town, job, {
+    elapsedMs: 30,
+    attempts: 1,
+    totalTokens: 123,
+    success: true,
+  });
+  const before = structuredClone({
+    item: item(town),
+    reading: town.physicalItems.reading,
+    agents: town.agents,
+    nextId: town.nextId,
+    economy: town.economy,
+    usage: town.physicalItems.session.usage,
+  });
+  const repeated = act(town, "northern", "read");
+  assert.equal(repeated.ok, false);
+  assert.match(repeated.message, /already read.*paused/);
+  assert.equal(repeated.content, undefined);
+  assert.equal(town.physicalItems.session.enabled, false);
+  assert.equal(town.physicalItems.session.readContentRevision, 0);
+  assert.equal(physical.nextPhysicalJob(town), null);
+  assert.deepEqual(
+    {
+      item: item(town),
+      reading: town.physicalItems.reading,
+      agents: town.agents,
+      nextId: town.nextId,
+      economy: town.economy,
+      usage: town.physicalItems.session.usage,
+    },
+    before,
+  );
+  assert.equal(physical.physicalObservation(town, "northern").knownManuscript.text, "");
+  ok(act(town, "northern", "read"));
+  assert.ok(
+    physical.physicalObservation(town, "northern").availableActions.some((o) => o.kind === "read"),
+    "manual reading outside the enabled NPC sequence remains deliberate and repeatable",
+  );
+});
+
+test("custody changes keep read knowledge while newly authored words allow a fresh read", () => {
+  const town = fixture();
+  atBook(town, "northern");
+  marked(town, "northern");
+  ok(act(town, "northern", "read"));
+  for (const kind of ["pick-up", "put-down", "pick-up"]) {
+    markNext(town);
+    ok(act(town, "northern", kind));
+    const observation = physical.physicalObservation(town, "northern");
+    assert.equal(item(town).contentRevision, 0);
+    assert.equal(observation.knownManuscript.contentRevision, 0);
+    assert.equal(observation.session.lastResult.kind, kind);
+    assert.ok(!observation.availableActions.some((option) => option.kind === "read"));
+  }
+  const finance = JSON.stringify({
+    money: town.agents.map(({ id, money }) => ({ id, money })),
+    tills: town.tills,
+    favors: town.favors,
+    economy: town.economy,
+  });
+  const fiction = "Rent £85 to a dragon; my fictional purse holds £12.40.";
+  markNext(town);
+  ok(act(town, "northern", "write", { title: "A free fiction", text: fiction }));
+  const written = physical.physicalObservation(town, "northern");
+  assert.equal(written.session.readContentRevision, 0);
+  assert.equal(written.knownManuscript, null);
+  assert.ok(written.availableActions.some((option) => option.kind === "read"));
+  markNext(town);
+  assert.equal(ok(act(town, "northern", "read")).content.text, fiction);
+  const read = physical.physicalObservation(town, "northern");
+  assert.equal(read.session.readContentRevision, 1);
+  assert.equal(read.knownManuscript.text, fiction);
+  assert.equal(read.knownManuscript.author, "northern");
+  assert.equal(read.session.lastResult.content, undefined);
+  assert.equal(JSON.stringify(read).split(fiction).length - 1, 1, "full known words occur once");
+  assert.equal(item(town).text, fiction);
+  assert.ok(
+    person(town, "northern").memories.some(
+      (memory) => memory.source === "statement" && memory.text.includes(fiction),
+    ),
+  );
+  assert.ok(
+    !person(town, "northern").memories.some(
+      (memory) => memory.source === "event" && memory.text.includes(fiction),
+    ),
+  );
+  assert.equal(
+    JSON.stringify({
+      money: town.agents.map(({ id, money }) => ({ id, money })),
+      tills: town.tills,
+      favors: town.favors,
+      economy: town.economy,
+    }),
+    finance,
+  );
+  markNext(town);
+  ok(act(town, "northern", "put-down"));
+  assert.equal(physical.physicalObservation(town, "northern").knownManuscript.text, fiction);
+  person(town, "northern").tile = { ...ANCHORS.park };
+  assert.deepEqual(physical.physicalObservation(town, "northern").items, []);
+  assert.equal(physical.physicalObservation(town, "northern").knownManuscript, null);
+  assert.ok(!JSON.stringify(physical.physicalObservation(town, "northern")).includes(fiction));
+});
+
+test("read receipt is actor-specific and explicit new trials restore deliberate rereading", () => {
+  const town = fixture();
+  atBook(town, "northern");
+  atBook(town, "sub");
+  atBook(town, "player");
+  marked(town, "northern");
+  ok(act(town, "northern", "read"));
+  for (const actor of ["sub", "player"]) {
+    assert.equal(physical.physicalObservation(town, actor).knownManuscript, null);
+    assert.equal(physical.physicalObservation(town, actor).session, null);
+    for (let count = 0; count < 2; count++) ok(act(town, actor, "read"));
+    assert.equal(town.physicalItems.session.readContentRevision, 0);
+    assert.ok(
+      physical.physicalObservation(town, actor).availableActions.some((o) => o.kind === "read"),
+    );
+  }
+  physical.stopPhysicalSession(town);
+  assert.equal(town.physicalItems.session.readContentRevision, 0);
+  assert.equal(physical.physicalObservation(town, "northern").knownManuscript.contentRevision, 0);
+  marked(town, "northern");
+  assert.equal(town.physicalItems.session.readContentRevision, undefined);
+  assert.equal(physical.physicalObservation(town, "northern").knownManuscript, null);
+  ok(act(town, "northern", "read"));
+  physical.stopPhysicalSession(town);
+  marked(town, "sub");
+  assert.equal(town.physicalItems.session.readContentRevision, undefined);
+  ok(act(town, "sub", "read"));
+  assert.equal(physical.physicalObservation(town, "sub").knownManuscript.contentRevision, 0);
+  assert.equal(physical.physicalObservation(town, "northern").knownManuscript, null);
+});
+
+test("read receipts survive save/reload without automatic rereads and remain optional for old saves", () => {
+  let town = fixture();
+  atBook(town, "northern");
+  marked(town, "northern");
+  ok(act(town, "northern", "read"));
+  town = save.parseTownFile(save.exportTown(town));
+  assert.ok(town);
+  assert.equal(town.physicalItems.session.readContentRevision, 0);
+  assert.ok(
+    !physical.physicalObservation(town, "northern").availableActions.some((o) => o.kind === "read"),
+  );
+  markNext(town);
+  assert.equal(act(town, "northern", "read").ok, false);
+  const paused = save.parseTownFile(save.exportTown(town));
+  assert.ok(paused);
+  assert.equal(paused.physicalItems.session.readContentRevision, 0);
+  assert.equal(physical.nextPhysicalJob(paused), null);
+  assert.equal(physical.physicalObservation(paused, "northern").knownManuscript.contentRevision, 0);
+  const legacy = structuredClone(paused);
+  delete legacy.physicalItems.session.readContentRevision;
+  const restored = save.parseTownFile(save.exportTown(legacy));
+  assert.ok(restored);
+  assert.equal(restored.physicalItems.session.readContentRevision, undefined);
+  assert.deepEqual(physical.validatePhysicalItems(restored), []);
+  ok(physical.startPhysicalSession(paused, "northern"));
+  assert.equal(paused.physicalItems.session.readContentRevision, undefined);
+  ok(act(paused, "northern", "read"));
+});
+
+test("forged receipts and stale or malformed reads reveal no new words or read effects", () => {
+  for (const receipt of [-1, 0.5, 1, Number.MAX_SAFE_INTEGER + 1, null, "0"]) {
+    const corrupt = fixture();
+    marked(corrupt, "northern");
+    corrupt.physicalItems.session.readContentRevision = receipt;
+    const original = JSON.stringify(corrupt);
+    assert.ok(physical.validatePhysicalItems(corrupt).length);
+    assert.equal(JSON.stringify(corrupt), original);
+    assert.equal(save.parseTownFile(JSON.stringify({ version: 2, town: corrupt })), null);
+    assert.throws(() => save.exportTown(corrupt), /manuscript/i);
+  }
+  const town = fixture();
+  atBook(town, "northern");
+  marked(town, "northern");
+  ok(act(town, "northern", "read"));
+  markNext(town);
+  ok(act(town, "northern", "pick-up"));
+  const before = structuredClone({
+    item: item(town),
+    reading: town.physicalItems.reading,
+    memories: person(town, "northern").memories,
+  });
+  for (const extra of [{ itemRevision: 0 }, { itemId: "unknown" }, { extra: true }]) {
+    const result = act(town, "northern", "read", extra);
+    assert.equal(result.ok, false);
+    assert.equal(result.content, undefined);
+    assert.deepEqual(
+      {
+        item: item(town),
+        reading: town.physicalItems.reading,
+        memories: person(town, "northern").memories,
+      },
+      before,
+    );
+    assert.equal(town.physicalItems.session.readContentRevision, 0);
+  }
+  assert.deepEqual(physical.validatePhysicalItems(town), []);
+});
+
 for (const sourceVersion of [1, 2])
   test(`v${sourceVersion} source towns preserve fictional manuscript words as unverified statements through another reader and v2 reload`, async () => {
     const town =
@@ -428,10 +652,14 @@ for (const sourceVersion of [1, 2])
       }),
       beforeFinance,
     );
+    marked(town, "sub");
+    assert.equal(ok(act(town, "sub", "read")).content.text, original);
     const restored = save.parseTownFile(save.exportTown(town));
     assert.ok(restored);
     assert.equal(item(restored).text, original);
     assert.deepEqual(item(restored).location, { kind: "held", holder: "sub" });
+    assert.equal(restored.physicalItems.session.readContentRevision, 1);
+    assert.equal(physical.physicalObservation(restored, "sub").knownManuscript.text, original);
     for (const id of ["northern", "sub"])
       assert.ok(
         person(restored, id).memories.some(
