@@ -34,6 +34,9 @@ export function ManuscriptTools({ town, controls }: { town: Town; controls: Manu
     ? (town.agents.find((person) => person.id === holderId)?.name ?? "a resident")
     : null;
   const name = town.agents.find((person) => person.id === actor)?.name ?? actor;
+  const actorHasManuscript = Boolean(
+    item && nearbyPhysicalItems(town, actor).some((row: PhysicalItem) => row.id === item.id),
+  );
   const player = town.agents.find((person) => person.id === "player")!;
   const canPickUp =
     item?.location.kind === "ground" &&
@@ -176,7 +179,7 @@ export function ManuscriptTools({ town, controls }: { town: Town; controls: Manu
               <button
                 className="btn"
                 type="button"
-                disabled={disabled || !controls.available}
+                disabled={disabled || !controls.available || !actorHasManuscript}
                 onClick={() => controls.onStart(actor)}
               >
                 {session ? "Start another bounded trial" : `Watch ${name} try`}
@@ -184,6 +187,12 @@ export function ManuscriptTools({ town, controls }: { town: Town; controls: Manu
             )}
             {!controls.available && (
               <p role="status">AI actions are unavailable. The manuscript stays as it is.</p>
+            )}
+            {!actorHasManuscript && (
+              <p>
+                Invite {name} when they are beside or holding the manuscript. You can carry it to
+                them.
+              </p>
             )}
             {session?.lastResult && <p>{session.lastResult.message}</p>}
           </div>

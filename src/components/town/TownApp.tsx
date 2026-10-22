@@ -566,6 +566,10 @@ export function TownApp() {
       localOnlyRef.current
     )
       return;
+    if (!nearbyPhysicalItems(live, actor).length) {
+      setPhysicalNote("Invite this resident when they are beside or holding the manuscript.");
+      return;
+    }
     const result = startPhysicalSession(live, actor, 8);
     setPhysicalNote(result.message);
     if (result.ok) {
