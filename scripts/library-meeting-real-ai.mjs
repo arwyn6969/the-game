@@ -14,6 +14,7 @@ import { DEFAULT_BUDGET, validateBudgetPolicy } from "../src/lib/mind-budget/pol
 import { SqlMindBudgetStore } from "../src/lib/mind-budget/store.ts";
 import { runBudgetedMind } from "../src/lib/mind-budget/runner.ts";
 import { auditDiscussionDelivery, auditDiscussionReload } from "./library-meeting-audit.mjs";
+import { currentDiscussionFloorJob } from "./library-meeting-floor-probe.mjs";
 
 // One explicitly authorized operator experiment, not hosted-user authentication.
 // No production town/config/database is loaded. Only the existing provider key
@@ -30,6 +31,7 @@ assert.ok(
   "Additional calls need explicit bounded authority",
 );
 const resumePath = process.env.MEETING_TRIAL_RESUME_REPORT;
+const floorProbePath = process.env.MEETING_TRIAL_FLOOR_PROBE_REPORT;
 const facilitator = process.env.MEETING_TRIAL_FACILITATOR || (resumePath ? "arwyn" : "northern");
 assert.ok(["northern", "arwyn"].includes(facilitator), "Choose a supported proposed facilitator");
 const previousPath = process.env.MEETING_TRIAL_PRIOR_REPORT;
@@ -114,9 +116,8 @@ if (resumePath) {
     "Resume is authorized for the original UTC day only",
   );
 }
-const MAX_CALLS = initialRemaining - (resumed?.transmissions ?? 0);
-assert.ok(Number.isSafeInteger(MAX_CALLS) && MAX_CALLS > 0 && MAX_CALLS <= ORIGINAL_ALLOWANCE);
-const resumption = resumed
+const resumeRemaining = initialRemaining - (resumed?.transmissions ?? 0);
+const initialResumption = resumed
   ? {
       pausedReportSha256: createHash("sha256").update(resumeBytes).digest("hex"),
       pausedTrialSourceHead: resumed.sourceHead,
@@ -125,17 +126,97 @@ const resumption = resumed
       originalTrialTransmissions: previous.transmissions,
       pausedMeetingTransmissions: resumed.transmissions,
       previouslySpentCalls: previous.transmissions + resumed.transmissions,
-      remainingAuthorizedCalls: MAX_CALLS,
+      remainingAuthorizedCalls: resumeRemaining,
       inheritedAccountCeiling: carryForward.inheritedAccountCeiling,
     }
   : null;
-const resumeTownPath = resumed ? resolve(dirname(resolve(resumePath)), "final-town.json") : null;
+const floorProbeBytes = floorProbePath ? await readFile(floorProbePath) : null;
+const floorSource = floorProbeBytes ? JSON.parse(floorProbeBytes.toString("utf8")) : null;
+if (floorProbePath) {
+  assert.ok(
+    previous && resumed && floorSource,
+    "Floor probe requires the complete prior receipt chain",
+  );
+  assert.equal(floorSource.model, MODEL);
+  assert.deepEqual(floorSource.carryForward, carryForward);
+  for (const [field, value] of Object.entries(initialResumption))
+    assert.deepEqual(
+      floorSource.resumption[field],
+      value,
+      "Floor probe parent receipt does not match",
+    );
+  assert.equal(floorSource.preflight.experimentAccountCeiling, 37);
+  assert.equal(floorSource.maxCalls, 6);
+  assert.equal(floorSource.transmissions, 2);
+  assert.equal(floorSource.cumulativeTransmissions, 8);
+  assert.equal(floorSource.cumulativeMeetingTransmissions, 7);
+  assert.equal(floorSource.cumulativeLedgerCharges, 7);
+  assert.equal(floorSource.meeting.id, resumed.meeting.id);
+  assert.equal(floorSource.meeting.facilitator, "arwyn");
+  assert.equal(floorSource.meeting.status, "paused");
+  assert.equal(floorSource.meeting.pending, null);
+  assert.equal(floorSource.meeting.floor?.actor, "arwyn");
+  assert.equal(floorSource.meeting.utterances.length, 0);
+  assert.equal(floorSource.playerAttention.length, 0);
+  assert.equal(floorSource.stopReason, "unreachable");
+  assert.equal(floorSource.decisions.length, 2);
+  assert.ok(floorSource.decisions.every((row) => row.transmissions === 1));
+  assert.equal(floorSource.decisions[0].actor, "northern");
+  assert.equal(floorSource.decisions[0].decision.kind, "listen");
+  assert.equal(floorSource.decisions[0].ok, true);
+  assert.equal(floorSource.decisions[0].result.ok, true);
+  const failure = floorSource.decisions[1];
+  assert.equal(failure.actor, "sub");
+  assert.equal(failure.ok, false);
+  assert.equal(failure.attempts.length, 1);
+  assert.equal(failure.attempts[0].status, 200);
+  assert.equal(failure.attempts[0].outcome, "invalid");
+  assert.equal(failure.attempts[0].response.invalidReason, "empty");
+  assert.equal(failure.attempts[0].response.responseCharacters, 0);
+  assert.equal(floorSource.ledger.budget.length, 7);
+  assert.ok(floorSource.ledger.budget.every((row) => row.charged_calls === 1 && row.settled));
+  assert.equal(floorSource.ledger.pool.length, 7);
+  assert.ok(floorSource.ledger.pool.every((row) => row.settled));
+  assert.equal(
+    new Date(floorSource.finishedAt).toISOString().slice(0, 10),
+    new Date().toISOString().slice(0, 10),
+    "Floor probe is authorized for the original UTC day only",
+  );
+}
+const sourceReport = floorSource || resumed;
+const sourcePath = floorProbePath || resumePath;
+const priorMeetingTransmissions = (resumed?.transmissions ?? 0) + (floorSource?.transmissions ?? 0);
+const MAX_CALLS = initialRemaining - priorMeetingTransmissions;
+assert.ok(Number.isSafeInteger(MAX_CALLS) && MAX_CALLS > 0 && MAX_CALLS <= ORIGINAL_ALLOWANCE);
+const resumption = sourceReport
+  ? {
+      ...initialResumption,
+      pausedReportSha256: createHash("sha256")
+        .update(floorProbeBytes || resumeBytes)
+        .digest("hex"),
+      pausedTrialSourceHead: sourceReport.sourceHead,
+      pausedMeetingTransmissions: priorMeetingTransmissions,
+      previouslySpentCalls: previous.transmissions + priorMeetingTransmissions,
+      remainingAuthorizedCalls: MAX_CALLS,
+    }
+  : null;
+const floorProbe = floorSource
+  ? {
+      method: "targeted-floor-probe",
+      priorReportSha256: resumption.pausedReportSha256,
+      priorMeetingTransmissions,
+      remainingAuthorizedCalls: MAX_CALLS,
+    }
+  : null;
+const resumeTownPath = sourceReport
+  ? resolve(dirname(resolve(sourcePath)), "final-town.json")
+  : null;
 const resumeTownBytes = resumeTownPath ? await readFile(resumeTownPath) : null;
 const savedResumeTown = resumeTownBytes ? JSON.parse(resumeTownBytes.toString("utf8")) : null;
-if (resumed) {
+if (sourceReport) {
   assert.equal(savedResumeTown.version, 2);
   assert.equal(savedResumeTown.town.discussions.sessions.length, 1);
-  assert.deepEqual(savedResumeTown.town.discussions.sessions[0], resumed.meeting);
+  assert.deepEqual(savedResumeTown.town.discussions.sessions[0], sourceReport.meeting);
 }
 const envFile = process.env.MEETING_TRIAL_ENV_FILE;
 const key = (
@@ -208,6 +289,7 @@ const preflight = {
   authorizedAdditionalFreeCalls: extraCalls,
   carryForward,
   resumption,
+  floorProbe,
   experimentAccountCeiling: trialCeiling,
   callAllowance,
 };
@@ -225,7 +307,7 @@ const RUN_CALLS = callAllowance;
 const LEDGER_CALL_LIMIT = resumed ? initialRemaining : RUN_CALLS;
 assert.ok(process.env.MEETING_TRIAL_OUT, "One fixed exclusive output directory is required");
 const out = resolve(process.env.MEETING_TRIAL_OUT);
-for (const evidencePath of [previousPath, resumePath].filter(Boolean)) {
+for (const evidencePath of [previousPath, resumePath, floorProbePath].filter(Boolean)) {
   const fromEvidence = relative(dirname(resolve(evidencePath)), out);
   assert.ok(
     fromEvidence === ".." || fromEvidence.startsWith("../"),
@@ -238,17 +320,19 @@ if (carryForward || resumption) {
   // Claim the one authorized continuation outside the original evidence folder.
   // Another output path cannot reset the inherited eleven-call allowance.
   const claim = resolve(
-    dirname(dirname(resolve(resumePath || previousPath))),
-    resumption
-      ? `.meeting-resume-${resumption.pausedReportSha256}.json`
-      : `.meeting-continuation-${carryForward.priorReportSha256}.json`,
+    dirname(dirname(resolve(sourcePath || previousPath))),
+    floorProbe
+      ? `.meeting-floor-probe-${floorProbe.priorReportSha256}.json`
+      : resumption
+        ? `.meeting-resume-${resumption.pausedReportSha256}.json`
+        : `.meeting-continuation-${carryForward.priorReportSha256}.json`,
   );
   await writeFile(
     claim,
     JSON.stringify({
       claimedAt: new Date().toISOString(),
       output: out,
-      ...(resumption || carryForward),
+      ...(floorProbe || resumption || carryForward),
     }),
     { flag: "wx" },
   );
@@ -259,9 +343,11 @@ const report = {
   scope:
     "One operator headless local meeting, real model and engine, synthetic town, local SQL accounting",
   model: MODEL,
+  method: floorProbe ? "targeted-floor-probe" : "default-discussion-scheduler",
   maxCalls: RUN_CALLS,
   carryForward,
   resumption,
+  floorProbe,
   ledgerCallLimit: LEDGER_CALL_LIMIT,
   preflight,
   transmissions: 0,
@@ -323,14 +409,14 @@ const policy = validateBudgetPolicy({
   inputNanousdPerToken: 0,
   outputNanousdPerToken: 0,
 });
-if (resumed)
-  await cp(resolve(dirname(resolve(resumePath)), "ledger"), resolve(out, "ledger"), {
+if (sourceReport)
+  await cp(resolve(dirname(resolve(sourcePath)), "ledger"), resolve(out, "ledger"), {
     recursive: true,
     errorOnExist: true,
     force: false,
   });
 const db = new PGlite({ dataDir: resolve(out, "ledger"), parsers: { 20: Number } });
-if (!resumed)
+if (!sourceReport)
   for (const name of [
     "20261012_mind_pool.sql",
     "20261013_mind_budget.sql",
@@ -341,7 +427,7 @@ const sql = { query: async (query, params) => (await db.query(query, params)).ro
 const budgetUserHash = createHash("sha256")
   .update(`operator-library-meeting:${resumed ? dirname(resolve(resumePath)) : out}`)
   .digest("hex");
-if (resumed) {
+if (sourceReport) {
   const budget = await sql.query(
     "select user_hash, charged_calls, charged_microusd, completed_at is not null as settled from mind_budget_attempts",
   );
@@ -350,7 +436,7 @@ if (resumed) {
   );
   assert.equal(
     budget.length,
-    resumed.transmissions,
+    priorMeetingTransmissions,
     "Copied ledger must retain every prior charge",
   );
   assert.ok(
@@ -362,13 +448,13 @@ if (resumed) {
         row.settled,
     ),
   );
-  assert.equal(pool.length, resumed.transmissions);
+  assert.equal(pool.length, priorMeetingTransmissions);
   assert.ok(
     pool.every((row) => row.provider === "openrouter" && row.model === MODEL && row.settled),
   );
   assert.deepEqual(
     pool.map(({ actual_tokens, outcome, status }) => ({ actual_tokens, outcome, status })),
-    resumed.ledger.pool.map(({ actual_tokens, outcome, status }) => ({
+    sourceReport.ledger.pool.map(({ actual_tokens, outcome, status }) => ({
       actual_tokens,
       outcome,
       status,
@@ -392,12 +478,12 @@ const { buildPrompt, parseMind } = await server.ssrLoadModule("/src/game/prompt.
 const d = await server.ssrLoadModule("/src/game/discussions.ts");
 const { canHear } = await server.ssrLoadModule("/src/game/attention.ts");
 const { exportTown, parseTownFile } = await server.ssrLoadModule("/src/game/save.ts");
-const town = resumed
+const town = sourceReport
   ? parseTownFile(resumeTownBytes.toString("utf8"))
   : parseTownFile(exportTown(createTown("Observer")));
 assert.ok(town, "The preserved final town must load without replacement");
 const person = (id) => town.agents.find((agent) => agent.id === id);
-if (!resumed)
+if (!sourceReport)
   for (const [id, tile] of Object.entries({
     northern: { x: 42, y: 21 },
     arwyn: { x: 44, y: 21 },
@@ -407,10 +493,10 @@ if (!resumed)
   }))
     person(id).tile = tile;
 const meeting = () => town.discussions.sessions.at(-1);
-if (resumed) {
+if (sourceReport) {
   assert.deepEqual(
     meeting(),
-    resumed.meeting,
+    sourceReport.meeting,
     "Saved meeting choices must match the paused receipt",
   );
   const memoryFacts = (value) =>
@@ -430,11 +516,11 @@ if (resumed) {
   const before = structuredClone(town);
   const result = d.resumeDiscussion(town);
   assert.ok(result.ok, result.message);
-  assert.equal(meeting().id, resumed.meeting.id);
-  assert.equal(meeting().epoch, resumed.meeting.epoch + 1);
-  assert.deepEqual(meeting().members, resumed.meeting.members);
-  assert.deepEqual(meeting().utterances, resumed.meeting.utterances);
-  assert.deepEqual(meeting().usage, resumed.meeting.usage);
+  assert.equal(meeting().id, sourceReport.meeting.id);
+  assert.equal(meeting().epoch, sourceReport.meeting.epoch + 1);
+  assert.deepEqual(meeting().members, sourceReport.meeting.members);
+  assert.deepEqual(meeting().utterances, sourceReport.meeting.utterances);
+  assert.deepEqual(meeting().usage, sourceReport.meeting.usage);
   assert.deepEqual(
     town.agents,
     before.agents,
@@ -442,6 +528,20 @@ if (resumed) {
   );
   report.resumption.resumedEpoch = meeting().epoch;
   report.resumption.priorChoicesAndMemoriesPreserved = true;
+  if (floorProbe) {
+    const floorJob = currentDiscussionFloorJob(town, {
+      observation: d.discussionObservation,
+      isFresh: d.isDiscussionJobFresh,
+    });
+    assert.ok(
+      floorJob && floorJob.agentId === "arwyn",
+      "The saved Arwyn floor must still be eligible to speak",
+    );
+    assert.equal(meeting().members.find((member) => member.id === "northern").mode, "listening");
+    assert.equal(meeting().members.find((member) => member.id === "sub").mode, "off");
+    report.floorProbe.initialFloor = structuredClone(meeting().floor);
+    report.floorProbe.defaultNextActor = d.nextDiscussionJob(town)?.agentId ?? null;
+  }
 }
 const finance = (value) =>
   JSON.stringify({
@@ -461,7 +561,7 @@ const command = (decision) =>
     expectedRevision: meeting().members.find((member) => member.id === "player").revision,
     commandId: `operator:${report.playerAttention.length}:${decision.kind}:${decision.invitee ?? "self"}`,
   });
-if (!resumed) {
+if (!sourceReport) {
   assert.ok(
     d.createLibraryDiscussion(
       town,
@@ -477,7 +577,7 @@ if (!resumed) {
 report.setup = {
   proposedFacilitator: facilitator,
   positions: town.agents.map(({ id, tile }) => ({ id, tile })),
-  npcChoices: resumed
+  npcChoices: sourceReport
     ? "Existing AI acceptance and attention choices preserved; same meeting resumed explicitly once"
     : "Invitations delivered by the player; all acceptance, attention and speech remain AI choices",
   observer:
@@ -486,15 +586,21 @@ report.setup = {
   gameTime: { day: town.day, minute: town.minute },
 };
 await writeFile(resolve(out, "initial-town.json"), exportTown(town));
-let lastTransmission = resumed ? Date.parse(resumed.decisions.at(-1).at) || 0 : 0;
+let lastTransmission = sourceReport ? Date.parse(sourceReport.decisions.at(-1).at) || 0 : 0;
 let retainedReceipts = structuredClone(meeting().utterances);
 try {
   while (report.transmissions < RUN_CALLS && meeting().status !== "closed") {
     d.advanceDiscussions(town);
-    const job = d.nextDiscussionJob(town);
+    const job = floorProbe
+      ? currentDiscussionFloorJob(town, {
+          observation: d.discussionObservation,
+          isFresh: d.isDiscussionJobFresh,
+        })
+      : d.nextDiscussionJob(town);
     if (!job) {
-      report.stopReason =
-        "No resident decision is ready; voluntary silence/decline is retained without coaxing.";
+      report.stopReason = floorProbe
+        ? "No eligible reserved NPC floor remains; targeted probe stops without changing attention choices."
+        : "No resident decision is ready; voluntary silence/decline is retained without coaxing.";
       break;
     }
     const waitMs = lastTransmission + 31_000 - Date.now();
@@ -529,6 +635,7 @@ try {
     const row = {
       number: report.decisions.length + 1,
       actor: job.agentId,
+      method: report.method,
       at: new Date().toISOString(),
       observation,
       promptCharacters: prompt.length,
@@ -573,10 +680,28 @@ try {
             lastTransmission = Date.now();
             await checkpoint();
             const response = await fetch(url, init);
-            if (response.ok) {
-              const usage = (await response.clone().json()).usage;
-              if (typeof usage?.cost === "number") row.reportedCostUSD = usage.cost;
-            }
+            const payload = await response
+              .clone()
+              .json()
+              .catch(() => null);
+            if (typeof payload?.usage?.cost === "number") row.reportedCostUSD = payload.usage.cost;
+            const safeField = (value) =>
+              typeof value === "number" && Number.isFinite(value)
+                ? value
+                : typeof value === "string"
+                  ? value
+                      .replace(/sk-[A-Za-z0-9_-]+/g, "[redacted]")
+                      .replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
+                      .slice(0, 240)
+                  : null;
+            const providerMetadata = {
+              id: safeField(payload?.id),
+              provider: safeField(payload?.provider ?? payload?.error?.metadata?.provider_name),
+              errorCode: safeField(payload?.error?.code),
+              errorMessage: safeField(payload?.error?.message),
+            };
+            if (Object.values(providerMetadata).some((value) => value !== null))
+              row.providerMetadata = providerMetadata;
             return response;
           },
           onAttempt: (provider, model, completion) =>
@@ -641,6 +766,9 @@ try {
     }
     if (row.reportedCostUSD !== null && row.reportedCostUSD !== 0)
       report.stopReason = "Unexpected nonzero reported provider cost; no further calls.";
+    if (floorProbe && ["pass", "leave", "close", "stop-listening"].includes(row.decision?.kind))
+      report.stopReason =
+        "The floor holder chose to stop, pass or leave; targeted probe ends without coaxing.";
     assert.equal(finance(town), startFinance, "Meeting decision changed financial state; stop now");
     assert.deepEqual(person("baba").memories, initialMemories.get("baba"));
     console.log(
@@ -733,8 +861,8 @@ try {
     ),
   };
   report.cumulativeTransmissions =
-    (previous?.transmissions ?? 0) + (resumed?.transmissions ?? 0) + report.transmissions;
-  report.cumulativeMeetingTransmissions = (resumed?.transmissions ?? 0) + report.transmissions;
+    (previous?.transmissions ?? 0) + priorMeetingTransmissions + report.transmissions;
+  report.cumulativeMeetingTransmissions = priorMeetingTransmissions + report.transmissions;
   report.cumulativeLedgerCharges = report.ledger.budget.reduce(
     (sum, row) => sum + row.charged_calls,
     0,

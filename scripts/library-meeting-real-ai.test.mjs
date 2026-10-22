@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { test } from "node:test";
-import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { access, cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -26,7 +26,9 @@ globalThis.fetch = async (url, init) => {
     return Response.json({choices:[{message:{content:JSON.stringify({task:'discussion',decision:{kind:'decline'}})},finish_reason:'stop'}],usage:{prompt_tokens:30,completion_tokens:14,total_tokens:44,cost:0}});
   }
   if (url === 'https://openrouter.ai/api/v1/chat/completions' && process.env.FIXTURE_GENERATE==='empty')
-    return Response.json({choices:[{message:{content:''},finish_reason:null}]});
+    return Response.json({id:'fixture-response',provider:'fixture-provider',error:{code:502,message:'Upstream empty sk-or-v1-fixture-hidden Bearer fixture-hidden'},choices:[{message:{content:''},finish_reason:null}]});
+  if (url === 'https://openrouter.ai/api/v1/chat/completions' && process.env.FIXTURE_GENERATE==='pass')
+    return Response.json({choices:[{message:{content:JSON.stringify({task:'discussion',decision:{kind:'pass'}})},finish_reason:'stop'}],usage:{prompt_tokens:30,completion_tokens:14,total_tokens:44,cost:0}});
   throw new Error('Unexpected network operation; generation forbidden');
 };
 `;
@@ -208,6 +210,142 @@ async function prepareResume(dir, previousText, overrides) {
   return { path, town, digest: await evidenceDigest(pausedDir) };
 }
 
+async function prepareFloorProbe(dir, paused, overrides) {
+  const floorDir = join(dir, "resumed");
+  await mkdir(floorDir);
+  const parentBytes = await readFile(paused.path);
+  const parent = JSON.parse(parentBytes);
+  const server = await createServer({
+    root,
+    configFile: false,
+    envDir: false,
+    appType: "custom",
+    logLevel: "error",
+    optimizeDeps: { noDiscovery: true },
+    server: { middlewareMode: true, hmr: false, ws: false, watch: null },
+  });
+  let town;
+  try {
+    const save = await server.ssrLoadModule("/src/game/save.ts");
+    const d = await server.ssrLoadModule("/src/game/discussions.ts");
+    town = save.parseTownFile(await readFile(join(dir, "paused", "final-town.json"), "utf8"));
+    assert.ok(d.resumeDiscussion(town).ok);
+    for (let index = 0; index < 2; index++) {
+      const job = d.nextDiscussionJob(town);
+      assert.equal(job.agentId, index === 0 ? "northern" : "sub");
+      assert.ok(d.markDiscussionRequest(town, job));
+      if (index === 0)
+        assert.ok(
+          d.applyDiscussionResult(town, { ...job, mind: "grok", decision: { kind: "listen" } }).ok,
+        );
+      else
+        d.pauseDiscussion(town, "Real AI unavailable or invalid; no retry or substitute dialogue.");
+      d.recordDiscussionUsage(town, job, {
+        elapsedMs: 10,
+        attempts: 1,
+        totalTokens: index === 0 ? 40 : null,
+        success: index === 0,
+      });
+    }
+    d.pauseDiscussion(town, "unreachable");
+    await writeFile(join(floorDir, "final-town.json"), save.exportTown(town));
+  } finally {
+    await server.close();
+  }
+  await cp(join(dir, "paused", "ledger"), join(floorDir, "ledger"), { recursive: true });
+  const db = new PGlite({ dataDir: join(floorDir, "ledger") });
+  try {
+    const userHash = createHash("sha256")
+      .update(`operator-library-meeting:${join(dir, "paused")}`)
+      .digest("hex");
+    for (let index = 5; index < 7; index++) {
+      const at = Date.now() - 120_000 - index;
+      await db.query("insert into mind_budget_attempts values ($1,$2,'act',$3,$3,$3,1,1,0,0)", [
+        `budget-${index}`,
+        userHash,
+        at,
+      ]);
+      await db.query(
+        "insert into mind_pool_attempts values ($1,'openrouter',$2,'act',$3,$3,$3,1500,$4,$5,200,10)",
+        [
+          `pool-${index}`,
+          parent.model,
+          at,
+          index === 5 ? 40 : null,
+          index === 5 ? "ok" : "invalid",
+        ],
+      );
+    }
+  } finally {
+    await db.close();
+  }
+  const report = {
+    sourceHead: "c".repeat(40),
+    model: parent.model,
+    maxCalls: 6,
+    carryForward: parent.carryForward,
+    resumption: {
+      pausedReportSha256: createHash("sha256").update(parentBytes).digest("hex"),
+      pausedTrialSourceHead: parent.sourceHead,
+      meetingId: parent.meeting.id,
+      originalAuthorizedCalls: 12,
+      originalTrialTransmissions: 1,
+      pausedMeetingTransmissions: 5,
+      previouslySpentCalls: 6,
+      remainingAuthorizedCalls: 6,
+      inheritedAccountCeiling: 37,
+    },
+    preflight: { experimentAccountCeiling: 37 },
+    transmissions: 2,
+    cumulativeTransmissions: 8,
+    cumulativeMeetingTransmissions: 7,
+    cumulativeLedgerCharges: 7,
+    finishedAt: new Date().toISOString(),
+    meeting: town.discussions.sessions[0],
+    playerAttention: [],
+    stopReason: "unreachable",
+    decisions: [
+      {
+        actor: "northern",
+        decision: { kind: "listen" },
+        transmissions: 1,
+        ok: true,
+        result: { ok: true },
+        at: new Date(Date.now() - 120_000).toISOString(),
+      },
+      {
+        actor: "sub",
+        transmissions: 1,
+        ok: false,
+        at: new Date(Date.now() - 120_000).toISOString(),
+        attempts: [
+          {
+            status: 200,
+            outcome: "invalid",
+            response: { invalidReason: "empty", responseCharacters: 0 },
+          },
+        ],
+      },
+    ],
+    ledger: {
+      budget: [
+        ...parent.ledger.budget,
+        { charged_calls: 1, settled: true },
+        { charged_calls: 1, settled: true },
+      ],
+      pool: [
+        ...parent.ledger.pool,
+        { settled: true, actual_tokens: 40, outcome: "ok", status: 200 },
+        { settled: true, actual_tokens: null, outcome: "invalid", status: 200 },
+      ],
+    },
+    ...(typeof overrides === "object" ? overrides : {}),
+  };
+  const path = join(floorDir, "report.json");
+  await writeFile(path, JSON.stringify(report));
+  return { path, town, digest: await evidenceDigest(floorDir) };
+}
+
 async function invoke({
   used = 25,
   extra = "0",
@@ -220,6 +358,7 @@ async function invoke({
   facilitator = "northern",
   replay = false,
   resume = false,
+  floorProbe = false,
 } = {}) {
   const dir = await mkdtemp(join(tmpdir(), "meeting-real-gate-"));
   const preload = join(dir, "network-fixture.mjs");
@@ -249,6 +388,7 @@ async function invoke({
     await writeFile(previousPath, previousText);
   }
   const paused = resume ? await prepareResume(dir, previousText, resume) : null;
+  const floor = floorProbe ? await prepareFloorProbe(dir, paused, floorProbe) : null;
   if (existing) {
     await writeFile(join(dir, "marker"), "preserved");
     // An already occupied path, even a file, must reject before generation.
@@ -269,9 +409,10 @@ async function invoke({
         MEETING_TRIAL_PRIOR_REPORT: previousPath,
         MEETING_TRIAL_FACILITATOR: facilitator,
         MEETING_TRIAL_RESUME_REPORT: paused?.path ?? "",
+        MEETING_TRIAL_FLOOR_PROBE_REPORT: floor?.path ?? "",
         FIXTURE_USED: String(used),
         FIXTURE_REMAINING: String(remaining),
-        FIXTURE_GENERATE: generate === "empty" ? "empty" : generate ? "yes" : "no",
+        FIXTURE_GENERATE: typeof generate === "string" ? generate : generate ? "yes" : "no",
         FIXTURE_PRICE: price,
       },
     };
@@ -301,6 +442,12 @@ async function invoke({
         paused.digest,
         "Resume must not change the paused report, town or original ledger",
       );
+    if (floor)
+      assert.equal(
+        await evidenceDigest(join(dir, "resumed")),
+        floor.digest,
+        "The prior resume evidence and seven-charge ledger stay unchanged",
+      );
     if (replay) {
       options.env.MEETING_TRIAL_OUT = join(dir, "another-output");
       const replayed = execute();
@@ -317,7 +464,14 @@ async function invoke({
     const finalTown = report
       ? JSON.parse(await readFile(join(out, "final-town.json"), "utf8")).town
       : null;
-    return { ...result, report, initialTown, finalTown, pausedTown: paused?.town };
+    return {
+      ...result,
+      report,
+      initialTown,
+      finalTown,
+      pausedTown: paused?.town,
+      floorTown: floor?.town,
+    };
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -454,6 +608,93 @@ test("resume rejects changed parent authority, changed failure evidence and exha
     const result = await invoke({ prior: true, facilitator: "arwyn", ...options });
     assert.notEqual(result.status, 0);
   }
+});
+test("targeted floor probe inherits only four remaining calls and verifies the complete chain", async () => {
+  for (const [used, allowance] of [
+    [32, 4],
+    [34, 3],
+    [37, 0],
+  ]) {
+    const result = await invoke({
+      prior: true,
+      resume: true,
+      floorProbe: true,
+      facilitator: "arwyn",
+      used,
+    });
+    assert.equal(result.status, 0, result.stderr);
+    const data = JSON.parse(result.stdout);
+    assert.equal(data.requestedMaxCalls, 4);
+    assert.equal(data.callAllowance, allowance);
+    assert.equal(data.experimentAccountCeiling, 37);
+    assert.equal(data.resumption.previouslySpentCalls, 8);
+    assert.equal(data.floorProbe.method, "targeted-floor-probe");
+  }
+  const changed = await invoke({
+    prior: true,
+    resume: true,
+    floorProbe: { cumulativeTransmissions: 7 },
+    facilitator: "arwyn",
+  });
+  assert.notEqual(changed.status, 0);
+});
+test("targeted floor dispatch selects Arwyn while Sub stays off and copies all seven charges once", async () => {
+  const result = await invoke({
+    prior: true,
+    resume: true,
+    floorProbe: true,
+    facilitator: "arwyn",
+    used: 32,
+    mode: "--run",
+    generate: "empty",
+    replay: true,
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const { report, initialTown, finalTown, floorTown } = result;
+  assert.equal(report.method, "targeted-floor-probe");
+  assert.equal(report.maxCalls, 4);
+  assert.equal(report.ledgerCallLimit, 11);
+  assert.equal(report.resumption.copiedLedgerCharges, 7);
+  assert.equal(report.resumption.copiedLedgerAttempts, 7);
+  assert.equal(report.floorProbe.defaultNextActor, "sub");
+  assert.equal(report.floorProbe.initialFloor.actor, "arwyn");
+  assert.equal(report.decisions[0].actor, "arwyn");
+  assert.ok(
+    report.decisions[0].observation.availableActions.some((action) => action.kind === "speak"),
+  );
+  assert.equal(report.transmissions, 1);
+  assert.equal(report.cumulativeTransmissions, 9);
+  assert.equal(report.cumulativeLedgerCharges, 8);
+  assert.equal(report.ledger.pool.length, 8);
+  assert.equal(report.meeting.id, floorTown.discussions.sessions[0].id);
+  assert.deepEqual(initialTown.agents, JSON.parse(JSON.stringify(floorTown.agents)));
+  assert.deepEqual(finalTown.agents, JSON.parse(JSON.stringify(floorTown.agents)));
+  assert.equal(report.meeting.members.find((member) => member.id === "sub").mode, "off");
+  assert.equal(report.meeting.members.find((member) => member.id === "northern").mode, "listening");
+  assert.equal(report.meeting.usage.tokensUnknown, 3);
+  const metadata = report.decisions[0].providerMetadata;
+  assert.equal(metadata.id, "fixture-response");
+  assert.equal(metadata.provider, "fixture-provider");
+  assert.equal(metadata.errorCode, 502);
+  assert.ok(!metadata.errorMessage.includes("fixture-hidden"));
+});
+test("targeted probe respects an actual pass without repeating the floor holder", async () => {
+  const result = await invoke({
+    prior: true,
+    resume: true,
+    floorProbe: true,
+    facilitator: "arwyn",
+    used: 32,
+    mode: "--run",
+    generate: "pass",
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.report.transmissions, 1);
+  assert.equal(result.report.decisions[0].decision.kind, "pass");
+  assert.equal(result.report.decisions[0].result.ok, true);
+  assert.equal(result.report.meeting.utterances.length, 0);
+  assert.match(result.report.stopReason, /chose to stop, pass or leave/);
+  assert.equal(result.report.meeting.members.find((member) => member.id === "sub").mode, "off");
 });
 test("exhausted authority prevents any ledger or generation", async () => {
   const result = await invoke({ mode: "--run" });
