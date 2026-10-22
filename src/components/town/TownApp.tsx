@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { ArcadeMark, PixelUniverse } from "./ArcadeArt";
+import { TownUiIcon } from "./appearance/TownUiIcon";
 import {
   CharacterOverview,
   CharacterProgress,
@@ -1943,10 +1944,58 @@ export function TownApp() {
         </div>
       </div>
       <nav className="town-tools" aria-label="Your town tools">
-        <button className="btn" type="button" onClick={() => openTools("agent-wallets")}>
+        <button
+          className="btn"
+          type="button"
+          data-on={tools === "journal"}
+          onClick={() => openTools("journal")}
+        >
+          <TownUiIcon name="journal" />
+          Journal
+        </button>
+        <button
+          className="btn"
+          type="button"
+          data-on={tools === "inventory"}
+          onClick={() => openTools("inventory")}
+        >
+          <TownUiIcon name="inventory" />
+          Inventory
+        </button>
+        <button
+          className="btn"
+          type="button"
+          aria-label="Go somewhere"
+          data-on={tools === "map"}
+          onClick={() => openTools("map")}
+        >
+          <TownUiIcon name="map" /> Go to
+        </button>
+        <button
+          className="btn"
+          type="button"
+          aria-label="Library project"
+          data-on={tools === "library"}
+          onClick={() => openTools("library")}
+        >
+          <TownUiIcon name="library" /> Library
+        </button>
+        <button
+          className="btn"
+          type="button"
+          data-on={tools === "agent-wallets"}
+          onClick={() => openTools("agent-wallets")}
+        >
+          <TownUiIcon name="wallets" />
           Agent wallets
         </button>
-        <button className="btn" type="button" onClick={() => openTools("stamps")}>
+        <button
+          className="btn"
+          type="button"
+          data-on={tools === "stamps"}
+          onClick={() => openTools("stamps")}
+        >
+          <TownUiIcon name="stamp" />
           {stampAppearance &&
             stampAppearance.worldId === town.identityRegistry?.worldId &&
             stampAppearance.characterId === town.identityRegistry?.characters.player.characterId &&
@@ -1978,35 +2027,14 @@ export function TownApp() {
             )}
           Stamp identity
         </button>
-        <button className="btn" type="button" onClick={() => openTools("journal")}>
-          Journal
-        </button>
-        <button className="btn" type="button" onClick={() => openTools("inventory")}>
-          Inventory
-        </button>
-        <button
-          className="btn"
-          type="button"
-          aria-label="Go somewhere"
-          onClick={() => openTools("map")}
-        >
-          Go to
-        </button>
-        <button
-          className="btn"
-          type="button"
-          aria-label="Library project"
-          onClick={() => openTools("library")}
-        >
-          Library
-        </button>
         <button
           className="btn"
           type="button"
           aria-label="Help & privacy"
+          data-on={tools === "help"}
           onClick={() => openTools("help")}
         >
-          Help
+          <TownUiIcon name="help" /> Help
         </button>
       </nav>
       <div className="social-toolbar">
@@ -2029,7 +2057,7 @@ export function TownApp() {
             setBoard(false);
           }}
         >
-          Town life{" "}
+          <TownUiIcon name="people" /> Town life{" "}
           <span>
             {watchTown ? "Watch · " : ""}
             {conversations.length} exchanges
@@ -2042,72 +2070,74 @@ export function TownApp() {
         )}
       </div>
 
-      {saveStatus && !saveStatus.ok && (
-        <p className="warn" role="alert">
-          {saveStatus.reason === "conflict"
-            ? "Another tab changed the saved town. This copy has not replaced it. Download this copy before switching or closing the page."
-            : "This town has not saved in this browser. Download a copy before closing the page."}{" "}
-          <button
-            className="btn"
-            type="button"
-            onClick={() => {
-              void saveCopy(town).then(setExportNote);
-            }}
-          >
-            Download this copy
-          </button>
-          {saveStatus.reason === "conflict" && (
+      <div className="town-updates">
+        {saveStatus && !saveStatus.ok && (
+          <p className="warn" role="alert">
+            {saveStatus.reason === "conflict"
+              ? "Another tab changed the saved town. This copy has not replaced it. Download this copy before switching or closing the page."
+              : "This town has not saved in this browser. Download a copy before closing the page."}{" "}
             <button
               className="btn"
               type="button"
               onClick={() => {
-                const report = readTownSave();
-                if (report.status === "ready") void acceptImportedTown(report.town, "load");
-                else
-                  setExportNote(
-                    "The saved town could not be read. Keep a downloaded copy of this town.",
-                  );
+                void saveCopy(town).then(setExportNote);
               }}
             >
-              Load saved town
+              Download this copy
             </button>
-          )}
-        </p>
-      )}
-      {localOnly && !shown && !tools && (
-        <p className="warn offline-note" role="status">
-          Local dialogue only is selected. Turn it off in Help & privacy to use AI.
-        </p>
-      )}
-      {(!shown || tools) && connectionWarning}
-      {hint && (town.guide ?? 0) < 3 && !shown && !tools && (
-        <div className="welcome-tip">
-          <Sparkles className="welcome-icon size-5" aria-hidden />
-          <div>
-            <strong>{library.story.title}</strong>
-            <p>
-              Northern wants to read a first page to his neighbors. Help find a place to begin, or
-              explore on your own.
-            </p>
+            {saveStatus.reason === "conflict" && (
+              <button
+                className="btn"
+                type="button"
+                onClick={() => {
+                  const report = readTownSave();
+                  if (report.status === "ready") void acceptImportedTown(report.town, "load");
+                  else
+                    setExportNote(
+                      "The saved town could not be read. Keep a downloaded copy of this town.",
+                    );
+                }}
+              >
+                Load saved town
+              </button>
+            )}
+          </p>
+        )}
+        {localOnly && !shown && !tools && (
+          <p className="warn offline-note" role="status">
+            Local dialogue only is selected. Turn it off in Help & privacy to use AI.
+          </p>
+        )}
+        {(!shown || tools) && connectionWarning}
+        {hint && (town.guide ?? 0) < 3 && !shown && !tools && (
+          <div className="welcome-tip">
+            <Sparkles className="welcome-icon size-5" aria-hidden />
+            <div>
+              <strong>{library.story.title}</strong>
+              <p>
+                Northern wants to read a first page to his neighbors. Help find a place to begin, or
+                explore on your own.
+              </p>
+            </div>
+            <button className="btn" type="button" onClick={() => openTools("library")}>
+              Library project
+            </button>
+            <details>
+              <summary>How to play</summary>
+              <p>{guideLine}</p>
+            </details>
           </div>
-          <button className="btn" type="button" onClick={() => openTools("library")}>
-            Library project
-          </button>
-          <details>
-            <summary>How to play</summary>
-            <p>{guideLine}</p>
-          </details>
-        </div>
-      )}
-      {yourOpenDebts.length > 0 && !shown && !tools && (
-        <p className="warn" role="status">
-          {yourOpenDebts.length} open{" "}
-          {yourOpenDebts.length === 1 ? "tab or favor" : "tabs or favors"} involving you.{" "}
-          <button className="btn" type="button" onClick={() => approach("player")}>
-            View your journal
-          </button>
-        </p>
-      )}
+        )}
+        {yourOpenDebts.length > 0 && !shown && !tools && (
+          <p className="warn" role="status">
+            {yourOpenDebts.length} open{" "}
+            {yourOpenDebts.length === 1 ? "tab or favor" : "tabs or favors"} involving you.{" "}
+            <button className="btn" type="button" onClick={() => approach("player")}>
+              View your journal
+            </button>
+          </p>
+        )}
+      </div>
       <div className="world-frame" ref={worldFrameRef}>
         <canvas
           ref={canvasRef}
@@ -3022,6 +3052,54 @@ function Mind({
             </ul>
           </section>
         </div>
+        {agent.id !== "player" && tab === "together" && (
+          <section
+            className="conversation-extras"
+            aria-label={`Choices and notes with ${agent.name}`}
+          >
+            {agent.id === "kevin" && (
+              <button className="btn mb-2" type="button" onClick={onLibrary}>
+                Library project
+              </button>
+            )}
+            {actions.length > 0 && (
+              <details
+                className="mind-actions"
+                onToggle={() => {
+                  if (followRef.current && logRef.current)
+                    revealLatest(logRef.current, latestRef.current);
+                }}
+              >
+                <summary>
+                  Choices with {agent.name} · {actions.length}
+                </summary>
+                <ul>
+                  {actions.map((action) => (
+                    <li key={action.id}>
+                      <p>{action.terms}</p>
+                      <button
+                        className="btn mt-2"
+                        type="button"
+                        disabled={busy || Boolean(action.disabledReason)}
+                        onClick={() => onAction(action.id)}
+                      >
+                        {action.label}
+                      </button>
+                      {action.disabledReason && (
+                        <p className="mt-1 text-muted">{action.disabledReason}</p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+            {localDialogue && (
+              <p className="mb-2 text-xs text-muted" role="note">
+                Local dialogue is active. Open-ended conversation needs a live AI connection.
+              </p>
+            )}
+          </section>
+        )}
         {inspectorEnabled && (
           <label className="mt-4 flex items-center gap-2 text-sm text-muted" htmlFor="mind-inspect">
             <input
@@ -3061,63 +3139,22 @@ function Mind({
             onSend();
           }}
         >
-          {agent.id === "kevin" && (
-            <button className="btn mb-2" type="button" onClick={onLibrary}>
-              Library project
-            </button>
-          )}
-          {actions.length > 0 && (
-            <details
-              className="mind-actions"
-              onToggle={() => {
-                if (followRef.current && logRef.current)
-                  revealLatest(logRef.current, latestRef.current);
-              }}
-            >
-              <summary>
-                Choices with {agent.name} · {actions.length}
-              </summary>
-              <ul>
-                {actions.map((action) => (
-                  <li key={action.id}>
-                    <p>{action.terms}</p>
-                    <button
-                      className="btn mt-2"
-                      type="button"
-                      disabled={busy || Boolean(action.disabledReason)}
-                      onClick={() => onAction(action.id)}
-                    >
-                      {action.label}
-                    </button>
-                    {action.disabledReason && (
-                      <p className="mt-1 text-muted">{action.disabledReason}</p>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
           {connectionWarning}
-          {localDialogue && (
-            <p className="mb-2 text-xs text-muted" role="note">
-              Local dialogue is active. Open-ended conversation needs a live AI connection.
-            </p>
-          )}
           {!canTalk && (
             <p className="character-note">Walk closer to speak. Your draft stays on this card.</p>
           )}
           <label className="text-sm text-muted" htmlFor="mind-line">
             Your line to {agent.name}
           </label>
-          <textarea
-            ref={lineRef}
-            id="mind-line"
-            className="field mt-2 min-h-20 py-2"
-            value={draft}
-            maxLength={400}
-            onChange={(event) => setDraft(event.target.value)}
-          />
-          <div className="mt-2 flex items-center gap-2">
+          <div className="reply-entry">
+            <textarea
+              ref={lineRef}
+              id="mind-line"
+              className="field mt-2 min-h-20 py-2"
+              value={draft}
+              maxLength={400}
+              onChange={(event) => setDraft(event.target.value)}
+            />
             <button
               className="btn"
               data-on="true"
@@ -3126,16 +3163,16 @@ function Mind({
             >
               {busy ? "Saying it" : "Say it"}
             </button>
-            <p
-              ref={feedbackRef}
-              tabIndex={-1}
-              className="mind-send-note text-sm text-muted"
-              role="status"
-              aria-live="polite"
-            >
-              {sendNote}
-            </p>
           </div>
+          <p
+            ref={feedbackRef}
+            tabIndex={-1}
+            className="mind-send-note text-sm text-muted"
+            role="status"
+            aria-live="polite"
+          >
+            {sendNote}
+          </p>
         </form>
       )}
     </aside>
