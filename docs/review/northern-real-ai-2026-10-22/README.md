@@ -11,7 +11,7 @@
 | Pick up | Northern actually held the single manuscript | 1,255 | 26 | 1.742 s |
 | Read | The engine returned its actual blank contents | 1,318 | 25 | 1.025 s |
 | Write | Saved original text titled “Ledger — Day 1”, authored by Northern | 1,340 | 272 | 11.860 s |
-| Speak | Said words about that ledger to the nearby Observer; the trial parked | 1,392 | 116 | 5.359 s |
+| Speak | Said words about that ledger within earshot of Data and Observer; the trial parked | 1,392 | 116 | 5.359 s |
 | **Total** | **4 requests, 4 transmitted attempts** | **5,305** | **439** | **19.986 s** |
 
 **5,744 total tokens; zero reported reasoning tokens; $0 reported provider cost.** All four responses were HTTP 200 with a normal stop, one attempt each. All four budget and pool rows settled, charging four calls and zero microusd. The zero transport-failure count is not a narrative-quality pass.
@@ -32,7 +32,7 @@ It proposes library shelving at £9/hour and cafe dishwashing at £8.50/hour. Th
 
 The current act prompt supplied his student role, practical voice, money-focused goal and pickup/read memories, but omitted his authoritative money/work/obligation facts and profile limitations. After writing, a memory of the text used event provenance, while the prompt said his own writing was knowledge. That blurred the distinction between knowing the document's words and knowing its claims were true. This is a source-level explanation consistent with the trace, not proof of the model's hidden reasoning.
 
-The game preserved custody, authored content, identity, cash, tills, favors and economy state. Save/export/import round trip passed. Northern retained the closed manuscript at the library, item revision 2 and content revision 1. He did not carry it to the park, put it down or reread the finished text in this trial. No performance, collective choice or social agreement occurred.
+The game preserved custody, authored content, identity, cash, tills, favors and economy state. Save/export/import round trip passed. Northern retained the closed manuscript at the library, item revision 2 and content revision 1. Data was already nearby in the fresh town; Data and Observer received attributed memories of his spoken claims. Neither was made to reply. Northern did not carry the manuscript to the park, put it down or reread the finished text in this trial. No performance, collective choice or social agreement occurred.
 
 The later credential-free checks passed: integrated typecheck, 23 focused action/parser/save/navigation/budget tests, receipt consistency assertions and documentation links. Lint has zero errors and the same existing unused-disable warning in auth code. No game runtime code was changed to obtain this result; additions are the finite operator harness and evidence. The earlier prototype's full-suite and build receipts remain attached to their tested runtime revision.
 
