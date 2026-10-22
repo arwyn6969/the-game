@@ -1,6 +1,6 @@
 # THE GAME
 
-**21 October source update:** this review branch contains the latest local AI fixes, player-acceptance evidence, server experiments and production planning. Start with the [GitHub synchronization record](docs/GITHUB_SYNC.md) for source commits, checks and remaining release gates.
+**Start here:** [current project status](docs/CURRENT_STATUS.md) records main, the preserved test candidate, deployed-version evidence and active ownership. PRs #38 and #39 integrated the latest source; the [synchronization record](docs/GITHUB_SYNC.md) is a dated receipt.
 
 A pixel town. Seven people already have days. You are their new neighbour. There is no ending.
 
@@ -46,19 +46,19 @@ An opt-in [AI provider pool](docs/AI_PROVIDER_POOL.md) routes each game job to i
 
 The full app source as of October 2026: the town (`src/game`), the screen (`src/components/town`), the mind call, styles, and the day-two check (`scripts/town-day.test.mjs`).
 
-The [Kevin World notes](docs/KEVIN_WORLD.md) preserve Arwyn's original vision and explain Kevin's technology memory preference. The S1 economy foundation from PR #16 is reconciled here with eight actors, version-2 saves and the complete funded-work UI. Fresh towns contain 90 coins; imports keep their valid opening total. Ordinary transfers conserve money and existing creditors. Experimental version-1 ledger saves still require their original branch and remain recoverable. Older builds cannot safely maintain the new financial extension; download a backup before changing versions.
+The [Kevin World notes](docs/KEVIN_WORLD.md) preserve Arwyn's original vision and explain Kevin's technology memory preference. The S1 economy foundation from PR #16 is reconciled here with eight actors, version-2 saves and the complete funded-work UI. Fresh towns contain 90 coins; imports keep their valid opening total. Ordinary transfers conserve money and existing creditors. Experimental version-1 ledger saves still require their original implementation, preserved at tag `archive/2026-10-21/funded-project-accounts`, and remain recoverable. Older builds cannot safely maintain the new financial extension; download a backup before changing versions.
 
 `npm run test:town` runs the town, save, economy, retrieval, conversation and collision regressions without a running Vite app. The day-two check verifies that the question travels, the seed cannot be closed, money stays a number, and a later hour does not repeat the same line.
 
 ## New contributors
 
-Start with [AGENTS.md](AGENTS.md), the [delivery notes](docs/implementation/game-quality-delivery.md) and the [roadmap](docs/ROADMAP.md). The earlier [technical contributor handoff](docs/handoffs/new-developer.md) retains useful background; its AI-metering assignment predates this implementation. The browser-local game and a future continuously running shared town remain separate scopes.
+Start with [current project status](docs/CURRENT_STATUS.md), [AGENTS.md](AGENTS.md), the [delivery notes](docs/implementation/game-quality-delivery.md) and the [roadmap](docs/ROADMAP.md). The earlier [technical contributor handoff](docs/handoffs/new-developer.md) retains useful background; its AI-metering assignment predates this implementation. The browser-local game and a future continuously running shared town remain separate scopes.
 
-## Development and two-agent setup
+## Development and collaboration
 
 Use Node 24 (`.nvmrc`), then `npm ci` and `npm run dev`. The development server uses port 8080. AI dialogue requires a server-side `XAI_API_KEY`; without it the town uses offline dialogue. The player can also select **Local-only dialogue** in Help. Do not put keys in browser code or a `VITE_` variable. Deployed paid calls require shared accounting and explicit conservative tariffs for both provider modes; see [budget configuration](src/lib/mind-budget/README.md). Missing or failed accounting falls back locally.
 
-Start follow-on work on a new feature branch from current `origin/main`. The four-PR gameplay → identity → appearance → private-wallet stack (#30–#33) is merged; the [branch and PR record](docs/BRANCHES.md) records its merge commits, main CI receipt and preserved source/recovery refs. The retired consolidation branch remains recoverable from merged commit `1461148`. Read [AGENTS.md](AGENTS.md), [the consolidation record](docs/CONSOLIDATION.md), and [the collaboration workflow](docs/COLLABORATION.md). Older prompts and [the baseline](docs/BASELINE.md) are historical; they are not instructions to restart a completed branch.
+Start follow-on work on a new feature branch from current `origin/main`. The four-PR gameplay → identity → appearance → private-wallet stack (#30–#33) is merged; the [branch and PR record](docs/BRANCHES.md) records its merge commits, main CI receipt and preserved source/recovery refs. The retired consolidation branch remains recoverable from merged commit `1461148`. Read [current project status](docs/CURRENT_STATUS.md), [AGENTS.md](AGENTS.md) and [the collaboration workflow](docs/COLLABORATION.md). The [consolidation record](docs/CONSOLIDATION.md) is historical evidence. Older prompts and [the baseline](docs/BASELINE.md) are historical; they are not instructions to restart a completed branch.
 
 Run `npm run test:town` for game regressions, `npm run diagnose:town` for review scenarios and `npm run diagnose:longevity` for synthetic long-term checks. After building, `npm run test:browser` checks desktop and phone journeys, the library loop, both reading scenes, multi-tab conflict handling, replay input and keyboard/import focus. Against a warm local development server on port 8094, `npm run test:browser:ai` checks delayed, missing and reordered responses with a browser-only mock and no provider calls. CI runs both browser gates. Diagnostics report observations; tests assert their covered behavior. Help displays the source build ID. The [five-person playtest](docs/implementation/game-quality-playtest.md) remains a human evaluation gate. Earlier publication evidence is in [docs/RELEASE.md](docs/RELEASE.md).
 
