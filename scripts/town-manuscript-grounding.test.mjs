@@ -41,6 +41,7 @@ function context(town, actorId = "northern") {
     job,
     prompt,
     resident: JSON.parse(prompt.split("\nResident: ")[1].split("\nCurrent observation: ")[0]),
+    observation: JSON.parse(prompt.split("\nCurrent observation: ")[1]),
   };
 }
 function shift(town, actorId, text) {
@@ -224,6 +225,21 @@ test("the grounding contract preserves freely chosen fiction and hypotheses with
 test("long own records and a maximum read remain bounded without dropping actual cash or disclosing others", () => {
   const town = fixture();
   const actor = person(town, "northern");
+  const nearby = [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+    [-1, -1],
+    [1, -1],
+    [-1, 1],
+  ];
+  town.agents
+    .filter((agent) => agent.id !== actor.id)
+    .forEach((agent, index) => {
+      const [dx, dy] = nearby[index];
+      agent.tile = { x: actor.tile.x + dx, y: actor.tile.y + dy };
+    });
   for (let i = 0; i < 24; i++)
     town.favors.push({
       id: `northern-tab-${i}`,
@@ -259,8 +275,15 @@ test("long own records and a maximum read remain bounded without dropping actual
       true,
     );
   }
-  const { prompt, resident } = context(town);
+  const { prompt, resident, observation } = context(town);
   assert.ok(prompt.length <= 8000, `prompt ${prompt.length}`);
+  assert.equal(observation.nearbyResidents.length, town.agents.length - 1);
+  for (const kind of ["read", "write", "put-down", "bring"])
+    assert.ok(observation.availableActions.some((action) => action.kind === kind));
+  assert.equal(
+    observation.availableActions.find((action) => action.kind === "bring").destinations.length,
+    9,
+  );
   assert.ok(JSON.stringify(resident.authoritativeFacts).length <= 1500);
   assert.equal(resident.authoritativeFacts.cash, 2);
   assert.equal(resident.authoritativeFacts.unit, "town coins");
