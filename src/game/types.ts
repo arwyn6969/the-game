@@ -240,11 +240,14 @@ export type Town = {
   economy?: import("./economy-types").EconomyState;
   /** Optional bounded presentation history; older version-2 saves remain valid. */
   social?: SocialEvent[];
+  /** Optional one-manuscript physical interaction prototype. */
+  physicalItems?: import("./physical-types").PhysicalItemsState;
 };
 
-export type ThinkKind = "plan" | "reflect" | "talk" | "player";
+export type ThinkKind = "plan" | "reflect" | "talk" | "player" | "act";
 
 export type ThinkJob =
+  | { kind: "act"; day: number; minute: number; agentId: NpcId; sessionRevision: number }
   | { kind: "plan"; day: number; minute: number; weekly: boolean; agents?: AgentId[] }
   | { kind: "reflect"; day: number; minute: number; agents: AgentId[]; weekly: boolean }
   | { kind: "talk"; day: number; minute: number; a: AgentId; b: AgentId }
@@ -303,6 +306,13 @@ export type PlanDraft = {
 };
 
 export type MindResult =
+  | {
+      kind: "act";
+      mind: "grok";
+      agentId: NpcId;
+      sessionRevision: number;
+      decision: import("./physical-types").PhysicalDecision;
+    }
   | { kind: "plan"; mind: "grok" | "offline"; weekly?: boolean; plans: PlanDraft[] }
   | {
       kind: "reflect";
