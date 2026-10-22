@@ -16,6 +16,7 @@ after(() => server.close());
 const { createTown } = await server.ssrLoadModule("/src/game/town.ts");
 const { buildPrompt, parseMind } = await server.ssrLoadModule("/src/game/prompt.ts");
 const { offlineResult } = await server.ssrLoadModule("/src/game/offline.ts");
+const { validatePhysicalItems } = await server.ssrLoadModule("/src/game/physical-items.ts");
 const { ANCHORS } = await server.ssrLoadModule("/src/game/world.ts");
 
 function fixture() {
@@ -61,15 +62,16 @@ function fixture() {
       usage: {
         requests: 1,
         providerAttempts: 0,
-        attemptsUnknown: 0,
+        attemptsUnknown: 1,
         knownTokens: 0,
         tokenSamples: 0,
-        tokensUnknown: 0,
+        tokensUnknown: 1,
         elapsedMs: 0,
         failures: 0,
       },
     },
   };
+  assert.deepEqual(validatePhysicalItems(town), []);
   const job = {
     kind: "act",
     agentId: "northern",

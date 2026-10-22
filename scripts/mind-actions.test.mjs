@@ -91,6 +91,7 @@ test("physical decision syntax accepts one bounded command and rejects extra aut
     { kind: "write", ...item, title: "x".repeat(81), text: "ok" },
     { kind: "write", ...item, title: "ok", text: "x".repeat(1201) },
     { kind: "speak", text: "x".repeat(401) },
+    { kind: "speak", text: "A hidden\u0000control" },
   ]) {
     assert.equal(parsePhysicalDecision(decision), null);
     assert.equal(validMindJson("act", JSON.stringify({ decision })), false);
