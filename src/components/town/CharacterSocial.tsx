@@ -8,6 +8,7 @@ import { fundedWorkSummary } from "@/game/funded-work";
 import { formatClock, mentionsSeed } from "@/game/text";
 import { placeTitle, zoneAt } from "@/game/world";
 import { inTalkRange } from "./talk";
+import { heldItem } from "@/game/physical-items";
 
 const nameOf = (town: Town, id: AgentId) => town.agents.find((a) => a.id === id)?.name ?? id;
 const dateOf = (event: { day: number; minute: number }) =>
@@ -117,6 +118,9 @@ export function CharacterOverview({
     agent.id === "player" || agent.memories.some((m) => m.type === "chat" && m.with === "player");
   const nearby = inTalkRange(player.tile.x, player.tile.y, agent.tile.x, agent.tile.y);
   const profile = characterProfile(agent.id);
+  const carried = heldItem(town, agent.id);
+  const reading = town.physicalItems?.reading;
+  const canObserve = !replay && (watch || nearby || agent.id === "player");
   return (
     <div className="character-overview">
       <p className="character-activity">
@@ -126,6 +130,17 @@ export function CharacterOverview({
             ? `${placeTitle(zoneAt(agent.tile.x, agent.tile.y))} · ${mentionsSeed(agent.status) ? "Keeping to their day" : agent.status}`
             : "Walk closer to see their current activity."}
       </p>
+      {canObserve && carried && (
+        <p className="character-note">
+          Carrying: {carried.title}
+          {reading?.actor === agent.id &&
+          reading.itemId === carried.id &&
+          reading.contentRevision === carried.contentRevision &&
+          reading.until >= (town.day - 1) * 1440 + town.minute
+            ? " · reading"
+            : ""}
+        </p>
+      )}
       <h3>Strengths</h3>
       <div className="expertise-tags">
         {profile.specialties.map((s) => (
