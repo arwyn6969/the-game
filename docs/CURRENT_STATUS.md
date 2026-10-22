@@ -25,6 +25,8 @@ The earlier player-acceptance and server-adapter round is complete within its bo
 
 Owner: this coin-label chat, `01a1645b-b94d-7b90-8ec1-074018dd0bd5`. Checkout `coin-balance-label/`, branch `codex/coin-balance-label`, base `dab257b` from current `origin/main`. Replace the player's ambiguous “on you” balance label with “coins” in the header, player details and journal, with singular “coin” for one. Scope is presentation copy only. Desktop (1280×800) and phone (390×844) local browser checks passed, including the visible “4 coins” label, movement, pause, local conversation, reload and synthetic town export/import. Typecheck and changed-file lint passed; see [the handoff](handoffs/coin-balance-label.md) for final verification and delivery status. Hosted publication remains separate.
 
+Delivery: [draft PR #45](https://github.com/arwyn6969/the-game/pull/45), implementation `7c42ccc`, pushed to its own upstream. Local checks above passed; PR CI remains separate.
+
 ## Evidence and remaining gates
 
 The preserved candidate has [browser and source evidence](review/candidate-2026-10-21.json). Later main includes [successful narrow planning/reflection checks](review/ai-job-fixes-2026-10-21.md#timeout-recovery-and-completed-live-checks), [eight actual-game reply/interruption/save checks](review/ai-game-session-2026-10-21.md) and [small synthetic NVIDIA backup qualification](review/nvidia-ultra-backup-2026-10-21.md). Each receipt retains its source revision and limits; the older delivery board's two-timeout observation is historical.

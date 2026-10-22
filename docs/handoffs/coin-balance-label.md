@@ -17,4 +17,4 @@ Validation with Node 24.19.0:
 
 No production build, physical-device or assistive-technology run was made for this copy edit. Singular wording was checked in source; browser fixtures retained the initial four-coin balance. The local checkout reused installed dependencies with an identical lockfile.
 
-Delivery is a feature branch and draft PR. Merge and live publication remain separate.
+Delivery: implementation `7c42ccc`, pushed to its own upstream, and [draft PR #45](https://github.com/arwyn6969/the-game/pull/45). Merge and live publication remain separate.
