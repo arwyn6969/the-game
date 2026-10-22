@@ -70,6 +70,8 @@ function ensureLists(town: Town) {
 }
 
 export function offlineResult(town: Town, job: ThinkJob): MindResult {
+  // Unavailable inference is not permission to author an NPC decision or speech.
+  if (job.kind === "act") throw new Error("Physical decisions require available AI");
   ensureLists(town);
   prepareRetrievals(town, job);
   if (job.kind === "plan") return offlinePlan(town, job.weekly, planIds(town, job));
