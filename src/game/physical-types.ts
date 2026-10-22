@@ -64,6 +64,8 @@ export type PhysicalSession = {
   maxDecisions: number;
   intent: PhysicalIntent | null;
   lastResult: PhysicalActionResult | null;
+  /** This actor read this content revision in the current bounded sequence. */
+  readContentRevision?: number;
   usage: PhysicalUsage;
 };
 
