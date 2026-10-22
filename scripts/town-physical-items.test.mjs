@@ -166,6 +166,116 @@ test("reading reveals exact content to its reader, not nearby observers or an un
   assert.equal(JSON.stringify(person(town, "sub").memories), subBefore);
 });
 
+for (const sourceVersion of [1, 2])
+  test(`v${sourceVersion} source towns preserve fictional manuscript words as unverified statements through another reader and v2 reload`, async () => {
+    const town =
+      sourceVersion === 1
+        ? save.parseTownFile(
+            await readFile(
+              new URL("./fixtures/legacy-six-resident-town.json", import.meta.url),
+              "utf8",
+            ),
+          )
+        : createTown("Fiction reader");
+    assert.ok(town);
+    assert.equal(town.version, 2);
+    ok(physical.initializePhysicalItems(town));
+    atBook(town, "northern");
+    atBook(town, "sub");
+    const beforeFinance = JSON.stringify({
+      money: town.agents.map(({ id, money }) => ({ id, money })),
+      tills: town.tills,
+      favors: town.favors,
+      economy: town.economy,
+    });
+    const original = "Cash on hand: £12.40. Rent £85 on Friday.\nA dragon drives the £22 bus.";
+    assert.equal(
+      person(town, "northern").money,
+      2,
+      "authored cash claims do not describe the actual purse",
+    );
+    const writerMemoryCount = person(town, "northern").memories.length;
+    ok(act(town, "northern", "pick-up"));
+    ok(act(town, "northern", "write", { title: "An invented ledger", text: original }));
+    const written = person(town, "northern").memories.slice(writerMemoryCount);
+    assert.ok(
+      written.some(
+        (memory) => memory.source === "event" && /wrote “An invented ledger”/.test(memory.text),
+      ),
+    );
+    const quote = written.find((memory) => memory.text.includes("Cash on hand: £12.40"));
+    assert.ok(quote);
+    assert.equal(quote.source, "statement");
+    assert.match(
+      quote.text,
+      /Quoted, unverified authored manuscript content by Northern, revision 1/,
+    );
+    assert.ok(
+      !written.some((memory) => memory.source === "event" && memory.text.includes("Rent £85")),
+    );
+    assert.equal(item(town).text, original, "fiction is preserved verbatim, not censored");
+    ok(act(town, "northern", "put-down"));
+    const readerMemoryCount = person(town, "sub").memories.length;
+    const writerBeforeRead = JSON.stringify(person(town, "northern").memories);
+    ok(act(town, "sub", "pick-up"));
+    const beforePrivateRead = JSON.stringify(person(town, "northern").memories);
+    const result = ok(act(town, "sub", "read"));
+    assert.equal(result.content.text, original);
+    assert.equal(result.content.author, "northern");
+    assert.equal(
+      JSON.stringify(person(town, "northern").memories),
+      beforePrivateRead,
+      "another resident's private read adds no bystander memory",
+    );
+    assert.notEqual(
+      writerBeforeRead,
+      beforePrivateRead,
+      "nearby pickup remains a factual witnessed event",
+    );
+    const readMemories = person(town, "sub").memories.slice(readerMemoryCount);
+    assert.ok(
+      readMemories.some(
+        (memory) => memory.source === "event" && /read “An invented ledger”/.test(memory.text),
+      ),
+    );
+    assert.ok(
+      readMemories.some(
+        (memory) =>
+          memory.source === "statement" &&
+          memory.text.includes("Rent £85") &&
+          /unverified authored/.test(memory.text),
+      ),
+    );
+    assert.ok(
+      !readMemories.some(
+        (memory) => memory.source === "event" && memory.text.includes("Cash on hand: £12.40"),
+      ),
+    );
+    assert.equal(
+      JSON.stringify({
+        money: town.agents.map(({ id, money }) => ({ id, money })),
+        tills: town.tills,
+        favors: town.favors,
+        economy: town.economy,
+      }),
+      beforeFinance,
+    );
+    const restored = save.parseTownFile(save.exportTown(town));
+    assert.ok(restored);
+    assert.equal(item(restored).text, original);
+    assert.deepEqual(item(restored).location, { kind: "held", holder: "sub" });
+    for (const id of ["northern", "sub"])
+      assert.ok(
+        person(restored, id).memories.some(
+          (memory) =>
+            memory.source === "statement" &&
+            /unverified authored/.test(memory.text) &&
+            memory.text.includes("Rent £85"),
+        ),
+      );
+    assert.deepEqual(physical.validatePhysicalItems(restored), []);
+  });
+
 test("speak records model-chosen words for actual nearby listeners and parks inference; wait is quiet", () => {
   const town = fixture();
   atBook(town, "data");

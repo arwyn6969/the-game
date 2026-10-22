@@ -294,6 +294,26 @@ function record(town: Town, actor: AgentId, message: string, privateRead = false
       }),
     );
 }
+function rememberManuscriptWords(town: Town, reader: AgentId, item: PhysicalItem) {
+  if (!item.text) return;
+  const author = item.author
+    ? (resident(town, item.author)?.name ?? item.author)
+    : "unknown author";
+  // Reading and writing really happened. Their contents may be fiction or
+  // unsupported claims; remembering the words never verifies those claims.
+  pushMemory(
+    resident(town, reader)!,
+    makeMemory(
+      town,
+      town.day,
+      town.minute,
+      "observe",
+      `Quoted, unverified authored manuscript content by ${author}, revision ${item.contentRevision}: “${item.text}”`,
+      6,
+      { source: "statement" },
+    ),
+  );
+}
 function adopt(town: Town, draft: Town) {
   // Keep the live root (save origin) and resident objects (simulation callers).
   town.physicalItems = draft.physicalItems;
@@ -468,9 +488,10 @@ export function applyPhysicalCommand(
           record(
             draft,
             actor,
-            `I read “${item.title}”, content revision ${item.contentRevision}: ${item.text || "The pages are blank."}`,
+            `${person.name} read “${item.title}”, content revision ${item.contentRevision}.${item.text ? " Its authored contents are not verified world facts." : " The pages are blank."}`,
             true,
           );
+          rememberManuscriptWords(draft, actor, item);
           result = {
             ok: true,
             kind,
@@ -498,7 +519,7 @@ export function applyPhysicalCommand(
             `${person.name} wrote “${item.title}” in the communal manuscript.`,
             false,
           );
-          record(draft, actor, `I wrote the manuscript text: ${item.text}`, true);
+          rememberManuscriptWords(draft, actor, item);
           result = {
             ok: true,
             kind,
