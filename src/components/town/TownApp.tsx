@@ -545,11 +545,13 @@ export function TownApp() {
   function changeManuscript(decision?: PhysicalDecision) {
     const live = townRef.current;
     if (!live || replayRef.current || pendingRef.current || importTextRef.current !== null) return;
-    const result = decision
-      ? applyPhysicalCommand(live, "player", decision)
-      : initializePhysicalItems(live);
-    if (decision?.kind === "read" && result.ok && "content" in result && result.content)
-      setPhysicalRead(result.content);
+    let result: { ok: boolean; message: string };
+    if (decision) {
+      const applied = applyPhysicalCommand(live, "player", decision);
+      if (decision.kind === "read" && applied.ok && applied.content)
+        setPhysicalRead(applied.content);
+      result = applied;
+    } else result = initializePhysicalItems(live);
     setPhysicalNote(result.message);
     persistTown(live);
     setTick((n) => n + 1);
@@ -592,7 +594,13 @@ export function TownApp() {
   }
 
   dispatchPhysicalRef.current = (live: Town) => {
-    if (pendingRef.current || replayRef.current || importTextRef.current !== null) return;
+    if (
+      pendingRef.current ||
+      replayRef.current ||
+      importTextRef.current !== null ||
+      document.visibilityState !== "visible"
+    )
+      return;
     const job = nextPhysicalJob(live);
     if (!job) return;
     if (!actionsAvailableRef.current || localOnlyRef.current) {
@@ -889,7 +897,12 @@ export function TownApp() {
     if (townRef.current !== live || pendingRef.current) return;
     if (localOnlyRef.current) return;
     if (job.kind === "act") {
-      if (!actionsAvailableRef.current || !markPhysicalRequest(live, job)) return;
+      if (
+        document.visibilityState !== "visible" ||
+        !actionsAvailableRef.current ||
+        !markPhysicalRequest(live, job)
+      )
+        return;
       pendingRef.current = true;
       activeJobRef.current = { town: live, job };
       const serial = ++requestSerial.current;
