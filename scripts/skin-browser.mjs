@@ -214,7 +214,6 @@ async function clockControls(page, minimumSize, sameRow) {
   const group = page.getByRole("group", { name: "Town clock controls", exact: true });
   assert.equal(await group.getByRole("button").count(), CLOCK_LABELS.length);
   const before = await saved(page);
-  const buttons = [];
   for (const name of CLOCK_LABELS) {
     const button = group.getByRole("button", { name, exact: true });
     assert.equal(await exposed(button, minimumSize), true, `${name} clock control is reachable`);
@@ -229,40 +228,59 @@ async function clockControls(page, minimumSize, sameRow) {
       await group.getByRole("button", { name: "Pause", exact: true }).getAttribute("aria-pressed"),
       "true",
     );
-    buttons.push({ name, box: await button.boundingBox() });
   }
-  const geometry = await page.evaluate(() => {
-    const box = (selector) => {
-      const r = document.querySelector(selector).getBoundingClientRect();
+  // Focus and scroll can move the enlarged HUD. Compare every rectangle from
+  // one layout snapshot after those real reachability checks have completed.
+  await frames(page);
+  const geometry = await group.evaluate((element, labels) => {
+    const box = (target) => {
+      const r = target.getBoundingClientRect();
       return { x: r.x, y: r.y, width: r.width, height: r.height };
     };
-    return { hud: box(".hud"), clock: box(".hud-clock"), transport: box(".transport") };
-  });
-  if (sameRow) {
-    assert.ok(
-      Math.abs(
-        geometry.clock.y +
-          geometry.clock.height / 2 -
-          geometry.transport.y -
-          geometry.transport.height / 2,
-      ) <= 2,
-      "Clock and speed controls share a row at ordinary text size",
-    );
-  }
+    return {
+      hud: box(document.querySelector(".hud")),
+      clock: box(document.querySelector(".hud-clock")),
+      transport: box(element),
+      buttons: Array.from(element.querySelectorAll("button"), (button, index) => ({
+        name: labels[index],
+        box: box(button),
+      })),
+      viewport: { width: innerWidth, height: innerHeight, x: scrollX, y: scrollY },
+      rootFontSize: getComputedStyle(document.documentElement).fontSize,
+    };
+  }, CLOCK_LABELS);
   const separated = (a, b) =>
     a.x + a.width <= b.x + 1 ||
     b.x + b.width <= a.x + 1 ||
     a.y + a.height <= b.y + 1 ||
     b.y + b.height <= a.y + 1;
-  assert.ok(separated(geometry.clock, geometry.transport), "Clock and controls must not overlap");
-  for (let index = 1; index < buttons.length; index++) {
-    assert.ok(
-      separated(buttons[index - 1].box, buttons[index].box),
-      "Clock button targets must not overlap",
-    );
+  try {
+    if (sameRow) {
+      assert.ok(
+        Math.abs(
+          geometry.clock.y +
+            geometry.clock.height / 2 -
+            geometry.transport.y -
+            geometry.transport.height / 2,
+        ) <= 2,
+        "Clock and speed controls share a row at ordinary text size",
+      );
+    }
+    assert.ok(separated(geometry.clock, geometry.transport), "Clock and controls must not overlap");
+    for (let index = 0; index < geometry.buttons.length; index++) {
+      for (let other = index + 1; other < geometry.buttons.length; other++) {
+        assert.ok(
+          separated(geometry.buttons[index].box, geometry.buttons[other].box),
+          `Clock button targets must not overlap: ${geometry.buttons[index].name} and ${geometry.buttons[other].name}`,
+        );
+      }
+    }
+    assert.equal((await layout(page)).overflow, false);
+  } catch (error) {
+    error.clockGeometry = geometry;
+    throw error;
   }
-  assert.equal((await layout(page)).overflow, false);
-  return { ...geometry, buttons };
+  return geometry;
 }
 
 async function appearancePreferences(browser, target, out, report) {
@@ -470,6 +488,7 @@ export async function runSkinChecks(browser, url, outputDirectory) {
       } catch (error) {
         item.status = "failed";
         item.error = error instanceof Error ? error.message : String(error);
+        if (error.clockGeometry) item.observations = error.clockGeometry;
         throw error;
       }
     }
