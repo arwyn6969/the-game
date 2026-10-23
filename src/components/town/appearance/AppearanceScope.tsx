@@ -4,8 +4,7 @@ import { APPEARANCE_KEY, initialAppearance, isSkin, SKINS, type SkinId } from ".
 
 /** Presentation state deliberately surrounds one stable, unkeyed game. */
 export function AppearanceScope({ children }: { children: ReactNode }) {
-  const [initial] = useState(initialAppearance);
-  const [skin, setSkin] = useState<SkinId>(initial.skin);
+  const [skin, setSkin] = useState<SkinId>(() => initialAppearance().skin);
   const [selectorHost, setSelectorHost] = useState<HTMLElement | null>(null);
   const scopeRef = useRef<HTMLDivElement>(null);
   const toolbarRef = useRef<HTMLLabelElement>(null);
@@ -23,7 +22,7 @@ export function AppearanceScope({ children }: { children: ReactNode }) {
     const observer = new ResizeObserver(measure);
     observer.observe(toolbar);
     return () => observer.disconnect();
-  }, [initial.preview, selectorHost]);
+  }, [selectorHost]);
 
   useEffect(() => {
     const scope = scopeRef.current;
@@ -44,9 +43,7 @@ export function AppearanceScope({ children }: { children: ReactNode }) {
     };
     const resize = new ResizeObserver(measure);
     const attach = () => {
-      const nextHost = initial.preview
-        ? scope.querySelector<HTMLElement>(".town > .status-strip")
-        : null;
+      const nextHost = scope.querySelector<HTMLElement>(".town > .status-strip");
       if (nextHost !== host) {
         if (host) resize.unobserve(host);
         host = nextHost;
@@ -72,7 +69,7 @@ export function AppearanceScope({ children }: { children: ReactNode }) {
       window.removeEventListener("resize", measure);
       scope.removeEventListener("scroll", measure, true);
     };
-  }, [initial.preview]);
+  }, []);
 
   const choose = useCallback((next: SkinId) => {
     setSkin(next);
@@ -110,19 +107,15 @@ export function AppearanceScope({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div
-      ref={scopeRef}
-      className="game-appearance"
-      data-ui-skin={skin}
-      data-preview={initial.preview}
-    >
-      {initial.preview &&
-        (selectorHost ? (
-          // React ownership remains outside TownApp's focus/dismissal boundary.
-          createPortal(selector, selectorHost)
-        ) : (
-          <div className="appearance-fallback">{selector}</div>
-        ))}
+    <div ref={scopeRef} className="game-appearance" data-ui-skin={skin}>
+      {selectorHost ? (
+        // React ownership remains outside TownApp's focus/dismissal boundary.
+        createPortal(selector, selectorHost)
+      ) : (
+        <header className="appearance-fallback" aria-label="Game interface">
+          {selector}
+        </header>
+      )}
       <div className="appearance-stage">{children}</div>
     </div>
   );

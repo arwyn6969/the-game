@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import axe from "axe-core";
 import { chromium } from "playwright";
 
 const SKINS = [
@@ -11,6 +12,7 @@ const SKINS = [
   { id: "original", label: "Original" },
 ];
 const SAVE_KEY = "the-game-town-v2";
+const APPEARANCE_KEY = "the-game-ui-appearance-v1";
 const TOOL_LABELS = [
   "Journal",
   "Inventory",
@@ -263,6 +265,112 @@ async function clockControls(page, minimumSize, sameRow) {
   return { ...geometry, buttons };
 }
 
+async function appearancePreferences(browser, target, out, report) {
+  const cases = [
+    ...SKINS.map((skin) => ({
+      name: `normal URL restores saved ${skin.label}`,
+      stored: skin.id,
+      expected: skin.id,
+    })),
+    {
+      name: "URL overrides stored preference without preview flag",
+      search: "?skin=original",
+      stored: "library-ink",
+      expected: "original",
+    },
+    {
+      name: "invalid URL falls back to stored preference",
+      search: "?skin=unknown",
+      stored: "library-ink",
+      expected: "library-ink",
+    },
+    {
+      name: "invalid URL and stored preferences fall back to Hearth",
+      search: "?skin=unknown",
+      stored: "unknown",
+      expected: "hobbs-hearth",
+    },
+    {
+      name: "legacy preview flag keeps Hearth default",
+      search: "?uiPreview=1",
+      expected: "hobbs-hearth",
+    },
+    {
+      name: "legacy disabled preview flag keeps Hearth default",
+      search: "?uiPreview=0",
+      expected: "hobbs-hearth",
+    },
+    { name: "denied appearance reads keep Hearth default", denied: true, expected: "hobbs-hearth" },
+    {
+      name: "valid URL works with denied appearance reads",
+      search: "?skin=plaza-cream",
+      denied: true,
+      expected: "plaza-cream",
+    },
+  ];
+  for (const [index, candidate] of cases.entries()) {
+    const entry = { name: candidate.name, status: "running", errors: [] };
+    report.preferenceChecks.push(entry);
+    const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    await context.addInitScript(
+      ({ stored, denied, key }) => {
+        if (stored) localStorage.setItem(key, stored);
+        if (denied) {
+          const original = Storage.prototype.getItem;
+          Storage.prototype.getItem = function (name) {
+            if (name === key) throw new DOMException("Denied", "SecurityError");
+            return original.call(this, name);
+          };
+        }
+      },
+      { stored: candidate.stored, denied: candidate.denied, key: APPEARANCE_KEY },
+    );
+    await context.route("**/*", (route) => {
+      const requestUrl = new URL(route.request().url());
+      if (requestUrl.origin !== target.origin) return route.fulfill({ status: 200, body: "" });
+      if (requestUrl.pathname.includes("_serverFn"))
+        return route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: '{"online":false,"ok":false}',
+        });
+      return route.continue();
+    });
+    const page = await context.newPage();
+    page.on("pageerror", (error) => entry.errors.push(error.message));
+    try {
+      const url = new URL(target);
+      url.search = candidate.search || "";
+      await page.goto(url.href, { waitUntil: "domcontentloaded", timeout: 45_000 });
+      await page.getByLabel("What do they call you?", { exact: true }).waitFor();
+      assert.equal(
+        await page.locator(".game-appearance").getAttribute("data-ui-skin"),
+        candidate.expected,
+      );
+      assert.equal(
+        await page.getByRole("combobox", { name: "Interface", exact: true }).inputValue(),
+        candidate.expected,
+      );
+      assert.equal(
+        await page.evaluate((key) => localStorage.getItem(key), SAVE_KEY),
+        null,
+        "Reading appearance must not create or replace a town",
+      );
+      assert.deepEqual(entry.errors, []);
+      entry.status = "passed";
+    } catch (error) {
+      entry.status = "failed";
+      entry.error = error instanceof Error ? error.message : String(error);
+      report.failures.push(`appearance: ${candidate.name}: ${entry.error}`);
+      await page
+        .screenshot({ path: join(out, `preference-${index}-failure.png`), fullPage: true })
+        .catch(() => {});
+    } finally {
+      await context.close();
+    }
+  }
+}
+
 /**
  * Real game components in disposable local browser contexts. This never attaches
  * to a personal browser/profile, calls a provider or changes server auth flags.
@@ -273,8 +381,8 @@ export async function runSkinChecks(browser, url, outputDirectory) {
   const target = new URL(url);
   assert.equal(target.protocol, "http:", "Skin QA only targets local HTTP previews");
   assert.ok(["localhost", "127.0.0.1"].includes(target.hostname));
-  target.searchParams.set("uiPreview", "1");
-  target.searchParams.set("skin", "plaza-cream");
+  target.searchParams.delete("uiPreview");
+  target.searchParams.delete("skin");
   const out = resolve(outputDirectory);
   await mkdir(out, { recursive: true });
   const report = {
@@ -282,7 +390,8 @@ export async function runSkinChecks(browser, url, outputDirectory) {
     node: process.version,
     generatedAt: new Date().toISOString(),
     scope:
-      "Synthetic local towns; original plus three real UI layouts; no external provider/wallet calls",
+      "Normal game URL defaults to Hearth; synthetic local towns and all four interfaces; no external provider/wallet calls",
+    preferenceChecks: [],
     journeys: [],
     failures: [],
     limits: [
@@ -291,6 +400,7 @@ export async function runSkinChecks(browser, url, outputDirectory) {
       "Unavailable and delayed AI use browser-only synthetic transport; provider quality and live signed-in sessions are not tested.",
     ],
   };
+  await appearancePreferences(browser, target, out, report);
   for (const viewport of [
     { name: "desktop", width: 1280, height: 800 },
     { name: "phone", width: 390, height: 844 },
@@ -371,6 +481,17 @@ export async function runSkinChecks(browser, url, outputDirectory) {
     try {
       await check("normal onboarding in a fresh isolated context", async () => {
         await page.goto(target.href, { waitUntil: "domcontentloaded", timeout: 45_000 });
+        await page.getByRole("combobox", { name: "Interface", exact: true }).waitFor();
+        assert.equal(
+          await page.locator(".game-appearance").getAttribute("data-ui-skin"),
+          "hobbs-hearth",
+        );
+        assert.equal(
+          await page.getByRole("combobox", { name: "Interface", exact: true }).inputValue(),
+          "hobbs-hearth",
+        );
+        assert.equal(new URL(page.url()).searchParams.has("uiPreview"), false);
+        assert.equal(new URL(page.url()).searchParams.has("skin"), false);
         await page
           .getByLabel("What do they call you?", { exact: true })
           .fill(`Skin ${viewport.name}`);
@@ -384,6 +505,12 @@ export async function runSkinChecks(browser, url, outputDirectory) {
             !!localStorage.getItem("the-game-town-v2"),
         );
         await pause(page);
+        assert.equal(
+          await page.locator(".status-strip .appearance-toolbar").count(),
+          1,
+          "The interface menu moves into the game status row on the normal URL",
+        );
+        assert.equal((await layout(page)).reservedAppearanceHeight, 0);
       });
       await check("keyboard or real emulated touch movement while paused", async () =>
         move(page, viewport.name === "phone"),
@@ -499,6 +626,10 @@ export async function runSkinChecks(browser, url, outputDirectory) {
           async () => {
             await chooseSkin(page, skin);
             assert.equal(
+              await page.evaluate((key) => localStorage.getItem(key), APPEARANCE_KEY),
+              skin.id,
+            );
+            assert.equal(
               await saved(page),
               baseline,
               "Appearance must leave paused town save byte-identical",
@@ -574,6 +705,39 @@ export async function runSkinChecks(browser, url, outputDirectory) {
           },
         );
       }
+      await check(
+        "denied appearance writes preserve the town, draft and active panel",
+        async () => {
+          await page.evaluate((key) => {
+            const original = Storage.prototype.setItem;
+            Storage.prototype.setItem = function (name, value) {
+              if (name === key) throw new DOMException("Denied", "SecurityError");
+              return original.call(this, name, value);
+            };
+            window.__skinQaRestoreAppearanceWrites = () => {
+              Storage.prototype.setItem = original;
+              delete window.__skinQaRestoreAppearanceWrites;
+            };
+          }, APPEARANCE_KEY);
+          try {
+            await chooseSkin(page, SKINS[1]);
+            assert.equal(await saved(page), baseline);
+            assert.equal(await page.evaluate(() => window.__skinQaTownWrites.length), writes);
+            assert.equal(journey.blockedServerCalls.length, calls);
+            assert.equal(
+              await panel.evaluate((element) => element === document.querySelector(".mind")),
+              true,
+            );
+            assert.equal(
+              await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(),
+              "I am keeping this draft while I compare the interfaces.",
+            );
+          } finally {
+            await page.evaluate(() => window.__skinQaRestoreAppearanceWrites());
+            await chooseSkin(page, SKINS[3]);
+          }
+        },
+      );
       await check("Escape in the compact selector keeps the conversation and draft", async () => {
         const selector = page.getByRole("combobox", { name: "Interface", exact: true });
         await selector.focus();
@@ -843,6 +1007,43 @@ export async function runSkinChecks(browser, url, outputDirectory) {
           "The synthetic transport must not leak into server functions",
         );
       });
+      await check(
+        "responded AI status keeps readable contrast in every new interface",
+        async () => {
+          await page.locator('.status-strip .badge[data-ai-status="responded"]').waitFor();
+          await page.addScriptTag({ content: axe.source });
+          const observations = [];
+          for (const skin of SKINS.slice(0, 3)) {
+            await chooseSkin(page, skin);
+            const result = await page.evaluate(async () => {
+              const badge = document.querySelector(
+                '.status-strip .badge[data-ai-status="responded"]',
+              );
+              const result = await window.axe.run(badge, {
+                runOnly: { type: "rule", values: ["color-contrast"] },
+                resultTypes: ["violations", "incomplete"],
+              });
+              return {
+                violations: result.violations.map(({ id, nodes }) => ({
+                  id,
+                  nodes: nodes.map(({ target, failureSummary }) => ({ target, failureSummary })),
+                })),
+                incomplete: result.incomplete.map(({ id }) => id),
+                foreground: getComputedStyle(badge).color,
+                background: getComputedStyle(badge.parentElement).backgroundColor,
+              };
+            });
+            assert.deepEqual(result.violations, [], `${skin.label} responded badge contrast`);
+            assert.deepEqual(
+              result.incomplete,
+              [],
+              `${skin.label} responded badge contrast is measurable`,
+            );
+            observations.push({ skin: skin.id, ...result });
+          }
+          return observations;
+        },
+      );
       if (viewport.name === "desktop") {
         await check(
           "Hearth enlarged text and spacing keep reply and close controls reachable",
@@ -958,7 +1159,7 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
   try {
     const report = await runSkinChecks(
       browser,
-      process.env.GAME_SKIN_QA_URL || "http://127.0.0.1:8186/?uiPreview=1&skin=plaza-cream",
+      process.env.GAME_SKIN_QA_URL || "http://127.0.0.1:8186/",
       process.env.GAME_SKIN_QA_OUT || "artifacts/ui-skins",
     );
     console.log(

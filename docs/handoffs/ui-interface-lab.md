@@ -6,9 +6,9 @@
 
 Three working arrangements of the real game interface, with an Original comparison option: Plaza Cream floating windows and action dock; Hobbs Hearth resident sidebar and central windows; Library Ink tool sidebar and reading desk. Larger reading text, paper surfaces, reusable pixel SVG icons, full scrolling Choice terms and a compact reply composer are implemented. The responsive candidates share one mobile reading-sheet interaction.
 
-Source: `codex/ui-interface-lab`, based on `adb1f47`; main fetched at `dab257b`. Explicit dependency: PR #41 / `codex/cloudflare-hosted-ai`. This UI-only branch retains the latest hosted recovery behavior. It does not integrate or redeploy the parent work.
+Source: `codex/ui-interface-lab`, based on `adb1f47`; main fetched at `dab257b`. Explicit dependency: PR #41 / `codex/cloudflare-hosted-ai`. This UI branch retains the latest hosted recovery behavior. The original local comparison did not integrate or redeploy the parent; the authorised release below supersedes that delivery boundary.
 
-Local preview: `http://127.0.0.1:8186/?uiPreview=1&skin=plaza-cream`. The comparison is opt-in; the normal URL keeps the original arrangement and colors. The compact Interface menu shares the existing status row, with its React ownership outside the town focus/dismissal boundary. It reserves no separate toolbar row during play. The same TownApp and canvas remain mounted throughout selection; appearance preferences are outside the Town schema.
+Local preview: `http://127.0.0.1:8186/?uiPreview=1&skin=plaza-cream`. The original comparison was opt-in; the authorised release below promotes Hearth and the menu to the normal URL. The compact Interface menu shares the existing status row, with its React ownership outside the town focus/dismissal boundary. It reserves no separate toolbar row during play. The same TownApp and canvas remain mounted throughout selection; appearance preferences are outside the Town schema.
 
 ## Validation actually run
 
@@ -38,7 +38,7 @@ The live game, authentication/provider configuration, save schema, simulation an
 
 ## Source review delivery
 
-Implementation commit `a2e2246` was pushed to `origin/codex/ui-interface-lab`. Creating the draft PR was then rejected by automatic approval review: it considered publishing source/assets/documentation in a PR beyond the user's local-preview authorization. No PR was created, and no alternate PR-creation path was attempted. The local comparison and checks are complete; opening the draft PR awaits explicit user authorization.
+Implementation commit `a2e2246` was pushed to `origin/codex/ui-interface-lab`. Creating the draft PR was then rejected by automatic approval review: it considered publishing source/assets/documentation in a PR beyond the user's local-preview authorization. No PR was created, and no alternate PR-creation path was attempted. That was the local-preview delivery boundary. The user explicitly authorised getting these changes live on 23 October, superseding the earlier publication block; release work is recorded below.
 
 ## Compact selector follow-up
 
@@ -65,3 +65,13 @@ Fresh Hearth measurements: HUD 62.19px → 45px at 1280px, 91.39px → 53px at 6
 The stable focused receipt passed 52/52 checks (25 desktop, 27 phone) with zero browser or console errors. Pause/1×/4×/Hour actions and pressed states, focus without speed/save changes, same-row alignment for all three candidates at 320/390/630/1280px, 44px touch targets, Original compatibility, and bounded 320px enlarged-text wrapping passed. Existing conversation, save, movement, reload, import/export and delayed-reply checks still pass. The harness waits for asynchronous coordinated saves and respects the existing Hour behavior of advancing up to 60 minutes or stopping for a job. A transient desktop close-panel navigation wait during editing did not recur on stable source. The 320px canvas retains its existing minimum height; the taller viewports gain the space measured above.
 
 Typecheck, lint and changed-file formatting passed, with the same inherited unused-disable warning. Broad unit/build/accessibility results were not rerun for this presentation-only follow-up. Native local-browser proof: `docs/design/ui-interfaces/compact-clock-controls.png`. Baselines and fresh synthetic checks are under ignored `artifacts/ui-clock-compact/`. This follow-up remains local and has not been pushed or published.
+
+## Authorised production release — 23 October 2026
+
+The user asked to get these changes live. Hobbs Hearth becomes the ordinary-URL default; all four styles remain in the compact Interface menu. URL skin → saved appearance preference → Hearth is preserved, including safe fallback for denied storage and invalid IDs. Appearance preferences stay separate from version-2 town saves. The uiPreview flag is no longer required, and former preview-only sizing/menu paths now apply consistently.
+
+The already-deployed hosting/recovery prerequisite PR #41 had a passing current Verify and no unresolved review threads. It was merged as `b8381df` and incorporated into this branch before release. The UI-only diff was independently reviewed against `adb1f47`: no simulation, save-schema, auth, provider or accounting changes, no lost gameplay/form/clock callbacks, and a stable unkeyed TownApp. Review identified low-contrast accepted-AI badge text in the three skins; it now uses the light chrome text colour. Existing remote production settings, routes, secrets and bindings are to be preserved.
+
+Fresh local checks: 965 application tests passed (910 script tests and 55 typed auth/data tests), 349 town tests passed, typecheck and lint passed with the inherited unused-disable warning. Diagnose completed as observations. Thirteen appearance-preference tests cover URL/storage/default/denial behavior. Release browser/accessibility checks, production build/packaging, current PR-head CI and live verification are the remaining release evidence. CI now runs the focused normal-URL interface browser harness alongside existing delayed-AI checks.
+
+Target: `https://www.arwyn.party/thegame/`, existing Worker `the-game-production`, production Hyperdrive `5992f69d7a4d41c1b5dcacd6f2b92887` and Images binding. The last recorded recovery deployment `e7893cf2-9c08-4cb8-9f94-cd82a38b15f0` must be checked against the live deployment list before use as rollback. No migration, secret upload or paid model/wallet operation is part of this UI release.

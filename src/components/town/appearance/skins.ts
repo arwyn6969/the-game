@@ -20,29 +20,29 @@ export const SKINS = [
   {
     id: "original",
     name: "Original",
-    description: "The existing interface for comparison",
+    description: "The classic town interface",
     motif: "original",
   },
 ] as const;
 
 export type SkinId = (typeof SKINS)[number]["id"];
+export const DEFAULT_SKIN: SkinId = "hobbs-hearth";
 export const APPEARANCE_KEY = "the-game-ui-appearance-v1";
 
 export function isSkin(value: unknown): value is SkinId {
   return SKINS.some((skin) => skin.id === value);
 }
 
-export function initialAppearance(): { preview: boolean; skin: SkinId } {
-  if (typeof window === "undefined") return { preview: false, skin: "original" };
+export function initialAppearance(): { skin: SkinId } {
+  if (typeof window === "undefined") return { skin: DEFAULT_SKIN };
   const query = new URLSearchParams(window.location.search);
-  if (query.get("uiPreview") !== "1") return { preview: false, skin: "original" };
   const requested = query.get("skin");
-  if (isSkin(requested)) return { preview: true, skin: requested };
+  if (isSkin(requested)) return { skin: requested };
   try {
     const stored: unknown = localStorage.getItem(APPEARANCE_KEY);
-    if (isSkin(stored)) return { preview: true, skin: stored };
+    if (isSkin(stored)) return { skin: stored };
   } catch {
     // Appearance preferences are optional, including when storage is denied.
   }
-  return { preview: true, skin: "plaza-cream" };
+  return { skin: DEFAULT_SKIN };
 }

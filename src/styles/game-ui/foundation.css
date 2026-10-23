@@ -166,7 +166,7 @@
   }
 
   .badge[data-off="false"] {
-    color: var(--ui-accent);
+    color: var(--ui-chrome-text);
   }
 
   .resident-chip {

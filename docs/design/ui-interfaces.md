@@ -1,10 +1,10 @@
-# Working interface comparison
+# Town interface styles
 
-22 October 2026. Three different arrangements of the actual game interface, using the approved cream speech-window direction. This is an opt-in local comparison; the existing live site has not been changed.
+23 October 2026. Three arrangements of the actual game interface, using the approved cream speech-window direction. The user has authorised publishing these styles to the existing game, with Hobbs Hearth as the default.
 
 ## Try it
 
-Start a local development server with Node 24 using the normal app-environment wrapper, then visit `/?uiPreview=1&skin=plaza-cream`. A compact Interface menu in the existing status row offers Plaza Cream, Hobbs Hearth, Library Ink and Original; it reserves no separate toolbar row during play. Without `uiPreview=1`, the existing layout and appearance remain the default.
+Start a local development server with Node 24 using the normal app-environment wrapper, then open the ordinary game URL. Hobbs Hearth is the default. A compact Interface menu in the existing status row offers Plaza Cream, Hobbs Hearth, Library Ink and Original; it reserves no separate toolbar row during play. A valid `?skin=plaza-cream` (or another skin ID) overrides the saved appearance preference; otherwise the saved preference is respected before falling back to Hearth. Old `uiPreview=1` links remain usable but the parameter is no longer required.
 
 Use a separate localhost origin and a disposable town for comparison. The `qa` parameter alone does not isolate storage. A portable backup can be imported through the existing confirmation flow; do not use a personal save for automated QA.
 
@@ -42,6 +42,6 @@ All dialogue, labels and action terms remain live text. Frames stretch with thei
 
 ## Baseline and validation
 
-The isolated branch is `codex/ui-interface-lab`, based on `adb1f47` from the reviewed hosting/recovery work in PR #41. Current main was fetched at `dab257b`, which is an ancestor of that base. This is an explicit stacked dependency so the comparison retains the latest AI recovery/draft behavior; it does not merge or publish the hosting work.
+The isolated branch is `codex/ui-interface-lab`. The original comparison was based on `adb1f47` from the reviewed hosting/recovery work in PR #41. For the authorised release, PR #41 passed its current Verify check and was merged as `b8381df`; the UI branch incorporates that main baseline and retains the live AI recovery/draft behavior. The UI release does not change authentication, provider limits or town storage.
 
 See `docs/handoffs/ui-interface-lab.md` for actual check results and remaining limits. Browser receipts and complete synthetic screenshots are under ignored `artifacts/ui-skins/`; the focused script is `scripts/skin-browser.mjs`.
