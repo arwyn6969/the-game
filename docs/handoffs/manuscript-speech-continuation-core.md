@@ -1,0 +1,9 @@
+# Manuscript speech continuation — core handoff
+
+Owner: `identity_economy_inventory`, `codex/manuscript-core-20261022`, explicitly dependent on root baseline `c2f35b3`. Scope: `src/game/physical-items.ts`, `scripts/town-physical-items.test.mjs`, `scripts/town-manuscript-integration.test.mjs`, and this handoff. No provider calls, schema changes, UI edits or production configuration changes.
+
+Successful speech records only the chosen words and their actual nearby listeners, completes that decision, and releases the controller for its next bounded choice. It no longer sets `session.waiting`. Successful `wait` still parks the controller; reaching the request cap still disables it. Explicit stop, duplicate-read pause, active movement intent and pending-request reload guards retain their existing behavior. Speech does not choose an item command, invent a listener's reply, or change the manuscript.
+
+The parser integration journey now exercises bring → original fiction write → actual read → speech → reload → put-down → wait. Each synthetic decision still passes through the real prompt/parser/executor, with world ticks and usage accounting; movement uses no inference per step. The final wait occurs before the eight-request cap, so the test distinguishes deliberate parking from exhaustion.
+
+Node 24 validation: all 45 current manuscript core/integration/grounding/prompt tests pass, as do typecheck and scoped ESLint. New core cases verify speech → a separate next pickup → quiet wait; eight consecutive speeches produce exactly eight requests and survive exhausted-state reload; and completed speech can survive reload while the next pending request stays blocked with honest known/unknown usage. Existing duplicate-read, stale decision, privacy, fiction, save/recovery, paid-work and movement regressions pass in the same run. Tests use `envDir: false` and no provider transport. Root owns integrated full checks and the separately authorized real trial.
