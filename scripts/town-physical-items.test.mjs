@@ -672,7 +672,7 @@ for (const sourceVersion of [1, 2])
     assert.deepEqual(physical.validatePhysicalItems(restored), []);
   });
 
-test("speak records model-chosen words for actual nearby listeners and parks inference; wait is quiet", () => {
+test("speech records actual words and permits the next action; a later wait parks quietly", () => {
   const town = fixture();
   atBook(town, "data");
   atBook(town, "sub");
@@ -687,14 +687,110 @@ test("speak records model-chosen words for actual nearby listeners and parks inf
   ok(act(town, "data", "speak", { text }));
   assert.equal(person(town, "data").bubble.text, text);
   assert.ok(person(town, "sub").memories.some((memory) => memory.text.includes(text)));
-  assert.equal(physical.nextPhysicalJob(town), null);
+  assert.equal(person(town, "sub").bubble, undefined, "listening fabricates no reply");
+  assert.ok(physical.nextPhysicalJob(town), "speech leaves the next bounded choice available");
+  assert.equal(town.physicalItems.session.waiting, false);
   assert.equal(town.physicalItems.session.usage.elapsedMs, 12);
-  physical.stopPhysicalSession(town);
-  marked(town);
+  assert.equal(item(town).location.kind, "ground", "speech does not choose an item action");
+  markNext(town);
+  ok(act(town, "data", "pick-up"));
+  assert.deepEqual(item(town).location, { kind: "held", holder: "data" });
+  markNext(town);
   const bubbles = JSON.stringify(town.agents.map((agent) => agent.bubble));
   ok(act(town, "data", "wait"));
   assert.equal(JSON.stringify(town.agents.map((agent) => agent.bubble)), bubbles);
   assert.equal(physical.nextPhysicalJob(town), null);
+  assert.equal(town.physicalItems.session.waiting, true);
+  assert.equal(town.physicalItems.session.usage.requests, 3);
+  assert.equal(town.physicalItems.session.usage.knownTokens, 45);
+  assert.equal(town.physicalItems.session.usage.tokensUnknown, 2);
+  assert.deepEqual(physical.validatePhysicalItems(town), []);
+});
+
+test("eight consecutive speech decisions exhaust the request cap without a ninth request", () => {
+  const town = fixture();
+  atBook(town, "northern");
+  ok(physical.startPhysicalSession(town, "northern", 8));
+  let lastJob;
+  const before = structuredClone(item(town));
+  for (let decision = 1; decision <= 8; decision++) {
+    lastJob = markNext(town);
+    physical.recordPhysicalUsage(town, lastJob, {
+      elapsedMs: 10,
+      attempts: 1,
+      totalTokens: 100,
+      success: true,
+    });
+    const text = `Original speech number ${decision}.`;
+    ok(act(town, "northern", "speak", { text }));
+    assert.equal(person(town, "northern").bubble.text, text);
+    assert.equal(town.physicalItems.session.decisions, decision);
+    assert.equal(Boolean(physical.nextPhysicalJob(town)), decision < 8);
+  }
+  assert.equal(town.physicalItems.session.enabled, false);
+  assert.equal(town.physicalItems.session.waiting, false);
+  assert.equal(physical.markPhysicalRequest(town, lastJob), false);
+  assert.deepEqual(town.physicalItems.session.usage, {
+    requests: 8,
+    providerAttempts: 8,
+    attemptsUnknown: 0,
+    knownTokens: 800,
+    tokenSamples: 8,
+    tokensUnknown: 0,
+    elapsedMs: 80,
+    failures: 0,
+  });
+  assert.deepEqual(item(town), before, "successive speech does not alter manuscript state");
+  const restored = save.parseTownFile(save.exportTown(town));
+  assert.ok(restored);
+  assert.equal(physical.nextPhysicalJob(restored), null);
+  assert.deepEqual(restored.physicalItems.session.usage, town.physicalItems.session.usage);
+});
+
+test("speech completion survives reload while the next pending request stays parked and unknown", () => {
+  let town = fixture();
+  atBook(town, "northern");
+  const first = marked(town, "northern");
+  physical.recordPhysicalUsage(town, first, {
+    elapsedMs: 22,
+    attempts: 1,
+    totalTokens: 88,
+    success: true,
+  });
+  ok(act(town, "northern", "speak", { text: "Data. You're up early." }));
+  const ready = physical.nextPhysicalJob(town);
+  assert.ok(ready);
+  town = save.parseTownFile(save.exportTown(town));
+  assert.ok(town);
+  assert.deepEqual(physical.nextPhysicalJob(town), ready);
+  assert.equal(town.physicalItems.session.lastResult.kind, "speak");
+  assert.equal(town.physicalItems.session.waiting, false);
+  const pending = markNext(town);
+  const reloaded = save.parseTownFile(save.exportTown(town));
+  assert.ok(reloaded);
+  assert.equal(physical.nextPhysicalJob(reloaded), null);
+  assert.equal(physical.markPhysicalRequest(reloaded, pending), false);
+  assert.deepEqual(reloaded.physicalItems.session.usage, {
+    requests: 2,
+    providerAttempts: 1,
+    attemptsUnknown: 1,
+    knownTokens: 88,
+    tokenSamples: 1,
+    tokensUnknown: 1,
+    elapsedMs: 22,
+    failures: 0,
+  });
+  physical.stopPhysicalSession(reloaded);
+  physical.recordPhysicalUsage(reloaded, pending, {
+    elapsedMs: 12,
+    attempts: 1,
+    totalTokens: 77,
+    success: true,
+  });
+  assert.equal(physical.nextPhysicalJob(reloaded), null);
+  assert.equal(reloaded.physicalItems.session.usage.knownTokens, 88);
+  assert.equal(reloaded.physicalItems.session.usage.tokensUnknown, 1);
+  assert.deepEqual(physical.validatePhysicalItems(reloaded), []);
 });
 
 test("bring uses one normal movement pass, rebuilds stripped paths after reload and retains the actual item", () => {

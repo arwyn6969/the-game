@@ -357,7 +357,7 @@ function finishDecision(town: Town, actor: AgentId, result: PhysicalActionResult
   if (session?.enabled && session.actor === actor) {
     session.revision++;
     session.lastResult = structuredClone(result);
-    session.waiting = result.ok && (result.kind === "wait" || result.kind === "speak");
+    session.waiting = result.ok && result.kind === "wait";
     if (!session.intent && session.decisions >= session.maxDecisions) {
       session.enabled = false;
       session.waiting = false;
