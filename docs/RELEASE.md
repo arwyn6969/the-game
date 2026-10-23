@@ -1,3 +1,13 @@
+# Manuscript continuation — 24 October 2026 BST
+
+Published at **https://www.arwyn.party/thegame/** after the user requested getting the current activity live. [PR #47](https://github.com/arwyn6969/the-game/pull/47) is merged as `4aaf8bd`; its tree equals qualified runtime `96a7f0100704`. Required [Verify 40035557618](https://github.com/arwyn6969/the-game/actions/runs/40035557618) passed. Worker **`722e5658-356d-4c82-baf1-7e70f1c1163c`** serves matching public assets.
+
+Northern may continue after ordinary speech within eight requests. Automatic physical requests wait at least 31 seconds before the next counted start, preserving the existing free provider's two-per-minute limit and all stops. Shared 24/day, 12/player/day, auth, settings, bindings, meeting attention and saves remain unchanged. The activity needs an open visible browser; continuous server operation remains separate work.
+
+No model request or migration belongs to publication. [Complete release/preservation/recovery evidence](review/manuscript-live-release-2026-10-23.md); prior Worker `8852b4fc-0ca5-4217-8f71-6c7420cd0d72` is the rollback reference.
+
+---
+
 # Cloudflare browser hosting — 22 October 2026
 
 The browser game is live at <https://www.arwyn.party/thegame/>. Recovery runtime `cfe997e39b55dedcc8b7900fdde9eeb78a1ae4a0` is deployed as Worker `e7893cf2-9c08-4cb8-9f94-cd82a38b15f0` in [PR #41](https://github.com/arwyn6969/the-game/pull/41). Availability checks retry automatically; failed player AI requests retain the draft and show a persistent reason, without substituting local dialogue. Background failures no longer overwrite player AI status. Only an explicit local-only preference uses authored player replies.

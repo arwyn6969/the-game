@@ -1,0 +1,43 @@
+{
+  "checkedAt": "2026-10-23T23:02:06.772Z",
+  "source": "96a7f010070461a8b26345287137e282f2b9dc5d",
+  "workerVersion": "722e5658-356d-4c82-baf1-7e70f1c1163c",
+  "entryStatus": 200,
+  "checks": [
+    {
+      "path": "/thegame/assets/styles-Dm22ONFg.css",
+      "sha256": "79dbe36a39bcd689bb19a9b32adb3b5f482c8a52130f464b0968ddf1b45c4ef5",
+      "bytes": 48260
+    },
+    {
+      "path": "/thegame/assets/index-ZcFNSpn9.js",
+      "sha256": "8ec51cb3bfd8607adcade4201cd1a3d39db447188187a56acf45dae992dd4361",
+      "bytes": 432276
+    },
+    {
+      "path": "/thegame/assets/routes-oI68W82j.js",
+      "sha256": "731898766935d9997e43d4e678ecb0bad8a6db349fbb8ffe49225345f196a84f",
+      "bytes": 581702
+    },
+    {
+      "path": "/thegame/privacy",
+      "status": 200
+    },
+    {
+      "path": "/thegame/api/auth/get-session",
+      "status": 200,
+      "anonymousSession": null
+    },
+    {
+      "path": "/thegame/__grok/manifest.webmanifest",
+      "start_url": "/thegame/",
+      "scope": "/thegame/"
+    },
+    {
+      "path": "/",
+      "status": 200,
+      "finalUrl": "https://arwyn.party/"
+    }
+  ],
+  "modelRequests": 0
+}
