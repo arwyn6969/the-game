@@ -31,9 +31,26 @@ export function AppearanceScope({ children }: { children: ReactNode }) {
     // Watching child additions covers the transition from name entry to town.
     let hud: Element | null = null;
     let host: HTMLElement | null = null;
+    let navigation: HTMLElement | null = null;
+    let residents: HTMLElement | null = null;
     const measure = () => {
       if (!hud) return;
-      const minimum = (toolbarRef.current?.getBoundingClientRect().bottom ?? 0) + 8;
+      const navigationBox = navigation?.getBoundingClientRect();
+      const residentsBox = residents?.getBoundingClientRect();
+      const worldBox = scope.querySelector(".world-frame")?.getBoundingClientRect();
+      const topNavigation =
+        navigationBox && worldBox && navigationBox.bottom <= worldBox.top
+          ? navigationBox.bottom
+          : 0;
+      const topResidents =
+        residentsBox && worldBox && residentsBox.bottom <= worldBox.top ? residentsBox.bottom : 0;
+      const minimum =
+        Math.max(
+          0,
+          toolbarRef.current?.getBoundingClientRect().bottom ?? 0,
+          topNavigation,
+          topResidents,
+        ) + 8;
       const maximum = Math.max(
         minimum,
         Math.min(window.innerHeight * 0.3, window.innerHeight - 240),
@@ -49,6 +66,18 @@ export function AppearanceScope({ children }: { children: ReactNode }) {
         host = nextHost;
         if (host) resize.observe(host);
         setSelectorHost(host);
+      }
+      const nextNavigation = scope.querySelector<HTMLElement>(".town > .town-tools");
+      if (nextNavigation !== navigation) {
+        if (navigation) resize.unobserve(navigation);
+        navigation = nextNavigation;
+        if (navigation) resize.observe(navigation);
+      }
+      const nextResidents = scope.querySelector<HTMLElement>(".town > .social-toolbar");
+      if (nextResidents !== residents) {
+        if (residents) resize.unobserve(residents);
+        residents = nextResidents;
+        if (residents) resize.observe(residents);
       }
       const next = scope.querySelector(".town > .hud");
       if (next !== hud) {
