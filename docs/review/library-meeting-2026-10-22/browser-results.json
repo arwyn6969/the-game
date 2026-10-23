@@ -1,0 +1,66 @@
+{
+  "target": "http://127.0.0.1:8134/",
+  "syntheticTransport": true,
+  "liveCalls": 0,
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "assertions": [
+        "Normal proposal creates no authored NPC dialogue and does not make the player listen",
+        "Hidden tabs dispatch no meeting decision and visibility restoration never auto-starts one",
+        "Mocked NPC decisions use the actual protocol/executor; nearby inattentive player and Baba do not hear",
+        "Late listening grants no earlier words; stopping while a reply is pending excludes the eventual line without invalidating its speaker",
+        "Player can take a fair turn; accepted speech clears only its draft; failed inference invents no reply and paused meetings still allow stopping listening",
+        "Cancellation never permits a second underlying request before settlement; its delayed response cannot add speech or erase the draft",
+        "Reload preserves committed history, restores an in-flight request as paused/unknown and never automatically resends it",
+        "Unavailable background action capability creates no substitute dialogue or provider call"
+      ],
+      "errors": [],
+      "unexpectedServerRequests": [],
+      "externalRequests": [
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com"
+      ],
+      "mockedModules": 3
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "assertions": [
+        "Normal proposal creates no authored NPC dialogue and does not make the player listen",
+        "Hidden tabs dispatch no meeting decision and visibility restoration never auto-starts one",
+        "Mocked NPC decisions use the actual protocol/executor; nearby inattentive player and Baba do not hear",
+        "Late listening grants no earlier words; stopping while a reply is pending excludes the eventual line without invalidating its speaker",
+        "Player can take a fair turn; accepted speech clears only its draft; failed inference invents no reply and paused meetings still allow stopping listening",
+        "Cancellation never permits a second underlying request before settlement; its delayed response cannot add speech or erase the draft",
+        "Reload preserves committed history, restores an in-flight request as paused/unknown and never automatically resends it",
+        "Unavailable background action capability creates no substitute dialogue or provider call"
+      ],
+      "errors": [],
+      "unexpectedServerRequests": [],
+      "externalRequests": [
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com"
+      ],
+      "mockedModules": 3
+    }
+  ],
+  "failures": []
+}

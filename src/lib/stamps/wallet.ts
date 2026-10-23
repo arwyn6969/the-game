@@ -124,7 +124,7 @@ function stateFor(provider: Provider, walletId: WalletId): ProviderState {
           current.revision++;
         });
       } catch {
-        // The before/after account and provider checks still apply without events.
+        // Provider identity and the address-bound proof still apply without events.
       }
   }
   return state;
@@ -234,14 +234,10 @@ export async function signWalletChallenge(
       return proof;
     }
     const provider = selection.provider as LeatherProvider;
-    const before = await getLeatherAddress({ ...options, provider });
-    checkSelection(selection, options.signal);
-    if (before.address !== selected.address || before.account !== selected.account) changed();
+    // getAddresses opens a new connection approval every time. Sign for the
+    // already selected account; the adapter and server verify the exact signer.
     const proof = await signLeatherChallenge(request, selected, { ...options, provider });
     checkSelection(selection, options.signal);
-    const after = await getLeatherAddress({ ...options, provider });
-    checkSelection(selection, options.signal);
-    if (after.address !== selected.address || after.account !== selected.account) changed();
     if (request.expiresAt <= Date.now())
       throw new WalletError(
         "expired",

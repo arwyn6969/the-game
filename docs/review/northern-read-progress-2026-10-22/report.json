@@ -1,0 +1,281 @@
+{
+  "sourceHead": "667d633abe152b70be806c4471a8c534ccd35d3f",
+  "startedAt": "2026-10-23T13:16:49.443Z",
+  "scope": "operator headless real-model/engine trial; local SQL budget and quota ledger",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "maxCalls": 8,
+  "preflight": {
+    "at": "2026-10-23T13:16:49.319Z",
+    "freeTier": true,
+    "freeRequests": {
+      "used": 6,
+      "limit": 50,
+      "remaining": 44
+    },
+    "monetaryUsageToday": 0,
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "pricing": {
+      "prompt": "0",
+      "completion": "0"
+    },
+    "requestedMaxCalls": 8,
+    "dailyCeiling": 24,
+    "callAllowance": 8
+  },
+  "decisions": [
+    {
+      "number": 1,
+      "at": "2026-10-23T13:16:50.971Z",
+      "gameTime": {
+        "day": 1,
+        "minute": 420
+      },
+      "observation": {
+        "actor": {
+          "id": "northern",
+          "name": "Northern",
+          "role": "Student",
+          "tile": {
+            "x": 39,
+            "y": 20
+          },
+          "place": "library",
+          "heldItemId": null
+        },
+        "items": [
+          {
+            "id": "manuscript:town:1",
+            "kind": "manuscript",
+            "title": "Blank manuscript",
+            "author": null,
+            "owner": "town",
+            "revision": 0,
+            "contentRevision": 0,
+            "location": {
+              "kind": "ground",
+              "tile": {
+                "x": 40,
+                "y": 20
+              }
+            }
+          }
+        ],
+        "knownManuscript": null,
+        "availableActions": [
+          {
+            "kind": "speak"
+          },
+          {
+            "kind": "wait"
+          },
+          {
+            "kind": "read",
+            "itemId": "manuscript:town:1",
+            "itemRevision": 0
+          },
+          {
+            "kind": "pick-up",
+            "itemId": "manuscript:town:1",
+            "itemRevision": 0
+          },
+          {
+            "kind": "bring",
+            "itemId": "manuscript:town:1",
+            "itemRevision": 0,
+            "destinations": [
+              "cafe",
+              "library",
+              "dorms",
+              "park",
+              "townhouses",
+              "grocery",
+              "noticeboard",
+              "plaza",
+              "street"
+            ]
+          }
+        ],
+        "nearbyResidents": [
+          {
+            "id": "player",
+            "name": "Observer",
+            "tile": {
+              "x": 40,
+              "y": 22
+            },
+            "place": "library"
+          },
+          {
+            "id": "data",
+            "name": "Data",
+            "tile": {
+              "x": 38,
+              "y": 20
+            },
+            "place": "library"
+          }
+        ],
+        "session": {
+          "revision": 1,
+          "decisions": 1,
+          "maxDecisions": 8,
+          "intent": null,
+          "lastResult": null
+        }
+      },
+      "promptCharacters": 5110,
+      "promptSha256": "ee150526fa3c8688bf66e6885c497575e3e03b8056e7a99598498d306e99cace",
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 7829,
+          "actualTokens": 1488,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1464,
+            "outputTokens": 24,
+            "reasoningTokens": 0,
+            "responseCharacters": 65,
+            "invalidReason": null
+          }
+        }
+      ],
+      "transmissions": 1,
+      "reportedCostUSD": 0,
+      "elapsedMs": 7847,
+      "ok": true,
+      "rawDecisionJSON": "{\"decision\": {\"kind\": \"speak\", \"text\": \"Data. You're up early.\"}}",
+      "decision": {
+        "kind": "speak",
+        "text": "Data. You're up early."
+      },
+      "result": {
+        "ok": true,
+        "kind": "speak",
+        "message": "Northern spoke to the people within earshot."
+      }
+    }
+  ],
+  "movement": [],
+  "suppressedOtherJobs": {},
+  "transmissions": 1,
+  "simulationMinutes": 0,
+  "stopReason": "Northern chose speak; the trial parks here without restarting.",
+  "setup": {
+    "northern": {
+      "id": "northern",
+      "name": "Northern",
+      "role": "Student",
+      "tile": {
+        "x": 39,
+        "y": 20
+      },
+      "place": "library",
+      "heldItemId": null
+    },
+    "knowledge": "Original current character/profile/goals; no supplied story or manuscript text",
+    "observer": {
+      "x": 40,
+      "y": 22
+    },
+    "item": {
+      "id": "manuscript:town:1",
+      "kind": "manuscript",
+      "title": "Blank manuscript",
+      "text": "",
+      "author": null,
+      "owner": "town",
+      "revision": 0,
+      "contentRevision": 0,
+      "location": {
+        "kind": "ground",
+        "tile": {
+          "x": 40,
+          "y": 20
+        }
+      }
+    }
+  },
+  "finishedAt": "2026-10-23T13:16:58.823Z",
+  "wallTimeMs": 9380,
+  "aiWaitMs": 7847,
+  "finalItem": {
+    "id": "manuscript:town:1",
+    "kind": "manuscript",
+    "title": "Blank manuscript",
+    "text": "",
+    "author": null,
+    "owner": "town",
+    "revision": 0,
+    "contentRevision": 0,
+    "location": {
+      "kind": "ground",
+      "tile": {
+        "x": 40,
+        "y": 20
+      }
+    }
+  },
+  "session": {
+    "actor": "northern",
+    "revision": 2,
+    "enabled": true,
+    "waiting": true,
+    "decisions": 1,
+    "maxDecisions": 8,
+    "intent": null,
+    "lastResult": {
+      "ok": true,
+      "kind": "speak",
+      "message": "Northern spoke to the people within earshot."
+    },
+    "usage": {
+      "requests": 1,
+      "providerAttempts": 1,
+      "attemptsUnknown": 0,
+      "knownTokens": 1488,
+      "tokenSamples": 1,
+      "tokensUnknown": 0,
+      "elapsedMs": 7847,
+      "failures": 0
+    }
+  },
+  "financeUnchanged": true,
+  "cashUnchanged": true,
+  "clockScope": "Game time advances only during physical travel; wall-clock pacing is not simulated game time.",
+  "saveRoundTrip": true,
+  "ledger": {
+    "budget": [
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      }
+    ],
+    "pool": [
+      {
+        "kind": "act",
+        "actual_tokens": 1488,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 7829,
+        "settled": true
+      }
+    ]
+  },
+  "afterAccount": {
+    "at": "2026-10-23T13:16:58.869Z",
+    "freeTier": true,
+    "freeRequests": {
+      "used": 6,
+      "limit": 50,
+      "remaining": 44
+    },
+    "monetaryUsageToday": 0
+  }
+}

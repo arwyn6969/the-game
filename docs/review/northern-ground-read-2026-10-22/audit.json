@@ -1,0 +1,48 @@
+{
+  "source": "e3a35c63bf3fe7f06d773fa7f658b2122fccc7cc",
+  "matchingInitialFields": {
+    "day": true,
+    "minute": true,
+    "playerName": true,
+    "agents": true,
+    "notices": true,
+    "favors": true,
+    "tills": true,
+    "nextId": true,
+    "economy": true
+  },
+  "matchingInitialItem": true,
+  "deliberateAllowanceChange": {
+    "prior": 8,
+    "current": 4,
+    "reason": "Preserve the existing 24/day ceiling after 20 requests were already used"
+  },
+  "initialIdentityScope": "Fresh synthetic identity UUIDs per trial; no production identity used",
+  "cashUnchanged": true,
+  "economyUnchanged": true,
+  "tillsUnchanged": true,
+  "favorsUnchanged": true,
+  "identityUnchanged": true,
+  "physicalAudit": [],
+  "economyAudit": [],
+  "saveRoundTrip": true,
+  "allFourResponsesAndActionsSucceeded": true,
+  "firstThreeReadsLeftGroundItemUnchanged": true,
+  "inputTokens": 5990,
+  "outputTokens": 122,
+  "totalTokens": 6112,
+  "providerLatencyMs": 9187,
+  "redundantUnchangedReads": {
+    "decisions": [
+      2,
+      3
+    ],
+    "totalTokens": 3097
+  },
+  "sourceHashes": {
+    "scripts/manuscript-real-ai.mjs": "34a4a1a206559228cac26733c4b22a9c8163288b10957fc25ef7ff62e56a05b1",
+    "src/game/physical-items.ts": "584b2c2a1fa7be692bedb9746e6397c18f679d026946052b6f8a32fc754f89bb",
+    "src/game/prompt.ts": "224f47bcd3373ed0592f0dc5e28d1f334d49bb3d729d90334347641c83fbae00",
+    "src/components/town/ManuscriptTools.tsx": "0d51a101ff1fe74a61ca360eeac0a58c4f33e516060211ee393f96f7701a1c21"
+  }
+}

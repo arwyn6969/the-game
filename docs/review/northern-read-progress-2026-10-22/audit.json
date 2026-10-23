@@ -1,0 +1,94 @@
+{
+  "source": "667d633abe152b70be806c4471a8c534ccd35d3f",
+  "scope": "Read-only state audit and SQL inspection from a temporary copy; zero extra generation requests",
+  "matchingInitialFields": {
+    "day": true,
+    "minute": true,
+    "playerName": true,
+    "agents": true,
+    "notices": true,
+    "favors": true,
+    "tills": true,
+    "nextId": true,
+    "economy": true
+  },
+  "matchingBlankItem": true,
+  "allowance": {
+    "maxCalls": 8,
+    "usedAtStart": 6,
+    "dailyCeiling": 24
+  },
+  "actualActions": [
+    {
+      "kind": "speak",
+      "text": "Data. You're up early."
+    }
+  ],
+  "inputTokens": 1464,
+  "outputTokens": 24,
+  "totalTokens": 1488,
+  "unknownTokenSamples": 0,
+  "reportedCostUSD": 0,
+  "aiWaitMs": 7847,
+  "providerLatencyMs": 7829,
+  "wallTimeMs": 9380,
+  "cashUnchanged": true,
+  "economyUnchanged": true,
+  "tillsUnchanged": true,
+  "favorsUnchanged": true,
+  "identityUnchanged": true,
+  "manuscriptUnchanged": true,
+  "simulationMinutes": 0,
+  "speechParked": true,
+  "nextPhysicalJob": null,
+  "saveRoundTrip": true,
+  "physicalAudit": [],
+  "economyAudit": [],
+  "exactPromptRebuiltFromSerializedInitialState": true,
+  "exactFinalTownReplayedWithoutProvider": true,
+  "sqlLedgerIndependentlyRead": true,
+  "ledger": {
+    "budget": [
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      }
+    ],
+    "pool": [
+      {
+        "kind": "act",
+        "actual_tokens": 1488,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 7829,
+        "settled": true
+      }
+    ]
+  },
+  "sourceHashes": {
+    "src/game/physical-types.ts": "a11c9917c0db262c5149f57524c3421ea7cea99e52e988cc905cd2bae4cf1383",
+    "src/game/physical-items.ts": "158c067e9a1dd5568c9459b8a1dd8eb74868b9bd6bad41b87bb9b73f5c74c265",
+    "src/game/prompt.ts": "8a6b2a0d85d5c6ee9cf69a746acd070e6e026501b27d36a13b8201d8491b26e2",
+    "src/components/town/ManuscriptTools.tsx": "0d51a101ff1fe74a61ca360eeac0a58c4f33e516060211ee393f96f7701a1c21",
+    "scripts/manuscript-real-ai.mjs": "0ee5118caea96134dfea51fc2b2ac598375038d9351fed4f6c9226add2771f20"
+  },
+  "saveNormalization": {
+    "observerTileInRuntime": {
+      "x": 40,
+      "y": 22
+    },
+    "observerTileOnImport": {
+      "x": 40,
+      "y": 21
+    },
+    "note": "Existing import normalization moves the observer to walkable floor; prompt reconstruction uses the serialized runtime tile, not a freshly normalized import."
+  },
+  "quotaObservation": {
+    "before": 6,
+    "immediateAfter": 6,
+    "note": "Immediate account counters are unchanged; no cause is inferred. The completion, transmission guard and SQL rows establish one actual request."
+  },
+  "qualification": "The first decision was speech. This run did not exercise manuscript reading, writing or the unchanged-read guard."
+}

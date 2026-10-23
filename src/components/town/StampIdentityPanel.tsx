@@ -23,6 +23,7 @@ import {
   setStampSuppressed,
   setStampVerificationRequired,
 } from "@/lib/stamps/client-session";
+import { StampPanelRequests, type StampPanelOperation } from "@/lib/stamps/panel-requests";
 import type {
   StampAppearance,
   StampCrop,
@@ -35,13 +36,7 @@ import type {
 
 type Mode = "original" | "portrait" | "head";
 type DraftStamp = Pick<StampHolding, "cpid" | "title" | "stampNumber">;
-type Operation = {
-  generation: number;
-  scopeKey: string;
-  walletId: WalletId;
-  abort: AbortController;
-  cpid?: string;
-};
+type Operation = StampPanelOperation;
 const DEFAULT_CROP: StampCrop = { x: 0, y: 0, size: 1 };
 const WALLET_NAMES: Record<WalletId, string> = { wonder: "Wonder Wallet", leather: "Leather" };
 
@@ -105,9 +100,7 @@ export function StampIdentityPanel({
   const [error, setError] = useState(false);
   const [walletId, setWalletId] = useState<WalletId>("wonder");
   const [walletNeedsVerification, setWalletNeedsVerification] = useState(false);
-  const active = useRef<Operation | null>(null);
   const mounted = useRef(false);
-  const generation = useRef(0);
   const callbacks = useRef({ onAppearance, onClose });
   const currentScopeKey = `${scope.worldId}:${scope.characterId}`;
   const scopeKey = useRef(currentScopeKey);
@@ -116,6 +109,22 @@ export function StampIdentityPanel({
   const currentWallet = useRef(walletId);
   const walletVerificationRequired = useRef(false);
   const disconnectPendingRef = useRef(disconnectPending);
+  const requests = useRef<StampPanelRequests | null>(null);
+  if (!requests.current)
+    requests.current = new StampPanelRequests((operation) => {
+      if (
+        operation.background ||
+        !mounted.current ||
+        operation.scopeKey !== scopeKey.current ||
+        operation.walletId !== currentWallet.current
+      )
+        return;
+      setBusy(false);
+      setError(true);
+      setNote(
+        "This request took too long. Your draft is still here; try again. If a wallet prompt is open, dismiss it before reconnecting. A change already accepted by the service may still finish.",
+      );
+    });
   callbacks.current = { onAppearance, onClose };
   scopeKey.current = currentScopeKey;
   viewRef.current = view;
@@ -126,31 +135,32 @@ export function StampIdentityPanel({
   function isCurrent(operation: Operation): boolean {
     return (
       mounted.current &&
-      operation.generation === generation.current &&
+      requests.current!.isCurrent(operation) &&
       operation.scopeKey === scopeKey.current &&
       operation.walletId === currentWallet.current &&
       !operation.abort.signal.aborted
     );
   }
 
-  function begin(): Operation | null {
-    if (active.current) return null;
-    const operation = {
-      generation: ++generation.current,
-      scopeKey: currentScopeKey,
-      walletId,
-      abort: new AbortController(),
-    };
-    active.current = operation;
-    setBusy(true);
-    setError(false);
+  function begin(background = false, wallet = false): Operation | null {
+    const operation = requests.current!.begin(
+      // Polling keeps its mount-time callback; use the current wallet selection.
+      { scopeKey: scopeKey.current, walletId: currentWallet.current },
+      background,
+      wallet,
+    );
+    if (!operation) return null;
+    if (!background) {
+      setBusy(true);
+      setError(false);
+    }
     return operation;
   }
 
   function finish(operation: Operation): void {
     if (!isCurrent(operation)) return;
-    active.current = null;
-    setBusy(false);
+    requests.current!.finish(operation);
+    if (!operation.background) setBusy(false);
   }
 
   function cancel(): void {
@@ -163,9 +173,7 @@ export function StampIdentityPanel({
   }
 
   function invalidate(): void {
-    generation.current++;
-    active.current?.abort.abort();
-    active.current = null;
+    requests.current!.invalidate();
   }
 
   function close(): void {
@@ -175,6 +183,9 @@ export function StampIdentityPanel({
 
   function failure(cause: unknown, operation: Operation): void {
     if (!isCurrent(operation)) return;
+    // An unavailable background check must not interrupt the player's draft.
+    if (operation.background && !(cause instanceof StampPanelError && cause.code === "expired"))
+      return;
     if (cause instanceof WalletError && cause.code === "changed") {
       resetWalletPresentation(cause.message.slice(0, 400));
       setError(true);
@@ -205,6 +216,7 @@ export function StampIdentityPanel({
 
   function acceptView(next: StampIdentityView, operation: Operation, resetDraft = false): void {
     if (!isCurrent(operation)) return;
+    const lostConnection = Boolean(viewRef.current?.connected && !next.connected);
     rememberStampSession(scope, next.connected);
     const appearance = next.connected ? currentAppearance(next.appearance, scope) : null;
     setView({ ...next, appearance });
@@ -219,22 +231,28 @@ export function StampIdentityPanel({
       setCrop(appearance ? { ...appearance.crop } : { ...DEFAULT_CROP });
       setPreview(appearance);
     }
-    setNote(
-      next.connected
-        ? "Your holdings have been checked. Choose a stamp to preview it."
-        : next.address
-          ? "Your wallet check expired. Sign again to refresh your holdings."
-          : "Choose a wallet and connect to browse stamps you hold.",
-    );
+    if (!operation.background || lostConnection)
+      setNote(
+        next.connected
+          ? "Your holdings have been checked. Choose a stamp to preview it."
+          : next.address || lostConnection
+            ? "Your wallet check expired. Sign again to refresh your holdings."
+            : "Choose a wallet and connect to browse stamps you hold.",
+      );
   }
 
-  async function refresh(page?: number, resetDraft = false): Promise<void> {
+  async function refresh(page?: number, resetDraft = false, background = false): Promise<void> {
     if (isStampSuppressed(scope) || walletVerificationRequired.current) return;
-    const operation = begin();
+    const operation = begin(background);
     if (!operation) return;
+    if (!background)
+      setNote(resetDraft ? "Checking your stamp connection…" : "Refreshing your stamp holdings…");
     try {
       const next = readResult(
-        await getStampIdentity({ data: { scope, ...(page === undefined ? {} : { page }) } }),
+        await getStampIdentity({
+          data: { scope, ...(page === undefined ? {} : { page }) },
+          signal: operation.abort.signal,
+        }),
       );
       acceptView(next, operation, resetDraft);
     } catch (cause) {
@@ -276,8 +294,8 @@ export function StampIdentityPanel({
       );
     } else void refresh(undefined, true);
     const interval = setInterval(() => {
-      if (polling.current && !active.current && !isStampSuppressed(scope))
-        void refresh(viewRef.current?.holdings?.page);
+      if (polling.current && !requests.current!.current && !isStampSuppressed(scope))
+        void refresh(viewRef.current?.holdings?.page, false, true);
     }, 60_000);
     return () => {
       mounted.current = false;
@@ -363,7 +381,7 @@ export function StampIdentityPanel({
 
   async function connect(): Promise<void> {
     if (disconnectPendingRef.current) return;
-    const operation = begin();
+    const operation = begin(false, true);
     if (!operation) return;
     polling.current = true;
     // An explicit reconnect hides the old proof while the new account grant is reviewed.
@@ -392,7 +410,10 @@ export function StampIdentityPanel({
       });
       if (!isCurrent(operation)) return;
       const challenge = readResult(
-        await beginStampProof({ data: { scope, address: selected.address } }),
+        await beginStampProof({
+          data: { scope, address: selected.address },
+          signal: operation.abort.signal,
+        }),
       );
       if (!isCurrent(operation)) return;
       setNote(
@@ -403,7 +424,10 @@ export function StampIdentityPanel({
       });
       if (!isCurrent(operation)) return;
       const next = readResult(
-        await finishStampProof({ data: { scope, challengeId: challenge.id, ...proof } }),
+        await finishStampProof({
+          data: { scope, challengeId: challenge.id, ...proof },
+          signal: operation.abort.signal,
+        }),
       );
       if (!isCurrent(operation)) return;
       setStampSuppressed(scope, false);
@@ -430,7 +454,12 @@ export function StampIdentityPanel({
     if (mode === "original") setMode("portrait");
     setNote("Preparing a safe image preview…");
     try {
-      const image = readResult(await previewStampImage({ data: { scope, cpid: stamp.cpid } }));
+      const image = readResult(
+        await previewStampImage({
+          data: { scope, cpid: stamp.cpid },
+          signal: operation.abort.signal,
+        }),
+      );
       if (!isCurrent(operation)) return;
       if (!safeImage(image))
         throw new StampPanelError(
@@ -450,9 +479,10 @@ export function StampIdentityPanel({
     const operation = begin();
     if (!operation) return;
     operation.cpid = draft?.cpid;
+    setNote("Applying your appearance…");
     try {
       if (mode === "original") {
-        readResult(await clearStampAppearance({ data: { scope } }));
+        readResult(await clearStampAppearance({ data: { scope }, signal: operation.abort.signal }));
         if (!isCurrent(operation)) return;
         setView((previous) => (previous ? { ...previous, appearance: null } : previous));
         callbacks.current.onAppearance(null);
@@ -461,7 +491,10 @@ export function StampIdentityPanel({
         if (!draft || !preview)
           throw new StampPanelError("invalid", "Choose a stamp with a preview first.");
         const appearance = readResult(
-          await chooseStampAppearance({ data: { scope, cpid: draft.cpid, mode, crop } }),
+          await chooseStampAppearance({
+            data: { scope, cpid: draft.cpid, mode, crop },
+            signal: operation.abort.signal,
+          }),
         );
         if (!isCurrent(operation)) return;
         const valid = currentAppearance(appearance, scope);
@@ -504,7 +537,9 @@ export function StampIdentityPanel({
     callbacks.current.onAppearance(null);
     setNote("Disconnecting the wallet check…");
     try {
-      readResult(await disconnectStampIdentity({ data: { scope } }));
+      readResult(
+        await disconnectStampIdentity({ data: { scope }, signal: operation.abort.signal }),
+      );
       if (!isCurrent(operation)) return;
       setStampSuppressed(scope, false);
       disconnectPendingRef.current = false;
@@ -593,6 +628,9 @@ export function StampIdentityPanel({
             </a>
           )}
           . Use a mainnet Native SegWit address. Wallet changes require a new verification.
+          {walletId === "leather" && (
+            <> Leather asks you to choose an account, then sign one verification message.</>
+          )}
           {walletId === "wonder" && (
             <>
               {" "}

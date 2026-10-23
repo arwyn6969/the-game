@@ -1,0 +1,453 @@
+{
+  "sourceHead": "ab3dcb4c422aec3bd1a09c670b6df06f5d8b2d3d",
+  "startedAt": "2026-10-22T16:04:14.883Z",
+  "scope": "One operator headless local meeting, real model and engine, synthetic town, local SQL accounting",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "maxCalls": 12,
+  "preflight": {
+    "at": "2026-10-22T16:04:14.764Z",
+    "freeTier": true,
+    "freeRequests": {
+      "used": 25,
+      "limit": 50,
+      "remaining": 25
+    },
+    "monetaryUsageToday": 0,
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "pricing": {
+      "prompt": "0",
+      "completion": "0"
+    },
+    "requestedMaxCalls": 12,
+    "savedDailyCeiling": 24,
+    "authorizedAdditionalFreeCalls": 12,
+    "experimentAccountCeiling": 37,
+    "callAllowance": 12
+  },
+  "transmissions": 1,
+  "decisions": [
+    {
+      "number": 1,
+      "actor": "northern",
+      "at": "2026-10-22T16:04:16.071Z",
+      "observation": {
+        "actor": {
+          "id": "northern",
+          "name": "Northern",
+          "tile": {
+            "x": 42,
+            "y": 21
+          }
+        },
+        "meeting": {
+          "id": "discussion:10",
+          "topic": "Would a short shared reading at the library be worthwhile, and what would make it welcoming?",
+          "venue": "library",
+          "status": "gathering",
+          "proposedRole": "facilitator",
+          "ownMode": "off",
+          "ownTurn": false
+        },
+        "perceivedCues": [],
+        "receivedTurns": [],
+        "availableActions": [
+          {
+            "kind": "accept",
+            "label": "Accept the invitation and facilitate"
+          },
+          {
+            "kind": "decline",
+            "label": "Decline the invitation"
+          }
+        ]
+      },
+      "promptCharacters": 4270,
+      "promptSha256": "1c0fe99271454f484e56038fb737a056850d60d686f38d06ad2c4f3539b35658",
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 3649,
+          "actualTokens": 1233,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1218,
+            "outputTokens": 15,
+            "reasoningTokens": 0,
+            "responseCharacters": 51,
+            "invalidReason": null
+          }
+        }
+      ],
+      "transmissions": 1,
+      "reportedCostUSD": 0,
+      "elapsedMs": 3661,
+      "ok": true,
+      "rawDecisionJSON": "{\"task\":\"discussion\",\"decision\":{\"kind\":\"decline\"}}",
+      "decision": {
+        "kind": "decline"
+      },
+      "result": {
+        "ok": true,
+        "message": "Meeting action recorded.",
+        "meetingId": "discussion:10"
+      }
+    }
+  ],
+  "speechAudits": [],
+  "playerAttention": [],
+  "stopReason": "The proposed facilitator declined. This meeting will not proceed.",
+  "setup": {
+    "positions": [
+      {
+        "id": "kevin",
+        "tile": {
+          "x": 10,
+          "y": 21
+        }
+      },
+      {
+        "id": "arwyn",
+        "tile": {
+          "x": 44,
+          "y": 21
+        }
+      },
+      {
+        "id": "northern",
+        "tile": {
+          "x": 42,
+          "y": 21
+        }
+      },
+      {
+        "id": "baba",
+        "tile": {
+          "x": 42,
+          "y": 22
+        }
+      },
+      {
+        "id": "sub",
+        "tile": {
+          "x": 43,
+          "y": 20
+        }
+      },
+      {
+        "id": "player",
+        "tile": {
+          "x": 43,
+          "y": 22
+        }
+      },
+      {
+        "id": "data",
+        "tile": {
+          "x": 38,
+          "y": 20
+        }
+      },
+      {
+        "id": "amelia",
+        "tile": {
+          "x": 28,
+          "y": 20
+        }
+      }
+    ],
+    "npcChoices": "Invitations delivered by the player; all acceptance, attention and speech remain AI choices",
+    "observer": "Player initially off; joins after first actual speech and stops after second if those turns occur",
+    "nearbyNonmember": "baba",
+    "gameTime": {
+      "day": 1,
+      "minute": 420
+    }
+  },
+  "finishedAt": "2026-10-22T16:04:19.734Z",
+  "aiWaitMs": 3661,
+  "meeting": {
+    "id": "discussion:10",
+    "revision": 10,
+    "epoch": 2,
+    "topic": "Would a short shared reading at the library be worthwhile, and what would make it welcoming?",
+    "venue": "library",
+    "facilitator": "northern",
+    "status": "closed",
+    "reason": "The proposed facilitator declined. This meeting will not proceed.",
+    "createdAt": {
+      "day": 1,
+      "minute": 420
+    },
+    "members": [
+      {
+        "id": "northern",
+        "invitation": "delivered",
+        "choice": "declined",
+        "role": "facilitator",
+        "revision": 4,
+        "mode": "off",
+        "arrived": false,
+        "decisionNeeded": false,
+        "noticedCue": true
+      },
+      {
+        "id": "arwyn",
+        "invitation": "delivered",
+        "choice": "pending",
+        "role": "participant",
+        "revision": 3,
+        "mode": "off",
+        "arrived": false,
+        "decisionNeeded": false,
+        "noticedCue": true
+      },
+      {
+        "id": "sub",
+        "invitation": "delivered",
+        "choice": "pending",
+        "role": "participant",
+        "revision": 3,
+        "mode": "off",
+        "arrived": false,
+        "decisionNeeded": false,
+        "noticedCue": true
+      },
+      {
+        "id": "player",
+        "invitation": "delivered",
+        "choice": "accepted",
+        "role": "participant",
+        "revision": 2,
+        "mode": "off",
+        "arrived": true,
+        "decisionNeeded": false,
+        "noticedCue": false
+      }
+    ],
+    "queue": [],
+    "floor": null,
+    "utterances": [],
+    "decisions": 1,
+    "usage": {
+      "requests": 1,
+      "providerAttempts": 1,
+      "attemptsUnknown": 0,
+      "knownTokens": 1233,
+      "tokenSamples": 1,
+      "tokensUnknown": 0,
+      "elapsedMs": 3661,
+      "failures": 0
+    },
+    "pending": null,
+    "commands": [
+      "operator:0:invite:northern",
+      "operator:0:invite:arwyn",
+      "operator:0:invite:sub",
+      "discussion:10:1:northern:3:decision"
+    ]
+  },
+  "financeUnchanged": true,
+  "memoryKnowledge": [
+    {
+      "id": "kevin",
+      "receivedTurnIds": [],
+      "newMemories": []
+    },
+    {
+      "id": "arwyn",
+      "receivedTurnIds": [],
+      "newMemories": [
+        {
+          "id": "m12",
+          "day": 1,
+          "minute": 420,
+          "type": "observe",
+          "text": "Observer invited me to a library discussion: Would a short shared reading at the library be worthwhile, and what would make it welcoming?. This is an invitation, not an attendance commitment.",
+          "importance": 5,
+          "keywords": [
+            "observer",
+            "invited",
+            "library",
+            "discussion",
+            "short",
+            "shared",
+            "reading",
+            "worthwhile",
+            "make",
+            "welcoming",
+            "invitation",
+            "attendance",
+            "commitment"
+          ],
+          "source": "statement"
+        }
+      ]
+    },
+    {
+      "id": "northern",
+      "receivedTurnIds": [],
+      "newMemories": [
+        {
+          "id": "m11",
+          "day": 1,
+          "minute": 420,
+          "type": "observe",
+          "text": "Observer invited me to a library discussion: Would a short shared reading at the library be worthwhile, and what would make it welcoming?. This is an invitation, not an attendance commitment.",
+          "importance": 5,
+          "keywords": [
+            "observer",
+            "invited",
+            "library",
+            "discussion",
+            "short",
+            "shared",
+            "reading",
+            "worthwhile",
+            "make",
+            "welcoming",
+            "invitation",
+            "attendance",
+            "commitment"
+          ],
+          "source": "statement"
+        }
+      ]
+    },
+    {
+      "id": "baba",
+      "receivedTurnIds": [],
+      "newMemories": []
+    },
+    {
+      "id": "sub",
+      "receivedTurnIds": [],
+      "newMemories": [
+        {
+          "id": "m13",
+          "day": 1,
+          "minute": 420,
+          "type": "observe",
+          "text": "Observer invited me to a library discussion: Would a short shared reading at the library be worthwhile, and what would make it welcoming?. This is an invitation, not an attendance commitment.",
+          "importance": 5,
+          "keywords": [
+            "observer",
+            "invited",
+            "library",
+            "discussion",
+            "short",
+            "shared",
+            "reading",
+            "worthwhile",
+            "make",
+            "welcoming",
+            "invitation",
+            "attendance",
+            "commitment"
+          ],
+          "source": "statement"
+        }
+      ]
+    },
+    {
+      "id": "player",
+      "receivedTurnIds": [],
+      "newMemories": []
+    },
+    {
+      "id": "data",
+      "receivedTurnIds": [],
+      "newMemories": []
+    },
+    {
+      "id": "amelia",
+      "receivedTurnIds": [],
+      "newMemories": []
+    }
+  ],
+  "saveRoundTrip": true,
+  "reloadKnowledgeUnchanged": true,
+  "reloadAudit": {
+    "meetingId": "discussion:10",
+    "unchangedUtteranceIds": [],
+    "observations": [
+      {
+        "actor": "kevin",
+        "receivedTurnIds": []
+      },
+      {
+        "actor": "arwyn",
+        "receivedTurnIds": []
+      },
+      {
+        "actor": "northern",
+        "receivedTurnIds": []
+      },
+      {
+        "actor": "baba",
+        "receivedTurnIds": []
+      },
+      {
+        "actor": "sub",
+        "receivedTurnIds": []
+      },
+      {
+        "actor": "player",
+        "receivedTurnIds": []
+      },
+      {
+        "actor": "data",
+        "receivedTurnIds": []
+      },
+      {
+        "actor": "amelia",
+        "receivedTurnIds": []
+      }
+    ],
+    "knowledgeBackfilled": false
+  },
+  "hearingQualification": {
+    "actualSpokenTurns": 0,
+    "independentlyAuditedTurns": 0,
+    "onlyOptedInResidentsReceivedObservedSpeech": null,
+    "nearbyBabaExcluded": null,
+    "playerExcludedBeforeListening": null,
+    "playerReceivedAfterJoining": null,
+    "playerExcludedAfterStopping": null,
+    "unexercisedCasesRemainUnqualified": true
+  },
+  "outcome": "no-speech-hearing-unqualified",
+  "ledger": {
+    "budget": [
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      }
+    ],
+    "pool": [
+      {
+        "kind": "act",
+        "actual_tokens": 1233,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 3649,
+        "settled": true
+      }
+    ]
+  },
+  "afterAccount": {
+    "at": "2026-10-22T16:04:19.976Z",
+    "freeTier": true,
+    "freeRequests": {
+      "used": 25,
+      "limit": 50,
+      "remaining": 25
+    },
+    "monetaryUsageToday": 0
+  }
+}

@@ -47,6 +47,8 @@ export class EphemeralMindBudgetStore implements BudgetStore {
     const sum = (entries: Entry[], field: "calls" | "microusd") =>
       entries.reduce((total, entry) => total + entry[field], 0);
     const background = request.kind !== "player";
+    const actionLimit = policy.actionConcurrent ?? 0;
+    const actionLane = request.kind === "act" && actionLimit > 0;
     if (
       sum(all, "calls") + request.calls >
         policy.dailyCalls - (background ? policy.interactiveReserveCalls : 0) ||
@@ -61,8 +63,12 @@ export class EphemeralMindBudgetStore implements BudgetStore {
         request.calls >
         policy.playerMinuteCalls - (background ? policy.playerInteractiveReserveMinuteCalls : 0) ||
       live.length >= policy.concurrent ||
+      (actionLane && live.filter((entry) => entry.kind === "act").length >= actionLimit) ||
       (background &&
-        live.filter((entry) => entry.kind !== "player").length >= policy.backgroundConcurrent)
+        !actionLane &&
+        live.filter(
+          (entry) => entry.kind !== "player" && (actionLimit === 0 || entry.kind !== "act"),
+        ).length >= policy.backgroundConcurrent)
     )
       return null;
     const entry: Entry = {
