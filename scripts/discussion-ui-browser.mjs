@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
+import axe from "axe-core";
 import { chromium } from "playwright";
 
 // Disposable towns and intercepted browser transport only. Never attach to a
@@ -101,6 +102,32 @@ async function availableDecision(page) {
 async function capture(page, name) {
   await page.screenshot({ path: join(out, name), fullPage: false });
 }
+async function auditMeeting(page, result, name) {
+  if (!(await page.evaluate(() => Boolean(window.axe))))
+    await page.addScriptTag({ content: axe.source });
+  const audit = await page.evaluate(async () => {
+    const panel = document.querySelector(".discussion-panel");
+    if (!panel) throw new Error("The meeting panel must be present for its accessibility audit");
+    const result = await window.axe.run(panel, {
+      runOnly: {
+        type: "tag",
+        values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"],
+      },
+      resultTypes: ["violations", "incomplete"],
+    });
+    const compact = (rule) => ({
+      id: rule.id,
+      impact: rule.impact,
+      nodes: rule.nodes.map(({ target, failureSummary }) => ({ target, failureSummary })),
+    });
+    return {
+      violations: result.violations.map(compact),
+      incomplete: result.incomplete.map(compact),
+    };
+  });
+  (result.audits ??= []).push({ name, ...audit });
+  assert.deepEqual(audit.violations, [], `${name} accessibility`);
+}
 async function draftField(page) {
   const field = page.getByLabel("Your line to this library discussion", { exact: true });
   if (!(await field.isVisible()))
@@ -155,6 +182,7 @@ try {
     await page
       .getByLabel("Propose one topic", { exact: true })
       .fill("A shared library activity — synthetic test");
+    await auditMeeting(page, result, "meeting proposal");
     await page.getByRole("button", { name: "Propose library meeting", exact: true }).click();
     await page.waitForFunction(() =>
       Boolean(
@@ -225,6 +253,7 @@ try {
     result.assertions.push(
       "Mocked NPC decisions use the actual protocol/executor; nearby inattentive player and Baba do not hear",
     );
+    await auditMeeting(page, result, "recorded meeting transcript");
     await capture(page, `${viewport.name}-first-meeting.png`);
 
     await page.getByRole("button", { name: "Join and listen", exact: true }).click();
@@ -242,6 +271,7 @@ try {
     );
     const draft = await draftField(page);
     await draft.fill("Could we consider a short public reading?");
+    await auditMeeting(page, result, "expanded meeting composer");
     const second = await requestDecision(page);
     await page.getByRole("button", { name: "Stop listening", exact: true }).click();
     await page.waitForFunction(

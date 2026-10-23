@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "./styles/game-ui/foundation.css";
+@import "./styles/game-ui/layouts.css";
 
 .manuscript-tools {
   border-block: 1px solid #493064;
