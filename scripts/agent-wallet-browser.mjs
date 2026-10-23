@@ -189,6 +189,7 @@ async function contextFor(viewport, journey, owner, saved) {
     (addresses) => {
       const state = (window.__agentWalletMock = {
         index: 0,
+        calls: [],
         pending: false,
         jobs: [],
         connected: false,
@@ -213,6 +214,7 @@ async function contextFor(viewport, journey, owner, saved) {
       }
       window.LeatherProvider = {
         async request(method, params) {
+          state.calls.push(method);
           await window.__agentQaCall(method);
           const index = state.index;
           if (method === "getAddresses")
@@ -327,11 +329,21 @@ async function verify(page, role, index) {
   await page.evaluate((value) => {
     window.__agentWalletMock.index = value;
   }, index);
+  const previousCalls =
+    walletId === "leather"
+      ? await page.evaluate(() => window.__agentWalletMock.calls.length)
+      : null;
   await panel(page).getByRole("button", { name: "Verify external address", exact: true }).click();
   await panel(page)
     .getByText(/External address verified for .*funding is unpublished\./)
     .waitFor();
   await panel(page).getByText(wallets[index].address, { exact: true }).waitFor();
+  if (walletId === "leather")
+    assert.deepEqual(
+      await page.evaluate((start) => window.__agentWalletMock.calls.slice(start), previousCalls),
+      ["getAddresses", "signMessage"],
+      "Each receiving-address proof needs one address approval and one signature",
+    );
 }
 async function importTown(page, raw, fork = false) {
   await page.getByLabel("Import a town file", { exact: true }).setInputFiles({
