@@ -193,6 +193,201 @@ function connectButton(page) {
 async function selectWallet(page, selected = walletId) {
   await panel(page).getByRole("combobox", { name: "Wallet", exact: true }).selectOption(selected);
 }
+async function assertPollingKeepsEditing(page, result, activeHeadStats) {
+  const bounded = async (promise) => {
+    let timer;
+    try {
+      return await Promise.race([
+        promise,
+        new Promise((_, reject) => {
+          timer = setTimeout(
+            () => reject(new Error("The held stamp request did not arrive")),
+            15_000,
+          );
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+  await page.evaluate(() => (window.__stampQaTimers.manualPolling = true));
+  const isServerFunction = (request) =>
+    new URL(request.url()).origin === target.origin &&
+    new URL(request.url()).pathname.includes("_serverFn/");
+  // Discover the built function ID through its real UI call instead of pinning a build hash.
+  const viewRequest = page.waitForRequest(
+    (request) => isServerFunction(request) && request.method() === "GET",
+  );
+  await panel(page).getByRole("button", { name: "Refresh holdings", exact: true }).click();
+  const viewPath = new URL((await viewRequest).url()).pathname;
+  await panel(page)
+    .getByText("Your holdings have been checked. Choose a stamp to preview it.", { exact: true })
+    .waitFor();
+
+  let mode = "renew";
+  let renewals = 0;
+  let applyPath;
+  let release;
+  let captured;
+  let completed;
+  let heldRequest;
+  function nextHeldRequest() {
+    const ready = new Promise((resolve) => (captured = resolve));
+    const done = new Promise((resolve) => (completed = resolve));
+    const gate = new Promise((resolve) => (release = resolve));
+    return { ready, done, gate };
+  }
+  let held = nextHeldRequest();
+  const intercept = async (route) => {
+    const request = route.request();
+    const pathname = new URL(request.url()).pathname;
+    if (request.method() === "GET" && pathname === viewPath) {
+      const response = await route.fetch();
+      const body = await response.text();
+      if (mode === "renew") {
+        renewals++;
+        assert.ok(body.includes("Stamp #4243"), "The real view must contain the selected stamp");
+        const headers = response.headers();
+        delete headers["content-length"];
+        delete headers["content-encoding"];
+        return route.fulfill({
+          response,
+          headers,
+          body: body.replaceAll("Stamp #4243", `Stamp #4243 · renewal ${renewals}`),
+        });
+      }
+      heldRequest = request;
+      captured();
+      await held.gate;
+      // A superseding edit aborts this HTTP request. Releasing its old response must be harmless.
+      await route.fulfill({ response, body }).catch((error) => {
+        if (!request.failure()) throw error;
+      });
+      completed();
+      return;
+    }
+    if (mode === "timeout" && request.method() === "POST" && pathname === applyPath) {
+      heldRequest = request;
+      captured();
+      await held.gate;
+      await route.abort("aborted").catch((error) => {
+        if (!request.failure()) throw error;
+      });
+      completed();
+      return;
+    }
+    return route.fallback();
+  };
+  await page.route("**/*", intercept);
+  const poll = () =>
+    page.evaluate(() => {
+      const count = window.__stampQaTimers.poll();
+      if (count !== 1) throw new Error(`Expected one live stamp polling interval; found ${count}`);
+    });
+  try {
+    // The fixture invokes the actual registered 60-second callback without changing Date/leases.
+    await poll();
+    await panel(page)
+      .getByRole("button", { name: /Stamp #4243 · renewal 1/ })
+      .waitFor();
+    assert.equal(
+      await panel(page).getByRole("combobox", { name: "Wallet", exact: true }).inputValue(),
+      walletId,
+    );
+    result.assertions.push(`${walletId} remains the selected wallet when its periodic view renews`);
+
+    mode = "hold";
+    await poll();
+    await bounded(held.ready);
+    const zoom = panel(page).getByRole("slider", { name: /Zoom/ });
+    const portrait = panel(page).getByRole("radio", {
+      name: "Portrait only · original sprite head",
+      exact: true,
+    });
+    assert.equal(await zoom.isEnabled(), true);
+    assert.equal(await portrait.isEnabled(), true);
+    assert.equal(await panel(page).getByRole("button", { name: "Cancel request" }).count(), 0);
+    await zoom.focus();
+    await page.keyboard.press("Home");
+    await page.keyboard.press("ArrowRight");
+    const draftZoom = await zoom.inputValue();
+    assert.notEqual(draftZoom, "4", "Crop edits must land while the refresh is pending");
+    await portrait.check();
+    const applying = page.waitForRequest(
+      (request) => isServerFunction(request) && request.method() === "POST",
+    );
+    await panel(page).getByRole("button", { name: "Apply appearance", exact: true }).click();
+    applyPath = new URL((await applying).url()).pathname;
+    await panel(page)
+      .getByText("Your stamp portrait is active; your original sprite head stays in place.", {
+        exact: true,
+      })
+      .waitFor();
+    release();
+    await bounded(held.done);
+    await page.waitForTimeout(100);
+    assert.ok(heldRequest.failure(), "Applying must abort the superseded view request");
+    assert.equal(await zoom.inputValue(), draftZoom);
+    assert.ok(
+      (await headPixelStats(page)).pinkPixels < activeHeadStats.pinkPixels,
+      "The released stale head response must not overwrite the newly applied portrait",
+    );
+    result.assertions.push(
+      "pending periodic checks leave mode/crop editable and preserve draft edits",
+      "Apply supersedes a periodic check and its late response cannot restore the old head",
+    );
+
+    // A second accepted renewal proves the old request did not retain the operation lock.
+    mode = "renew";
+    await poll();
+    await panel(page)
+      .getByRole("button", { name: /Stamp #4243 · renewal 2/ })
+      .waitFor();
+
+    mode = "timeout";
+    held = nextHeldRequest();
+    await panel(page).getByRole("radio", { name: "Stamp head and portrait", exact: true }).check();
+    await page.evaluate(() => (window.__stampQaTimers.captureService = true));
+    await panel(page).getByRole("button", { name: "Apply appearance", exact: true }).click();
+    await bounded(held.ready);
+    await page.evaluate(() => {
+      window.__stampQaTimers.captureService = false;
+      const count = window.__stampQaTimers.expireService();
+      if (count !== 1) throw new Error(`Expected one 30-second service deadline; found ${count}`);
+    });
+    await panel(page)
+      .getByRole("alert")
+      .filter({ hasText: "This request took too long" })
+      .waitFor();
+    assert.equal(
+      await panel(page).getByRole("button", { name: "Apply appearance", exact: true }).isEnabled(),
+      true,
+    );
+    assert.equal(await zoom.inputValue(), draftZoom);
+    assert.equal(await imagePreview(page).count(), 1);
+    release();
+    await bounded(held.done);
+    result.assertions.push("a stalled Apply releases controls at its deadline and keeps the draft");
+  } finally {
+    release?.();
+    await page.evaluate(() => {
+      window.__stampQaTimers.captureService = false;
+      window.__stampQaTimers.manualPolling = false;
+    });
+    await page.unroute("**/*", intercept);
+  }
+  // Restore the existing journey's chosen crop/head so its remaining pixel checks stay meaningful.
+  await panel(page).getByRole("slider", { name: /Zoom/ }).focus();
+  await page.keyboard.press("End");
+  await panel(page).getByRole("slider", { name: "Horizontal position", exact: true }).focus();
+  await page.keyboard.press("End");
+  await panel(page).getByRole("button", { name: "Apply appearance", exact: true }).click();
+  await panel(page).getByText("Your stamp head is active.", { exact: true }).waitFor();
+  await stampTool(page).getByRole("img", { name: "Stamp #4243", exact: true }).waitFor();
+}
+function imagePreview(page) {
+  return panel(page).getByRole("img", { name: "Preview of Stamp #4243", exact: true });
+}
 async function verifyAndApplyStamp(page) {
   await selectWallet(page);
   await page.evaluate(() => {
@@ -423,6 +618,56 @@ try {
       return route.fulfill({ status: 200, contentType: "text/css", body: "" });
     });
     await installWallet(context, result);
+    await context.addInitScript(() => {
+      const nativeInterval = window.setInterval.bind(window);
+      const nativeClearInterval = window.clearInterval.bind(window);
+      const nativeTimeout = window.setTimeout.bind(window);
+      const nativeClearTimeout = window.clearTimeout.bind(window);
+      const polls = new Map();
+      const deadlines = new Map();
+      const timers = (window.__stampQaTimers = {
+        captureService: false,
+        manualPolling: false,
+        poll() {
+          const callbacks = [...polls.values()];
+          for (const callback of callbacks) callback();
+          return callbacks.length;
+        },
+        expireService() {
+          const pending = [...deadlines];
+          deadlines.clear();
+          for (const [timer, callback] of pending) {
+            nativeClearTimeout(timer);
+            callback();
+          }
+          return pending.length;
+        },
+      });
+      window.setInterval = (callback, delay, ...args) => {
+        if (delay !== 60_000 || typeof callback !== "function")
+          return nativeInterval(callback, delay, ...args);
+        const invoke = () => callback(...args);
+        const timer = nativeInterval(() => {
+          if (!timers.manualPolling) invoke();
+        }, delay);
+        polls.set(timer, invoke);
+        return timer;
+      };
+      window.clearInterval = (timer) => {
+        polls.delete(timer);
+        nativeClearInterval(timer);
+      };
+      window.setTimeout = (callback, delay, ...args) => {
+        const timer = nativeTimeout(callback, delay, ...args);
+        if (timers.captureService && delay === 30_000 && typeof callback === "function")
+          deadlines.set(timer, () => callback(...args));
+        return timer;
+      };
+      window.clearTimeout = (timer) => {
+        deadlines.delete(timer);
+        nativeClearTimeout(timer);
+      };
+    });
     const page = (activePage = await context.newPage());
     page.on("request", (request) => {
       if (request.method() === "POST" && new URL(request.url()).origin === target.origin)
@@ -434,7 +679,7 @@ try {
       if (message.type() !== "error") return;
       if (
         expectingAbort &&
-        /Failed to load resource|Failed to fetch|net::ERR_FAILED/.test(message.text())
+        /Failed to load resource|Failed to fetch|net::ERR_(?:FAILED|ABORTED)/.test(message.text())
       )
         result.expectedAbortedRequests.push(message.text());
       else result.errors.push(message.text());
@@ -524,8 +769,17 @@ try {
     await page.evaluate(() => {
       window.__stampWalletMock.mode = "approve";
     });
+    const walletCallsBeforeConnect = result.walletCalls.length;
     await connectButton(page).click();
     await panel(page).getByRole("heading", { name: "Choose a stamp", exact: true }).waitFor();
+    if (walletId === "leather") {
+      assert.deepEqual(result.walletCalls.slice(walletCallsBeforeConnect), [
+        "leather:getAddresses",
+        "leather:signMessage",
+      ]);
+      result.assertions.push("Leather connects with one address request and one message signature");
+    }
+    const walletCallsAfterConnect = result.walletCalls.length;
     await panel(page)
       .getByText(/^Verified address/)
       .waitFor();
@@ -583,6 +837,21 @@ try {
         result.walletCalls.includes("wonder:signMessage"),
         "The invalid wallet-generated connect proof must be ignored in favor of a fresh server challenge",
       );
+    }
+
+    expectingAbort = true;
+    try {
+      await assertPollingKeepsEditing(page, result, headStats);
+    } finally {
+      expectingAbort = false;
+    }
+    if (walletId === "leather") {
+      assert.equal(
+        result.walletCalls.length,
+        walletCallsAfterConnect,
+        "Holdings, preview, crop, Apply and periodic renewal must not reopen Leather",
+      );
+      result.assertions.push("stamp editing and holdings renewals need no new Leather approvals");
     }
 
     await panel(page)

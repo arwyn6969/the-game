@@ -121,34 +121,53 @@ function install(provider, leather) {
 }
 function leather() {
   const calls = [];
+  const listeners = new Map();
+  const state = {
+    active: first,
+    entry: {
+      address: first.address,
+      symbol: "BTC",
+      type: "p2wpkh",
+      network: "mainnet",
+      derivationPath: "m/84'/0'/3'/0/0",
+    },
+  };
   const provider = {
     async request(method, params) {
       calls.push([method, params]);
       if (method === "getAddresses")
         return {
           result: {
-            addresses: [
-              {
-                address: first.address,
-                symbol: "BTC",
-                type: "p2wpkh",
-                network: "mainnet",
-                derivationPath: "m/84'/0'/3'/0/0",
-              },
-            ],
+            addresses: [{ ...state.entry }],
           },
         };
       assert.equal(method, "signMessage");
+      const signer = params.account === 3 ? first : state.active;
       return {
         result: {
-          address: first.address,
+          address: signer.address,
           message: params.message,
-          signature: first.sign(params.message),
+          signature: signer.sign(params.message),
         },
       };
     },
+    on(event, callback) {
+      const set = listeners.get(event) ?? new Set();
+      set.add(callback);
+      listeners.set(event, set);
+    },
+    removeListener(event, callback) {
+      listeners.get(event)?.delete(callback);
+    },
   };
-  return { provider, calls };
+  return {
+    provider,
+    calls,
+    state,
+    emit(event) {
+      for (const callback of listeners.get(event) ?? []) callback();
+    },
+  };
 }
 
 test("Wonder connects through the documented account object and ignores its automatic proof", async () => {
@@ -190,11 +209,188 @@ test("wallet dispatch preserves Leather's selected account and server-verifiable
   assert.deepEqual(selected, { walletId: "leather", address: first.address, account: 3 });
   assert.equal(verifyStampProof(proof.address, proof.message, proof.signature), true);
   assert.deepEqual(wallet.calls.map(([method]) => method), [
-    "getAddresses", "getAddresses", "signMessage", "getAddresses",
+    "getAddresses", "signMessage",
   ]);
-  assert.deepEqual(wallet.calls[2][1], {
+  assert.deepEqual(wallet.calls[1][1], {
     type: "bip322", message: request.message, paymentType: "p2wpkh", network: "mainnet", account: 3,
   });
+});
+
+test("Leather pins the initially approved account when its active UI account silently changes", async () => {
+  const wallet = leather();
+  delete wallet.provider.on;
+  install(undefined, wallet.provider);
+  const selected = await getWalletAddress("leather");
+  // This provider has no account events: the selected account remains the requested signer.
+  wallet.state.active = second;
+  wallet.state.entry = {
+    ...wallet.state.entry,
+    address: second.address,
+    derivationPath: "m/84'/0'/4'/0/0",
+  };
+  const proof = await signWalletChallenge("leather", challenge(), selected);
+  assert.equal(proof.address, first.address);
+  assert.equal(verifyStampProof(proof.address, proof.message, proof.signature), true);
+  assert.equal(wallet.calls[1][1].account, 3);
+  assert.deepEqual(
+    wallet.calls.map(([method]) => method),
+    ["getAddresses", "signMessage"],
+  );
+});
+
+test("Leather without an account path never guesses an account or accepts a different signer", async () => {
+  for (const changedAccount of [false, true]) {
+    const wallet = leather();
+    delete wallet.state.entry.derivationPath;
+    install(undefined, wallet.provider);
+    const selected = await getWalletAddress("leather");
+    assert.equal(Object.hasOwn(selected, "account"), false);
+    if (changedAccount) wallet.state.active = second;
+    const pending = signWalletChallenge("leather", challenge(), selected);
+    if (changedAccount) await assert.rejects(pending, code("invalid"));
+    else {
+      const proof = await pending;
+      assert.equal(verifyStampProof(proof.address, proof.message, proof.signature), true);
+    }
+    assert.equal(Object.hasOwn(wallet.calls[1][1], "account"), false);
+    assert.deepEqual(
+      wallet.calls.map(([method]) => method),
+      ["getAddresses", "signMessage"],
+    );
+  }
+});
+
+test("Leather discards account and disconnect events before or during a signature", async () => {
+  for (const event of ["accountsChanged", "disconnect"])
+    for (const phase of ["before", "during"]) {
+      const wallet = leather();
+      install(undefined, wallet.provider);
+      const selected = await getWalletAddress("leather");
+      if (phase === "before") wallet.emit(event);
+      else {
+        const request = wallet.provider.request;
+        wallet.provider.request = async (...args) => {
+          const proof = await request(...args);
+          wallet.emit(event);
+          return proof;
+        };
+      }
+      await assert.rejects(signWalletChallenge("leather", challenge(), selected), code("changed"));
+      assert.deepEqual(
+        wallet.calls.map(([method]) => method),
+        phase === "before" ? ["getAddresses"] : ["getAddresses", "signMessage"],
+      );
+    }
+});
+
+test("Leather provider replacement cannot accept an earlier selection or its late proof", async () => {
+  for (const phase of ["before", "during"]) {
+    const wallet = leather();
+    const replacement = leather();
+    const otherWallet = wonder();
+    install(otherWallet.provider, wallet.provider);
+    const selected = await getWalletAddress("leather");
+    if (phase === "before") window.LeatherProvider = replacement.provider;
+    else {
+      const request = wallet.provider.request;
+      wallet.provider.request = async (...args) => {
+        const proof = await request(...args);
+        window.LeatherProvider = replacement.provider;
+        return proof;
+      };
+    }
+    await assert.rejects(signWalletChallenge("leather", challenge(), selected), code("changed"));
+    assert.deepEqual(
+      wallet.calls.map(([method]) => method),
+      phase === "before" ? ["getAddresses"] : ["getAddresses", "signMessage"],
+    );
+    assert.deepEqual(replacement.calls, []);
+    assert.deepEqual(otherWallet.calls, []);
+  }
+});
+
+test("cancelled or expired pending Leather proofs cannot complete the simplified connection", async (t) => {
+  for (const outcome of ["cancelled", "expired"]) {
+    const wallet = leather();
+    install(undefined, wallet.provider);
+    const selected = await getWalletAddress("leather");
+    const request = challenge();
+    let complete;
+    wallet.provider.request = (...args) => {
+      wallet.calls.push(args);
+      return new Promise((resolve) => {
+        complete = resolve;
+      });
+    };
+    const abort = new AbortController();
+    const pending = signWalletChallenge("leather", request, selected, { signal: abort.signal });
+    assert.ok(complete, "The signature request must already be pending");
+    if (outcome === "cancelled") abort.abort();
+    else t.mock.method(Date, "now", () => request.expiresAt + 1);
+    complete({
+      result: {
+        address: first.address,
+        message: request.message,
+        signature: first.sign(request.message),
+      },
+    });
+    await assert.rejects(pending, code(outcome));
+    assert.deepEqual(
+      wallet.calls.map(([method]) => method),
+      ["getAddresses", "signMessage"],
+    );
+    t.mock.restoreAll();
+  }
+});
+
+test("copied or forged Leather selections cannot cause another wallet prompt", async () => {
+  const wallet = leather();
+  install(undefined, wallet.provider);
+  const selected = await getWalletAddress("leather");
+  assert.equal(Object.isFrozen(selected), true);
+  for (const forged of [
+    { ...selected },
+    { ...selected, account: 4 },
+    { ...selected, address: second.address },
+  ])
+    await assert.rejects(signWalletChallenge("leather", challenge(), forged), code("changed"));
+  assert.deepEqual(
+    wallet.calls.map(([method]) => method),
+    ["getAddresses"],
+  );
+});
+
+test("a Leather signature must still echo the exact challenge and pass the server verifier", async () => {
+  for (const changed of ["address", "message", "signature"]) {
+    const wallet = leather();
+    install(undefined, wallet.provider);
+    const selected = await getWalletAddress("leather");
+    const request = challenge();
+    wallet.provider.request = async (method, params) => {
+      wallet.calls.push([method, params]);
+      return {
+        result: {
+          address: changed === "address" ? second.address : first.address,
+          message: changed === "message" ? `${request.message} altered` : request.message,
+          signature: second.sign(request.message),
+        },
+      };
+    };
+    const pending = signWalletChallenge("leather", request, selected);
+    if (changed !== "signature") await assert.rejects(pending, code("invalid"));
+    else {
+      const proof = await pending;
+      assert.equal(
+        verifyStampProof(proof.address, proof.message, proof.signature),
+        false,
+        "An address echo cannot make another key's signature authoritative",
+      );
+    }
+    assert.deepEqual(
+      wallet.calls.map(([method]) => method),
+      ["getAddresses", "signMessage"],
+    );
+  }
 });
 
 test("detection, watching and unavailable Wonder never invoke another installed wallet", async () => {
