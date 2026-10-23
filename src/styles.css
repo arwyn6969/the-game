@@ -2084,3 +2084,10 @@ textarea.field {
     padding: 0 0.75rem 0.5rem;
   }
 }
+
+@media (max-width: 360px) {
+  .character-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
