@@ -1,0 +1,178 @@
+{
+  "auditedAt": "2026-10-23T22:41:47.159Z",
+  "method": "read-only inspection of actual downloaded UI exports and recorded UI request starts",
+  "executionSource": "2b2b8a4dbb7a62b3d5db20b8f2aca4ec4396a7f1",
+  "setupCorrection": {
+    "beforeAnyModelRequest": true,
+    "onlyChange": "town.paused=true",
+    "preCorrectionGameTime": {
+      "day": 1,
+      "minute": 432
+    },
+    "actualTestGameTime": {
+      "day": 1,
+      "minute": 420
+    },
+    "originalFixtureRetained": true,
+    "originalPreparationHashVerified": true
+  },
+  "normalScheduledActors": [
+    "arwyn",
+    "northern",
+    "sub",
+    "arwyn"
+  ],
+  "actualChoices": [
+    {
+      "actor": "arwyn",
+      "choice": "accepted"
+    },
+    {
+      "actor": "northern",
+      "choice": "declined"
+    },
+    {
+      "actor": "sub",
+      "choice": "accepted"
+    },
+    {
+      "actor": "arwyn",
+      "choice": "no attention decision committed; invalid response"
+    }
+  ],
+  "finalMembers": [
+    {
+      "id": "arwyn",
+      "choice": "accepted",
+      "mode": "off",
+      "arrived": true
+    },
+    {
+      "id": "northern",
+      "choice": "declined",
+      "mode": "off",
+      "arrived": false
+    },
+    {
+      "id": "sub",
+      "choice": "accepted",
+      "mode": "off",
+      "arrived": true
+    },
+    {
+      "id": "player",
+      "choice": "accepted",
+      "mode": "off",
+      "arrived": true
+    }
+  ],
+  "requests": {
+    "actualUiStarts": 4,
+    "authorizedMaximum": 12,
+    "fraction": "4/12",
+    "recordedUiStartSpacingMs": [
+      112394,
+      52975,
+      49883
+    ],
+    "minimumRecordedUiStartSpacingMs": 49883,
+    "atLeast31Seconds": true,
+    "providerTransmissionTiming": "Not independently read from SQL by this audit"
+  },
+  "usage": {
+    "requests": 4,
+    "providerAttempts": 4,
+    "attemptsUnknown": 0,
+    "knownTokens": 4927,
+    "tokenSamples": 4,
+    "tokensUnknown": 0,
+    "elapsedMs": 12141,
+    "failures": 1
+  },
+  "speech": {
+    "actualUtterances": 0,
+    "reconstructedUtterances": 0,
+    "hearingVerdict": "INCONCLUSIVE: no actual speech",
+    "lateJoin": "unqualified",
+    "postStop": "unqualified"
+  },
+  "knowledge": [
+    {
+      "actor": "kevin",
+      "receivedTurnIds": []
+    },
+    {
+      "actor": "arwyn",
+      "receivedTurnIds": []
+    },
+    {
+      "actor": "northern",
+      "receivedTurnIds": []
+    },
+    {
+      "actor": "baba",
+      "receivedTurnIds": []
+    },
+    {
+      "actor": "sub",
+      "receivedTurnIds": []
+    },
+    {
+      "actor": "player",
+      "receivedTurnIds": []
+    },
+    {
+      "actor": "data",
+      "receivedTurnIds": []
+    },
+    {
+      "actor": "amelia",
+      "receivedTurnIds": []
+    }
+  ],
+  "invariants": {
+    "allEightReceivedProjectionsEmpty": true,
+    "allNpcAndPlayerAttentionOff": true,
+    "allResidentMemoriesUnchangedFromActualPostCorrectionBaseline": true,
+    "financeUnchanged": true,
+    "identityUnchanged": true,
+    "positionsUnchanged": true,
+    "pausedGameTimeUnchanged": true,
+    "actualReloadPreservesStateAndKnowledge": true,
+    "noPendingRequest": true
+  },
+  "financialStateSha256": "0b595d37c1ce2c43b061cb4439c92dbfb5e3bd1fa952b8508dae545f666ddd54",
+  "identityStateSha256": "ca71c5730cf05fd8feb62610ed08f4d7cdf75003fec90e5091c7f825c0f03233",
+  "originalEvidenceSha256": {
+    "fixture-town.json": "e0935c1c09e75631b691e67aa3455c5108dfd779865aa70e1a4a4a8b107bec18",
+    "fixture-town-paused.json": "3f54b3ea31ca8ce6e9aa0af2c1712b2d8581e2b832a994c6b7dc81090bf9db09",
+    "pause-correction.json": "515ce649c012e469f72ceedc9db6e50c07e0b17d819324532571fe4fd116576b",
+    "fixture-receipt.json": "960d6337da07022153c2251e6cd840ceedd959f6d716336c56a6e5619b5a52a6",
+    "setup-before-pause-correction.json": "3cf7e4e660ea95d3695d47634cef9acf4b81abf59d0df7b3847d92606abedf3c",
+    "execution.json": "0651ab37c8c6c76ecd44ac45f7ae76c47bdc938418e194cc0532f1fe8a317511",
+    "before-step-01.json": "58dd4f0b51defa8b171f608f06a429b583fe2a9636bdbaf9d333d3ab16b99cbd",
+    "after-step-01.json": "0759ad15a6584958ecacc711ce8dcbf13452bea5f3724ee00320c9061ab4f888",
+    "audit-step-01.json": "01c014b97bedb9d840b777df1b4c59651f6208cfb9ef8ae892a224071ede4f68",
+    "before-step-02.json": "0759ad15a6584958ecacc711ce8dcbf13452bea5f3724ee00320c9061ab4f888",
+    "after-step-02.json": "1ae1a015a7cce3b24b7dcdc0a6d8f511e6aa702c4068f551189c32ea3f0fbdf5",
+    "audit-step-02.json": "28da927e647d375381450487635935a4a198ccf642cb4a4a5de3c7a1eaeffe8e",
+    "before-step-03.json": "1ae1a015a7cce3b24b7dcdc0a6d8f511e6aa702c4068f551189c32ea3f0fbdf5",
+    "after-step-03.json": "036e6f93185fdbf25b0ff07cc34fd3db66fd2c94d36877ca95dab8eb33066761",
+    "audit-step-03.json": "eb632e76b620838b61fbdfd8e6a511a9aacd167b877c40c8a21b94439829872d",
+    "before-step-04.json": "036e6f93185fdbf25b0ff07cc34fd3db66fd2c94d36877ca95dab8eb33066761",
+    "after-step-04.json": "71a131c3d42912a057a7697f23fa8fb855b1b3909b6aa0be7cf6fbf701f61e49",
+    "audit-step-04.json": "4bd9d0a989c58b2f751ec29431037cad23b73147df87dda1cc83ebe055269f8a",
+    "final-town.json": "71a131c3d42912a057a7697f23fa8fb855b1b3909b6aa0be7cf6fbf701f61e49",
+    "reloaded-town.json": "71a131c3d42912a057a7697f23fa8fb855b1b3909b6aa0be7cf6fbf701f61e49",
+    "audit-initial-final-reload.json": "940f4c085e655e7a18efaa2b032950cd4414f79903485545ff4df47bd6a424e3"
+  },
+  "limits": [
+    "No positive hearing, late-joining or post-stop delivery claim is made.",
+    "Initial physical positions were staged; walking/travel was not qualified.",
+    "Provider, SQL charges, $0 cost and settlement are separately verified by the executing operator; this audit does not open a database.",
+    "No actual outgoing prompt capture was supplied; actor knowledge projections are verified from actual exports with the exact core helper."
+  ],
+  "auditProviderCalls": 0,
+  "auditReplayedDecisions": 0,
+  "auditProductionWrites": 0
+}
