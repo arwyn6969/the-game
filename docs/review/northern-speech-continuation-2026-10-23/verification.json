@@ -1,0 +1,45 @@
+{
+  "source": "9574d5fe4a196966b488b7f109c4548ced0e3297",
+  "runtimeSource": "9574d5fe4a196966b488b7f109c4548ced0e3297",
+  "fullTests": {
+    "script": 935,
+    "typed": 55,
+    "passed": true
+  },
+  "focusedPrompt": {
+    "tests": 18,
+    "passed": true
+  },
+  "beforeFinalPrompt": {
+    "source": "712ff75",
+    "townTests": 394,
+    "typecheck": true,
+    "lint": {
+      "errors": 0,
+      "warnings": 1,
+      "inherited": "src/lib/auth/use-current-user.ts:59 unused eslint-disable"
+    },
+    "diagnostics": true,
+    "credentialFreeBuild": true,
+    "databaseURLPresent": false,
+    "migrations": "skipped"
+  },
+  "aiLaneFinalPrompt": {
+    "source": "17c8bc9bfa2815e28a7156dac158ead82972e227",
+    "focusedTests": 45,
+    "typecheck": true,
+    "scopedLint": true,
+    "format": true,
+    "denseKnown1200CharacterBody": "passes unchanged8000 cap"
+  },
+  "browser": {
+    "source": "cbb0506d9e34bcef3dada7c55a9d8e34b9c720c8",
+    "transport": "synthetic only",
+    "viewports": [
+      [1280, 800],
+      [390, 844]
+    ],
+    "receipt": "../manuscript-speech-continuation-2026-10-23/README.md"
+  },
+  "scope": "One new user-authorized real-model run; no retry, restart, merge or deployment"
+}
