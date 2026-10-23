@@ -27,7 +27,7 @@ test("parsed decisions survive clock ticks and a saved journey without per-step 
   const book = () => town.physicalItems.items[0];
   const session = () => town.physicalItems.session;
   actor().tile = { ...ANCHORS.library };
-  assert.equal(physical.startPhysicalSession(town, "northern", 6).ok, true);
+  assert.equal(physical.startPhysicalSession(town, "northern", 8).ok, true);
 
   // These are synthetic transport responses, not actual provider measurements.
   function respond(decision) {
@@ -82,10 +82,24 @@ test("parsed decisions survive clock ticks and a saved journey without per-step 
   const spoken = "I wrote a squirrel a leading role. It has not accepted yet.";
   respond({ kind: "speak", text: spoken });
   assert.equal(actor().bubble.text, spoken);
-  assert.equal(physical.nextPhysicalJob(town), null, "speech parks the bounded trial");
+  assert.ok(physical.nextPhysicalJob(town), "speech permits the next self-chosen action");
+  assert.deepEqual(book().location, { kind: "held", holder: "northern" });
+  town = parseTownFile(exportTown(town));
+  assert.ok(town);
+  assert.ok(physical.nextPhysicalJob(town), "a completed speech remains complete after reload");
   assert.equal(session().usage.requests, 4);
   assert.equal(session().usage.providerAttempts, 4);
   assert.equal(session().usage.knownTokens, 400);
+  respond(itemDecision("put-down"));
+  assert.equal(book().location.kind, "ground");
+  assert.equal(book().text, original);
+  respond({ kind: "wait" });
+  assert.equal(physical.nextPhysicalJob(town), null, "explicit wait parks the bounded trial");
+  assert.equal(session().waiting, true);
+  assert.equal(session().enabled, true, "wait parks before the eight-request cap");
+  assert.equal(session().usage.requests, 6);
+  assert.equal(session().usage.providerAttempts, 6);
+  assert.equal(session().usage.knownTokens, 600);
   assert.equal(session().usage.attemptsUnknown, 0);
   assert.equal(session().usage.tokensUnknown, 0);
   assert.deepEqual(physical.validatePhysicalItems(town), []);

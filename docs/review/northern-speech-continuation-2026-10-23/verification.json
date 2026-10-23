@@ -1,0 +1,83 @@
+{
+  "source": "9574d5fe4a196966b488b7f109c4548ced0e3297",
+  "runtimeSource": "9574d5fe4a196966b488b7f109c4548ced0e3297",
+  "fullTests": {
+    "script": 935,
+    "typed": 55,
+    "passed": true
+  },
+  "focusedPrompt": {
+    "tests": 18,
+    "passed": true
+  },
+  "beforeFinalPrompt": {
+    "source": "712ff75",
+    "townTests": 394,
+    "typecheck": true,
+    "lint": {
+      "errors": 0,
+      "warnings": 1,
+      "inherited": "src/lib/auth/use-current-user.ts:59 unused eslint-disable"
+    },
+    "diagnostics": true,
+    "credentialFreeBuild": true,
+    "databaseURLPresent": false,
+    "migrations": "skipped"
+  },
+  "aiLaneFinalPrompt": {
+    "source": "17c8bc9bfa2815e28a7156dac158ead82972e227",
+    "focusedTests": 45,
+    "typecheck": true,
+    "scopedLint": true,
+    "format": true,
+    "denseKnown1200CharacterBody": "passes unchanged8000 cap"
+  },
+  "browser": {
+    "source": "cbb0506d9e34bcef3dada7c55a9d8e34b9c720c8",
+    "transport": "synthetic only",
+    "viewports": [
+      [1280, 800],
+      [390, 844]
+    ],
+    "receipt": "../manuscript-speech-continuation-2026-10-23/README.md"
+  },
+  "scope": "One new user-authorized real-model run; no retry, restart, merge or deployment",
+  "currentMainIntegration": {
+    "base": "f7d5ae5",
+    "runtimeSource": "4f04f32fdd2c11dbef871daeaec9e1e939721aab",
+    "branch": "codex/northern-speech-continuation-20261023",
+    "fullTests": {
+      "script": 1038,
+      "typed": 55,
+      "passed": true
+    },
+    "townTests": {
+      "tests": 418,
+      "passed": true
+    },
+    "typecheck": true,
+    "lint": {
+      "errors": 0,
+      "warnings": 1,
+      "inherited": "src/lib/auth/use-current-user.ts:59"
+    },
+    "diagnostics": true,
+    "credentialFreeBuild": true,
+    "databaseURLPresent": false,
+    "migrations": "skipped",
+    "deliberateListening": "Preserved; unaddressed physical speech gives nearby Data no memory",
+    "realProviderCalls": 0,
+    "browser": {
+      "receipt": "../manuscript-speech-main-integration-2026-10-23/README.md",
+      "source": "4f04f32fdd2c11dbef871daeaec9e1e939721aab",
+      "evidenceCommit": "f75cdffb4609ac1b9cb7e5beabde1c8a5784848c",
+      "viewports": [
+        [1280, 800],
+        [390, 844]
+      ],
+      "passed": true,
+      "authEnabled": true,
+      "providerCalls": 0
+    }
+  }
+}

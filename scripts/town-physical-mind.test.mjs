@@ -18,6 +18,10 @@ const { buildPrompt, parseMind } = await server.ssrLoadModule("/src/game/prompt.
 const { offlineResult } = await server.ssrLoadModule("/src/game/offline.ts");
 const {
   validatePhysicalItems,
+  initializePhysicalItems,
+  nextPhysicalJob,
+  markPhysicalRequest,
+  recordPhysicalUsage,
   physicalObservation,
   applyPhysicalCommand,
   startPhysicalSession,
@@ -364,4 +368,75 @@ test("unavailable act inference has no authored NPC action or speech fallback", 
   const before = structuredClone(town);
   assert.throws(() => offlineResult(town, job), /require available AI/);
   assert.deepEqual(town, before);
+});
+
+test("speech uses one bounded decision and the next prompt contains actual words without an invented reply", () => {
+  const town = createTown("A human");
+  const northern = town.agents.find((agent) => agent.id === "northern");
+  const data = town.agents.find((agent) => agent.id === "data");
+  northern.tile = { x: 39, y: 20 };
+  data.tile = { x: 38, y: 20 };
+  initializePhysicalItems(town);
+  assert.equal(startPhysicalSession(town, "northern", 8).ok, true);
+  const item = structuredClone(town.physicalItems.items[0]);
+  const finances = JSON.stringify({
+    favors: town.favors,
+    economy: town.economy,
+    cash: town.agents.map((agent) => agent.money),
+  });
+  const beforeData = new Set(data.memories.map((memory) => memory.id));
+  const beforeNorthern = new Set(northern.memories.map((memory) => memory.id));
+  const words = ["Data. You're up early.", "I haven't chosen what to do next."];
+  for (const [index, text] of words.entries()) {
+    const job = nextPhysicalJob(town);
+    assert.ok(job);
+    const prompt = buildPrompt(town, job);
+    assert.match(
+      prompt,
+      /Speech consumes one decision and continues; wait, failure or the request cap stops/,
+    );
+    if (index === 1) assert.ok(prompt.includes(words[0]));
+    assert.doesNotMatch(prompt, /Data said:|Data replied:|Data agreed|Data accepted/);
+    assert.match(prompt, /No genre, story, destination or event is required/);
+    assert.match(prompt, /Choose any remaining option freely, including wait/);
+    assert.ok(prompt.length <= 8000);
+    assert.equal(markPhysicalRequest(town, job), true);
+    // Synthetic completion accounting; no transport or provider is used by this test.
+    recordPhysicalUsage(town, job, { elapsedMs: 0, attempts: 1, totalTokens: 1, success: true });
+    const result = parseMind(job, JSON.stringify({ decision: { kind: "speak", text } }));
+    assert.equal(applyPhysicalCommand(town, "northern", result.decision).ok, true);
+    assert.equal(town.physicalItems.session.waiting, false);
+    assert.equal(town.physicalItems.session.decisions, index + 1);
+    assert.equal(town.physicalItems.session.usage.requests, index + 1);
+    assert.equal(town.physicalItems.session.maxDecisions, 8);
+    assert.ok(nextPhysicalJob(town));
+  }
+  assert.deepEqual(town.physicalItems.items[0], item);
+  assert.equal(
+    JSON.stringify({
+      favors: town.favors,
+      economy: town.economy,
+      cash: town.agents.map((agent) => agent.money),
+    }),
+    finances,
+  );
+  const heard = data.memories.filter((memory) => !beforeData.has(memory.id));
+  assert.deepEqual(heard, []);
+  const spoken = northern.memories.filter((memory) => !beforeNorthern.has(memory.id));
+  assert.equal(spoken.length, 2);
+  for (const [index, memory] of spoken.entries()) {
+    assert.equal(memory.source, "statement");
+    assert.equal(memory.text, `Northern said: “${words[index]}”`);
+  }
+  const options = physicalObservation(town, "northern").availableActions.map(
+    (option) => option.kind,
+  );
+  assert.ok(
+    options.includes("speak") &&
+      options.includes("wait") &&
+      options.includes("read") &&
+      options.includes("pick-up"),
+  );
+  assert.equal(applyPhysicalCommand(town, "northern", { kind: "wait" }).ok, true);
+  assert.equal(nextPhysicalJob(town), null);
 });

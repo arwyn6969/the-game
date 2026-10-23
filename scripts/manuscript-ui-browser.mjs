@@ -14,8 +14,16 @@ const out = resolve(process.env.MANUSCRIPT_QA_OUT || "artifacts/manuscript-ui");
 await mkdir(out, { recursive: true });
 const report = {
   sourceHead: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
+  sourceTrackedChanges: execFileSync("git", ["diff", "HEAD", "--name-only"], {
+    encoding: "utf8",
+  })
+    .trim()
+    .split("\n")
+    .filter(Boolean),
   target: target.href,
   syntheticTransport: true,
+  virtualClock: true,
+  physicalRequestIntervalMs: 31_000,
   liveCalls: 0,
   journeys: [],
   failures: [],
@@ -23,7 +31,7 @@ const report = {
 const mockModule = `
 export async function mindAvailability() { return { online: true, configured: true, actions: globalThis.__physicalActionsAvailable !== false }; }
 const mock = globalThis.__manuscriptMindMock ??= { calls: [], pending: new Map(), resolve(id, response) { const row=this.pending.get(id); if(row) {this.pending.delete(id);row.resolve(response);} }, reject(id) { const row=this.pending.get(id);if(row){this.pending.delete(id);row.reject(new Error('Synthetic unavailable'));}} };
-export function thinkTown({data}) { if(data.kind !== 'act') return Promise.resolve({ok:false,error:'synthetic-offline'}); const id=mock.calls.length;mock.calls.push({id,user:data.user});return new Promise((resolve,reject)=>mock.pending.set(id,{resolve,reject})); }
+export function thinkTown({data}) { if(data.kind !== 'act') return Promise.resolve({ok:false,error:'synthetic-offline'}); const id=mock.calls.length;mock.calls.push({id,user:data.user,startedAt:performance.now()});return new Promise((resolve,reject)=>mock.pending.set(id,{resolve,reject})); }
 `;
 const browser = await chromium.launch({ headless: true });
 let active;
@@ -133,7 +141,28 @@ async function openInventory(page) {
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
 }
 async function calls(page, count) {
+  const state = await page.evaluate(() => ({
+    calls: window.__manuscriptMindMock.calls.length,
+    pending: window.__manuscriptMindMock.pending.size,
+    elapsed: performance.now() - (window.__manuscriptMindMock.calls.at(-1)?.startedAt ?? -Infinity),
+  }));
+  if (state.calls < count && state.calls > 0 && state.pending === 0)
+    await page.clock.fastForward(Math.max(0, 31_025 - state.elapsed));
   await page.waitForFunction((count) => window.__manuscriptMindMock.calls.length >= count, count);
+  const starts = await page.evaluate(() =>
+    window.__manuscriptMindMock.calls.map((call) => call.startedAt),
+  );
+  for (let index = 1; index < starts.length; index++)
+    assert.ok(starts[index] - starts[index - 1] >= 31_000, "Physical starts retain real cadence");
+}
+async function advanceFromLastStart(page, elapsedMs) {
+  const elapsed = await page.evaluate(
+    () => performance.now() - window.__manuscriptMindMock.calls.at(-1).startedAt,
+  );
+  await page.clock.fastForward(Math.max(0, elapsedMs - elapsed));
+  return page.evaluate(
+    () => performance.now() - window.__manuscriptMindMock.calls.at(-1).startedAt,
+  );
 }
 async function respond(page, id, decision, known = true) {
   await page.evaluate(
@@ -208,9 +237,15 @@ try {
       });
     });
     const page = (active = await context.newPage());
+    await page.clock.install({ time: new Date("2026-10-23T18:00:00.000Z") });
     page.on("pageerror", (error) => result.errors.push(error.message));
     for (const layout of ["same", "adjacent", "diagonal", "far", "other-held"]) {
       await seedGroundRead(page, layout);
+      assert.equal(
+        await page.evaluate(async () => (await import("/src/lib/auth/client.ts")).authEnabled),
+        true,
+      );
+      result.productAuthEnabled = true;
       await openInventory(page);
       await page
         .locator(".manuscript-tools")
@@ -527,6 +562,233 @@ try {
     await openInventory(page);
     await page.getByRole("button", { name: "Watch Northern try", exact: true }).click();
     await calls(page, 1);
+    const beforeGreeting = await town(page);
+    const greeting = "Data. You're up early.";
+    await respond(page, 0, { kind: "speak", text: greeting });
+    const cadenceBefore = await town(page);
+    assert.equal(cadenceBefore.physicalItems.session.usage.requests, 1);
+    assert.equal(cadenceBefore.physicalItems.session.usage.knownTokens, 44);
+    assert.equal(cadenceBefore.physicalItems.session.waiting, false);
+    const beforeDeadlineMs = await advanceFromLastStart(page, 28_000);
+    assert.ok(beforeDeadlineMs < 31_000);
+    assert.equal(await page.evaluate(() => window.__manuscriptMindMock.calls.length), 1);
+    assert.deepEqual(
+      (await town(page)).physicalItems.session.usage,
+      cadenceBefore.physicalItems.session.usage,
+    );
+    assert.equal((await town(page)).physicalItems.session.decisions, 1);
+    await page
+      .locator(".status-message")
+      .filter({ hasText: "Waiting between free AI requests" })
+      .waitFor();
+    await capture(page, `${viewport.name}-cadence-wait.png`);
+    await calls(page, 2);
+    await page.waitForTimeout(180);
+    assert.equal(
+      await page.evaluate(() => window.__manuscriptMindMock.calls.length),
+      2,
+      "The next pending decision must retain the single transport lock",
+    );
+    await page.getByRole("button", { name: "Pause", exact: true }).click();
+    const afterGreeting = await town(page);
+    assert.equal(afterGreeting.physicalItems.session.enabled, true);
+    assert.equal(afterGreeting.physicalItems.session.decisions, 2);
+    assert.deepEqual(afterGreeting.physicalItems.items, beforeGreeting.physicalItems.items);
+    assert.equal(
+      afterGreeting.agents.find((person) => person.id === "northern").bubble.text,
+      greeting,
+    );
+    assert.deepEqual(
+      afterGreeting.agents.find((person) => person.id === "data").bubble,
+      beforeGreeting.agents.find((person) => person.id === "data").bubble,
+      "One resident's speech must not fabricate another resident's reply",
+    );
+    const unintendedRecipients = afterGreeting.agents
+      .filter((person) => person.id !== "northern")
+      .filter((person) => person.memories.some((memory) => memory.text.includes(greeting)))
+      .map((person) => person.id);
+    assert.deepEqual(
+      unintendedRecipients,
+      [],
+      "Mere proximity must not grant manuscript speech knowledge to Data, the player or others",
+    );
+    assert.deepEqual(afterGreeting.discussions, beforeGreeting.discussions);
+    const nextAfterSpeech = await page.evaluate(() =>
+      JSON.parse(window.__manuscriptMindMock.calls[1].user.split("Current observation: ")[1]),
+    );
+    assert.equal(nextAfterSpeech.session.lastResult.kind, "speak");
+    assert.equal(nextAfterSpeech.session.lastResult.ok, true);
+    assert.equal(nextAfterSpeech.actor.heldItemId, null);
+    assert.equal(nextAfterSpeech.knownManuscript, null);
+    assert.ok(nextAfterSpeech.nearbyResidents.some((person) => person.id === "data"));
+    assert.ok(nextAfterSpeech.availableActions.some((option) => option.kind === "read"));
+    const greetingItem = afterGreeting.physicalItems.items[0];
+    await capture(page, `${viewport.name}-greeting-continues.png`);
+    // The second physical action is a separately supplied model choice. The
+    // greeting itself must neither read nor pick up the nearby manuscript.
+    await respond(page, 1, {
+      kind: "read",
+      itemId: greetingItem.id,
+      itemRevision: greetingItem.revision,
+    });
+    await waitTown(
+      page,
+      () =>
+        JSON.parse(localStorage.getItem("the-game-town-v2")).town.physicalItems.session
+          .readContentRevision === 0,
+    );
+    assert.deepEqual((await town(page)).physicalItems.items, beforeGreeting.physicalItems.items);
+    await page.getByRole("button", { name: "1×", exact: true }).click();
+    await calls(page, 3);
+    await respond(page, 2, { kind: "wait" });
+    await waitTown(
+      page,
+      () =>
+        JSON.parse(localStorage.getItem("the-game-town-v2")).town.physicalItems.session.waiting ===
+        true,
+    );
+    await page.waitForTimeout(1250);
+    await page.clock.fastForward(31_100);
+    assert.equal(await page.evaluate(() => window.__manuscriptMindMock.calls.length), 3);
+    const afterSpeechWait = await town(page);
+    assert.equal(afterSpeechWait.physicalItems.session.enabled, true);
+    assert.equal(afterSpeechWait.physicalItems.session.decisions, 3);
+    assert.equal(afterSpeechWait.physicalItems.session.usage.requests, 3);
+    assert.equal(afterSpeechWait.physicalItems.session.usage.knownTokens, 132);
+    assert.deepEqual(afterSpeechWait.physicalItems.items, beforeGreeting.physicalItems.items);
+    result.speechContinuation = {
+      greeting,
+      nextRequestAfterGreeting: true,
+      nextDecision: "read",
+      noAutomaticPickup: true,
+      noFabricatedDataReply: true,
+      beforeDeadlineMs,
+      usageUnchangedWhileQueued: true,
+      unintendedRecipients,
+      meetingStateUnchanged: true,
+      waitingAfterExplicitWait: afterSpeechWait.physicalItems.session.waiting,
+      callsAtWait: 3,
+      usage: afterSpeechWait.physicalItems.session.usage,
+    };
+    result.assertions.push(
+      "Ordinary greeting causes a second model request without a Data reply, pickup or implicit read; proximity grants no knowledge to Data/player/others and meeting state is unchanged; a separately supplied read succeeds, then explicit wait parks at three counted requests",
+      "Before 31 seconds the next physical request does not dispatch, mark a decision or change usage; virtual wall time then releases the next free choice at the unchanged production interval",
+    );
+
+    await seed(page, { item: true, near: true });
+    await openInventory(page);
+    await page.getByRole("button", { name: "Watch Northern try", exact: true }).click();
+    await calls(page, 1);
+    await respond(page, 0, { kind: "speak", text: greeting });
+    await openInventory(page);
+    await page.getByRole("button", { name: "Stop resident trial", exact: true }).click();
+    await page.getByRole("button", { name: "Start another bounded trial", exact: true }).click();
+    await advanceFromLastStart(page, 28_000);
+    assert.equal(await page.evaluate(() => window.__manuscriptMindMock.calls.length), 1);
+    const restartedQueued = await town(page);
+    assert.equal(restartedQueued.physicalItems.session.decisions, 0);
+    assert.equal(restartedQueued.physicalItems.session.usage.requests, 0);
+    assert.equal(restartedQueued.physicalItems.session.usage.knownTokens, 0);
+    await page.evaluate(() =>
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        get: () => "hidden",
+      }),
+    );
+    await page.clock.fastForward(5000);
+    assert.equal(await page.evaluate(() => window.__manuscriptMindMock.calls.length), 1);
+    assert.equal((await town(page)).physicalItems.session.usage.requests, 0);
+    await page.evaluate(() => {
+      delete document.visibilityState;
+    });
+    await calls(page, 2);
+    await respond(page, 1, { kind: "wait" });
+    await page.clock.fastForward(31_100);
+    assert.equal(await page.evaluate(() => window.__manuscriptMindMock.calls.length), 2);
+    result.assertions.push(
+      "Stopping and starting another trial does not reset the physical-start interval; the queued new trial consumes zero decisions/tokens, hidden tabs still block an eligible start, and explicit wait remains parked beyond the next interval",
+    );
+
+    await seed(page, { item: true, near: true });
+    await openInventory(page);
+    await page.getByRole("button", { name: "Watch Northern try", exact: true }).click();
+    await calls(page, 1);
+    const beforeSpeechCap = (await town(page)).physicalItems.items;
+    for (const count of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      await calls(page, count);
+      await respond(page, count - 1, {
+        kind: "speak",
+        text: `Synthetic speech proposal ${count}; no other action is requested.`,
+      });
+    }
+    await waitTown(
+      page,
+      () =>
+        JSON.parse(localStorage.getItem("the-game-town-v2")).town.physicalItems.session.enabled ===
+        false,
+    );
+    await page.waitForTimeout(1250);
+    await page.clock.fastForward(31_100);
+    assert.equal(await page.evaluate(() => window.__manuscriptMindMock.calls.length), 8);
+    const speechCap = await town(page);
+    assert.equal(speechCap.physicalItems.session.decisions, 8);
+    assert.equal(speechCap.physicalItems.session.maxDecisions, 8);
+    assert.equal(speechCap.physicalItems.session.waiting, false);
+    assert.equal(speechCap.physicalItems.session.usage.requests, 8);
+    assert.equal(speechCap.physicalItems.session.usage.providerAttempts, 8);
+    assert.equal(speechCap.physicalItems.session.usage.knownTokens, 352);
+    assert.equal(speechCap.physicalItems.session.usage.tokensUnknown, 0);
+    assert.deepEqual(speechCap.physicalItems.items, beforeSpeechCap);
+    await openInventory(page);
+    await page.locator(".manuscript-diagnostics summary").click();
+    assert.match(
+      await page.locator(".manuscript-diagnostics p").first().textContent(),
+      /8 of 8 decisions.*Stopped/,
+    );
+    await page.locator(".manuscript-diagnostics").scrollIntoViewIfNeeded();
+    await capture(page, `${viewport.name}-speech-cap.png`);
+    result.speechCap = {
+      decisions: speechCap.physicalItems.session.decisions,
+      requests: speechCap.physicalItems.session.usage.requests,
+      enabled: speechCap.physicalItems.session.enabled,
+      knownTokens: speechCap.physicalItems.session.usage.knownTokens,
+      itemUnchanged: true,
+      ninthCall: false,
+    };
+    result.assertions.push(
+      "Eight separately supplied speech proposals exhaust the existing eight-decision allowance, preserve the manuscript, show 8 of 8 Stopped, and dispatch no ninth call",
+    );
+
+    await seed(page, { item: true, near: true });
+    await openInventory(page);
+    await page.getByRole("button", { name: "Watch Northern try", exact: true }).click();
+    await calls(page, 1);
+    await respond(page, 0, { kind: "speak", text: greeting });
+    await calls(page, 2);
+    const beforePendingReload = await town(page);
+    assert.equal(beforePendingReload.physicalItems.session.waiting, true);
+    assert.equal(beforePendingReload.physicalItems.session.usage.requests, 2);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.waitForFunction(() => Boolean(window.__game && window.__manuscriptMindMock));
+    await page.waitForTimeout(1250);
+    await page.clock.fastForward(31_100);
+    const pendingReload = await town(page);
+    assert.equal(pendingReload.physicalItems.session.waiting, true);
+    assert.equal(pendingReload.physicalItems.session.usage.requests, 2);
+    assert.equal(pendingReload.physicalItems.session.usage.providerAttempts, 1);
+    assert.equal(pendingReload.physicalItems.session.usage.attemptsUnknown, 1);
+    assert.equal(pendingReload.physicalItems.session.usage.knownTokens, 44);
+    assert.equal(pendingReload.physicalItems.session.usage.tokensUnknown, 1);
+    assert.deepEqual(pendingReload.physicalItems.items, beforePendingReload.physicalItems.items);
+    assert.equal(await page.evaluate(() => window.__manuscriptMindMock.calls.length), 0);
+    result.assertions.push(
+      "Reload during the request after speech preserves its pending marker and unknown usage, without resuming inference or changing manuscript custody",
+    );
+
+    await seed(page, { item: true, near: true });
+    await openInventory(page);
+    await page.getByRole("button", { name: "Watch Northern try", exact: true }).click();
+    await calls(page, 1);
     await page.getByRole("button", { name: "Pause", exact: true }).click();
     let item = (await town(page)).physicalItems.items[0];
     await respond(page, 0, { kind: "pick-up", itemId: item.id, itemRevision: item.revision });
@@ -618,6 +880,8 @@ try {
       itemRevision: stopped.revision,
     });
     assert.deepEqual((await town(page)).physicalItems.items[0], stopped);
+    await page.clock.fastForward(31_100);
+    assert.equal(await page.evaluate(() => window.__manuscriptMindMock.calls.length), 5);
     result.assertions.push(
       "Stopped trial rejects its delayed response without changing custody/content",
     );
