@@ -1,5 +1,11 @@
 # Current project status
 
+## Live Arwyn meeting — 23 October 2026, inconclusive hearing result
+
+This chat ran the user-authorized prepared meeting through the normal authenticated live UI on Build `2b2b8a4dbb7a`, with unchanged free limits and a maximum of 12 calls. Arwyn accepted facilitation, Northern declined and Sub accepted. The fourth response failed decision validation; no attention choice or speech was committed. The meeting stopped and remains paused. **4 calls, 4,927 known tokens, 12.141 seconds of AI wait, $0 recorded charge; all four budget/provider rows settled.** No retry, forced choice, authored substitute, deployment, configuration change or automatic continuation followed.
+
+Actual-export audits preserve all eight empty knowledge projections, memories, finances, identities, positions and paused time; reload adds no request. **Positive opt-in hearing, late joining and post-stop exclusion remain unqualified because no speech occurred.** The prepared file's pause flag was corrected before any AI request; the original and actual pre-correction export are preserved. The [full live receipt](review/library-meeting-live-2026-10-23/README.md) records normal scheduler choices, SQL attribution, scope and sanitized audits. Evidence owner: this chat, `library-meeting/`, branch `codex/library-live-meeting-20261023` from main `f7d5ae5`; runtime code is unchanged.
+
 ## Library meetings — published 23 October 2026
 
 Live: **https://www.arwyn.party/thegame/**. Clean runtime `2b2b8a4dbb7a62b3d5db20b8f2aca4ec4396a7f1` is deployed as Worker **`8852b4fc-0ca5-4217-8f71-6c7420cd0d72`**. Source delivery is [PR #44](https://github.com/arwyn6969/the-game/pull/44), targeting main and preserving manuscript prerequisite #42, current main's hosting #41 and the already live Leather/stamp fixes from #43. This chat owns the release in `library-meeting/`; historical receipts below retain their original scope. [Release evidence and rollback](review/library-meeting-release-2026-10-23/README.md).
