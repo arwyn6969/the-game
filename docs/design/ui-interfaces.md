@@ -42,6 +42,6 @@ All dialogue, labels and action terms remain live text. Frames stretch with thei
 
 ## Baseline and validation
 
-The isolated branch is `codex/ui-interface-lab`. The original comparison was based on `adb1f47` from the reviewed hosting/recovery work in PR #41. For the authorised release, PR #41 passed its current Verify check and was merged as `b8381df`; the UI branch incorporates that main baseline and retains the live AI recovery/draft behavior. The UI release does not change authentication, provider limits or town storage.
+The isolated branch is `codex/ui-interface-lab`. The original comparison was based on `adb1f47` from the reviewed hosting/recovery work in PR #41. For the authorised release, PR #41 passed its current Verify check and was merged as `b8381df`; the UI branch incorporates that main baseline and retains the live AI recovery/draft behavior. The UI release also incorporates the exact currently deployed wallet/stamp fixes from PR #43 (`60630d5`, runtime `858ecaa`) as an explicit production dependency. Its review stacks on that branch, leaving the separate draft’s main integration alone. The UI changes do not change authentication, provider limits or town storage.
 
 See `docs/handoffs/ui-interface-lab.md` for actual check results and remaining limits. Browser receipts and complete synthetic screenshots are under ignored `artifacts/ui-skins/`; the focused script is `scripts/skin-browser.mjs`.
