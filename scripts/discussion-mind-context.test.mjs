@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { createServer } from "vite";
+import { mindJsonFailure } from "../src/lib/mind-pool/transport.ts";
 
 const server = await createServer({
   root: fileURLToPath(new URL("..", import.meta.url)),
@@ -16,22 +17,189 @@ after(() => server.close());
 const { createTown } = await server.ssrLoadModule("/src/game/town.ts");
 const { buildPrompt, parseMind } = await server.ssrLoadModule("/src/game/prompt.ts");
 const { offlineResult } = await server.ssrLoadModule("/src/game/offline.ts");
-const { createLibraryDiscussion, applyDiscussionCommand } = await server.ssrLoadModule(
-  "/src/game/discussions.ts",
-);
+const {
+  createLibraryDiscussion,
+  applyDiscussionCommand,
+  nextDiscussionJob,
+  markDiscussionRequest,
+  applyDiscussionResult,
+  recordDiscussionUsage,
+} = await server.ssrLoadModule("/src/game/discussions.ts");
+const { exportTown, parseTownFile } = await server.ssrLoadModule("/src/game/save.ts");
 const person = (town, id) => town.agents.find((agent) => agent.id === id);
 const meeting = (town) => town.discussions.sessions.at(-1);
 const member = (town, id) => meeting(town).members.find((row) => row.id === id);
 let commandNumber = 0;
-function command(town, id, kind) {
+function command(town, id, kind, fields = {}) {
   const result = applyDiscussionCommand(town, id, {
     kind,
     meetingId: meeting(town).id,
     expectedRevision: member(town, id).revision,
     commandId: `context-test:${++commandNumber}`,
+    ...fields,
   });
   assert.equal(result.ok, true, result.message);
 }
+
+const responseChoices = (prompt) =>
+  prompt
+    .split("\n")
+    .filter((line) => line.startsWith('{"task":"discussion","decision":'))
+    .map((line) => JSON.parse(line));
+
+test("recorded pre-step04 Arwyn attention offers have complete strict wire choices without speech or actor metadata", () => {
+  // Portable synthetic setup reproduces the actual saved job and observation;
+  // no real player save, historical provider output or inference is needed.
+  const town = parseTownFile(exportTown(createTown("Observer")));
+  town.paused = true;
+  for (const [id, tile] of Object.entries({
+    arwyn: { x: 44, y: 21 },
+    northern: { x: 42, y: 21 },
+    sub: { x: 43, y: 20 },
+    player: { x: 43, y: 22 },
+    baba: { x: 42, y: 22 },
+  }))
+    person(town, id).tile = tile;
+  assert.equal(
+    createLibraryDiscussion(
+      town,
+      "What would make a short shared reading at the library welcoming?",
+      "arwyn",
+    ).ok,
+    true,
+  );
+  for (const invitee of ["arwyn", "northern", "sub"])
+    command(town, "player", "invite", { invitee });
+  for (const [actor, kind] of [
+    ["arwyn", "accept"],
+    ["northern", "decline"],
+    ["sub", "accept"],
+  ]) {
+    const job = nextDiscussionJob(town);
+    assert.equal(job.agentId, actor);
+    assert.equal(markDiscussionRequest(town, job), true);
+    const parsed = parseMind(job, JSON.stringify({ task: "discussion", decision: { kind } }));
+    assert.equal(applyDiscussionResult(town, parsed).ok, true);
+    recordDiscussionUsage(town, job, {
+      success: true,
+      attempts: 1,
+      totalTokens: 25,
+      elapsedMs: 10,
+    });
+  }
+  const job = nextDiscussionJob(town);
+  assert.deepEqual(job, {
+    kind: "act",
+    task: "discussion",
+    day: 1,
+    minute: 420,
+    agentId: "arwyn",
+    meetingId: "discussion:10",
+    sessionRevision: 1,
+    actorRevision: 5,
+    turnId: null,
+  });
+  const before = structuredClone(town);
+  const prompt = buildPrompt(town, job);
+  const observation = JSON.parse(prompt.split("\nCurrent observation: ")[1]);
+  assert.deepEqual(observation.availableActions, [
+    { kind: "leave", label: "Leave discussion" },
+    { kind: "listen", label: "Join and listen" },
+    { kind: "participate", label: "Join as a speaker" },
+  ]);
+  const choices = responseChoices(prompt);
+  assert.deepEqual(
+    choices,
+    ["leave", "listen", "participate"].map((kind) => ({ task: "discussion", decision: { kind } })),
+  );
+  for (const choice of choices) {
+    const text = JSON.stringify(choice);
+    assert.equal(mindJsonFailure("act", text), null);
+    assert.deepEqual(parseMind(job, text).decision, choice.decision);
+    assert.deepEqual(Object.keys(choice).sort(), ["decision", "task"]);
+    assert.deepEqual(Object.keys(choice.decision), ["kind"]);
+    for (const extra of [
+      { label: "Join and listen" },
+      { reason: "An explanation" },
+      { actor: "arwyn" },
+    ]) {
+      const invalid = JSON.stringify({ ...choice, decision: { ...choice.decision, ...extra } });
+      assert.equal(mindJsonFailure("act", invalid), "missing-envelope");
+      assert.equal(parseMind(job, invalid), null);
+    }
+  }
+  assert.doesNotMatch(
+    prompt,
+    /"kind":"speak"|<your own words>|\{"task":"discussion","decision":\{\.\.\.\}\}/,
+  );
+  assert.match(prompt, /choose freely/i);
+  assert.deepEqual(
+    town,
+    before,
+    "Wire guidance must not change the resident's choices or knowledge",
+  );
+});
+
+test("every offered simple choice has a strict envelope and speech shape appears only with the floor", () => {
+  const town = fixture();
+  const cases = [context(town)];
+  command(town, "northern", "read-invitation");
+  cases.push(context(town));
+  command(town, "northern", "accept");
+  cases.push(context(town));
+  command(town, "northern", "participate");
+  for (const kind of ["read-invitation", "accept", "listen"]) command(town, "arwyn", kind);
+  cases.push(context(town), context(town, "arwyn"));
+  command(town, "arwyn", "participate");
+  cases.push(context(town, "arwyn"));
+  const covered = new Set();
+  for (const { job, prompt, observation } of cases) {
+    const choices = responseChoices(prompt);
+    assert.deepEqual(
+      choices.map(({ decision }) => decision.kind).sort(),
+      observation.availableActions.map(({ kind }) => kind).sort(),
+    );
+    const canSpeak = observation.availableActions.some(({ kind }) => kind === "speak");
+    const speech = choices.find(({ decision }) => decision.kind === "speak");
+    assert.equal(Boolean(speech), canSpeak);
+    if (canSpeak) {
+      assert.deepEqual(speech, {
+        task: "discussion",
+        decision: { kind: "speak", text: "<your own words>" },
+      });
+      assert.match(prompt, /replace.*placeholder/i);
+    } else assert.doesNotMatch(prompt, /<your own words>/);
+    for (const choice of choices) {
+      const text = JSON.stringify(choice);
+      assert.equal(mindJsonFailure("act", text), null);
+      assert.deepEqual(parseMind(job, text).decision, choice.decision);
+      assert.deepEqual(Object.keys(choice).sort(), ["decision", "task"]);
+      assert.deepEqual(
+        Object.keys(choice.decision).sort(),
+        choice.decision.kind === "speak" ? ["kind", "text"] : ["kind"],
+      );
+      covered.add(choice.decision.kind);
+    }
+  }
+  assert.deepEqual(
+    [...covered].sort(),
+    [
+      "read-invitation",
+      "ignore",
+      "accept",
+      "decline",
+      "leave",
+      "listen",
+      "participate",
+      "stop-listening",
+      "request-turn",
+      "withdraw-turn",
+      "pass",
+      "close",
+      "speak",
+    ].sort(),
+  );
+});
 function currentJob(town, id = "northern") {
   return {
     kind: "act",

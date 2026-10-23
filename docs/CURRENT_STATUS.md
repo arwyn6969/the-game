@@ -1,5 +1,11 @@
 # Current project status
 
+## Live meeting validation and resume — active, 23 October 2026
+
+Owner: the current library-meeting chat, checkout `library-meeting/`, branch `codex/library-validation-resume-20261023`, based on current `origin/main` `f7d5ae5`. The user authorized diagnosis, a locally verified correction and continuation of the same saved live meeting. The four prior requests remain charged; at most eight further calls may be made within the unchanged free routing and all live shared/player/provider limits. No resident choice, saved audience or earlier evidence will be rewritten.
+
+The paused live export is byte-identical to the prior final export. The failed fourth response was rejected in provider-output format validation before engine commitment; all three actually offered attention choices pass both strict parsers locally. The prompt now lists the complete strict JSON envelope for every currently offered choice, with speech guidance only when speech is offered. The validators and all choices remain unchanged. Typecheck, 415 town tests, 13 focused discussion tests, lint (zero errors, one inherited warning), diagnostics and a credential-free build pass; full local checks and historical diagnostic recovery are in progress. Next evidence: current passing PR verification, then the same meeting's normal UI continuation with actual export/audience audits. The original inconclusive live run remains separately preserved in [draft PR #48](https://github.com/arwyn6969/the-game/pull/48).
+
 ## Library meetings — published 23 October 2026
 
 Live: **https://www.arwyn.party/thegame/**. Clean runtime `2b2b8a4dbb7a62b3d5db20b8f2aca4ec4396a7f1` is deployed as Worker **`8852b4fc-0ca5-4217-8f71-6c7420cd0d72`**. Source delivery is [PR #44](https://github.com/arwyn6969/the-game/pull/44), targeting main and preserving manuscript prerequisite #42, current main's hosting #41 and the already live Leather/stamp fixes from #43. This chat owns the release in `library-meeting/`; historical receipts below retain their original scope. [Release evidence and rollback](review/library-meeting-release-2026-10-23/README.md).
