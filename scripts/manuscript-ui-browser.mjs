@@ -21,6 +21,8 @@ const report = {
     .filter(Boolean),
   target: target.href,
   syntheticTransport: true,
+  virtualClock: true,
+  physicalRequestIntervalMs: 31_000,
   liveCalls: 0,
   journeys: [],
   failures: [],
@@ -28,7 +30,7 @@ const report = {
 const mockModule = `
 export async function mindAvailability() { return { online: true, configured: true, actions: globalThis.__physicalActionsAvailable !== false }; }
 const mock = globalThis.__manuscriptMindMock ??= { calls: [], pending: new Map(), resolve(id, response) { const row=this.pending.get(id); if(row) {this.pending.delete(id);row.resolve(response);} }, reject(id) { const row=this.pending.get(id);if(row){this.pending.delete(id);row.reject(new Error('Synthetic unavailable'));}} };
-export function thinkTown({data}) { if(data.kind !== 'act') return Promise.resolve({ok:false,error:'synthetic-offline'}); const id=mock.calls.length;mock.calls.push({id,user:data.user});return new Promise((resolve,reject)=>mock.pending.set(id,{resolve,reject})); }
+export function thinkTown({data}) { if(data.kind !== 'act') return Promise.resolve({ok:false,error:'synthetic-offline'}); const id=mock.calls.length;mock.calls.push({id,user:data.user,startedAt:performance.now()});return new Promise((resolve,reject)=>mock.pending.set(id,{resolve,reject})); }
 `;
 const browser = await chromium.launch({ headless: true });
 let active;
@@ -138,7 +140,28 @@ async function openInventory(page) {
   await page.getByRole("button", { name: "Inventory", exact: true }).click();
 }
 async function calls(page, count) {
+  const state = await page.evaluate(() => ({
+    calls: window.__manuscriptMindMock.calls.length,
+    pending: window.__manuscriptMindMock.pending.size,
+    elapsed: performance.now() - (window.__manuscriptMindMock.calls.at(-1)?.startedAt ?? -Infinity),
+  }));
+  if (state.calls < count && state.calls > 0 && state.pending === 0)
+    await page.clock.fastForward(Math.max(0, 31_025 - state.elapsed));
   await page.waitForFunction((count) => window.__manuscriptMindMock.calls.length >= count, count);
+  const starts = await page.evaluate(() =>
+    window.__manuscriptMindMock.calls.map((call) => call.startedAt),
+  );
+  for (let index = 1; index < starts.length; index++)
+    assert.ok(starts[index] - starts[index - 1] >= 31_000, "Physical starts retain real cadence");
+}
+async function advanceFromLastStart(page, elapsedMs) {
+  const elapsed = await page.evaluate(
+    () => performance.now() - window.__manuscriptMindMock.calls.at(-1).startedAt,
+  );
+  await page.clock.fastForward(Math.max(0, elapsedMs - elapsed));
+  return page.evaluate(
+    () => performance.now() - window.__manuscriptMindMock.calls.at(-1).startedAt,
+  );
 }
 async function respond(page, id, decision, known = true) {
   await page.evaluate(
@@ -186,6 +209,7 @@ try {
       });
     });
     const page = (active = await context.newPage());
+    await page.clock.install({ time: new Date("2026-10-23T18:00:00.000Z") });
     page.on("pageerror", (error) => result.errors.push(error.message));
     for (const layout of ["same", "adjacent", "diagonal", "far", "other-held"]) {
       await seedGroundRead(page, layout);
@@ -505,6 +529,23 @@ try {
     const beforeGreeting = await town(page);
     const greeting = "Data. You're up early.";
     await respond(page, 0, { kind: "speak", text: greeting });
+    const cadenceBefore = await town(page);
+    assert.equal(cadenceBefore.physicalItems.session.usage.requests, 1);
+    assert.equal(cadenceBefore.physicalItems.session.usage.knownTokens, 44);
+    assert.equal(cadenceBefore.physicalItems.session.waiting, false);
+    const beforeDeadlineMs = await advanceFromLastStart(page, 28_000);
+    assert.ok(beforeDeadlineMs < 31_000);
+    assert.equal(await page.evaluate(() => window.__manuscriptMindMock.calls.length), 1);
+    assert.deepEqual(
+      (await town(page)).physicalItems.session.usage,
+      cadenceBefore.physicalItems.session.usage,
+    );
+    assert.equal((await town(page)).physicalItems.session.decisions, 1);
+    await page
+      .locator(".status-message")
+      .filter({ hasText: "Waiting between free AI requests" })
+      .waitFor();
+    await capture(page, `${viewport.name}-cadence-wait.png`);
     await calls(page, 2);
     await page.waitForTimeout(180);
     assert.equal(
@@ -571,6 +612,7 @@ try {
         true,
     );
     await page.waitForTimeout(1250);
+    await page.clock.fastForward(31_100);
     assert.equal(await page.evaluate(() => window.__manuscriptMindMock.calls.length), 3);
     const afterSpeechWait = await town(page);
     assert.equal(afterSpeechWait.physicalItems.session.enabled, true);
@@ -584,6 +626,8 @@ try {
       nextDecision: "read",
       noAutomaticPickup: true,
       noFabricatedDataReply: true,
+      beforeDeadlineMs,
+      usageUnchangedWhileQueued: true,
       unintendedRecipients,
       meetingStateUnchanged: true,
       waitingAfterExplicitWait: afterSpeechWait.physicalItems.session.waiting,
@@ -592,6 +636,41 @@ try {
     };
     result.assertions.push(
       "Ordinary greeting causes a second model request without a Data reply, pickup or implicit read; proximity grants no knowledge to Data/player/others and meeting state is unchanged; a separately supplied read succeeds, then explicit wait parks at three counted requests",
+      "Before 31 seconds the next physical request does not dispatch, mark a decision or change usage; virtual wall time then releases the next free choice at the unchanged production interval",
+    );
+
+    await seed(page, { item: true, near: true });
+    await openInventory(page);
+    await page.getByRole("button", { name: "Watch Northern try", exact: true }).click();
+    await calls(page, 1);
+    await respond(page, 0, { kind: "speak", text: greeting });
+    await openInventory(page);
+    await page.getByRole("button", { name: "Stop resident trial", exact: true }).click();
+    await page.getByRole("button", { name: "Start another bounded trial", exact: true }).click();
+    await advanceFromLastStart(page, 28_000);
+    assert.equal(await page.evaluate(() => window.__manuscriptMindMock.calls.length), 1);
+    const restartedQueued = await town(page);
+    assert.equal(restartedQueued.physicalItems.session.decisions, 0);
+    assert.equal(restartedQueued.physicalItems.session.usage.requests, 0);
+    assert.equal(restartedQueued.physicalItems.session.usage.knownTokens, 0);
+    await page.evaluate(() =>
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        get: () => "hidden",
+      }),
+    );
+    await page.clock.fastForward(5000);
+    assert.equal(await page.evaluate(() => window.__manuscriptMindMock.calls.length), 1);
+    assert.equal((await town(page)).physicalItems.session.usage.requests, 0);
+    await page.evaluate(() => {
+      delete document.visibilityState;
+    });
+    await calls(page, 2);
+    await respond(page, 1, { kind: "wait" });
+    await page.clock.fastForward(31_100);
+    assert.equal(await page.evaluate(() => window.__manuscriptMindMock.calls.length), 2);
+    result.assertions.push(
+      "Stopping and starting another trial does not reset the physical-start interval; the queued new trial consumes zero decisions/tokens, hidden tabs still block an eligible start, and explicit wait remains parked beyond the next interval",
     );
 
     await seed(page, { item: true, near: true });
@@ -613,6 +692,7 @@ try {
         false,
     );
     await page.waitForTimeout(1250);
+    await page.clock.fastForward(31_100);
     assert.equal(await page.evaluate(() => window.__manuscriptMindMock.calls.length), 8);
     const speechCap = await town(page);
     assert.equal(speechCap.physicalItems.session.decisions, 8);
@@ -655,6 +735,7 @@ try {
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForFunction(() => Boolean(window.__game && window.__manuscriptMindMock));
     await page.waitForTimeout(1250);
+    await page.clock.fastForward(31_100);
     const pendingReload = await town(page);
     assert.equal(pendingReload.physicalItems.session.waiting, true);
     assert.equal(pendingReload.physicalItems.session.usage.requests, 2);
@@ -763,6 +844,8 @@ try {
       itemRevision: stopped.revision,
     });
     assert.deepEqual((await town(page)).physicalItems.items[0], stopped);
+    await page.clock.fastForward(31_100);
+    assert.equal(await page.evaluate(() => window.__manuscriptMindMock.calls.length), 5);
     result.assertions.push(
       "Stopped trial rejects its delayed response without changing custody/content",
     );
