@@ -2,7 +2,7 @@
 
 23 October 2026. Arwyn authorized allowing ordinary speech to continue within the existing eight-request cap, without scripting the next move, followed by one fresh real-AI run. This continues manuscript [PR #42](https://github.com/arwyn6969/the-game/pull/42). Exact integrated runtime and trial source: `9574d5fe4a196966b488b7f109c4548ced0e3297`. Core `4ebdb78`, prompt `17c8bc9` and browser acceptance `82f70df` were integrated before the run. The prior completed one-call greeting trial and ledger remain intact.
 
-**Integration after the run:** another workflow merged PR #42 and published the library-meeting release while this follow-up was underway. The later fix is therefore on fresh branch `codex/northern-speech-continuation-20261023`, based on current main `f7d5ae5`. This measured trial retains its original runtime and attention semantics; it is not a hosted test or a new-provider run on that later main. The follow-up preserves main's newer opt-in hearing and manual meeting controls. Separate current-main verification is recorded below.
+**Integration after the run:** another workflow merged PR #42 and published the library-meeting release while this follow-up was underway. The later fix is therefore on fresh branch `codex/northern-speech-continuation-20261023`, [draft PR #47](https://github.com/arwyn6969/the-game/pull/47), based on current main `f7d5ae5`. This measured trial retains its original runtime and attention semantics; it is not a hosted test or a new-provider run on that later main. The follow-up preserves main's newer opt-in hearing and manual meeting controls. Separate current-main verification is recorded below.
 
 ## What Northern actually did
 
