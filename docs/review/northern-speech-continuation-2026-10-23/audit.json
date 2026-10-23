@@ -1,0 +1,447 @@
+{
+  "source": "9574d5fe4a196966b488b7f109c4548ced0e3297",
+  "scope": "Independent local prompt/action/movement replay; SQL inspected only from temporary copy; zero extra provider/account calls",
+  "exactPromptAndObservationReplay": true,
+  "exactActionResultsAndRawFinalSaveReplay": true,
+  "exactMovementAndSuppressedJobReplay": true,
+  "saveNormalization": {
+    "serializedObserverTile": {
+      "x": 40,
+      "y": 22
+    },
+    "importedObserverTile": {
+      "x": 40,
+      "y": 21
+    },
+    "note": "Prompt reconstruction uses serialized runtime state; import independently normalizes the observer onto walkable floor."
+  },
+  "allowance": {
+    "maxCalls": 8,
+    "usedAtStart": 13,
+    "dailyCeiling": 24
+  },
+  "transmissions": 6,
+  "decisions": [
+    {
+      "number": 1,
+      "promptSha256": "a6d85f4d3ac879902053c279bf2aea9055e3a09befe21c2ab40e6f3af344f794",
+      "decision": {
+        "kind": "pick-up",
+        "itemId": "manuscript:town:1",
+        "itemRevision": 0
+      },
+      "result": {
+        "ok": true,
+        "kind": "pick-up",
+        "itemId": "manuscript:town:1",
+        "message": "Northern picked up the manuscript."
+      },
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 2866,
+          "actualTokens": 1479,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1447,
+            "outputTokens": 32,
+            "reasoningTokens": 0,
+            "responseCharacters": 83,
+            "invalidReason": null
+          }
+        }
+      ],
+      "inferenceError": null,
+      "reportedCostUSD": 0,
+      "movementMinutes": 0,
+      "nextDecisionAvailable": true,
+      "currentItemRevision": 1,
+      "currentContentRevision": 0,
+      "readContentRevision": null
+    },
+    {
+      "number": 2,
+      "promptSha256": "aaaa0f4c9ba60b06d0f819d263a76615a6cf8b7fddc4f0d89660bdf2c2b0e772",
+      "decision": {
+        "kind": "read",
+        "itemId": "manuscript:town:1",
+        "itemRevision": 1
+      },
+      "result": {
+        "ok": true,
+        "kind": "read",
+        "itemId": "manuscript:town:1",
+        "message": "The manuscript is blank. Nobody has written its text yet.",
+        "content": {
+          "title": "Blank manuscript",
+          "text": "",
+          "revision": 0,
+          "author": null
+        }
+      },
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 2898,
+          "actualTokens": 1556,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1531,
+            "outputTokens": 25,
+            "reasoningTokens": 0,
+            "responseCharacters": 74,
+            "invalidReason": null
+          }
+        }
+      ],
+      "inferenceError": null,
+      "reportedCostUSD": 0,
+      "movementMinutes": 0,
+      "nextDecisionAvailable": true,
+      "currentItemRevision": 1,
+      "currentContentRevision": 0,
+      "readContentRevision": 0
+    },
+    {
+      "number": 3,
+      "promptSha256": "6cea004e4ab30cb49652427139c71dbe378d2d4dcff26c5f321905f6a9fe39c7",
+      "decision": {
+        "kind": "write",
+        "itemId": "manuscript:town:1",
+        "itemRevision": 1,
+        "title": "Budget log — Day 1",
+        "text": "Cash on hand: 2 town coins. No funded work accepted. No obligations recorded. No work payments received. No offered work recorded. No shift projects recorded. Unknown: rent, food prices, wage rates, job availability, due dates. Need income before next meal calculation."
+      },
+      "result": {
+        "ok": true,
+        "kind": "write",
+        "itemId": "manuscript:town:1",
+        "message": "Northern wrote the actual manuscript text; content revision 1."
+      },
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 9633,
+          "actualTokens": 1658,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1545,
+            "outputTokens": 113,
+            "reasoningTokens": 0,
+            "responseCharacters": 421,
+            "invalidReason": null
+          }
+        }
+      ],
+      "inferenceError": null,
+      "reportedCostUSD": 0,
+      "movementMinutes": 0,
+      "nextDecisionAvailable": true,
+      "currentItemRevision": 2,
+      "currentContentRevision": 1,
+      "readContentRevision": 0
+    },
+    {
+      "number": 4,
+      "promptSha256": "2eb27d61f0306f908e18296d59e4ae39ee3016808d09f1f885b42aac8ecfd75d",
+      "decision": {
+        "kind": "read",
+        "itemId": "manuscript:town:1",
+        "itemRevision": 2
+      },
+      "result": {
+        "ok": true,
+        "kind": "read",
+        "itemId": "manuscript:town:1",
+        "message": "Northern read the manuscript.",
+        "content": {
+          "title": "Budget log — Day 1",
+          "text": "Cash on hand: 2 town coins. No funded work accepted. No obligations recorded. No work payments received. No offered work recorded. No shift projects recorded. Unknown: rent, food prices, wage rates, job availability, due dates. Need income before next meal calculation.",
+          "revision": 1,
+          "author": "northern"
+        }
+      },
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 2433,
+          "actualTokens": 1584,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1544,
+            "outputTokens": 40,
+            "reasoningTokens": 0,
+            "responseCharacters": 100,
+            "invalidReason": null
+          }
+        }
+      ],
+      "inferenceError": null,
+      "reportedCostUSD": 0,
+      "movementMinutes": 0,
+      "nextDecisionAvailable": true,
+      "currentItemRevision": 2,
+      "currentContentRevision": 1,
+      "readContentRevision": 1
+    },
+    {
+      "number": 5,
+      "promptSha256": "747690de753ed03e6422ca8e819a6edd58dd375d452eb7483490bd9631b04cfd",
+      "decision": {
+        "kind": "write",
+        "itemId": "manuscript:town:1",
+        "itemRevision": 2,
+        "title": "Budget log — Day 1",
+        "text": "Cash on hand: 2 town coins. No funded work accepted. No obligations recorded. No work payments received. No offered work recorded. No shift projects recorded. Unknown: rent, food prices, wage rates, job availability, due dates. Need income before next meal calculation. Noticed Data nearby in the library. Might ask if they've seen any job postings or know typical student wages around here."
+      },
+      "result": {
+        "ok": true,
+        "kind": "write",
+        "itemId": "manuscript:town:1",
+        "message": "Northern wrote the actual manuscript text; content revision 2."
+      },
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 5758,
+          "actualTokens": 1723,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1604,
+            "outputTokens": 119,
+            "reasoningTokens": 0,
+            "responseCharacters": 505,
+            "invalidReason": null
+          }
+        }
+      ],
+      "inferenceError": null,
+      "reportedCostUSD": 0,
+      "movementMinutes": 0,
+      "nextDecisionAvailable": true,
+      "currentItemRevision": 3,
+      "currentContentRevision": 2,
+      "readContentRevision": 1
+    },
+    {
+      "number": 6,
+      "promptSha256": "b528af7ca36b0c2194930d45722e4d0e23c7f781f13c39962b002289e6d744dc",
+      "decision": null,
+      "result": null,
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "invalid",
+          "status": 200,
+          "latencyMs": 889,
+          "actualTokens": null,
+          "modelCooldownMs": 30000,
+          "response": {
+            "finishReason": null,
+            "inputTokens": null,
+            "outputTokens": null,
+            "reasoningTokens": null,
+            "responseCharacters": 0,
+            "invalidReason": "empty"
+          }
+        }
+      ],
+      "inferenceError": "unreachable",
+      "reportedCostUSD": null,
+      "movementMinutes": 0,
+      "nextDecisionAvailable": false,
+      "currentItemRevision": 3,
+      "currentContentRevision": 2,
+      "readContentRevision": 1
+    }
+  ],
+  "simulationMinutes": 0,
+  "stopReason": "Real AI unavailable or invalid; trial stopped without fallback.",
+  "sessionEnabledAtEnd": false,
+  "sessionWaitingAtEnd": false,
+  "nextJobAtEnd": null,
+  "usage": {
+    "requests": 6,
+    "providerAttempts": 6,
+    "attemptsUnknown": 0,
+    "knownTokens": 8000,
+    "tokenSamples": 5,
+    "tokensUnknown": 1,
+    "elapsedMs": 24544,
+    "failures": 1
+  },
+  "inputTokens": 7671,
+  "outputTokens": 329,
+  "tokenSamplesUnknown": 1,
+  "providerAttemptsUnknown": 0,
+  "providerLatencyMs": 24477,
+  "knownReportedCostUSD": 0,
+  "costSamplesUnknown": 1,
+  "aiWaitMs": 24544,
+  "wallTimeMs": 157989,
+  "wallPacingAndOtherTimeMs": 133445,
+  "financial": {
+    "cashUnchanged": true,
+    "tillsUnchanged": true,
+    "favorsUnchanged": true,
+    "openingBalancesUnchanged": true,
+    "transactionsUnchanged": true,
+    "economyUnchanged": true,
+    "equalMinuteControlEconomyMatches": true,
+    "equalMinuteControlCashMatches": true,
+    "equalMinuteControlTillsMatches": true,
+    "initialWork": null,
+    "finalWork": null,
+    "changedEconomyKeys": []
+  },
+  "identityUnchanged": true,
+  "manuscriptUnchanged": false,
+  "finalManuscript": {
+    "id": "manuscript:town:1",
+    "kind": "manuscript",
+    "title": "Budget log — Day 1",
+    "text": "Cash on hand: 2 town coins. No funded work accepted. No obligations recorded. No work payments received. No offered work recorded. No shift projects recorded. Unknown: rent, food prices, wage rates, job availability, due dates. Need income before next meal calculation. Noticed Data nearby in the library. Might ask if they've seen any job postings or know typical student wages around here.",
+    "author": "northern",
+    "owner": "town",
+    "revision": 3,
+    "contentRevision": 2,
+    "location": {
+      "kind": "held",
+      "holder": "northern"
+    }
+  },
+  "saveRoundTrip": true,
+  "physicalAudit": [],
+  "economyAudit": [],
+  "sqlLedgerIndependentlyRead": true,
+  "ledger": {
+    "budget": [
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      }
+    ],
+    "pool": [
+      {
+        "kind": "act",
+        "actual_tokens": 1479,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 2866,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": 1556,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 2898,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": 1658,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 9633,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": 1584,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 2433,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": 1723,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 5758,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": null,
+        "outcome": "invalid",
+        "status": 200,
+        "latency_ms": 889,
+        "settled": true
+      }
+    ]
+  },
+  "sourceHashes": {
+    "src/game/physical-types.ts": "a11c9917c0db262c5149f57524c3421ea7cea99e52e988cc905cd2bae4cf1383",
+    "src/game/physical-items.ts": "1a5525c1c2c9cd71cc1d0bdc65b79e8e9721c365fc3706fff9b97c52b8667195",
+    "src/game/prompt.ts": "e9233d263e4648063d33c29d245c8d194cc2c1dc77f4ed392cddf41730e14890",
+    "src/game/save.ts": "c094e8c37a0e6a8bc00b55123488eac06eb078563b29578692b66694b993939c",
+    "src/game/sim.ts": "e44fb6ed0f1ba78d8ca8414520ed6810bb32832e44caa4075df1277458fcaed2",
+    "src/components/town/ManuscriptTools.tsx": "0d51a101ff1fe74a61ca360eeac0a58c4f33e516060211ee393f96f7701a1c21",
+    "scripts/manuscript-real-ai.mjs": "0ee5118caea96134dfea51fc2b2ac598375038d9351fed4f6c9226add2771f20"
+  },
+  "quotaObservation": {
+    "before": 13,
+    "after": 17
+  },
+  "qualification": {
+    "speechChosen": false,
+    "unchangedReadAttempted": false,
+    "note": "An actual read after changed words is permitted; no speech or duplicate proposal means those live behaviors remain unexercised by this sample.",
+    "quotaNote": "Account snapshots are observations, not a one-to-one reconciliation of this run's independently recorded transmissions."
+  }
+}
