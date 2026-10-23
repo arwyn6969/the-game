@@ -343,6 +343,8 @@ export function applyResult(
   result: MindResult,
   source: "statement" | "event" = "statement",
 ) {
+  if (result.kind === "act")
+    throw new Error("Physical decisions require applyPhysicalCommand and a fresh bounded session.");
   if (!Number.isFinite(town.minute)) town.minute = 0;
   if (!Number.isFinite(town.day) || town.day < 1) town.day = 1;
   if (!Number.isFinite(town.nextId)) town.nextId = 1;

@@ -52,6 +52,7 @@ jobs:
           if (!ready) throw new Error("AI test preview did not start");
           JS
           node scripts/quality-ai-browser.mjs
+          DISCUSSION_QA_URL=http://127.0.0.1:8094/ npm run test:browser:meetings
           GAME_SKIN_QA_URL=http://127.0.0.1:8094/ GAME_SKIN_QA_OUT=artifacts/ui-interfaces node scripts/skin-browser.mjs
       - name: Accessibility checks
         run: |
@@ -88,6 +89,7 @@ jobs:
           path: |
             artifacts/quality-browser
             artifacts/quality-ai-browser
+            artifacts/discussion-ui
             artifacts/stamp-identity-browser
             artifacts/agent-wallet-browser
             artifacts/accessibility-browser

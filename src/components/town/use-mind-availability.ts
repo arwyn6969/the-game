@@ -4,9 +4,11 @@ import { mindAvailability } from "@/lib/mind.functions";
 /** Recheck configuration/connectivity only. Never replay a player's AI request. */
 export function useMindAvailability(localOnly: boolean, replyFailed: boolean) {
   const onlineRef = useRef(false);
+  const actionsAvailableRef = useRef(false);
   const retryingRef = useRef(replyFailed);
   retryingRef.current = replyFailed;
   const [online, setOnline] = useState(false);
+  const [actionsAvailable, setActionsAvailable] = useState(false);
   const [checked, setChecked] = useState(false);
   const [checking, setChecking] = useState(false);
   const checkRef = useRef<() => Promise<boolean>>(async () => false);
@@ -16,10 +18,12 @@ export function useMindAvailability(localOnly: boolean, replyFailed: boolean) {
     let alive = true;
     let inFlight: Promise<boolean> | null = null;
     let timeout: number | undefined;
-    const update = (value: boolean) => {
+    const update = (value: boolean, actions = false) => {
       if (!alive) return;
       onlineRef.current = value;
+      actionsAvailableRef.current = value && actions;
       setOnline(value);
+      setActionsAvailable(value && actions);
       setChecked(true);
     };
     const probe = (): Promise<boolean> => {
@@ -40,7 +44,7 @@ export function useMindAvailability(localOnly: boolean, replyFailed: boolean) {
             }),
           ]);
           const ready = result.online && navigator.onLine;
-          update(ready);
+          update(ready, "actions" in result && result.actions === true);
           return alive && ready;
         } catch {
           update(false);
@@ -76,5 +80,5 @@ export function useMindAvailability(localOnly: boolean, replyFailed: boolean) {
     };
   }, [localOnly]);
 
-  return { online, onlineRef, checked, checking, check };
+  return { online, onlineRef, actionsAvailable, actionsAvailableRef, checked, checking, check };
 }

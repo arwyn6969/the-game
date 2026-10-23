@@ -1,0 +1,18 @@
+{
+  "sourceHead": "185d72b",
+  "source": {
+    "scripts/library-meeting-real-ai.mjs": "71395f64314f29c9c84767cc6b2b91601c6e40bcaf882c895aef253baecd15af",
+    "scripts/library-meeting-audit.mjs": "fca5cf8df8a50a4cadcdb77dea39a366c41591c2991d7841ab5d55ab47ed0a87",
+    "src/game/discussions.ts": "3fc28e88369ee638f6b76a951df940bdb94ae1b4e58bab616edd7dbeb3201ae8",
+    "src/game/attention.ts": "c19ac63407d44274d1ddbcf17185a8298ed612632c81254242199cda7a07662b",
+    "src/game/prompt.ts": "f77d8d92337a0444a7d29fa9a5fd77629a2a1da1da0d88e5f6f1f0604f356def",
+    "src/game/save.ts": "0e6d626dcbb512c6795ccfb3c74dd02237407845d6761611c2dc0cb7068bfbfd"
+  },
+  "evidence": {
+    "report.json": "c21cd6b4e0b83b219636713adb9d35d1dff6d15ae0ae5fb28c16197a7a5a881d",
+    "initial-town.json": "8918acad03ad76bf865e7a78cbad162386d947cba3ebf7a949c93efeb57fe649",
+    "final-town.json": "4c31313d56675008e1110d18f37496a147397bd92ffedfeb63142e0716a883dc",
+    "prompt-1.txt": "30e52573a4ba80b8b255bd22328bbf44ce741646e37a775b08a134f190a80c59",
+    "prompt-2.txt": "c438e60addcc71022b7c5ab32c8f576765bb9d597d3528f94196129b62b99332"
+  }
+}

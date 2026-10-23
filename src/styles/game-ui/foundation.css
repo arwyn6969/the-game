@@ -745,6 +745,26 @@
     font-size: 0.875rem;
   }
 
+  .discussion-compose {
+    color: var(--ui-ink);
+    background: var(--ui-paper);
+    border-color: var(--ui-line);
+  }
+
+  .manuscript-tools {
+    border-color: var(--ui-line);
+  }
+
+  .manuscript-tools select {
+    color: var(--ui-ink);
+    background: var(--ui-paper-raised);
+    border-color: var(--ui-line);
+  }
+
+  .manuscript-diagnostics {
+    color: var(--ui-muted);
+  }
+
   .social-empty,
   .social-effects {
     font-size: 1rem;

@@ -1,0 +1,76 @@
+{
+  "sourceHead": "7a5142b9e821c6e12aa7abcc4c5d01e090f6095e",
+  "at": "2026-10-22T14:11:01.786Z",
+  "scope": "Local replay of the prior real trial's rejected read; zero model calls",
+  "priorSource": "fac60f23cc7904c99b4f83f4a006aea5d3ac07b9",
+  "actorTile": {
+    "x": 23,
+    "y": 17
+  },
+  "oldDecision": {
+    "kind": "read",
+    "itemId": "manuscript:town:1",
+    "itemRevision": 3
+  },
+  "oldResult": {
+    "ok": false,
+    "kind": "read",
+    "message": "Hold the manuscript before putting it down, reading or writing it."
+  },
+  "currentAvailableRead": {
+    "kind": "read",
+    "itemId": "manuscript:town:1",
+    "itemRevision": 3
+  },
+  "newResult": {
+    "ok": true,
+    "kind": "read",
+    "itemId": "manuscript:town:1",
+    "message": "Northern read the manuscript.",
+    "content": {
+      "title": "Day 1 ledger: cash on hand",
+      "text": "Cash: 2 town coins.\nNo funded work accepted.\nNo obligations recorded.\nNo work payments recorded.\nNo offered work recorded.\nNo recorded shift projects.\n\nMissing: rent amount, food prices, job listings, wage rates, due dates.\n\nPlan: check noticeboard for postings. Ask Data if they know of any paid tasks. Keep manuscript to track changes.",
+      "revision": 1,
+      "author": "northern"
+    }
+  },
+  "itemBefore": {
+    "id": "manuscript:town:1",
+    "kind": "manuscript",
+    "title": "Day 1 ledger: cash on hand",
+    "text": "Cash: 2 town coins.\nNo funded work accepted.\nNo obligations recorded.\nNo work payments recorded.\nNo offered work recorded.\nNo recorded shift projects.\n\nMissing: rent amount, food prices, job listings, wage rates, due dates.\n\nPlan: check noticeboard for postings. Ask Data if they know of any paid tasks. Keep manuscript to track changes.",
+    "author": "northern",
+    "owner": "town",
+    "revision": 3,
+    "contentRevision": 1,
+    "location": {
+      "kind": "ground",
+      "tile": {
+        "x": 23,
+        "y": 17
+      }
+    }
+  },
+  "itemAfter": {
+    "id": "manuscript:town:1",
+    "kind": "manuscript",
+    "title": "Day 1 ledger: cash on hand",
+    "text": "Cash: 2 town coins.\nNo funded work accepted.\nNo obligations recorded.\nNo work payments recorded.\nNo offered work recorded.\nNo recorded shift projects.\n\nMissing: rent amount, food prices, job listings, wage rates, due dates.\n\nPlan: check noticeboard for postings. Ask Data if they know of any paid tasks. Keep manuscript to track changes.",
+    "author": "northern",
+    "owner": "town",
+    "revision": 3,
+    "contentRevision": 1,
+    "location": {
+      "kind": "ground",
+      "tile": {
+        "x": 23,
+        "y": 17
+      }
+    }
+  },
+  "custodyAndAllItemFieldsUnchanged": true,
+  "inferenceUsageUnchanged": true,
+  "financeUnchanged": true,
+  "saveRoundTrip": true,
+  "liveRequests": 0
+}

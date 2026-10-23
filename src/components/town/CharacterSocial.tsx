@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Eye, MessageCircle, Pin, X } from "lucide-react";
 import type { Agent, AgentId, SocialEvent, Town } from "@/game/types";
 import { characterProfile } from "@/game/characters";
@@ -8,6 +8,7 @@ import { fundedWorkSummary } from "@/game/funded-work";
 import { formatClock, mentionsSeed } from "@/game/text";
 import { placeTitle, zoneAt } from "@/game/world";
 import { inTalkRange } from "./talk";
+import { heldItem } from "@/game/physical-items";
 
 const nameOf = (town: Town, id: AgentId) => town.agents.find((a) => a.id === id)?.name ?? id;
 const dateOf = (event: { day: number; minute: number }) =>
@@ -117,6 +118,9 @@ export function CharacterOverview({
     agent.id === "player" || agent.memories.some((m) => m.type === "chat" && m.with === "player");
   const nearby = inTalkRange(player.tile.x, player.tile.y, agent.tile.x, agent.tile.y);
   const profile = characterProfile(agent.id);
+  const carried = heldItem(town, agent.id);
+  const reading = town.physicalItems?.reading;
+  const canObserve = !replay && (watch || nearby || agent.id === "player");
   return (
     <div className="character-overview">
       <p className="character-activity">
@@ -126,6 +130,17 @@ export function CharacterOverview({
             ? `${placeTitle(zoneAt(agent.tile.x, agent.tile.y))} · ${mentionsSeed(agent.status) ? "Keeping to their day" : agent.status}`
             : "Walk closer to see their current activity."}
       </p>
+      {canObserve && carried && (
+        <p className="character-note">
+          Carrying: {carried.title}
+          {reading?.actor === agent.id &&
+          reading.itemId === carried.id &&
+          reading.contentRevision === carried.contentRevision &&
+          reading.until >= (town.day - 1) * 1440 + town.minute
+            ? " · reading"
+            : ""}
+        </p>
+      )}
       <h3>Strengths</h3>
       <div className="expertise-tags">
         {profile.specialties.map((s) => (
@@ -312,6 +327,7 @@ export function SocialPanel({
   onFollow,
   onProfile,
   replay,
+  discussion,
 }: {
   town: Town;
   events: SocialEvent[];
@@ -321,7 +337,9 @@ export function SocialPanel({
   onFollow: (id: AgentId) => void;
   onProfile: (id: AgentId) => void;
   replay: boolean;
+  discussion?: ReactNode;
 }) {
+  const [section, setSection] = useState<"history" | "meeting">("history");
   const [chosen, setChosen] = useState<string | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -357,17 +375,39 @@ export function SocialPanel({
           <X size={18} />
         </button>
       </div>
-      <label className="watch-town-control">
+      {discussion && (
+        <div className="social-sections" role="group" aria-label="Town life sections">
+          <button
+            className="btn"
+            type="button"
+            aria-pressed={section === "history"}
+            onClick={() => setSection("history")}
+          >
+            Conversation history
+          </button>
+          <button
+            className="btn"
+            type="button"
+            aria-pressed={section === "meeting"}
+            onClick={() => setSection("meeting")}
+          >
+            Library meeting
+          </button>
+        </div>
+      )}
+      {section === "meeting" && discussion}
+      <label className="watch-town-control" hidden={section === "meeting"}>
         <input type="checkbox" checked={watch} onChange={(e) => onWatch(e.target.checked)} />
         Watch town conversations
       </label>
-      <p className="social-scope">
+      <p className="social-scope" hidden={section === "meeting"}>
         {watch
           ? "Watching public town life. This does not add knowledge to your resident."
           : "Your conversations and nearby exchanges you witnessed."}
       </p>
       <div
         className="mind-body social-body"
+        hidden={section === "meeting"}
         role="region"
         aria-label="Town life conversations"
         tabIndex={0}
@@ -471,8 +511,8 @@ export function SocialPanel({
             <section className="social-effects">
               <h3>Remembered</h3>
               <p>
-                Recorded in {current.memories.map((m) => nameOf(town, m.agentId)).join(" and ")}'s
-                conversation history.
+                Recorded in {current.memories.map((m) => nameOf(town, m.agentId)).join(" and ")}
+                's conversation history.
               </p>
             </section>
             {Boolean(current.intentions?.length) && (

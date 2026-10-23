@@ -1,0 +1,26 @@
+{
+  "source": "fac60f23cc7904c99b4f83f4a006aea5d3ac07b9",
+  "controlSimulationMinutes": 7,
+  "controlEconomyEqualsTrial": true,
+  "openingBalancesUnchanged": true,
+  "cashUnchanged": true,
+  "tillsUnchanged": true,
+  "favorsUnchanged": true,
+  "transactionsUnchanged": true,
+  "identityUnchanged": true,
+  "economyAudit": [],
+  "physicalAudit": [],
+  "explanation": "First ordinary simulation tick initializes funded payroll, including Kevin/Baba wage holds and agreements. Same bookkeeping is reproduced without any AI/model call.",
+  "fundedAgreements": [
+    {
+      "worker": "kevin",
+      "fee": 5,
+      "status": "active"
+    },
+    {
+      "worker": "baba",
+      "fee": 4,
+      "status": "active"
+    }
+  ]
+}

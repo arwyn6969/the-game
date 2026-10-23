@@ -14,9 +14,11 @@ export function promptMemories(town: Town, agent: Agent, job: ThinkJob) {
   const question =
     job.kind === "player"
       ? plain(job.text, 400)
-      : job.kind === "talk"
-        ? `${job.a} ${job.b}`
-        : job.kind;
+      : job.kind === "act"
+        ? "manuscript physical action previous result own creative intentions"
+        : job.kind === "talk"
+          ? `${job.a} ${job.b}`
+          : job.kind;
   const query = `${question} ${placeTitle(zoneAt(agent.tile.x, agent.tile.y))} ${(other
     ? []
     : (agent.threads ?? [])

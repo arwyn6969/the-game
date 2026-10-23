@@ -31,6 +31,16 @@ export function budgetConfigured(env = process.env): boolean {
     return false;
   }
 }
+/** Configuration capability only; reservations still enforce live shared headroom. */
+export function actionBudgetConfigured(env = process.env): boolean {
+  try {
+    if (!budgetConfigured(env)) return false;
+    const policy = loadBudgetPolicy(env);
+    return (policy.actionConcurrent ?? 0) > 0 || policy.backgroundConcurrent > 0;
+  } catch {
+    return false;
+  }
+}
 async function budgetStore(scope: "shared" | "ephemeral") {
   if (scope === "ephemeral") {
     globalBudget.__mindEphemeralBudget ??= new EphemeralMindBudgetStore();

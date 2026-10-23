@@ -1,0 +1,228 @@
+{
+  "reviewDate": "2026-10-22",
+  "capturedAtUtc": "2026-10-22T11:01:53.910096+00:00",
+  "method": "Read-only static source trace and working-tree byte comparison; no app, tests, provider or live-platform calls.",
+  "heads": {
+    "product": "7ddda79a91784228586a6536ec9abd565175f79f",
+    "hosted-ai-rollout": "dab257bb4911d8abf63b412aca5e427cc0dcb2ab",
+    "community-evening-plan": "23be73a0c338e43caaa335a66b138a9e550db323"
+  },
+  "files": [
+    {
+      "path": "src/game/types.ts",
+      "sha256": {
+        "product": "a85a1ec6ad5e219f3e1a0222419ff4d85e9a966253ce947829befa6c08d728a0",
+        "hosted-ai-rollout": "a85a1ec6ad5e219f3e1a0222419ff4d85e9a966253ce947829befa6c08d728a0"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/game/prompt.ts",
+      "sha256": {
+        "product": "e3516d0430f7e3bde6d841fb012faf6f7fdbe3d59f2a1fce453a9675e40b5bce",
+        "hosted-ai-rollout": "e3516d0430f7e3bde6d841fb012faf6f7fdbe3d59f2a1fce453a9675e40b5bce"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/game/retrieval.ts",
+      "sha256": {
+        "product": "5f511b94d3993025e2580be9362fb9fc4920c7304e3e7aff13c4ca1f338e09ae",
+        "hosted-ai-rollout": "5f511b94d3993025e2580be9362fb9fc4920c7304e3e7aff13c4ca1f338e09ae"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/game/effects.ts",
+      "sha256": {
+        "product": "bb85ecc0d91dfbcd6ad19825b28b1c91867cd19bf8d0d427c3f80e787e11511b",
+        "hosted-ai-rollout": "bb85ecc0d91dfbcd6ad19825b28b1c91867cd19bf8d0d427c3f80e787e11511b"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/game/sim.ts",
+      "sha256": {
+        "product": "d198167fc3aaff20c19e0fe5029b1d52af10db4d9225d771dcd713d2b03c4b90",
+        "hosted-ai-rollout": "d198167fc3aaff20c19e0fe5029b1d52af10db4d9225d771dcd713d2b03c4b90"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/game/navigation.ts",
+      "sha256": {
+        "product": "dde6b6aa7a92dea4b0b808a5db93835880f665c9cac2a624323b990215d1d52c",
+        "hosted-ai-rollout": "dde6b6aa7a92dea4b0b808a5db93835880f665c9cac2a624323b990215d1d52c"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/game/path.ts",
+      "sha256": {
+        "product": "92d4ed9d37773cb323133096671bc1678ce167034966e4e721f84d1b7048bac7",
+        "hosted-ai-rollout": "92d4ed9d37773cb323133096671bc1678ce167034966e4e721f84d1b7048bac7"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/game/world.ts",
+      "sha256": {
+        "product": "d801575aa1f1b4d7b286a1124310047314a98e625dc8675ff266ab466616ae6f",
+        "hosted-ai-rollout": "d801575aa1f1b4d7b286a1124310047314a98e625dc8675ff266ab466616ae6f"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/game/render.ts",
+      "sha256": {
+        "product": "6243b8d85ed8a40e4d9ef7836a16adfeefe9f38eec2a374024b64e66714a890c",
+        "hosted-ai-rollout": "6243b8d85ed8a40e4d9ef7836a16adfeefe9f38eec2a374024b64e66714a890c"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/game/save.ts",
+      "sha256": {
+        "product": "5486d033d0bbb4c12732e4547e8bf96dd5a07e2cecf18f3d47d82510e7430bc1",
+        "hosted-ai-rollout": "5486d033d0bbb4c12732e4547e8bf96dd5a07e2cecf18f3d47d82510e7430bc1"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/game/identity.ts",
+      "sha256": {
+        "product": "143f91ba712e4282d345f929b5164b6ffa039672331c956540f43c2b116c5306",
+        "hosted-ai-rollout": "143f91ba712e4282d345f929b5164b6ffa039672331c956540f43c2b116c5306"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/game/reading-evening.ts",
+      "sha256": {
+        "product": "c297924bd7ca73f7eb64fc6fd47b3f67758b7f30232eec6af9e7fd548e6188d7",
+        "hosted-ai-rollout": "c297924bd7ca73f7eb64fc6fd47b3f67758b7f30232eec6af9e7fd548e6188d7"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/game/community.ts",
+      "sha256": {
+        "product": "e50e288d75b5531b9c76283d04a413cf0d616b3f07774ab8a8f71876fedd5dac",
+        "hosted-ai-rollout": "e50e288d75b5531b9c76283d04a413cf0d616b3f07774ab8a8f71876fedd5dac"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/components/town/TownApp.tsx",
+      "sha256": {
+        "product": "18f61aad987858075b348269548213d32e63fcbda0c7be521f723c2fcbef20d7",
+        "hosted-ai-rollout": "18f61aad987858075b348269548213d32e63fcbda0c7be521f723c2fcbef20d7"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/components/town/WorldArt.ts",
+      "sha256": {
+        "product": "03304f4f3dafa218b94ef3fab39ee0e80fbe74b06f79584b9e40289bf4b33c8a",
+        "hosted-ai-rollout": "03304f4f3dafa218b94ef3fab39ee0e80fbe74b06f79584b9e40289bf4b33c8a"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/components/town/PlayerTools.tsx",
+      "sha256": {
+        "product": "b6ff67250f508869868d3ce3adf17ec82d10abdfc918c0809d2d436b38b77323",
+        "hosted-ai-rollout": "b6ff67250f508869868d3ce3adf17ec82d10abdfc918c0809d2d436b38b77323"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/components/town/CharacterSocial.tsx",
+      "sha256": {
+        "product": "4a0fc3742af23aa108ef9f6f6c478a4bc1f23f361ae003233cf14403345fcf3e",
+        "hosted-ai-rollout": "4a0fc3742af23aa108ef9f6f6c478a4bc1f23f361ae003233cf14403345fcf3e"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/lib/mind.functions.ts",
+      "sha256": {
+        "product": "4b130e4544d2b3379b2908f9105646d59fab9f334baa99ea9cd13a09172a7822",
+        "hosted-ai-rollout": "4b130e4544d2b3379b2908f9105646d59fab9f334baa99ea9cd13a09172a7822"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/lib/mind.gateway.ts",
+      "sha256": {
+        "product": "a909f6ddf3f46c9ac64232c5271d38dc365bfe2ad5f0b89edc3fe7951994b215",
+        "hosted-ai-rollout": "a909f6ddf3f46c9ac64232c5271d38dc365bfe2ad5f0b89edc3fe7951994b215"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/lib/mind-pool/types.ts",
+      "sha256": {
+        "product": "751bb830bf01b2a5f203c16a8adff3031e37424478de51d1c1f1acc447796797",
+        "hosted-ai-rollout": "751bb830bf01b2a5f203c16a8adff3031e37424478de51d1c1f1acc447796797"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/lib/mind-pool/config.ts",
+      "sha256": {
+        "product": "aafbbc530c3ba4586c63b0042fb88ed904e81eb8f1549e18103b8cd8022afde3",
+        "hosted-ai-rollout": "aafbbc530c3ba4586c63b0042fb88ed904e81eb8f1549e18103b8cd8022afde3"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/lib/mind-pool/transport.ts",
+      "sha256": {
+        "product": "c160640c3b80ac0cd570bdb99b39090e18065359e5551b87a01f2dbe1b84c702",
+        "hosted-ai-rollout": "c160640c3b80ac0cd570bdb99b39090e18065359e5551b87a01f2dbe1b84c702"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/lib/mind-pool/router.ts",
+      "sha256": {
+        "product": "a46bc11ed903fa42795b6b5789d0c370e56156428da5f17554c7b1601b4217c3",
+        "hosted-ai-rollout": "c5873c77026198d7e1a1a05b92941f5b040d136431d561dcc5174f33ad6f283f"
+      },
+      "identical": false
+    },
+    {
+      "path": "src/lib/mind-pool/server.ts",
+      "sha256": {
+        "product": "465e9ff3b4c676ad7cb36a5596dc4b412d4dd9f0a5fe9dce1c17f53eabc9a8c7",
+        "hosted-ai-rollout": "663ad8c7271ff1219d739a2d3a5cfda68dc49b3b63c5e1ddc4405c977258611a"
+      },
+      "identical": false
+    },
+    {
+      "path": "src/lib/mind-budget/policy.ts",
+      "sha256": {
+        "product": "0a374959b47826049a994eb4e9fc879f8e0c0a13d98b41ac2efc9bc8f3a8c7ab",
+        "hosted-ai-rollout": "0a374959b47826049a994eb4e9fc879f8e0c0a13d98b41ac2efc9bc8f3a8c7ab"
+      },
+      "identical": true
+    },
+    {
+      "path": "src/lib/mind-budget/server.server.ts",
+      "sha256": {
+        "product": "37bafd44825bda4a1dbdce07d64bd0fb2b32e7433b741ce5717a6dd8611ded24",
+        "hosted-ai-rollout": "2a5609e0892c811a6562792ee2dc579625ecffaa707ba99a12170c4dda2ff9b7"
+      },
+      "identical": false
+    },
+    {
+      "path": "migrations/20261013_mind_budget.sql",
+      "sha256": {
+        "product": "9974ed555a57760ad3787bef641e1c6d816164dcd25db06bc9333d9ef92dd5ee",
+        "hosted-ai-rollout": "9974ed555a57760ad3787bef641e1c6d816164dcd25db06bc9333d9ef92dd5ee"
+      },
+      "identical": true
+    }
+  ]
+}
