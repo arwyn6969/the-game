@@ -13,6 +13,12 @@ const out = resolve(process.env.MANUSCRIPT_QA_OUT || "artifacts/manuscript-ui");
 await mkdir(out, { recursive: true });
 const report = {
   sourceHead: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
+  sourceTrackedChanges: execFileSync("git", ["diff", "HEAD", "--name-only"], {
+    encoding: "utf8",
+  })
+    .trim()
+    .split("\n")
+    .filter(Boolean),
   target: target.href,
   syntheticTransport: true,
   liveCalls: 0,
@@ -183,6 +189,11 @@ try {
     page.on("pageerror", (error) => result.errors.push(error.message));
     for (const layout of ["same", "adjacent", "diagonal", "far", "other-held"]) {
       await seedGroundRead(page, layout);
+      assert.equal(
+        await page.evaluate(async () => (await import("/src/lib/auth/client.ts")).authEnabled),
+        true,
+      );
+      result.productAuthEnabled = true;
       await openInventory(page);
       await page
         .locator(".manuscript-tools")
@@ -495,6 +506,12 @@ try {
     const greeting = "Data. You're up early.";
     await respond(page, 0, { kind: "speak", text: greeting });
     await calls(page, 2);
+    await page.waitForTimeout(180);
+    assert.equal(
+      await page.evaluate(() => window.__manuscriptMindMock.calls.length),
+      2,
+      "The next pending decision must retain the single transport lock",
+    );
     await page.getByRole("button", { name: "Pause", exact: true }).click();
     const afterGreeting = await town(page);
     assert.equal(afterGreeting.physicalItems.session.enabled, true);
@@ -509,6 +526,16 @@ try {
       beforeGreeting.agents.find((person) => person.id === "data").bubble,
       "One resident's speech must not fabricate another resident's reply",
     );
+    const unintendedRecipients = afterGreeting.agents
+      .filter((person) => person.id !== "northern")
+      .filter((person) => person.memories.some((memory) => memory.text.includes(greeting)))
+      .map((person) => person.id);
+    assert.deepEqual(
+      unintendedRecipients,
+      [],
+      "Mere proximity must not grant manuscript speech knowledge to Data, the player or others",
+    );
+    assert.deepEqual(afterGreeting.discussions, beforeGreeting.discussions);
     const nextAfterSpeech = await page.evaluate(() =>
       JSON.parse(window.__manuscriptMindMock.calls[1].user.split("Current observation: ")[1]),
     );
@@ -516,6 +543,7 @@ try {
     assert.equal(nextAfterSpeech.session.lastResult.ok, true);
     assert.equal(nextAfterSpeech.actor.heldItemId, null);
     assert.equal(nextAfterSpeech.knownManuscript, null);
+    assert.ok(nextAfterSpeech.nearbyResidents.some((person) => person.id === "data"));
     assert.ok(nextAfterSpeech.availableActions.some((option) => option.kind === "read"));
     const greetingItem = afterGreeting.physicalItems.items[0];
     await capture(page, `${viewport.name}-greeting-continues.png`);
@@ -556,12 +584,14 @@ try {
       nextDecision: "read",
       noAutomaticPickup: true,
       noFabricatedDataReply: true,
+      unintendedRecipients,
+      meetingStateUnchanged: true,
       waitingAfterExplicitWait: afterSpeechWait.physicalItems.session.waiting,
       callsAtWait: 3,
       usage: afterSpeechWait.physicalItems.session.usage,
     };
     result.assertions.push(
-      "Ordinary greeting causes a second model request without a Data reply, pickup or implicit read; a separately supplied read succeeds, then explicit wait parks at three counted requests",
+      "Ordinary greeting causes a second model request without a Data reply, pickup or implicit read; proximity grants no knowledge to Data/player/others and meeting state is unchanged; a separately supplied read succeeds, then explicit wait parks at three counted requests",
     );
 
     await seed(page, { item: true, near: true });
