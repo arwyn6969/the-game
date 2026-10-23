@@ -6,9 +6,10 @@ import type { PoolConfig, MindKind, PoolResult, Completion } from "./types.ts";
 import { routeMind } from "./router.ts";
 import { SqlQuotaStore } from "./store.ts";
 import type { Sql } from "../db.ts";
+import { createPostgresPool } from "../postgres.server.ts";
 
 const globalPool = globalThis as typeof globalThis & {
-  __mindQuotaPool?: import("pg").Pool;
+  __mindQuotaPool?: ReturnType<typeof createPostgresPool>;
 };
 
 async function quotaSql(): Promise<Sql> {
@@ -17,18 +18,14 @@ async function quotaSql(): Promise<Sql> {
     return getSql();
   }
   // Bound ledger latency without changing auth/platform database behaviour.
-  const { default: pg } = await import("pg");
   if (!globalPool.__mindQuotaPool) {
-    globalPool.__mindQuotaPool = new pg.Pool({
+    globalPool.__mindQuotaPool = createPostgresPool({
       connectionString: process.env.DATABASE_URL,
       max: 4,
       connectionTimeoutMillis: 3_000,
       query_timeout: 3_000,
       statement_timeout: 3_000,
       lock_timeout: 3_000,
-    });
-    globalPool.__mindQuotaPool.on("error", () => {
-      /* Requests fail closed; never print connection secrets. */
     });
   }
   const pool = globalPool.__mindQuotaPool;

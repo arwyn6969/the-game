@@ -81,7 +81,7 @@ export function DiscussionPanel({ town, controls }: { town: Town; controls: Disc
             disabled={readOnly}
             onChange={(event) => controls.onEnable(event.target.checked)}
           />
-          Enable the local meeting prototype
+          Enable library meetings (experimental)
         </label>
         {readOnly && (
           <p className="warn">Replay is view-only. Return to now to join or make a choice.</p>

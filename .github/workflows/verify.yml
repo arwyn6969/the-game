@@ -79,6 +79,8 @@ jobs:
           npm run build
           npm run test:browser:agent-wallets
           GAME_AGENT_QA_WALLET=leather GAME_AGENT_QA_OUT=artifacts/agent-wallet-browser/leather npm run test:browser:agent-wallets
+      - name: Build Cloudflare target without migrations
+        run: npm run build:cloudflare
       - uses: actions/upload-artifact@v4
         if: always()
         with:

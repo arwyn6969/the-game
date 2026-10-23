@@ -235,6 +235,16 @@ export async function registryResult<T>(run: () => Promise<T>): Promise<Registry
         error: "unauthenticated",
         message: "Sign in to your game account before managing agent wallets.",
       };
+    // Unexpected hosted failures need a trace without logging provider errors,
+    // wallet addresses, session tokens or database connection strings.
+    if (process.env.GAME_HOSTING_TARGET === "cloudflare" && error instanceof Error)
+      console.error("[agent-registry] unexpected failure", {
+        name: error.name,
+        frames: error.stack
+          ?.split("\n")
+          .filter((line) => /^\s+at /.test(line))
+          .slice(0, 5),
+      });
     return {
       ok: false,
       error: "unavailable",

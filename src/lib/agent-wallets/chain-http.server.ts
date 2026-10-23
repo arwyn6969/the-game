@@ -37,7 +37,7 @@ export async function chainRead(
     if (options.signal?.aborted) throw new Error("Chain observation cancelled.");
     const response = await (options.fetch ?? globalThis.fetch)(url, {
       method: "GET",
-      redirect: "error",
+      redirect: "manual",
       cache: "no-store",
       credentials: "omit",
       signal: controller.signal,

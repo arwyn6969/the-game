@@ -422,7 +422,7 @@ test("chain transport only permits fixed HTTPS mainnet origins and GET with no c
         fetch: async (requested, options) => {
           assert.equal(requested, url);
           assert.equal(options.method, "GET");
-          assert.equal(options.redirect, "error");
+          assert.equal(options.redirect, "manual");
           assert.equal(options.credentials, "omit");
           assert.equal(options.cache, "no-store");
           assert.equal(options.headers.Accept, "application/json");

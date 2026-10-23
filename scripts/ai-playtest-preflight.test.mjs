@@ -33,6 +33,18 @@ const environment = (changes = {}) => ({
   ...changes,
 });
 let db;
+test("standalone preflight requires Google credentials without depending on the Grok broker", () => {
+  const env = environment({
+    VITE_AUTH_MODE: "standalone",
+    GOOGLE_CLIENT_ID: "synthetic-client",
+    GOOGLE_CLIENT_SECRET: secret,
+    GROK_AUTH_CLIENT_ID: "",
+    GROK_AUTH_CLIENT_SECRET: "",
+    GROK_AUTH_ISSUER: "",
+  });
+  assert.equal(configurationReport(env).auth.googleClient, true);
+  assert.equal(configurationReport({ ...env, GOOGLE_CLIENT_SECRET: "" }).auth.googleClient, false);
+});
 const baseline = {};
 const label = (text) => /preflight:(\w+)/.exec(text)?.[1];
 before(async () => {

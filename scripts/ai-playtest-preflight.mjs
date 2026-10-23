@@ -73,8 +73,12 @@ export function configurationReport(env, poolConfig) {
   const auth = {
     explicitFlag: env.VITE_AUTH_ENABLED === "true",
     durableSecret: present(env.BETTER_AUTH_SECRET) && env.BETTER_AUTH_SECRET.trim().length >= 32,
-    brokerClient: present(env.GROK_AUTH_CLIENT_ID) && present(env.GROK_AUTH_CLIENT_SECRET),
-    issuerUrl: validUrl(env.GROK_AUTH_ISSUER),
+    ...(env.VITE_AUTH_MODE === "standalone"
+      ? { googleClient: present(env.GOOGLE_CLIENT_ID) && present(env.GOOGLE_CLIENT_SECRET) }
+      : {
+          brokerClient: present(env.GROK_AUTH_CLIENT_ID) && present(env.GROK_AUTH_CLIENT_SECRET),
+          issuerUrl: validUrl(env.GROK_AUTH_ISSUER),
+        }),
     callbackOrigin: validUrl(env.BETTER_AUTH_URL, true),
   };
   if (Object.values(auth).some((value) => !value)) issues.push("auth_configuration_incomplete");
@@ -113,6 +117,8 @@ export function configurationReport(env, poolConfig) {
         env.BETTER_AUTH_SECRET,
         env.GROK_AUTH_CLIENT_SECRET,
         env.GROK_AUTH_CLIENT_ID,
+        env.GOOGLE_CLIENT_ID,
+        env.GOOGLE_CLIENT_SECRET,
         env.DATABASE_URL,
         ...config.providers.map((provider) => env[provider.apiKeyEnv]),
       ]

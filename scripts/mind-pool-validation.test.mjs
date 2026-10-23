@@ -109,7 +109,7 @@ async function runSynthetic(body, options = {}) {
       assert.equal(posted, 1, "the one-attempt policy must forbid retries");
       assert.equal(url, "https://openrouter.ai/api/v1/chat/completions");
       assert.equal(init.method, "POST");
-      assert.equal(init.redirect, "error");
+      assert.equal(init.redirect, "manual");
       const request = JSON.parse(init.body);
       assert.equal(request.model, "openrouter/free");
       assert.equal(request.max_tokens, 400);

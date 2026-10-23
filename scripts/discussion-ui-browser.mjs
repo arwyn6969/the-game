@@ -151,7 +151,7 @@ try {
     page.on("pageerror", (error) => result.errors.push(error.message));
     await seed(page);
     await openMeeting(page);
-    await page.getByLabel("Enable the local meeting prototype", { exact: true }).check();
+    await page.getByLabel("Enable library meetings (experimental)", { exact: true }).check();
     await page
       .getByLabel("Propose one topic", { exact: true })
       .fill("A shared library activity — synthetic test");

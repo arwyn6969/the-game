@@ -3,12 +3,12 @@ import { MIND_SYSTEM, requestMind, validateMindRequest } from "./mind.gateway";
 import { authMiddleware } from "./auth/middleware";
 
 export const mindAvailability = createServerFn({ method: "GET" }).handler(async () => {
-  const { budgetConfigured } = await import("./mind-budget/server.server");
+  const { budgetConfigured, actionBudgetConfigured } = await import("./mind-budget/server.server");
   if (!budgetConfigured(process.env)) return { online: false, configured: false, actions: false };
   if (process.env.MIND_PROVIDER_MODE === "pool") {
     const { poolAvailable } = await import("./mind-pool/server");
     const configured = await poolAvailable();
-    const actions = await poolAvailable(undefined, "act");
+    const actions = actionBudgetConfigured(process.env) && (await poolAvailable(undefined, "act"));
     return { online: configured, configured, actions };
   }
   if (process.env.MIND_PROVIDER_MODE && process.env.MIND_PROVIDER_MODE !== "legacy")

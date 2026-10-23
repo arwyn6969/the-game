@@ -1,7 +1,8 @@
 import { genericOAuthClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { runPreSignInSignOut, runSignOut } from "../../../scripts/sign-out-plan.mjs";
-import { GROK_PROVIDERS } from "./providers";
+import { GROK_PROVIDERS, standaloneAuth } from "./providers";
+import { appPath } from "../app-path";
 
 /**
  * Better Auth client for this React SPA (browser-side).
@@ -18,6 +19,7 @@ import { GROK_PROVIDERS } from "./providers";
  * the visitor stays signed in.
  */
 export const authClient = createAuthClient({
+  basePath: appPath("/api/auth"),
   plugins: [genericOAuthClient()],
   fetchOptions: {
     onRequest(ctx) {
@@ -73,10 +75,7 @@ function setBearerToken(token: string | null): void {
  * popup there and a normal redirect everywhere else.
  */
 function inLivePreview(): boolean {
-  return (
-    typeof window !== "undefined" &&
-    window.location.hostname.endsWith(".grok-sandbox.com")
-  );
+  return typeof window !== "undefined" && window.location.hostname.endsWith(".grok-sandbox.com");
 }
 
 /** Message the popup posts back to the opener once sign-in completes. */
@@ -100,8 +99,10 @@ export async function signIn(
   providerId: string,
   opts: { callbackURL?: string; errorCallbackURL?: string } = {},
 ): Promise<void> {
-  const callbackURL = opts.callbackURL ?? "/";
-  const errorCallbackURL = opts.errorCallbackURL ?? "/";
+  const callbackURL =
+    !opts.callbackURL || opts.callbackURL === "/" ? appPath("/") : opts.callbackURL;
+  const errorCallbackURL =
+    !opts.errorCallbackURL || opts.errorCallbackURL === "/" ? appPath("/") : opts.errorCallbackURL;
 
   // Open the popup SYNCHRONOUSLY on the user gesture — before any await
   // (including signOut). Awaiting first drops user-gesture privilege in some
@@ -136,18 +137,28 @@ export async function signIn(
     if (typeof window !== "undefined") {
       const dest = new URL(callbackURL, window.location.origin);
       const here = window.location;
-      if (dest.origin !== here.origin || dest.pathname !== here.pathname || dest.search !== here.search) {
+      if (
+        dest.origin !== here.origin ||
+        dest.pathname !== here.pathname ||
+        dest.search !== here.search
+      ) {
         window.location.href = callbackURL;
       }
     }
     return;
   }
 
-  const { data, error } = await authClient.signIn.oauth2({
-    providerId,
-    callbackURL,
-    errorCallbackURL,
-  });
+  const { data, error } = standaloneAuth
+    ? await authClient.signIn.social({
+        provider: "google",
+        callbackURL,
+        errorCallbackURL,
+      })
+    : await authClient.signIn.oauth2({
+        providerId,
+        callbackURL,
+        errorCallbackURL,
+      });
   if (error) throw new Error(error.message ?? "Sign-in failed");
   if (data?.url) window.location.href = data.url;
 }
@@ -218,7 +229,7 @@ function waitForPopupToken(popup: Window): Promise<string | null> {
  * a hand-rolled control must catch it and let the visitor retry. In the live
  * preview the local clear is sufficient, so it always resolves.
  */
-export async function signOut(redirectTo = "/"): Promise<void> {
+export async function signOut(redirectTo = appPath("/")): Promise<void> {
   await runSignOut({
     livePreview: inLivePreview(),
     hasBearer: Boolean(getBearerToken()),

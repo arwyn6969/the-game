@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { appPath } from "../lib/app-path";
 
 async function handle(request: Request): Promise<Response> {
   const { assertSameSiteRequest, CrossSiteRequestError } =
@@ -14,7 +15,7 @@ async function handle(request: Request): Promise<Response> {
   let forwarded = request;
   if (
     request.method === "POST" &&
-    ["/api/auth/oauth2/link", "/api/auth/link-social"].includes(path)
+    [appPath("/api/auth/oauth2/link"), appPath("/api/auth/link-social")].includes(path)
   ) {
     const session = await auth.api.getSession({
       headers: request.headers,

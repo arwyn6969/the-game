@@ -81,7 +81,14 @@ import {
   spreadView,
 } from "@/game/effects";
 import { agentById } from "@/game/memory";
-import { mindAvailability, thinkTown } from "@/lib/mind.functions";
+import { thinkTown } from "@/lib/mind.functions";
+import { useMindAvailability } from "./use-mind-availability";
+import {
+  mindFailure,
+  mindFailureFromResult,
+  mindFailureMessage,
+  type MindFailure,
+} from "./mind-status";
 import { offlineResult, prepareRetrievals } from "@/game/offline";
 import { beatAt } from "@/game/plan";
 import { buildPrompt, parseMind } from "@/game/prompt";
@@ -299,7 +306,6 @@ export function TownApp() {
   const townRef = useRef<Town | null>(boot.current);
   const keysRef = useRef(new Set<string>());
   const speedRef = useRef<0 | 1 | 4>(townRef.current?.paused ? 0 : 1);
-  const onlineRef = useRef(true);
   const replayRef = useRef<Replay | null>(null);
   const pendingRef = useRef(false);
   const foregroundPendingRef = useRef(false);
@@ -345,9 +351,7 @@ export function TownApp() {
   const [recoverNote, setRecoverNote] = useState("");
   const [farNote, setFarNote] = useState("");
   const [tick, setTick] = useState(0);
-  const [online, setOnline] = useState(true);
-  const [checked, setChecked] = useState(false);
-  const [lastMind, setLastMind] = useState<"online" | "offline" | null>(null);
+  const [lastMind, setLastMind] = useState<"online" | null>(null);
   const [speed, setSpeed] = useState<0 | 1 | 4>(speedRef.current);
   const [replay, setReplay] = useState<Replay | null>(null);
   const [panel, setPanel] = useState<AgentId | null>(null);
@@ -426,7 +430,16 @@ export function TownApp() {
 
   const [board, setBoard] = useState(false);
   const [thinking, setThinking] = useState("");
-  const [hiccup, setHiccup] = useState(false);
+  const [replyFailure, setReplyFailure] = useState<MindFailure | null>(null);
+  const {
+    online,
+    onlineRef,
+    checked,
+    checking,
+    actionsAvailable,
+    actionsAvailableRef,
+    check: checkAI,
+  } = useMindAvailability(localOnly, replyFailure !== null);
   const [importText, setImportText] = useState<string | null>(null);
   const [importMode, setImportMode] = useState<"restore" | "fork">("restore");
   importTextRef.current = importText;
@@ -449,8 +462,6 @@ export function TownApp() {
   const [physicalRead, setPhysicalRead] = useState<PhysicalActionResult["content"] | null>(null);
   const [physicalSelected, setPhysicalSelected] = useState<string | null>(null);
   const physicalSelectedRef = useRef<string | null>(null);
-  const [actionsAvailable, setActionsAvailable] = useState(false);
-  const actionsAvailableRef = useRef(false);
   const [discussionEnabled, setDiscussionEnabled] = useState(savedMeetingPreference);
   const [discussionDraft, setDiscussionDraft] = useState("");
   const [discussionNote, setDiscussionNote] = useState("");
@@ -544,6 +555,8 @@ export function TownApp() {
     setDiscussionDraft("");
     setDiscussionNote("");
     discussionStartedRef.current = null;
+    setReplyFailure(null);
+    setLastMind(null);
     setInspect(false);
     resetGlide(next);
     setImportText(null);
@@ -720,26 +733,14 @@ export function TownApp() {
 
   async function checkDiscussionAvailability() {
     if (pendingRef.current || document.visibilityState !== "visible") return;
-    try {
-      const result = await mindAvailability();
-      const enabled = "actions" in result && result.actions === true;
-      actionsAvailableRef.current = enabled;
-      setActionsAvailable(enabled);
-      onlineRef.current = result.online;
-      setOnline(result.online);
-      setChecked(true);
-      setDiscussionNote(
-        localOnlyRef.current
-          ? "Local dialogue is selected. Turn it off in Help before requesting a meeting decision."
-          : enabled && result.online
-            ? "Resident AI actions are configured. Request a decision when ready."
-            : "Resident AI actions are unavailable. The meeting waits without generating dialogue.",
-      );
-    } catch {
-      actionsAvailableRef.current = false;
-      setActionsAvailable(false);
-      setDiscussionNote("Could not check resident AI actions. The meeting waits.");
-    }
+    const ready = await checkAI();
+    setDiscussionNote(
+      localOnlyRef.current
+        ? "Local dialogue is selected. Turn it off in Help before requesting a meeting decision."
+        : actionsAvailableRef.current && ready
+          ? "Resident AI actions are configured. Request a decision when ready."
+          : "Resident AI actions are unavailable. The meeting waits without generating dialogue.",
+    );
   }
 
   function requestDiscussionDecision() {
@@ -856,53 +857,13 @@ export function TownApp() {
     });
   }
 
-  function localReplyNow() {
-    const current = activeJobRef.current;
+  function cancelAIRequest() {
     requestSerial.current += 1;
     activeJobRef.current = null;
     pendingRef.current = false;
     foregroundPendingRef.current = false;
     setThinking("");
-    if (!current || townRef.current !== current.town || current.job.kind !== "player") return;
-    if (replayRef.current !== null) {
-      setSendNote("Return to now to send your line again; your draft is still here.");
-      return;
-    }
-    const player = agentById(current.town, "player");
-    const resident = agentById(current.town, current.job.agentId);
-    if (!inTalkRange(player.tile.x, player.tile.y, resident.tile.x, resident.tile.y)) {
-      setSendNote(
-        "You walked out of earshot. Walk closer to send your line again; your draft is still here.",
-      );
-      return;
-    }
-    const job = current.job;
-    try {
-      const before = playerChatIds(agentById(current.town, job.agentId).memories ?? []);
-      applyResult(current.town, offlineResult(current.town, job));
-      const landed = exchangeLanded(
-        before,
-        playerChatIds(agentById(current.town, job.agentId).memories ?? []),
-      );
-      // The resident's own draft remains the same context even with their card closed.
-      setDraft((text) => nextDraft(text, job.text, true, landed), job.agentId);
-      if (panelRef.current === job.agentId)
-        setSendNote(
-          landed
-            ? "They answered with local dialogue."
-            : "That did not land. Your line is still here.",
-        );
-      if (landed) {
-        current.town.guide = 3;
-        current.town.sawHint = true;
-        setHint(false);
-      }
-      setLastMind("offline");
-      persistTown(current.town);
-      setTick((n) => n + 1);
-    } catch {
-      setSendNote("That did not land. Your line is still here.");
-    }
+    setSendNote("AI request cancelled. Your line is still here; no local reply was substituted.");
   }
 
   function setLocalPreference(value: boolean) {
@@ -916,7 +877,8 @@ export function TownApp() {
         pausePhysicalSession(live, "Resident trial paused while local dialogue is selected.");
         persistTown(live);
       }
-      localReplyNow();
+      cancelAIRequest();
+      setReplyFailure(null);
     }
     try {
       localStorage.setItem(LOCAL_DIALOGUE_KEY, String(value));
@@ -980,9 +942,6 @@ export function TownApp() {
   }, [importing]);
 
   useEffect(() => {
-    onlineRef.current = online;
-  }, [online]);
-  useEffect(() => {
     replayRef.current = replay;
     keysRef.current.clear();
     stepInputRef.current = null;
@@ -1026,31 +985,6 @@ export function TownApp() {
   }, []);
 
   useEffect(() => {
-    let gone = false;
-    mindAvailability()
-      .then((res) => {
-        if (gone) return;
-        setOnline(res.online);
-        const enabled = "actions" in res && res.actions === true;
-        actionsAvailableRef.current = enabled;
-        setActionsAvailable(enabled);
-        onlineRef.current = res.online;
-        setChecked(true);
-      })
-      .catch(() => {
-        if (gone) return;
-        setOnline(false);
-        actionsAvailableRef.current = false;
-        setActionsAvailable(false);
-        onlineRef.current = false;
-        setChecked(true);
-      });
-    return () => {
-      gone = true;
-    };
-  }, []);
-
-  useEffect(() => {
     mounted.current = true;
     return () => {
       mounted.current = false;
@@ -1085,12 +1019,6 @@ export function TownApp() {
     measure();
     return () => observer.disconnect();
   }, [phase]);
-
-  useEffect(() => {
-    if (!hiccup) return;
-    const id = window.setTimeout(() => setHiccup(false), 4000);
-    return () => window.clearTimeout(id);
-  }, [hiccup]);
 
   runMindRef.current = async (live, job) => {
     if (townRef.current !== live || pendingRef.current || transportBusyRef.current) return;
@@ -1325,7 +1253,7 @@ export function TownApp() {
     let timed: number | undefined;
     let applied = false;
     let landed = false;
-    let usedLocalReply = false;
+    let failed: MindFailure | null = null;
     const mark = () =>
       job.kind === "player" ? playerChatIds(agentById(live, job.agentId).memories ?? []) : [];
     try {
@@ -1344,42 +1272,35 @@ export function TownApp() {
         requestMind(job.kind, prompt).then(resolve, reject);
       });
       if (!fresh()) return;
-      if (!res.ok) throw new Error(res.error);
+      if (!res.ok) {
+        failed = mindFailureFromResult(res);
+        throw new Error("AI request failed");
+      }
       if (res.text.length > 20_000) throw new Error("huge");
       const parsed = parseMind(job, res.text);
-      try {
-        const before = mark();
-        if (parsed) applyResult(live, parsed);
-        else {
-          usedLocalReply = true;
-          applyResult(live, offlineResult(live, job));
-        }
-        if (job.kind === "player") landed = exchangeLanded(before, mark());
-        applied = true;
-        if (mounted.current) {
-          setLastMind(parsed ? "online" : "offline");
-          if (!parsed) setHiccup(true);
-        }
-      } catch {
-        applied = true;
-        if (mounted.current) {
-          setLastMind("offline");
-          setHiccup(true);
-        }
+      if (!parsed) throw new Error("invalid");
+      const before = mark();
+      applyResult(live, parsed);
+      applied = true;
+      if (job.kind === "player") {
+        landed = exchangeLanded(before, mark());
+        if (!landed) throw new Error("invalid");
+        setLastMind("online");
+        setReplyFailure(null);
       }
-    } catch {
-      if (fresh() && !applied) {
-        try {
-          const before = mark();
-          usedLocalReply = true;
-          applyResult(live, offlineResult(live, job));
-          if (job.kind === "player") landed = exchangeLanded(before, mark());
-        } catch {
-          /* The clock must resume even if the fallback cannot land. */
-        }
-        if (mounted.current) {
-          setLastMind("offline");
-          setHiccup(true);
+    } catch (error) {
+      if (fresh()) {
+        if (job.kind === "player") {
+          failed ??= mindFailure(error);
+          setReplyFailure(failed);
+          // Keep the player's draft. A failed model request must never invent
+          // an authored conversation or silently switch this browser to local.
+        } else if (!applied) {
+          try {
+            applyResult(live, offlineResult(live, job));
+          } catch {
+            /* Background simulation may continue without a generated result. */
+          }
         }
       }
     } finally {
@@ -1398,10 +1319,10 @@ export function TownApp() {
             if (same) {
               setSendNote(
                 landed
-                  ? usedLocalReply
-                    ? "They answered with local dialogue."
-                    : "They heard you."
-                  : "That did not land. Your line is still here.",
+                  ? "They heard you."
+                  : failed
+                    ? `${mindFailureMessage(failed)} Your line is still here; no local reply was substituted.`
+                    : "That did not land. Your line is still here.",
               );
             }
             if (landed && townRef.current === live && (live.guide ?? 0) < 3) {
@@ -1801,7 +1722,7 @@ export function TownApp() {
       delete window.__controlsTest;
       delete window.__game;
     };
-  }, [phase]);
+  }, [phase, onlineRef]);
 
   async function enter(event: React.FormEvent) {
     event.preventDefault();
@@ -1993,12 +1914,49 @@ export function TownApp() {
       agentId: who,
       text,
     };
-    const minds =
-      onlineRef.current &&
-      !localOnlyRef.current &&
-      !pendingRef.current &&
-      document.visibilityState === "visible";
-    if (!minds) {
+    if (!localOnlyRef.current) {
+      if (pendingRef.current || document.visibilityState !== "visible") {
+        setSendNote(
+          "AI is busy or this tab is inactive. Your line is still here; try again shortly.",
+        );
+        return;
+      }
+      if (!onlineRef.current) {
+        setSendNote("Checking the AI connection. Your line is still here.");
+        const ready = await checkAI();
+        if (townRef.current !== live || panelRef.current !== who || replayRef.current !== null)
+          return;
+        if (!ready) {
+          setSendNote(
+            "AI is unavailable. Connection checks retry automatically. Your line is still here; no local reply was substituted.",
+          );
+          return;
+        }
+        const playerNow = agentById(live, "player");
+        const residentNow = agentById(live, who);
+        if (
+          !inTalkRange(playerNow.tile.x, playerNow.tile.y, residentNow.tile.x, residentNow.tile.y)
+        ) {
+          setSendNote("Walk closer to send your line again. Your draft is still here.");
+          return;
+        }
+      }
+      if (
+        localOnlyRef.current ||
+        pendingRef.current ||
+        foregroundPendingRef.current ||
+        document.visibilityState !== "visible"
+      ) {
+        setSendNote("Return to this tab to send your line again. Your draft is still here.");
+        return;
+      }
+      job.day = live.day;
+      job.minute = live.minute;
+      setSendNote("Waiting for an AI reply.");
+      void runMindRef.current(live, job);
+      return;
+    }
+    {
       try {
         const before = playerChatIds(agentById(live, who).memories ?? []);
         applyResult(live, offlineResult(live, job));
@@ -2021,8 +1979,6 @@ export function TownApp() {
       setTick((n) => n + 1);
       return;
     }
-    setSendNote("Saying it.");
-    void runMindRef.current(live, job);
   }
 
   if (phase === "unavailable") {
@@ -2330,7 +2286,25 @@ export function TownApp() {
     )
     .map((agent) => agent.id);
   const talkChoices = crowd && crowd.length > 1 ? crowd : nearby;
-  const localReplies = localOnly || !online || lastMind === "offline";
+  const aiUnavailable = !online || replyFailure !== null;
+  const aiWarning = replyFailure
+    ? `${mindFailureMessage(replyFailure)} No local reply was substituted. Your line is kept; send it again to retry.`
+    : checked && !online
+      ? "AI is unavailable. Messages stay unsent; no local replies will be substituted."
+      : "";
+
+  const connectionWarning =
+    !localOnly && aiWarning ? (
+      <div className="warn ai-warning" data-ai-warning role="alert">
+        <p>{aiWarning}</p>
+        <p>
+          Connection checks retry automatically. A connection check does not resend your message.
+        </p>
+        <button className="btn" type="button" disabled={checking} onClick={() => void checkAI()}>
+          {checking ? "Checking AI connection" : "Check AI connection"}
+        </button>
+      </div>
+    ) : null;
 
   const events = visibleSocialEvents(town, watchTown, { day: clockDay, minute: clockMinute });
   const conversations = events.filter((event) => event.kind === "conversation");
@@ -2512,39 +2486,53 @@ export function TownApp() {
             {farNote}
           </p>
         )}
-        {checked && (
-          <span
-            className="badge"
-            data-off={localReplies ? "true" : lastMind === "online" ? "false" : undefined}
-            title={
-              localReplies
-                ? "Local dialogue is limited. AI responses are currently unavailable."
+        <span
+          className="badge"
+          data-ai-status={
+            localOnly
+              ? "local"
+              : !checked
+                ? "checking"
+                : aiUnavailable
+                  ? "unavailable"
+                  : lastMind === "online"
+                    ? "responded"
+                    : "ready"
+          }
+          data-off={
+            localOnly || aiUnavailable ? "true" : lastMind === "online" ? "false" : undefined
+          }
+          title={
+            localOnly
+              ? "You chose authored local dialogue in Help & privacy."
+              : aiUnavailable
+                ? "AI has not completed a usable reply. Your message is kept for retry."
                 : lastMind === "online"
-                  ? "The latest AI response was received and accepted."
-                  : "AI is configured, but no response has been verified in this session."
-            }
-          >
-            {localReplies
-              ? "local replies"
-              : lastMind === "online"
-                ? "AI responded"
-                : "AI unverified"}
-          </span>
-        )}
+                  ? "The latest player AI response was received and accepted."
+                  : "AI is configured. Send a message to request a reply."
+          }
+        >
+          {localOnly
+            ? "Local dialogue selected"
+            : !checked
+              ? "Checking AI"
+              : !online
+                ? "AI reconnecting"
+                : replyFailure
+                  ? "AI reply failed"
+                  : lastMind === "online"
+                    ? "AI responded"
+                    : "AI ready"}
+        </span>
         {thinking && (
           <span className="status-message" role="status">
-            {thinking === "player" ? "Waiting for your reply" : "Residents are thinking"}
+            {thinking === "player" ? "Waiting for your AI reply" : "Residents are thinking"}
           </span>
         )}
         {thinking === "player" && (
-          <button className="btn" type="button" onClick={localReplyNow}>
-            Use local reply now
+          <button className="btn" type="button" onClick={cancelAIRequest}>
+            Cancel AI request
           </button>
-        )}
-        {hiccup && (
-          <span className="status-message" role="status">
-            AI reply unavailable.
-          </span>
         )}
         {town.physicalItems?.session && !replay && (
           <span className="status-message" role="status">
@@ -2706,12 +2694,12 @@ export function TownApp() {
           )}
         </p>
       )}
-      {checked && (localOnly || !online) && !shown && !tools && (
+      {localOnly && !shown && !tools && (
         <p className="warn offline-note" role="status">
-          {localOnly ? "Local dialogue only is on." : "AI is offline."} Residents use authored local
-          dialogue and remember your conversations.
+          Local dialogue only is selected. Turn it off in Help & privacy to use AI.
         </p>
       )}
+      {(!shown || tools) && connectionWarning}
       {hint && (town.guide ?? 0) < 3 && !shown && !tools && (
         <div className="welcome-tip">
           <Sparkles className="welcome-icon size-5" aria-hidden />
@@ -2920,7 +2908,8 @@ export function TownApp() {
             busy={thinking === "player" || replay !== null}
             inspect={inspectorEnabled && inspect}
             sendNote={sendNote}
-            localDialogue={checked && localReplies}
+            localDialogue={localOnly}
+            connectionWarning={connectionWarning}
             inspectorEnabled={inspectorEnabled}
             onInspect={setInspect}
             onClose={() => {
@@ -3373,6 +3362,7 @@ function Mind({
   inspect,
   sendNote,
   localDialogue,
+  connectionWarning,
   onInspect,
   inspectorEnabled,
   onClose,
@@ -3394,6 +3384,7 @@ function Mind({
   inspect: boolean;
   sendNote: string;
   localDialogue: boolean;
+  connectionWarning: React.ReactNode;
   onInspect: (value: boolean) => void;
   inspectorEnabled: boolean;
   onClose: () => void;
@@ -3728,6 +3719,7 @@ function Mind({
               </ul>
             </details>
           )}
+          {connectionWarning}
           {localDialogue && (
             <p className="mb-2 text-xs text-muted" role="note">
               Local dialogue is active. Open-ended conversation needs a live AI connection.
