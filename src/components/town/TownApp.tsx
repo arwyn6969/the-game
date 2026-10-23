@@ -1831,49 +1831,59 @@ export function TownApp() {
             <p className="brand-caption">YOUR LITTLE UNIVERSE</p>
           </div>
         </div>
-        <div className="hud-clock">
-          <span className="day-chip">Day {String(clockDay).padStart(2, "0")}</span>
-          <span>{formatClock(clockMinute)}</span>
-          <span className="hud-period text-muted">{periodName(clockMinute)}</span>
-          {replay !== null && <span className="text-purple">Replay</span>}
+        <div className="hud-time-controls">
+          <div className="hud-clock">
+            <span className="day-chip">Day {String(clockDay).padStart(2, "0")}</span>
+            <span>{formatClock(clockMinute)}</span>
+            <span className="hud-period text-muted">{periodName(clockMinute)}</span>
+            {replay !== null && <span className="text-purple">Replay</span>}
+          </div>
+          <div className="transport" role="group" aria-label="Town clock controls">
+            <button
+              className="btn"
+              data-on={speed === 0 ? "true" : "false"}
+              aria-pressed={speed === 0}
+              type="button"
+              onClick={() => setRate(0)}
+              aria-label="Pause"
+              title="Pause"
+            >
+              <Pause className="inline size-4" aria-hidden />
+              <span className="transport-pause-label">Pause</span>
+            </button>
+            <button
+              className="btn"
+              data-on={speed === 1 ? "true" : "false"}
+              aria-pressed={speed === 1}
+              type="button"
+              onClick={() => setRate(1)}
+            >
+              <Play className="inline size-4" aria-hidden /> 1×
+            </button>
+            <button
+              className="btn"
+              data-on={speed === 4 ? "true" : "false"}
+              aria-pressed={speed === 4}
+              type="button"
+              onClick={() => setRate(4)}
+            >
+              4×
+            </button>
+            <button
+              className="btn"
+              type="button"
+              title="Advance up to one hour"
+              onClick={nextHour}
+              disabled={thinking === "player"}
+            >
+              <SkipForward className="inline size-4" aria-hidden /> Hour
+            </button>
+          </div>
         </div>
         <p className="hud-wallet">
           <span className="pixel-coin" aria-hidden />
           {player.money} on you
         </p>
-        <div className="transport" role="group" aria-label="Town clock controls">
-          <button
-            className="btn"
-            data-on={speed === 0 ? "true" : "false"}
-            aria-pressed={speed === 0}
-            type="button"
-            onClick={() => setRate(0)}
-            aria-label="Pause"
-          >
-            <Pause className="inline size-4" aria-hidden /> Pause
-          </button>
-          <button
-            className="btn"
-            data-on={speed === 1 ? "true" : "false"}
-            aria-pressed={speed === 1}
-            type="button"
-            onClick={() => setRate(1)}
-          >
-            <Play className="inline size-4" aria-hidden /> 1×
-          </button>
-          <button
-            className="btn"
-            data-on={speed === 4 ? "true" : "false"}
-            aria-pressed={speed === 4}
-            type="button"
-            onClick={() => setRate(4)}
-          >
-            4×
-          </button>
-          <button className="btn" type="button" onClick={nextHour} disabled={thinking === "player"}>
-            <SkipForward className="inline size-4" aria-hidden /> Hour
-          </button>
-        </div>
       </header>
       <div className="status-strip">
         <p className="status-place">
@@ -1983,15 +1993,22 @@ export function TownApp() {
         <button
           className="btn"
           type="button"
+          aria-label="Agent wallets"
+          title="Agent wallets"
           data-on={tools === "agent-wallets"}
           onClick={() => openTools("agent-wallets")}
         >
           <TownUiIcon name="wallets" />
-          Agent wallets
+          <span className="town-tool-label-full">Agent wallets</span>
+          <span className="town-tool-label-compact" aria-hidden="true">
+            Wallets
+          </span>
         </button>
         <button
           className="btn"
           type="button"
+          aria-label="Stamp identity"
+          title="Stamp identity"
           data-on={tools === "stamps"}
           onClick={() => openTools("stamps")}
         >
@@ -2025,7 +2042,10 @@ export function TownApp() {
                 />
               </span>
             )}
-          Stamp identity
+          <span className="town-tool-label-full">Stamp identity</span>
+          <span className="town-tool-label-compact" aria-hidden="true">
+            Stamps
+          </span>
         </button>
         <button
           className="btn"

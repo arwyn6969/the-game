@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { APPEARANCE_KEY, initialAppearance, SKINS, type SkinId } from "./skins";
+import { createPortal } from "react-dom";
+import { APPEARANCE_KEY, initialAppearance, isSkin, SKINS, type SkinId } from "./skins";
 
 /** Presentation state deliberately surrounds one stable, unkeyed game. */
 export function AppearanceScope({ children }: { children: ReactNode }) {
   const [initial] = useState(initialAppearance);
   const [skin, setSkin] = useState<SkinId>(initial.skin);
+  const [selectorHost, setSelectorHost] = useState<HTMLElement | null>(null);
   const scopeRef = useRef<HTMLDivElement>(null);
-  const toolbarRef = useRef<HTMLElement>(null);
+  const toolbarRef = useRef<HTMLLabelElement>(null);
   const selected = SKINS.find((candidate) => candidate.id === skin)!;
 
   useEffect(() => {
@@ -14,13 +16,14 @@ export function AppearanceScope({ children }: { children: ReactNode }) {
     const scope = scopeRef.current;
     if (!toolbar || !scope) return;
     const measure = () => {
-      scope.style.setProperty("--appearance-bar-height", `${toolbar.offsetHeight}px`);
+      const fallback = toolbar.closest<HTMLElement>(".appearance-fallback");
+      scope.style.setProperty("--appearance-bar-height", `${fallback?.offsetHeight ?? 0}px`);
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(toolbar);
     return () => observer.disconnect();
-  }, [initial.preview]);
+  }, [initial.preview, selectorHost]);
 
   useEffect(() => {
     const scope = scopeRef.current;
@@ -28,6 +31,7 @@ export function AppearanceScope({ children }: { children: ReactNode }) {
     // Sheets follow the real HUD boundary, including wrapping and text zoom.
     // Watching child additions covers the transition from name entry to town.
     let hud: Element | null = null;
+    let host: HTMLElement | null = null;
     const measure = () => {
       if (!hud) return;
       const minimum = (toolbarRef.current?.getBoundingClientRect().bottom ?? 0) + 8;
@@ -40,11 +44,21 @@ export function AppearanceScope({ children }: { children: ReactNode }) {
     };
     const resize = new ResizeObserver(measure);
     const attach = () => {
+      const nextHost = initial.preview
+        ? scope.querySelector<HTMLElement>(".town > .status-strip")
+        : null;
+      if (nextHost !== host) {
+        if (host) resize.unobserve(host);
+        host = nextHost;
+        if (host) resize.observe(host);
+        setSelectorHost(host);
+      }
       const next = scope.querySelector(".town > .hud");
-      if (next === hud) return;
-      if (hud) resize.unobserve(hud);
-      hud = next;
-      if (hud) resize.observe(hud);
+      if (next !== hud) {
+        if (hud) resize.unobserve(hud);
+        hud = next;
+        if (hud) resize.observe(hud);
+      }
       measure();
     };
     const changes = new MutationObserver(attach);
@@ -58,7 +72,7 @@ export function AppearanceScope({ children }: { children: ReactNode }) {
       window.removeEventListener("resize", measure);
       scope.removeEventListener("scroll", measure, true);
     };
-  }, []);
+  }, [initial.preview]);
 
   const choose = useCallback((next: SkinId) => {
     setSkin(next);
@@ -72,6 +86,29 @@ export function AppearanceScope({ children }: { children: ReactNode }) {
     window.history.replaceState(window.history.state, "", url);
   }, []);
 
+  const selector = (
+    <label ref={toolbarRef} className="appearance-toolbar" title={`Interface: ${selected.name}`}>
+      <span aria-hidden="true">Interface</span>
+      <svg aria-hidden="true" viewBox="0 0 12 8" width="10" height="7">
+        <path d="m2 2 4 4 4-4" fill="none" stroke="currentColor" strokeWidth="2" />
+      </svg>
+      <select
+        aria-label="Interface"
+        value={skin}
+        onChange={(event) => {
+          if (isSkin(event.currentTarget.value)) choose(event.currentTarget.value);
+        }}
+        onKeyDown={(event) => event.stopPropagation()}
+      >
+        {SKINS.map((candidate) => (
+          <option key={candidate.id} value={candidate.id}>
+            {candidate.name}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+
   return (
     <div
       ref={scopeRef}
@@ -79,36 +116,13 @@ export function AppearanceScope({ children }: { children: ReactNode }) {
       data-ui-skin={skin}
       data-preview={initial.preview}
     >
-      {initial.preview && (
-        <header
-          ref={toolbarRef}
-          className="appearance-toolbar"
-          aria-label="Compare game interfaces"
-        >
-          <div className="appearance-intro">
-            <span className="appearance-eyebrow">CHOOSE YOUR INTERFACE</span>
-            <p>{selected.description}</p>
-          </div>
-          <div className="appearance-options" role="group" aria-label="Interface layouts">
-            {SKINS.map((candidate) => (
-              <button
-                key={candidate.id}
-                type="button"
-                aria-pressed={skin === candidate.id}
-                onClick={() => choose(candidate.id)}
-                className="appearance-option"
-                data-motif={candidate.motif}
-              >
-                <span className="appearance-miniature" aria-hidden="true">
-                  <i />
-                  <b />
-                </span>
-                <span>{candidate.name}</span>
-              </button>
-            ))}
-          </div>
-        </header>
-      )}
+      {initial.preview &&
+        (selectorHost ? (
+          // React ownership remains outside TownApp's focus/dismissal boundary.
+          createPortal(selector, selectorHost)
+        ) : (
+          <div className="appearance-fallback">{selector}</div>
+        ))}
       <div className="appearance-stage">{children}</div>
     </div>
   );

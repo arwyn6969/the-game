@@ -11,6 +11,16 @@ const SKINS = [
   { id: "original", label: "Original" },
 ];
 const SAVE_KEY = "the-game-town-v2";
+const TOOL_LABELS = [
+  "Journal",
+  "Inventory",
+  "Go somewhere",
+  "Library project",
+  "Agent wallets",
+  "Stamp identity",
+  "Help & privacy",
+];
+const CLOCK_LABELS = ["Pause", "1×", "4×", "Hour"];
 // Same bounded browser-only transport approach as quality-ai-browser.mjs.
 // The real parser, orchestration, validation and UI still process its result.
 const transportModule = `
@@ -112,20 +122,23 @@ async function importTown(page, raw, filename) {
 }
 
 async function chooseSkin(page, skin) {
-  const button = page.locator(".appearance-toolbar").getByRole("button", {
-    name: skin.label,
+  // Let an earlier pane-close restore canvas focus before this new interaction.
+  await frames(page);
+  const selector = page.getByRole("combobox", {
+    name: "Interface",
     exact: true,
   });
-  await button.click();
+  await selector.focus();
+  await selector.selectOption(skin.id);
   await page.waitForFunction(
     (id) => document.querySelector(".game-appearance")?.getAttribute("data-ui-skin") === id,
     skin.id,
   );
   await frames(page);
   assert.equal(
-    await button.evaluate((element) => document.activeElement === element),
+    await selector.evaluate((element) => document.activeElement === element),
     true,
-    "Changing appearance must leave focus on the activated comparison button",
+    "Changing appearance must leave focus on the compact interface selector",
   );
 }
 
@@ -144,14 +157,20 @@ async function layout(page) {
       panel: boxOf(".mind"),
       residents: boxOf(".social-toolbar"),
       tools: boxOf(".town-tools"),
+      interfaceSelector: boxOf(".appearance-toolbar"),
+      reservedAppearanceHeight: Number.parseFloat(
+        getComputedStyle(document.querySelector(".game-appearance")).getPropertyValue(
+          "--appearance-bar-height",
+        ),
+      ),
       proseSize: prose ? Number.parseFloat(getComputedStyle(prose).fontSize) : null,
     };
   });
 }
 
-async function exposed(locator) {
+async function exposed(locator, minimumSize = 44) {
   await locator.scrollIntoViewIfNeeded();
-  return locator.evaluate((element) => {
+  return locator.evaluate((element, minimum) => {
     const box = element.getBoundingClientRect();
     const left = Math.max(0, box.left);
     const right = Math.min(innerWidth, box.right);
@@ -160,15 +179,88 @@ async function exposed(locator) {
     const x = (left + right) / 2;
     const y = (top + bottom) / 2;
     return (
-      right - left >= 44 &&
-      bottom - top >= 44 &&
+      right - left >= minimum &&
+      bottom - top >= minimum &&
       x >= 0 &&
       x < innerWidth &&
       y >= 0 &&
       y < innerHeight &&
       element.contains(document.elementFromPoint(x, y))
     );
+  }, minimumSize);
+}
+
+async function reachableTools(page, touch) {
+  const toolbar = tools(page);
+  assert.equal(await toolbar.getByRole("button").count(), TOOL_LABELS.length);
+  const observations = [];
+  for (const name of TOOL_LABELS) {
+    const button = toolbar.getByRole("button", { name, exact: true });
+    assert.equal(await button.isEnabled(), true, `${name} remains available`);
+    assert.equal(
+      await exposed(button, touch ? 44 : 40),
+      true,
+      `${name} must be reachable with a ${touch ? 44 : 40}px target`,
+    );
+    observations.push({ name, box: await button.boundingBox() });
+  }
+  assert.equal((await layout(page)).overflow, false);
+  return observations;
+}
+
+async function clockControls(page, minimumSize, sameRow) {
+  const group = page.getByRole("group", { name: "Town clock controls", exact: true });
+  assert.equal(await group.getByRole("button").count(), CLOCK_LABELS.length);
+  const before = await saved(page);
+  const buttons = [];
+  for (const name of CLOCK_LABELS) {
+    const button = group.getByRole("button", { name, exact: true });
+    assert.equal(await exposed(button, minimumSize), true, `${name} clock control is reachable`);
+    await button.focus();
+    await frames(page);
+    assert.equal(
+      await saved(page),
+      before,
+      "Focusing a clock control must not change town time or speed",
+    );
+    assert.equal(
+      await group.getByRole("button", { name: "Pause", exact: true }).getAttribute("aria-pressed"),
+      "true",
+    );
+    buttons.push({ name, box: await button.boundingBox() });
+  }
+  const geometry = await page.evaluate(() => {
+    const box = (selector) => {
+      const r = document.querySelector(selector).getBoundingClientRect();
+      return { x: r.x, y: r.y, width: r.width, height: r.height };
+    };
+    return { hud: box(".hud"), clock: box(".hud-clock"), transport: box(".transport") };
   });
+  if (sameRow) {
+    assert.ok(
+      Math.abs(
+        geometry.clock.y +
+          geometry.clock.height / 2 -
+          geometry.transport.y -
+          geometry.transport.height / 2,
+      ) <= 2,
+      "Clock and speed controls share a row at ordinary text size",
+    );
+  }
+  const separated = (a, b) =>
+    a.x + a.width <= b.x + 1 ||
+    b.x + b.width <= a.x + 1 ||
+    a.y + a.height <= b.y + 1 ||
+    b.y + b.height <= a.y + 1;
+  assert.ok(separated(geometry.clock, geometry.transport), "Clock and controls must not overlap");
+  for (let index = 1; index < buttons.length; index++) {
+    assert.ok(
+      separated(buttons[index - 1].box, buttons[index].box),
+      "Clock button targets must not overlap",
+    );
+  }
+  assert.equal((await layout(page)).overflow, false);
+  return { ...geometry, buttons };
 }
 
 /**
@@ -296,6 +388,50 @@ export async function runSkinChecks(browser, url, outputDirectory) {
       await check("keyboard or real emulated touch movement while paused", async () =>
         move(page, viewport.name === "phone"),
       );
+      await check("clock controls preserve speed on focus and retain real actions", async () => {
+        await clockControls(page, viewport.name === "phone" ? 44 : 36, true);
+        const group = page.getByRole("group", { name: "Town clock controls", exact: true });
+        for (const name of ["1×", "4×"]) {
+          await group.getByRole("button", { name, exact: true }).click();
+          for (const candidate of ["Pause", "1×", "4×"]) {
+            assert.equal(
+              await group
+                .getByRole("button", { name: candidate, exact: true })
+                .getAttribute("aria-pressed"),
+              String(candidate === name),
+            );
+          }
+          // Town persistence uses an asynchronous cross-tab writer lock.
+          await page.waitForFunction(
+            (key) => JSON.parse(localStorage.getItem(key) || "null")?.town?.paused === false,
+            SAVE_KEY,
+          );
+          assert.equal(JSON.parse(await saved(page)).town.paused, false);
+          await pause(page);
+        }
+        const before = JSON.parse(await saved(page)).town;
+        await group.getByRole("button", { name: "Hour", exact: true }).click();
+        await page.waitForFunction(
+          ({ key, previous }) => {
+            const town = JSON.parse(localStorage.getItem(key) || "null")?.town;
+            return town && town.day * 1440 + town.minute > previous;
+          },
+          { key: SAVE_KEY, previous: before.day * 1440 + before.minute },
+        );
+        const after = JSON.parse(await saved(page)).town;
+        const advanced = after.day * 1440 + after.minute - before.day * 1440 - before.minute;
+        assert.ok(
+          advanced > 0 && advanced <= 60,
+          "Hour advances up to 60 minutes, stopping for a simulation job",
+        );
+        assert.equal(after.paused, true);
+        assert.equal(
+          await group
+            .getByRole("button", { name: "Pause", exact: true })
+            .getAttribute("aria-pressed"),
+          "true",
+        );
+      });
       await check("export and import preserve synthetic town identities", async () => {
         const event = page.waitForEvent("download");
         await page.getByRole("button", { name: "Download town", exact: true }).click();
@@ -412,7 +548,17 @@ export async function runSkinChecks(browser, url, outputDirectory) {
               "The send button must remain reachable with Choices expanded",
             );
             const observed = await layout(page);
+            observed.clockControls = await clockControls(
+              page,
+              viewport.name === "phone" ? 44 : 36,
+              skin.id !== "original",
+            );
             assert.equal(observed.overflow, false, "No horizontal document overflow");
+            assert.equal(
+              observed.reservedAppearanceHeight,
+              0,
+              "The compact interface selector must not reserve a separate game bar",
+            );
             assert.ok(
               observed.canvas.width > 0 && observed.canvas.height > 0,
               "A useful town canvas must remain",
@@ -428,6 +574,56 @@ export async function runSkinChecks(browser, url, outputDirectory) {
           },
         );
       }
+      await check("Escape in the compact selector keeps the conversation and draft", async () => {
+        const selector = page.getByRole("combobox", { name: "Interface", exact: true });
+        await selector.focus();
+        await page.keyboard.press("Escape");
+        await frames(page);
+        assert.equal(
+          await panel.evaluate((element) => element === document.querySelector(".mind")),
+          true,
+        );
+        assert.equal(
+          await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(),
+          "I am keeping this draft while I compare the interfaces.",
+        );
+        assert.equal(
+          await page
+            .getByRole("tab", { name: "Together", exact: true })
+            .getAttribute("aria-selected"),
+          "true",
+        );
+        assert.equal(await saved(page), baseline);
+        assert.equal(await page.evaluate(() => window.__skinQaTownWrites.length), writes);
+        assert.equal(
+          await selector.evaluate((element) => document.activeElement === element),
+          true,
+        );
+      });
+      if (viewport.name === "phone") {
+        await check("compact selector fits all four interfaces at 320px", async () => {
+          await page.setViewportSize({ width: 320, height: viewport.height });
+          const observations = [];
+          try {
+            for (const skin of SKINS) {
+              await chooseSkin(page, skin);
+              const observed = await layout(page);
+              assert.equal(observed.overflow, false);
+              assert.equal(observed.reservedAppearanceHeight, 0);
+              assert.ok(observed.interfaceSelector.x >= 0);
+              assert.ok(observed.interfaceSelector.x + observed.interfaceSelector.width <= 320);
+              assert.ok(observed.interfaceSelector.height >= 44);
+              assert.equal(await saved(page), baseline);
+              observations.push({ skin: skin.id, ...observed });
+              if (skin.id === "hobbs-hearth") await shot("hobbs-hearth-320px-menu");
+            }
+          } finally {
+            await page.setViewportSize({ width: viewport.width, height: viewport.height });
+            await frames(page);
+          }
+          return observations;
+        });
+      }
       await check("typing after a skin switch stays in the message field", async () => {
         const input = page.getByLabel("Your line to Kevin", { exact: true });
         const before = await position(page);
@@ -439,6 +635,10 @@ export async function runSkinChecks(browser, url, outputDirectory) {
       });
       await page.getByRole("button", { name: "Close conversation", exact: true }).click();
       for (const skin of SKINS) {
+        await check(`${skin.label}: all seven toolbar controls remain reachable`, async () => {
+          await chooseSkin(page, skin);
+          return reachableTools(page, viewport.name === "phone");
+        });
         await check(`${skin.label}: real Library, Journal and travel panels`, async () => {
           await chooseSkin(page, skin);
           await tools(page).getByRole("button", { name: "Library project", exact: true }).click();
@@ -455,6 +655,75 @@ export async function runSkinChecks(browser, url, outputDirectory) {
           await page.getByRole("button", { name: "Close Go somewhere", exact: true }).click();
           assert.equal((await layout(page)).overflow, false);
           await shot(`${skin.id}-town`);
+        });
+      }
+      if (viewport.name === "phone") {
+        await check("clock and controls share one reachable row at 320px and 630px", async () => {
+          const observations = [];
+          try {
+            for (const width of [320, 630]) {
+              await page.setViewportSize({ width, height: viewport.height });
+              for (const skin of SKINS.slice(0, 3)) {
+                await chooseSkin(page, skin);
+                observations.push({
+                  width,
+                  skin: skin.id,
+                  ...(await clockControls(page, 44, true)),
+                });
+              }
+            }
+          } finally {
+            await page.setViewportSize({ width: viewport.width, height: viewport.height });
+            await frames(page);
+          }
+          return observations;
+        });
+        await check(
+          "enlarged narrow clock wraps without overlap and keeps controls reachable",
+          async () => {
+            await page.setViewportSize({ width: 320, height: viewport.height });
+            const style = await page.addStyleTag({
+              content: "html { font-size: 200% !important; }",
+            });
+            const observations = [];
+            try {
+              for (const skin of SKINS.slice(0, 3)) {
+                await chooseSkin(page, skin);
+                observations.push({ skin: skin.id, ...(await clockControls(page, 44, false)) });
+              }
+            } finally {
+              await style.evaluate((element) => element.remove());
+              await page.setViewportSize({ width: viewport.width, height: viewport.height });
+              await frames(page);
+            }
+            return observations;
+          },
+        );
+        await check("320px toolbar scroll reaches Help in every interface", async () => {
+          await page.setViewportSize({ width: 320, height: viewport.height });
+          const observations = [];
+          try {
+            for (const skin of SKINS) {
+              await chooseSkin(page, skin);
+              const before = await saved(page);
+              const buttons = await reachableTools(page, true);
+              const help = tools(page).getByRole("button", {
+                name: "Help & privacy",
+                exact: true,
+              });
+              await help.tap();
+              await page.getByRole("dialog", { name: "Help & privacy", exact: true }).waitFor();
+              await page.getByRole("button", { name: "Close Help & privacy", exact: true }).click();
+              await frames(page);
+              assert.equal(await saved(page), before);
+              observations.push({ skin: skin.id, buttons, ...(await layout(page)) });
+              if (skin.id === "hobbs-hearth") await shot("hobbs-hearth-320px-toolbar");
+            }
+          } finally {
+            await page.setViewportSize({ width: viewport.width, height: viewport.height });
+            await frames(page);
+          }
+          return observations;
         });
       }
       await check("chosen appearance and town survive reload without a URL override", async () => {

@@ -4,7 +4,7 @@
 
 ## Try it
 
-Start a local development server with Node 24 using the normal app-environment wrapper, then visit `/?uiPreview=1&skin=plaza-cream`. A comparison bar offers Plaza Cream, Hobbs Hearth, Library Ink and Original. Without `uiPreview=1`, the existing layout and appearance remain the default.
+Start a local development server with Node 24 using the normal app-environment wrapper, then visit `/?uiPreview=1&skin=plaza-cream`. A compact Interface menu in the existing status row offers Plaza Cream, Hobbs Hearth, Library Ink and Original; it reserves no separate toolbar row during play. Without `uiPreview=1`, the existing layout and appearance remain the default.
 
 Use a separate localhost origin and a disposable town for comparison. The `qa` parameter alone does not isolate storage. A portable backup can be imported through the existing confirmation flow; do not use a personal save for automated QA.
 
@@ -19,9 +19,13 @@ At phone widths the candidates share a practical reading-sheet interaction. Thei
 
 ## Interaction changes
 
+The main tools use compact inline icons and text, with 40px desktop buttons and 44px touch targets. Narrow screens keep one horizontally scrolling row; Wallets and Stamps retain their full accessible names. The Library Ink rail is 9rem wide. In the measured Hearth preview the horizontal row shrank from about 90px to 52px at phone and medium widths, giving 37px back to the game.
+
+The clock and pause/speed controls now share a compact presentation group. At medium widths they fit on one header line with the brand and money; below 560px, brand and money sit above a clock/control row. Pause keeps its accessible name and tooltip with an icon, while 1×, 4× and Hour stay written. Controls retain 44px touch targets and wrap when enlarged text needs more room. The existing clock and speed handlers are unchanged.
+
 The conversation area now scrolls the complete work/project terms and resident notes with the history. The reply label, text field and Say it action stay together at the bottom. Choices still call the existing action handler, retain their full terms and remain separate from sending a message. Clock, resident access, money, tools, replay and portable backups remain available.
 
-The comparison selector sits outside the town's focus/dismissal boundary. It updates only a validated appearance ID and its own local preference. It neither remounts the game nor calls gameplay, save, provider or money handlers. The preference key is `the-game-ui-appearance-v1`; it is not part of the town save schema. A URL selection takes precedence for direct comparisons.
+The comparison selector is portaled into the status row while its React ownership stays outside the town's focus/dismissal boundary. Native menu keyboard events stay with the selector so Escape does not dismiss an open conversation. It updates only a validated appearance ID and its own local preference. It neither remounts the game nor calls gameplay, save, provider or money handlers. The preference key is `the-game-ui-appearance-v1`; it is not part of the town save schema. A URL selection takes precedence for direct comparisons.
 
 Sheets measure the real header boundary, including wrapping. A clamped fallback handles short viewports and text enlargement. Existing visual-viewport, safe-area and cramped-world protections are retained. A single main reading panel remains active; this build does not add draggable or simultaneous utility windows.
 
@@ -30,7 +34,7 @@ Sheets measure the real header boundary, including wrapping. A clamped fallback 
 - `src/components/town/appearance/AppearanceScope.tsx`: stable comparison scope and selection control.
 - `src/components/town/appearance/skins.ts`: appearance IDs, labels and optional preference lookup.
 - `src/styles/game-ui/foundation.css`: readable paper panels, frames, text, tabs, choices, fields, captions, warnings, onboarding and recovery surfaces.
-- `src/styles/game-ui/layouts.css`: three real desktop arrangements, responsive sheets, palettes and comparison bar.
+- `src/styles/game-ui/layouts.css`: three real desktop arrangements, responsive sheets, palettes and compact interface menu.
 - `public/game/ui/retro-icons.svg`: thirteen original scalable pixel symbols; their IDs and provenance are documented beside the asset.
 - `src/components/town/appearance/TownUiIcon.tsx`: decorative SVG wrapper respecting the hosting base path.
 
