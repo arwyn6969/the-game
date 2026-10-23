@@ -4,9 +4,10 @@ import type { MindKind } from "../mind-pool/types.ts";
 import { loadBudgetPolicy } from "./policy.ts";
 import { EphemeralMindBudgetStore, SqlMindBudgetStore } from "./store.ts";
 import { runBudgetedMind } from "./runner.ts";
+import { createPostgresPool } from "../postgres.server.ts";
 
 const globalBudget = globalThis as typeof globalThis & {
-  __mindBudgetPool?: import("pg").Pool;
+  __mindBudgetPool?: ReturnType<typeof createPostgresPool>;
   __mindEphemeralBudget?: EphemeralMindBudgetStore;
 };
 export function budgetScope(env = process.env): "shared" | "ephemeral" | "unavailable" {
@@ -35,18 +36,14 @@ async function budgetStore(scope: "shared" | "ephemeral") {
     globalBudget.__mindEphemeralBudget ??= new EphemeralMindBudgetStore();
     return globalBudget.__mindEphemeralBudget;
   }
-  const { default: pg } = await import("pg");
   if (!globalBudget.__mindBudgetPool) {
-    globalBudget.__mindBudgetPool = new pg.Pool({
+    globalBudget.__mindBudgetPool = createPostgresPool({
       connectionString: process.env.DATABASE_URL,
       max: 4,
       connectionTimeoutMillis: 3_000,
       query_timeout: 3_000,
       statement_timeout: 3_000,
       lock_timeout: 3_000,
-    });
-    globalBudget.__mindBudgetPool.on("error", () => {
-      /* Fail closed without logging secrets. */
     });
   }
   const pool = globalBudget.__mindBudgetPool;

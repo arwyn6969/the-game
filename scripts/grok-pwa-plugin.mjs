@@ -28,9 +28,9 @@ function requestHost(req) {
   return Array.isArray(host) ? host[0] : host;
 }
 
-export function renderInstallPage(hostHeader, url = "/") {
+export function renderInstallPage(hostHeader, url = "/", context = {}) {
   const template = readFileSync(INSTALL_PAGE_PATH, "utf8");
-  return renderInstallPageHtml(template, { host: hostHeader, url });
+  return renderInstallPageHtml(template, { ...context, host: hostHeader, url });
 }
 
 function sendHtml(res, html) {
@@ -42,10 +42,16 @@ function sendHtml(res, html) {
   res.end(body);
 }
 
-function serveGrokPwa(middlewares) {
+function serveGrokPwa(middlewares, context) {
+  const { basePath } = context;
   middlewares.use((req, res, next) => {
     const rawUrl = req.url ?? "";
-    const pathOnly = rawUrl.split("?", 1)[0] ?? "";
+    const externalPath = rawUrl.split("?", 1)[0] ?? "";
+    if (basePath && externalPath !== basePath && !externalPath.startsWith(`${basePath}/`)) {
+      next();
+      return;
+    }
+    const pathOnly = externalPath.slice(basePath.length) || "/";
     const method = (req.method ?? "GET").toUpperCase();
     if (method !== "GET") {
       next();
@@ -53,7 +59,7 @@ function serveGrokPwa(middlewares) {
     }
 
     if (pathOnly === "/__grok/manifest.webmanifest" || pathOnly === "/__grok/manifest.json") {
-      const body = Buffer.from(renderWebManifest(requestHost(req)), "utf8");
+      const body = Buffer.from(renderWebManifest(requestHost(req), context), "utf8");
       res.statusCode = 200;
       res.setHeader("content-type", "application/manifest+json; charset=utf-8");
       res.setHeader("cache-control", "no-cache");
@@ -64,7 +70,7 @@ function serveGrokPwa(middlewares) {
 
     if (isInstallQuery(rawUrl) && isDocumentPath(pathOnly) && acceptsHtml(req.headers.accept)) {
       try {
-        sendHtml(res, renderInstallPage(requestHost(req), rawUrl));
+        sendHtml(res, renderInstallPage(requestHost(req), rawUrl, context));
       } catch (err) {
         console.error("[app-builder] install page missing:", err);
         res.statusCode = 500;
@@ -84,10 +90,15 @@ function serveGrokPwa(middlewares) {
  * content-encoded: under `vite preview` the compression middleware can hand
  * this wrapper gzipped bytes, which must pass through untouched.
  */
-function wrapHtmlResponses(middlewares, cwd) {
+function wrapHtmlResponses(middlewares, cwd, context) {
   middlewares.use((req, res, next) => {
     const rawUrl = req.url ?? "";
-    const pathOnly = rawUrl.split("?", 1)[0] ?? "";
+    const externalPath = rawUrl.split("?", 1)[0] ?? "";
+    // Dev hooks run before Vite strips its base; preview's post-hook runs after.
+    const pathOnly =
+      context.basePath && externalPath.startsWith(`${context.basePath}/`)
+        ? externalPath.slice(context.basePath.length)
+        : externalPath;
     const method = (req.method ?? "GET").toUpperCase();
     const looksLikeDocument =
       method === "GET" &&
@@ -105,6 +116,7 @@ function wrapHtmlResponses(middlewares, cwd) {
     const injector = createHeadInjector({
       host,
       cwd,
+      ...context,
     });
     let mode = null; // null = undecided, "inject" | "passthrough"
 
@@ -153,10 +165,12 @@ function wrapHtmlResponses(middlewares, cwd) {
 
 export function grokPwaPlugin() {
   let root = process.cwd();
+  let context = { basePath: "" };
   return {
     name: "app-builder:grok-pwa",
     configResolved(config) {
       root = config.root;
+      context = { basePath: (config.base || "/").replace(/\/$/, "") };
     },
     resolveId(id) {
       if (id === GROK_OG_IDENTITY_ID) return `\0${GROK_OG_IDENTITY_ID}`;
@@ -169,21 +183,22 @@ export function grokPwaPlugin() {
       return injectGrokPwaHead(html, {
         host: process.env.VITE_PUBLIC_HOSTNAME ?? "",
         cwd: root,
+        ...context,
       });
     },
     configureServer(server) {
       // Registered directly (not in a returned post-hook) so both run BEFORE
       // TanStack Start's SSR middleware, like the auth-popup plugin.
-      serveGrokPwa(server.middlewares);
-      wrapHtmlResponses(server.middlewares, root);
+      serveGrokPwa(server.middlewares, context);
+      wrapHtmlResponses(server.middlewares, root, context);
     },
     configurePreviewServer(server) {
-      serveGrokPwa(server.middlewares);
+      serveGrokPwa(server.middlewares, context);
       // Post-hook: preview registers compression between the direct hooks and
       // the post-hooks, and the injector must wrap AFTER compression so it
       // sees plaintext HTML (compression then compresses the injected output).
       return () => {
-        wrapHtmlResponses(server.middlewares, root);
+        wrapHtmlResponses(server.middlewares, root, context);
       };
     },
   };

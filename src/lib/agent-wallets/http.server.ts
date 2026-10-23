@@ -24,8 +24,9 @@ export function registryStorageMode(
         !env.BETTER_AUTH_URL ||
         new URL(env.BETTER_AUTH_URL).origin !== origin ||
         url.protocol !== "https:" ||
-        !env.GROK_AUTH_CLIENT_ID?.trim() ||
-        !env.GROK_AUTH_CLIENT_SECRET?.trim()
+        !(env.VITE_AUTH_MODE === "standalone"
+          ? env.GOOGLE_CLIENT_ID?.trim() && env.GOOGLE_CLIENT_SECRET?.trim()
+          : env.GROK_AUTH_CLIENT_ID?.trim() && env.GROK_AUTH_CLIENT_SECRET?.trim())
       )
         return "unavailable";
       return "shared";

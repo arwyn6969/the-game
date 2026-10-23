@@ -9,21 +9,38 @@ const target = new URL(process.env.GAME_AI_QA_URL || "http://127.0.0.1:8094/");
 assert.equal(target.protocol, "http:");
 assert.ok(["localhost", "127.0.0.1"].includes(target.hostname));
 const out = resolve(process.env.GAME_AI_QA_OUT || "artifacts/quality-ai-browser");
+const recoveryOnly = process.env.GAME_AI_QA_RECOVERY_ONLY === "1";
+const onlyViewport = process.env.GAME_AI_QA_VIEWPORT;
+assert.ok(!onlyViewport || ["desktop", "phone"].includes(onlyViewport));
 await mkdir(out, { recursive: true });
 const report = {
   url: target.href,
   mockedTransport: true,
   liveProviderCalls: 0,
+  recoveryOnly,
   journeys: [],
   failures: [],
 };
 const transportModule = `
 const mock = globalThis.__qualityMindMock ??= {
-  calls: [], pending: new Map(),
+  calls: [], pending: new Map(), availabilityCalls: 0,
+  holdAvailability: false, availabilityPending: [],
+  availability: { online: true, configured: true },
+  availabilityRejects: Number(sessionStorage.getItem('__qualityAvailabilityRejects') || 0),
   resolve(id, response) { const pending = this.pending.get(id); if (pending) { this.pending.delete(id); pending.resolve(response); } },
   reject(id) { const pending = this.pending.get(id); if (pending) { this.pending.delete(id); pending.reject(new Error('Synthetic provider unavailable')); } }
 };
-export async function mindAvailability() { return { online: true, configured: true }; }
+sessionStorage.removeItem('__qualityAvailabilityRejects');
+export function mindAvailability() {
+  mock.availabilityCalls++;
+  if (mock.availabilityRejects > 0) {
+    mock.availabilityRejects--;
+    throw new Error('Synthetic availability check unavailable');
+  }
+  if (mock.holdAvailability)
+    return new Promise(resolve => mock.availabilityPending.push(resolve));
+  return mock.availability;
+}
 export function thinkTown({data}) {
   const id = mock.calls.length;
   mock.calls.push({ id, kind: data.kind, started: Date.now() });
@@ -133,6 +150,45 @@ async function send(page, text) {
   await page.getByLabel("Your line to Kevin", { exact: true }).fill(text);
   await page.getByRole("button", { name: "Say it", exact: true }).click();
 }
+async function checkHiddenWhileAvailabilityPending(page, viewport) {
+  const line = `Keep this line when hidden ${viewport.name}`;
+  const before = (await calls(page)).length;
+  await page.evaluate(() => {
+    window.__qualityMindMock.availability = { online: false, configured: false };
+    window.dispatchEvent(new Event("focus"));
+  });
+  await page.locator('[data-ai-status="unavailable"]').waitFor();
+  await page.evaluate(() => {
+    window.__qualityMindMock.holdAvailability = true;
+    window.__qualityMindMock.availability = { online: true, configured: true };
+  });
+  await send(page, line);
+  await page.waitForFunction(() => window.__qualityMindMock.availabilityPending.length > 0);
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", { configurable: true, value: "hidden" });
+    document.dispatchEvent(new Event("visibilitychange"));
+    const mock = window.__qualityMindMock;
+    mock.holdAvailability = false;
+    for (const resolve of mock.availabilityPending.splice(0)) resolve(mock.availability);
+  });
+  await page.waitForFunction(() =>
+    /return.*tab|tab.*inactive|inactive.*tab|back.*tab/i.test(
+      document.querySelector(".mind-send-note")?.textContent || "",
+    ),
+  );
+  assert.equal(
+    (await calls(page)).length,
+    before,
+    "A newly hidden tab cannot send after an awaited availability check",
+  );
+  assert.equal(await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(), line);
+  assert.equal(chatCount(await readTown(page), line), 0);
+  await page.evaluate(() => {
+    delete document.visibilityState;
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await page.locator('[data-ai-status="ready"]').waitFor();
+}
 async function startReplay(page) {
   await page.locator("#scrub").focus();
   await page.keyboard.press("ArrowLeft");
@@ -151,7 +207,7 @@ try {
   for (const viewport of [
     { name: "desktop", width: 1280, height: 800 },
     { name: "phone", width: 390, height: 844 },
-  ]) {
+  ].filter((viewport) => !onlyViewport || viewport.name === onlyViewport)) {
     const result = { viewport, moduleReplacements: 0, networkLeaks: [], errors: [] };
     report.journeys.push(result);
     const context = await browser.newContext({ viewport, hasTouch: viewport.name === "phone" });
@@ -178,6 +234,7 @@ try {
       });
     });
     const page = (activePage = await context.newPage());
+    await page.clock.install();
     page.on("pageerror", (error) => result.errors.push(error.message));
     page.on("console", (message) => {
       if (message.type() === "error") result.errors.push(message.text());
@@ -222,11 +279,95 @@ try {
       );
       return player.tile.x === x && player.tile.y === y;
     }, initialMove.after);
+    await page.evaluate(() => sessionStorage.setItem("__qualityAvailabilityRejects", "100"));
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForFunction(() => !!window.__controlsTest && !!window.__qualityMindMock);
     assert.deepEqual(await position(page), initialMove.after);
     result.pausedMovementAutosavesWithoutAnotherAction = initialMove;
+    await page.locator('[data-ai-status="unavailable"]').waitFor();
+    await page.locator("[data-ai-warning]").waitFor();
+    const availabilityAtFailure = await page.evaluate(
+      () => window.__qualityMindMock.availabilityCalls,
+    );
+    await page.evaluate(() => {
+      window.__qualityMindMock.availabilityRejects = 0;
+      window.dispatchEvent(new Event("focus"));
+    });
+    await page.locator('[data-ai-status="ready"]').waitFor();
+    assert.ok(
+      (await page.evaluate(() => window.__qualityMindMock.availabilityCalls)) >
+        availabilityAtFailure,
+      "Refocusing must retry an initial failed availability check without reloading",
+    );
+    assert.equal((await calls(page)).length, 0, "Connection recovery must not generate AI replies");
+    result.startupFailureRecoversOnFocusWithoutReload = true;
+    await page.evaluate(() => {
+      window.__qualityMindMock.availability = { online: false, configured: false };
+      window.dispatchEvent(new Event("focus"));
+    });
+    await page.locator('[data-ai-status="unavailable"]').waitFor();
+    await page.evaluate(() => {
+      window.__qualityMindMock.availability = { online: true, configured: true };
+    });
+    await page.clock.fastForward(16_000);
+    await page.locator('[data-ai-status="ready"]').waitFor();
+    assert.equal((await calls(page)).length, 0, "Periodic recovery must only check availability");
+    result.unavailableConfigurationRecoversAutomatically = true;
     const base = await readTown(page);
+    const near = copy(base);
+    near.playerName = `Replies ${viewport.name}`;
+    const kevin = near.agents.find((agent) => agent.id === "kevin");
+    near.agents.find((agent) => agent.id === "player").tile = await page.evaluate(
+      ({ x, y }) =>
+        [
+          { x: x + 1, y },
+          { x: x - 1, y },
+          { x, y: y + 1 },
+          { x, y: y - 1 },
+        ].find((point) => window.__game.tile(point.x, point.y)?.block === false),
+      kevin.tile,
+    );
+    if (recoveryOnly) {
+      await importTown(page, near);
+      await openKevin(page);
+      await checkHiddenWhileAvailabilityPending(page, viewport);
+      result.hiddenDuringAvailabilityKeepsDraftWithoutRequest = true;
+      const line = `Focused failure ${viewport.name}`;
+      await send(page, line);
+      await requestCount(page, 1);
+      await page.evaluate(() => window.__qualityMindMock.resolve(0, { ok: false, error: "slow" }));
+      await page.locator("[data-ai-warning]").waitFor();
+      assert.equal(await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(), line);
+      assert.equal(chatCount(await readTown(page), line), 0);
+      await pause(page);
+      const warningBox = await page.locator("[data-ai-warning]").boundingBox();
+      const composerBox = await page.locator(".mind-say").boundingBox();
+      assert.ok(warningBox && composerBox && warningBox.y >= composerBox.y - 1);
+      assert.ok(warningBox.y + warningBox.height <= viewport.height);
+      const close = page.getByRole("button", { name: "Close conversation", exact: true });
+      const closeBox = await close.boundingBox();
+      assert.ok(closeBox && closeBox.y >= 0 && closeBox.y + closeBox.height <= viewport.height);
+      await page.screenshot({ path: join(out, `${viewport.name}-ai-warning.png`) });
+      await close.click();
+      await openKevin(page);
+      await page.getByRole("button", { name: "Check AI connection", exact: true }).click();
+      await send(page, line);
+      await requestCount(page, 2);
+      await resolveRequest(page, 1, reply(`Focused recovered ${viewport.name}`));
+      await page.locator('[data-ai-status="responded"]').waitFor();
+      assert.equal(await page.locator("[data-ai-warning]").count(), 0);
+      assert.equal(chatCount(await readTown(page), line), 1);
+      result.failureWarningControlsAndResend = true;
+      assert.deepEqual(result.networkLeaks, []);
+      assert.deepEqual(result.errors, []);
+      await page.screenshot({ path: join(out, `${viewport.name}-recovery.png`) });
+      await context.close();
+      activePage = undefined;
+      console.log(
+        JSON.stringify({ viewport: viewport.name, ok: true, scenarios: result }, null, 2),
+      );
+      continue;
+    }
     const ambient = copy(base);
     ambient.playerName = `Ambient ${viewport.name}`;
     ambient.day = 2;
@@ -260,19 +401,12 @@ try {
       await page.waitForTimeout(remaining);
     }
     result.ambientUnresolvedMs = Date.now() - started;
-    const near = copy(base);
-    near.playerName = `Replies ${viewport.name}`;
-    const kevin = near.agents.find((agent) => agent.id === "kevin");
-    near.agents.find((agent) => agent.id === "player").tile = await page.evaluate(
-      ({ x, y }) =>
-        [
-          { x: x + 1, y },
-          { x: x - 1, y },
-          { x, y: y + 1 },
-          { x, y: y - 1 },
-        ].find((point) => window.__game.tile(point.x, point.y)?.block === false),
-      kevin.tile,
+    assert.notEqual(
+      await page.locator("[data-ai-status]").getAttribute("data-ai-status"),
+      "unavailable",
+      "An ambient result or timeout must not report that player AI has failed",
     );
+    result.ambientFailureDoesNotDisablePlayerAI = true;
     await importTown(page, near);
     const staleMarker = `STALE-AMBIENT-${viewport.name}`;
     await resolveRequest(page, 0, {
@@ -292,13 +426,15 @@ try {
     );
     result.importRejectsStaleAmbient = true;
     await openKevin(page);
+    await checkHiddenWhileAvailabilityPending(page, viewport);
+    result.hiddenDuringAvailabilityKeepsDraftWithoutRequest = true;
     const first = `First pending ${viewport.name}`;
     await send(page, first);
     await requestCount(page, 2);
-    await page.getByRole("button", { name: "Use local reply now", exact: true }).click();
-    await page.waitForFunction(() => document.querySelector("#mind-line")?.value === "");
+    await page.getByRole("button", { name: "Cancel AI request", exact: true }).click();
+    assert.equal(await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(), first);
     await pause(page);
-    assert.equal(chatCount(await readTown(page), first), 1);
+    assert.equal(chatCount(await readTown(page), first), 0);
     const second = `Second pending ${viewport.name}`;
     await send(page, second);
     await requestCount(page, 3);
@@ -307,10 +443,10 @@ try {
     await resolveRequest(page, 1, reply(`LATE-FIRST-${viewport.name}`));
     await pause(page);
     const reordered = await readTown(page);
-    assert.equal(chatCount(reordered, first), 1);
+    assert.equal(chatCount(reordered, first), 0);
     assert.equal(chatCount(reordered, second), 1);
     assert.equal(JSON.stringify(reordered).includes(`LATE-FIRST-${viewport.name}`), false);
-    result.manualFallbackAndReordering = true;
+    result.cancellationPreservesDraftAndRejectsLateReply = true;
     const walkDraft = `Walk away ${viewport.name}`;
     await send(page, walkDraft);
     await requestCount(page, 4);
@@ -341,18 +477,78 @@ try {
       await send(page, missing);
       await requestCount(page, 5);
       await page.waitForFunction(
-        () => document.querySelector("#mind-line")?.value === "",
+        () => document.querySelector("[data-ai-warning]") !== null,
         undefined,
         { timeout: 18_000 },
       );
+      assert.equal(
+        await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(),
+        missing,
+      );
       await pause(page);
-      assert.equal(chatCount(await readTown(page), missing), 1);
+      assert.equal(chatCount(await readTown(page), missing), 0);
       await resolveRequest(page, 4, reply("LATE-TIMEOUT"));
       await pause(page);
-      assert.equal(chatCount(await readTown(page), missing), 1);
+      assert.equal(chatCount(await readTown(page), missing), 0);
       assert.equal(JSON.stringify(await readTown(page)).includes("LATE-TIMEOUT"), false);
-      result.missingResultFallsBackExactlyOnce = true;
+      result.timeoutPreservesDraftWithoutLocalReply = true;
     }
+    await page.getByRole("button", { name: "Close conversation", exact: true }).click();
+    await importTown(page, near);
+    await openKevin(page);
+    const failureScenarios = [
+      { name: "limited", response: { ok: false, error: "slow" }, reason: /limited|busy/i },
+      {
+        name: "invalid",
+        response: { ok: true, text: "not JSON" },
+        reason: /invalid|usable|safely use|understand|incomplete/i,
+      },
+      { name: "connection", response: null, reason: /reach|connection|connect|unavailable/i },
+    ];
+    for (const scenario of failureScenarios) {
+      const line = `${scenario.name} request ${viewport.name}`;
+      const id = (await calls(page)).length;
+      await send(page, line);
+      await requestCount(page, id + 1);
+      await page.evaluate(
+        ({ id, response }) => {
+          if (response) window.__qualityMindMock.resolve(id, response);
+          else window.__qualityMindMock.reject(id);
+        },
+        { id, response: scenario.response },
+      );
+      await page.locator("[data-ai-warning]").waitFor();
+      assert.match(await page.locator("[data-ai-warning]").innerText(), scenario.reason);
+      assert.equal(await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(), line);
+      await pause(page);
+      assert.equal(
+        chatCount(await readTown(page), line),
+        0,
+        "A failed AI request cannot author a local exchange",
+      );
+      await page.clock.fastForward(5000);
+      assert.ok(
+        await page.locator("[data-ai-warning]").isVisible(),
+        "The warning must not disappear after four seconds",
+      );
+      assert.equal(
+        (await calls(page)).length,
+        id + 1,
+        "Connection checks must not automatically resend a player message",
+      );
+      if (scenario.name === "limited")
+        await page.screenshot({ path: join(out, `${viewport.name}-ai-warning.png`) });
+      await page.getByRole("button", { name: "Check AI connection", exact: true }).click();
+      await send(page, line);
+      await requestCount(page, id + 2);
+      await resolveRequest(page, id + 1, reply(`Recovered ${scenario.name} ${viewport.name}`));
+      await page.waitForFunction(() => document.querySelector("#mind-line")?.value === "");
+      await page.locator('[data-ai-status="responded"]').waitFor();
+      assert.equal(await page.locator("[data-ai-warning]").count(), 0);
+      await pause(page);
+      assert.equal(chatCount(await readTown(page), line), 1);
+    }
+    result.failedAIKeepsDraftAndRecoversWithoutReload = failureScenarios.map(({ name }) => name);
     await page.getByRole("button", { name: "Close conversation", exact: true }).click();
     const replayTown = copy(near);
     const ids = replayTown.agents.map((agent) => agent.id);
@@ -369,12 +565,12 @@ try {
     await requestCount(page, replayManualId + 1);
     await startReplay(page);
     await page
-      .getByRole("button", { name: "Use local reply now", exact: true })
+      .getByRole("button", { name: "Cancel AI request", exact: true })
       .waitFor({ state: "hidden" });
     assert.equal(
       chatCount(await readTown(page), replayManual),
       0,
-      "Manual fallback must not apply a new exchange from replay",
+      "Cancellation must not apply a new exchange from replay",
     );
     await page.getByRole("button", { name: "Back to now", exact: true }).click();
     await resolveRequest(page, replayManualId, reply(`LATE-REPLAY-MANUAL-${viewport.name}`));
@@ -388,7 +584,7 @@ try {
       0,
       "Leaving replay cannot revive a cancelled response",
     );
-    result.replayCancelsPendingAndHidesFallback = true;
+    result.replayCancelsPendingAndHidesCancellation = true;
     const replayPreference = `Replay preference ${viewport.name}`;
     const replayPreferenceId = (await calls(page)).length;
     await send(page, replayPreference);
@@ -464,21 +660,24 @@ try {
     assert.equal(await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(), "");
     assert.equal(chatCount(await readTown(page), acceptedClosed), 1);
     result.acceptedClosedCardClearsSentDraft = true;
-    const fallbackClosed = `Local with card closed ${viewport.name}`;
+    const fallbackClosed = `Cancelled with card closed ${viewport.name}`;
     const fallbackClosedId = (await calls(page)).length;
     await send(page, fallbackClosed);
     await requestCount(page, fallbackClosedId + 1);
     await page.getByRole("button", { name: "Close conversation", exact: true }).click();
-    await page.getByRole("button", { name: "Use local reply now", exact: true }).click();
+    await page.getByRole("button", { name: "Cancel AI request", exact: true }).click();
     await resolveRequest(page, fallbackClosedId, reply(`LATE-CLOSED-FALLBACK-${viewport.name}`));
     await openKevin(page);
-    assert.equal(await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(), "");
-    assert.equal(chatCount(await readTown(page), fallbackClosed), 1);
+    assert.equal(
+      await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(),
+      fallbackClosed,
+    );
+    assert.equal(chatCount(await readTown(page), fallbackClosed), 0);
     assert.equal(
       JSON.stringify(await readTown(page)).includes(`LATE-CLOSED-FALLBACK-${viewport.name}`),
       false,
     );
-    result.localClosedCardClearsSentDraftOnce = true;
+    result.cancellationWithClosedCardKeepsDraft = true;
     const acceptedWithNewDraft = `Sent before new draft ${viewport.name}`;
     const unsent = `Keep my newer words ${viewport.name}`;
     const newerId = (await calls(page)).length;

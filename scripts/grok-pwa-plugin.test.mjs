@@ -17,7 +17,7 @@ import {
   snapshotOgIdentity,
   stripInstallParams,
 } from "./grok-pwa-shared.mjs";
-import { renderInstallPage } from "./grok-pwa-plugin.mjs";
+import { grokPwaPlugin, renderInstallPage } from "./grok-pwa-plugin.mjs";
 
 const TEMPLATE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const EMPTY_WORKSPACE = mkdtempSync(join(tmpdir(), "grok-pwa-fixture-"));
@@ -552,3 +552,53 @@ test("vite plugin bakes og identity as a virtual module", () => {
   assert.match(plugin, /virtual:grok-og-identity/);
   assert.match(plugin, /snapshotOgIdentity/);
 });
+
+for (const base of ["/", "/thegame/"]) {
+  test(`Vite preview keeps PWA links and installation inside ${base}`, async (t) => {
+    const { preview } = await import("vite");
+    const root = mkdtempSync(join(tmpdir(), "grok-pwa-preview-"));
+    const dist = join(root, "dist");
+    mkdirSync(dist);
+    const plugin = grokPwaPlugin();
+    plugin.configResolved({ root, base });
+    const source = `<html><head><title>THE GAME</title><link rel="manifest" href="${base}__grok/manifest.webmanifest"></head><body>Preview town</body></html>`;
+    const built = plugin.transformIndexHtml(source);
+    assert.equal((built.match(/rel="manifest"/g) ?? []).length, 1);
+    writeFileSync(join(dist, "index.html"), built);
+    const server = await preview({
+      configFile: false,
+      root,
+      base,
+      plugins: [plugin],
+      logLevel: "silent",
+      preview: { host: "127.0.0.1", port: 0, strictPort: false },
+    });
+    t.after(() => server.close());
+    const origin = `http://127.0.0.1:${server.httpServer.address().port}`;
+    const manifestResponse = await fetch(`${origin}${base}__grok/manifest.webmanifest`);
+    assert.equal(manifestResponse.status, 200);
+    assert.match(manifestResponse.headers.get("content-type"), /application\/manifest\+json/);
+    const manifest = await manifestResponse.json();
+    assert.equal(manifest.id, base);
+    assert.equal(manifest.scope, base);
+    assert.equal(manifest.start_url, base);
+    assert.equal(manifest.icons[0].src, `${base}__grok/icon-180.png`);
+    const installResponse = await fetch(`${origin}${base}?install=1&platform=ios&visit=2`, {
+      headers: { accept: "text/html" },
+    });
+    assert.equal(installResponse.status, 200);
+    const install = await installResponse.text();
+    assert.ok(install.includes(`href="${base}__grok/install/styles.css"`));
+    assert.ok(install.includes(`href="${base}?visit=2"`));
+    const page = await fetch(`${origin}${base}`, { headers: { accept: "text/html" } });
+    assert.equal(page.status, 200);
+    const html = await page.text();
+    assert.match(html, /Preview town/);
+    assert.equal((html.match(/rel="manifest"/g) ?? []).length, 1);
+    assert.ok(html.includes(`href="${base}__grok/manifest.webmanifest"`));
+    if (base !== "/") {
+      assert.doesNotMatch(html, /href="\/__grok\//);
+      assert.doesNotMatch(install, /href="\/__grok\//);
+    }
+  });
+}

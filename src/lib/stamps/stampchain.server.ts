@@ -52,7 +52,7 @@ export async function boundedStampFetch(
   const request = async () => {
     const response = await (options.fetch ?? globalThis.fetch)(url, {
       method: "GET",
-      redirect: "error",
+      redirect: "manual",
       cache: "no-store",
       signal: controller.signal,
       headers: { Accept: allowedMime.join(", ") },
