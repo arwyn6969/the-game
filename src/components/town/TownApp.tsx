@@ -163,6 +163,7 @@ declare global {
 type Replay = { d: number; m: number };
 const LOCAL_DIALOGUE_KEY = "the-game-local-dialogue-only";
 const MEETING_PROTOTYPE_KEY = "the-game-library-meeting-prototype";
+const PHYSICAL_REQUEST_INTERVAL_MS = 31_000;
 
 function physicalUsageSample(
   response: unknown,
@@ -462,6 +463,7 @@ export function TownApp() {
   const [physicalRead, setPhysicalRead] = useState<PhysicalActionResult["content"] | null>(null);
   const [physicalSelected, setPhysicalSelected] = useState<string | null>(null);
   const physicalSelectedRef = useRef<string | null>(null);
+  const physicalRequestStartedAtRef = useRef<number | null>(null);
   const [discussionEnabled, setDiscussionEnabled] = useState(savedMeetingPreference);
   const [discussionDraft, setDiscussionDraft] = useState("");
   const [discussionNote, setDiscussionNote] = useState("");
@@ -1135,12 +1137,18 @@ export function TownApp() {
       return;
     }
     if (job.kind === "act") {
+      if (document.visibilityState !== "visible" || !actionsAvailableRef.current) return;
+      const previousStart = physicalRequestStartedAtRef.current;
       if (
-        document.visibilityState !== "visible" ||
-        !actionsAvailableRef.current ||
-        !markPhysicalRequest(live, job)
-      )
+        previousStart !== null &&
+        performance.now() - previousStart < PHYSICAL_REQUEST_INTERVAL_MS
+      ) {
+        const note =
+          "Waiting between free AI requests (up to 31 seconds). No request is used while waiting.";
+        if (physicalNote !== note) setPhysicalNote(note);
         return;
+      }
+      if (!markPhysicalRequest(live, job)) return;
       pendingRef.current = true;
       activeJobRef.current = { town: live, job };
       const serial = ++requestSerial.current;
@@ -1169,6 +1177,7 @@ export function TownApp() {
         const prompt = buildPrompt(live, job);
         const res = await new Promise<Awaited<ReturnType<typeof thinkTown>>>((resolve, reject) => {
           timed = window.setTimeout(() => reject(new Error("timeout")), 15_000);
+          physicalRequestStartedAtRef.current = performance.now();
           requestMind(job.kind, prompt).then(resolve, reject);
         });
         response = res;

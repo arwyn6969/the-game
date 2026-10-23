@@ -4,6 +4,8 @@ Revision: 22 October 2026. This narrows the immediate task in [Northern's Park P
 
 The authorized [grounding correction and repeat](../review/northern-grounding-repeat-2026-10-22/README.md) now supplies actual personal facts and treats document contents as unverified claims while allowing fiction. Northern wrote grounded notes, reread them, carried the manuscript to the noticeboard and put it down; reading afterward was correctly rejected because he no longer held it. The next small improvement is state-aware legal-action guidance, with no silent relaxation of the physical rules.
 
+**23 October manuscript follow-up:** adjacent-ground reading, current action options and retained read revisions are implemented. The later [speech-continuation trial](../review/northern-speech-continuation-2026-10-23/README.md), source `9574d5f`, chose pickup, reading, budget writing, reading the changed content and expanded notes; a sixth empty provider response stopped it. It used 8,000 known tokens plus one unknown sample. The speech-continuation fix is separately integrated onto the newer library-meeting main, preserving opt-in attention. The original proof outline below retains its earlier scope; linked receipts define current rules. No shared performance or free-fiction selection is established by this run.
+
 ## What was missing from the earlier plan
 
 The creative direction is usable, but the earlier brief moved from intentions to a whole community event without specifying how game state becomes visible action. It also combined several independent efforts: AI runtime, creative collaboration, physical props, inventory and continuous server operation. They should not be one first implementation packet.
