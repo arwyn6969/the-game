@@ -385,6 +385,7 @@ test("speech uses one bounded decision and the next prompt contains actual words
     cash: town.agents.map((agent) => agent.money),
   });
   const beforeData = new Set(data.memories.map((memory) => memory.id));
+  const beforeNorthern = new Set(northern.memories.map((memory) => memory.id));
   const words = ["Data. You're up early.", "I haven't chosen what to do next."];
   for (const [index, text] of words.entries()) {
     const job = nextPhysicalJob(town);
@@ -420,8 +421,10 @@ test("speech uses one bounded decision and the next prompt contains actual words
     finances,
   );
   const heard = data.memories.filter((memory) => !beforeData.has(memory.id));
-  assert.equal(heard.length, 2);
-  for (const [index, memory] of heard.entries()) {
+  assert.deepEqual(heard, []);
+  const spoken = northern.memories.filter((memory) => !beforeNorthern.has(memory.id));
+  assert.equal(spoken.length, 2);
+  for (const [index, memory] of spoken.entries()) {
     assert.equal(memory.source, "statement");
     assert.equal(memory.text, `Northern said: “${words[index]}”`);
   }
