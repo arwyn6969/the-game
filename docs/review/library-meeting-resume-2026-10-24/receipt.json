@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-24",
+  "result": "same-live-meeting-resumed-player-line-opt-in-delivery-verified",
+  "runtime": {
+    "source": "a7ca408b1b128aae53c21d36c9a527fc485a576f",
+    "mergedPr": "https://github.com/arwyn6969/the-game/pull/49",
+    "mainMerge": "6f890add7968002a59aee3ebd506f7f6129479cd",
+    "verify": "https://github.com/arwyn6969/the-game/actions/runs/40042407847",
+    "verifyConclusion": "success",
+    "workerVersion": "c66bb68a-7c96-414a-9a38-72e2d62766e9",
+    "rollbackVersion": "722e5658-356d-4c82-baf1-7e70f1c1163c",
+    "liveUrl": "https://www.arwyn.party/thegame/",
+    "configSecretsChanged": false,
+    "databaseMigrations": false
+  },
+  "diagnosis": {
+    "historicalFailureBoundary": "provider-output-format-before-engine-commitment",
+    "historicalExactInvalidFieldOrSyntax": "unknown-response-body-not-retained",
+    "allThreeOfferedChoicesPassBothStrictParsers": true,
+    "correction": "complete-envelope-guidance-for-every-currently-offered-choice",
+    "validatorsWeakened": false
+  },
+  "attentionChoices": [
+    { "actor": "arwyn", "chosenAction": "listen", "tokens": 1313 },
+    { "actor": "sub", "chosenAction": "listen", "tokens": 1308 }
+  ],
+  "delivery": {
+    "actualTurns": 1,
+    "mind": "player",
+    "aiGeneratedSpeech": false,
+    "actualRecipientIds": ["arwyn", "sub"],
+    "matchesExactCoreAudienceHelper": true,
+    "onlySpeakerAndListenersGainedAttributedMemory": true,
+    "allEightKnowledgeProjectionsMatch": true,
+    "originalMemoriesUnchanged": true,
+    "originalAttendanceChoicesPreserved": true,
+    "financesIdentityAndTimeUnchanged": true,
+    "actualUiReloadVerified": true
+  },
+  "usage": {
+    "originalRequests": 4,
+    "newRequests": 2,
+    "totalRequests": 6,
+    "originalAuthorizedMaximum": 12,
+    "unusedAuthorizedCalls": 6,
+    "newKnownTokens": 2621,
+    "totalKnownTokens": 7548,
+    "newBrowserAiWaitMs": 3242,
+    "totalBrowserAiWaitMs": 15383,
+    "historicalFailures": 1,
+    "newFailures": 0,
+    "unknownSamples": 0,
+    "chargedMicrousd": 0,
+    "newAttemptsCompletedOk": 2,
+    "liveBudgetRequests": 0,
+    "livePoolRequests": 0,
+    "providerDailyRequestsBefore": 0,
+    "providerDailyRequestsAfter": 2,
+    "providerDailyUsageUsd": 0,
+    "authorizationResetAtMidnight": false
+  },
+  "preservedLimits": {
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "sharedCallsPerRollingDay": 24,
+    "playerCallsPerDay": 12,
+    "playerCallsPerMinute": 3,
+    "providerCallsPerMinute": 2,
+    "globalConcurrency": 1,
+    "backgroundConcurrency": 0,
+    "actionConcurrency": 1,
+    "interactiveReservesUnchanged": true,
+    "zeroMonetaryLimitsAndTariffs": true,
+    "paidFallback": false
+  },
+  "finalState": {
+    "sameMeeting": true,
+    "facilitator": "arwyn",
+    "paused": true,
+    "playerListening": false,
+    "pendingRequest": false,
+    "nextNormalNpcJob": false,
+    "northernChoice": "declined",
+    "forcedNpcChoices": 0,
+    "forcedNpcFloors": 0
+  },
+  "notQualified": ["AI-generated meeting speech", "uninterrupted group flow", "late-join delivery", "speech after stopping listening"],
+  "privateEvidenceDirectory": "artifacts/library-meeting-live-20261023-resume/"
+}
