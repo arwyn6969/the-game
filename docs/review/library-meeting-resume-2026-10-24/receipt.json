@@ -15,20 +15,48 @@
   },
   "diagnosis": {
     "historicalFailureBoundary": "provider-output-format-before-engine-commitment",
-    "historicalExactInvalidFieldOrSyntax": "unknown-response-body-not-retained",
     "allThreeOfferedChoicesPassBothStrictParsers": true,
     "correction": "complete-envelope-guidance-for-every-currently-offered-choice",
-    "validatorsWeakened": false
+    "validatorsWeakened": false,
+    "historicalInvalidReason": "missing-envelope",
+    "historicalExactInvalidFieldOrValue": "unknown-response-body-not-retained",
+    "historicalJsonParsedAsObject": true,
+    "historicalDiagnostic": {
+      "timestampUtc": "2026-10-23T18:02:02.836Z",
+      "workerVersion": "8852b4fc-0ca5-4217-8f71-6c7420cd0d72",
+      "finishReason": "stop",
+      "inputTokens": 1220,
+      "outputTokens": 20,
+      "reasoningTokens": 0,
+      "responseCharacters": 76,
+      "invalidReason": "missing-envelope"
+    },
+    "recoverySource": "user-signed-in-Cloudflare-historical-dashboard",
+    "recoveryDate": "2026-10-24",
+    "additionalAiRequestsForRecovery": 0,
+    "productionChangesForRecovery": false,
+    "furtherRuntimeChangeJustified": false
   },
   "attentionChoices": [
-    { "actor": "arwyn", "chosenAction": "listen", "tokens": 1313 },
-    { "actor": "sub", "chosenAction": "listen", "tokens": 1308 }
+    {
+      "actor": "arwyn",
+      "chosenAction": "listen",
+      "tokens": 1313
+    },
+    {
+      "actor": "sub",
+      "chosenAction": "listen",
+      "tokens": 1308
+    }
   ],
   "delivery": {
     "actualTurns": 1,
     "mind": "player",
     "aiGeneratedSpeech": false,
-    "actualRecipientIds": ["arwyn", "sub"],
+    "actualRecipientIds": [
+      "arwyn",
+      "sub"
+    ],
     "matchesExactCoreAudienceHelper": true,
     "onlySpeakerAndListenersGainedAttributedMemory": true,
     "allEightKnowledgeProjectionsMatch": true,
@@ -83,6 +111,11 @@
     "forcedNpcChoices": 0,
     "forcedNpcFloors": 0
   },
-  "notQualified": ["AI-generated meeting speech", "uninterrupted group flow", "late-join delivery", "speech after stopping listening"],
+  "notQualified": [
+    "AI-generated meeting speech",
+    "uninterrupted group flow",
+    "late-join delivery",
+    "speech after stopping listening"
+  ],
   "privateEvidenceDirectory": "artifacts/library-meeting-live-20261023-resume/"
 }

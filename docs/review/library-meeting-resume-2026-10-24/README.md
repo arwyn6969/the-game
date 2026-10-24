@@ -6,9 +6,15 @@ This is bounded real-AI attention and player-speech delivery evidence. It does n
 
 ## Diagnosis and correction
 
-The original fourth request returned HTTP 200 but failed provider-output format validation before engine commitment. Its 1,240 tokens remain charged. The original response body was not retained; historical Cloudflare telemetry could not be retrieved with the existing CLI permission. Consequently its exact invalid syntax or field is **unknown**. No expanded logging permissions or raw response capture was introduced.
+The original fourth request returned HTTP 200 but failed provider-output format validation before engine commitment. Its 1,240 tokens remain charged. The existing CLI permission could not retrieve historical telemetry. After the user signed into the Cloudflare dashboard on 24 October, a read-only historical query recovered the precise diagnostic at **23 October 18:02:02.836 UTC / 19:02:02.836 BST**, on the original Worker version `8852b4fc-0ca5-4217-8f71-6c7420cd0d72`:
 
-The saved job's three legal attention choices all passed both strict parsers locally. The prompt now gives a complete valid JSON envelope for **every currently offered choice**, and speech guidance only when speech is offered. Regression coverage reproduces the pre-failure job, accepts each offered choice and rejects extra fields. Validators, legal choices, scheduling and audience rules were preserved. This corrects incomplete output guidance; it is not proof of the historical response's exact defect.
+```json
+{"finishReason":"stop","inputTokens":1220,"outputTokens":20,"reasoningTokens":0,"responseCharacters":76,"invalidReason":"missing-envelope"}
+```
+
+The unchanged transport parser emits `missing-envelope` only after content parses, with permitted fence normalization, as a non-null, non-array JSON object. The object failed the action envelope or decision structure check. This was not classified as empty content, malformed JSON, a non-object or a length-truncated completion. The original 76-character body was not retained, so the exact missing, extra or invalid field/value remains **unknown**. The reason name does not establish that a particular wrapper field was literally absent. No expanded permissions, raw model-response capture, production changes or additional AI requests were made for this lookup. Only the normalized warning and a private screenshot were retained.
+
+The saved job's three legal attention choices all passed both strict parsers locally. The prompt now gives a complete valid JSON envelope for **every currently offered choice**, and speech guidance only when speech is offered. Regression coverage reproduces the pre-failure job, accepts each offered choice and rejects extra fields. Validators, legal choices, scheduling and audience rules were preserved. This corrects incomplete output guidance and addresses the observed structural failure category; it is not proof of the historical response's exact rejected field or a guarantee that every future model response will validate. Independent source review found no further runtime change justified by the recovered summary alone.
 
 ## Verified publication
 
