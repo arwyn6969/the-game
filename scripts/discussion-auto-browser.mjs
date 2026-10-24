@@ -4,8 +4,8 @@ import assert from "node:assert/strict";
 // browser itself; every response is a labelled synthetic transport fixture.
 export const discussionMockModule = `
 export async function mindAvailability() { return { online:true, configured:true, actions:globalThis.__discussionAvailable !== false }; }
-const mock=globalThis.__discussionMock??={calls:[],pending:new Map(),resolve(id,res){const row=this.pending.get(id);if(row){this.pending.delete(id);row.resolve(res);}},reject(id){const row=this.pending.get(id);if(row){this.pending.delete(id);row.reject(new Error('Synthetic unavailable'));}}};
-export function thinkTown({data}) { if(data.kind!=='act')return Promise.resolve({ok:false,error:'synthetic-offline'});const id=mock.calls.length;mock.calls.push({id,user:data.user,startedAt:performance.now()});return new Promise((resolve,reject)=>mock.pending.set(id,{resolve,reject})); }
+const mock=globalThis.__discussionMock??={calls:[],allInvocations:[],pending:new Map(),resolve(id,res){const row=this.pending.get(id);if(row){this.pending.delete(id);row.resolve(res);}},reject(id){const row=this.pending.get(id);if(row){this.pending.delete(id);row.reject(new Error('Synthetic unavailable'));}}};
+export function thinkTown({data}) { mock.allInvocations.push({kind:data.kind,startedAt:performance.now()});if(data.kind!=='act')return Promise.resolve({ok:false,error:'synthetic-offline'});const id=mock.calls.length;mock.calls.push({id,user:data.user,startedAt:performance.now()});return new Promise((resolve,reject)=>mock.pending.set(id,{resolve,reject})); }
 `;
 
 export function offeredKinds(state) {
@@ -34,6 +34,19 @@ async function assertStartSpacing(page) {
   const starts = await page.evaluate(() => window.__discussionMock.calls.map((c) => c.startedAt));
   for (let index = 1; index < starts.length; index++)
     assert.ok(starts[index] - starts[index - 1] >= 31_000, "All act starts retain free pacing");
+}
+
+async function assertOnlyArmedDiscussion(page, since) {
+  const invocations = await page.evaluate(
+    (since) => window.__discussionMock.allInvocations.slice(since),
+    since,
+  );
+  assert.ok(invocations.length > 0, "This armed window includes a real synthetic request");
+  assert.deepEqual(
+    invocations.filter((invocation) => invocation.kind !== "act"),
+    [],
+    "An armed meeting must never dispatch background plan/talk/reflect requests",
+  );
 }
 
 async function automaticRequest(page, expectedCount) {
@@ -125,15 +138,111 @@ export async function runAutomaticMeetingJourneys(helpers, viewport) {
     await context.close();
   }
 
+  for (const interruption of ["global Pause", "hidden then visible"]) {
+    const { context, page, result } = await createJourney(
+      viewport,
+      `automatic durable Start interrupted by ${interruption}`,
+    );
+    await propose(page, `SYNTHETIC durable Start race — ${interruption}`);
+    const baseline = await meeting(page);
+    await page.evaluate(() => {
+      if (!navigator.locks?.request || !navigator.locks?.query)
+        throw new Error("The durable Start race requires the actual browser Web Locks API");
+      const hold = (window.__discussionSaveLock = {
+        acquired: false,
+        released: false,
+      });
+      hold.task = navigator.locks.request("the-game-town-save", async () => {
+        hold.acquired = true;
+        await new Promise((resolve) => {
+          hold.release = resolve;
+        });
+        hold.released = true;
+      });
+    });
+    await page.waitForFunction(() => window.__discussionSaveLock.acquired);
+    await page.getByRole("button", { name: "Start automatic meeting", exact: true }).click();
+    await page.waitForFunction(async () => {
+      const start = Array.from(document.querySelectorAll("button")).find(
+        (button) => button.textContent.trim() === "Start automatic meeting",
+      );
+      const locks = await navigator.locks.query();
+      return start?.disabled && locks.pending.some((lock) => lock.name === "the-game-town-save");
+    });
+    assert.equal(await page.evaluate(() => window.__discussionMock.calls.length), 0);
+    if (interruption === "global Pause") {
+      await page
+        .getByRole("group", { name: "Town clock controls", exact: true })
+        .getByRole("button", { name: "Pause", exact: true })
+        .click();
+    } else {
+      await setHidden(page, true);
+      assert.match(await page.locator(".discussion-state").innerText(), /Meeting paused/);
+      // Becoming visible before the durable save resolves must not revive Start.
+      await setHidden(page, false);
+    }
+    assert.match(await page.locator(".discussion-state").innerText(), /Meeting paused/);
+    assert.equal(await page.evaluate(() => window.__discussionMock.calls.length), 0);
+    await page.evaluate(() => window.__discussionSaveLock.release());
+    await page.waitForFunction(async () => {
+      const locks = await navigator.locks.query();
+      const start = Array.from(document.querySelectorAll("button")).find(
+        (button) => button.textContent.trim() === "Start automatic meeting",
+      );
+      const saved = JSON.parse(localStorage.getItem("the-game-town-v2")).town;
+      return (
+        window.__discussionSaveLock.released &&
+        !locks.pending.some((lock) => lock.name === "the-game-town-save") &&
+        start &&
+        !start.disabled &&
+        saved.discussions.sessions.at(-1).status === "paused"
+      );
+    });
+    await page.clock.fastForward(62_100);
+    const interrupted = await meeting(page);
+    assert.equal(await page.evaluate(() => window.__discussionMock.calls.length), 0);
+    assert.equal(interrupted.status, "paused");
+    assert.equal(interrupted.pending, null);
+    assert.equal(interrupted.decisions, baseline.decisions);
+    assert.deepEqual(interrupted.usage, baseline.usage);
+    assert.deepEqual(interrupted.utterances, baseline.utterances);
+    assert.equal(
+      await page.getByRole("button", { name: "Stop automatic meeting", exact: true }).count(),
+      0,
+    );
+    result.assertions.push(
+      `A real held save lock delays Start; ${interruption} cancels its authorization before release, consumes no request or accounting and cannot restart on visibility/time alone`,
+    );
+    await page.getByRole("button", { name: "Start automatic meeting", exact: true }).click();
+    const explicitlyRestarted = await automaticRequest(page, 1);
+    const offered = await availableDecision(page);
+    assertOfferedDecision(offered, { kind: "read-invitation" });
+    await page.getByRole("button", { name: "Stop automatic meeting", exact: true }).click();
+    await assertStopped(page, meeting);
+    await respond(page, explicitlyRestarted, { kind: "read-invitation" });
+    assert.equal((await meeting(page)).utterances.length, 0);
+    result.assertions.push("Only a fresh explicit Start can authorize the first actual request");
+    await auditMeeting(page, result, `durable Start cancelled by ${interruption}`);
+    await capture(
+      page,
+      `${viewport.name}-automatic-start-${interruption === "global Pause" ? "pause" : "hidden"}-race.png`,
+    );
+    await finish(result, context, page);
+  }
+
   {
-    const { context, page, result } = await createJourney(viewport, "automatic lifecycle");
+    const { context, page, result } = await createJourney(viewport, "automatic lifecycle", {
+      backgroundDue: true,
+    });
     await propose(page, "SYNTHETIC automatic library discussion");
     await auditMeeting(page, result, "automatic Arwyn proposal");
     await page.getByRole("button", { name: "Pause meeting decisions", exact: true }).click();
     assert.equal((await meeting(page)).status, "paused");
     assert.equal(await page.evaluate(() => window.__discussionMock.calls.length), 0);
+    const armedFrom = await page.evaluate(() => window.__discussionMock.allInvocations.length);
     await page.getByRole("button", { name: "Start automatic meeting", exact: true }).click();
     const firstId = await automaticRequest(page, 1);
+    await assertOnlyArmedDiscussion(page, armedFrom);
     const firstState = await availableDecision(page);
     assert.equal(firstState.actor, "arwyn");
     assertOfferedDecision(firstState, { kind: "read-invitation" });
@@ -149,12 +258,27 @@ export async function runAutomaticMeetingJourneys(helpers, viewport) {
     );
     await respond(page, firstId, { kind: "read-invitation" });
     const afterFirst = await meeting(page);
+    const dueTown = await savedTown(page);
+    assert.ok(
+      dueTown.agents.some((agent) => agent.id !== "player" && agent.plan.day < dueTown.day),
+      "The pacing window has an actual stale background plan due on the next normal tick",
+    );
+    const beforeNormalTick = await page.locator(".hud-clock").innerText();
+    // Exercise the real minute loop while there is no pending meeting request.
+    // A jump alone would not run enough animation frames to test takeJob.
+    await page.clock.runFor(1_100);
+    assert.notEqual(await page.locator(".hud-clock").innerText(), beforeNormalTick);
+    await assertOnlyArmedDiscussion(page, armedFrom);
     await advanceDiscussionWindow(page, 5_000);
     const waiting = await meeting(page);
     assert.equal(await page.evaluate(() => window.__discussionMock.calls.length), 1);
     assert.equal(waiting.decisions, afterFirst.decisions);
     assert.deepEqual(waiting.usage, afterFirst.usage);
     assert.equal(waiting.pending, null);
+    await assertOnlyArmedDiscussion(page, armedFrom);
+    result.assertions.push(
+      "A real normal town tick with stale plans dispatches no background AI while the automatic meeting is armed or pacing",
+    );
     result.assertions.push(
       "Paused Start resumes once; manual stepping is excluded, and pacing wait consumes no request or accounting",
     );
@@ -177,6 +301,7 @@ export async function runAutomaticMeetingJourneys(helpers, viewport) {
       assertOfferedDecision(state, decision);
       choices.push({ actor: state.actor, kind });
       await respond(page, id, decision);
+      await assertOnlyArmedDiscussion(page, armedFrom);
     }
     const spoken = await meeting(page);
     assert.equal(spoken.utterances.length, 1, JSON.stringify(choices));
@@ -205,10 +330,12 @@ export async function runAutomaticMeetingJourneys(helpers, viewport) {
       assert.equal(state.actor, actor);
       assertOfferedDecision(state, { kind: "listen" });
       await respond(page, id, { kind: "listen" });
+      await assertOnlyArmedDiscussion(page, armedFrom);
       choices.push({ actor, kind: "listen" });
       assert.equal((await meeting(page)).members.find((m) => m.id === actor).decisionNeeded, false);
     }
     const pending = await automaticRequest(page, choices.length + 1);
+    await assertOnlyArmedDiscussion(page, armedFrom);
     assertOfferedDecision(await availableDecision(page), { kind: "speak" });
     const field = await draftField(page);
     await field.fill("SYNTHETIC retained player draft");

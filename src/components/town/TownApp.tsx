@@ -949,6 +949,7 @@ export function TownApp() {
     if (
       !live ||
       !discussionEnabled ||
+      discussionStartingRef.current ||
       discussionRunRef.current?.status === "running" ||
       pendingRef.current ||
       transportBusyRef.current ||
@@ -1234,6 +1235,13 @@ export function TownApp() {
   runMindRef.current = async (live, job) => {
     if (townRef.current !== live || pendingRef.current || transportBusyRef.current) return;
     if (localOnlyRef.current) return;
+    const automaticMeeting = discussionRunRef.current?.status === "running";
+    if (
+      (discussionStartingRef.current || automaticMeeting) &&
+      job.kind !== "player" &&
+      !(automaticMeeting && job.kind === "act" && job.task === "discussion")
+    )
+      return;
     if (job.kind === "act" && job.task === "discussion") {
       if (
         document.visibilityState !== "visible" ||
@@ -1702,7 +1710,11 @@ export function TownApp() {
       const live = townRef.current;
       if (!live || !job) return false;
       const minds =
-        onlineRef.current && !localOnlyRef.current && document.visibilityState === "visible";
+        onlineRef.current &&
+        !localOnlyRef.current &&
+        document.visibilityState === "visible" &&
+        !discussionStartingRef.current &&
+        discussionRunRef.current?.status !== "running";
       if (minds && !pendingRef.current && !transportBusyRef.current) {
         void runMindRef.current(live, job);
         return true;
@@ -1840,6 +1852,7 @@ export function TownApp() {
             speedRef.current > 0 &&
             replayRef.current === null &&
             importTextRef.current === null &&
+            !discussionStartingRef.current &&
             discussionRunRef.current?.status !== "running"
           )
             dispatchPhysicalRef.current(live);
