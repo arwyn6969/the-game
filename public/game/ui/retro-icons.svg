@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" shape-rendering="crispEdges">
+  <symbol id="journal" viewBox="0 0 24 24">
+    <path fill-rule="evenodd" d="M2 4h7v1h2v1h2V5h2V4h7v16h-8v1h-4v-1H2V4Zm2 2v12h6v1h1V8H9V7H7V6H4Zm16 0h-3v1h-2v1h-2v11h1v-1h6V6Z"/>
+    <path d="M5 9h3v1H5zm0 3h3v1H5zm11-3h3v1h-3zm0 3h3v1h-3z"/>
+  </symbol>
+  <symbol id="inventory" viewBox="0 0 24 24">
+    <path fill-rule="evenodd" d="M8 2h8v2h2v4h3v13H3V8h3V4h2V2Zm2 2v2H8v2h8V6h-2V4h-4ZM5 10v9h14v-9H5Z"/>
+    <path d="M9 10h6v3h-2v3h-2v-3H9zM5 19h14v3H5z"/>
+  </symbol>
+  <symbol id="map" viewBox="0 0 24 24">
+    <path fill-rule="evenodd" d="M2 5h3V4h3V3h1v1h3v1h3V4h3V3h4v16h-3v1h-3v1h-1v-1h-3v-1H9v1H6v1H2V5Zm2 2v12h2v-1h1V6H6v1H4Zm5-1v11h3v1h2V7h-2V6H9Zm7 1v11h2v-1h2V5h-2v1h-2v1Z"/>
+  </symbol>
+  <symbol id="library" viewBox="0 0 24 24">
+    <path d="M10 2h4v2h3v2h3v2h2v2H2V8h2V6h3V4h3V2ZM4 12h3v7H4zm6 0h4v7h-4zm7 0h3v7h-3zM2 20h20v2H2z"/>
+  </symbol>
+  <symbol id="wallets" viewBox="0 0 24 24">
+    <path fill-rule="evenodd" d="M4 3h15v3h2v3h1v10h-1v2H3v-2H2V6h2V3Zm2 2v1h11V5H6ZM4 8v11h15v-3h-6v-2h-1v-3h1V9h6V8H4Zm11 3v3h5v-3h-5Z"/>
+    <path d="M16 12h2v1h-2z"/>
+  </symbol>
+  <symbol id="stamp" viewBox="0 0 24 24">
+    <path fill-rule="evenodd" d="M9 2h6v2h2v5h-2v3h3v2h3v6H3v-6h3v-2h3V9H7V4h2V2Zm2 2v2H9v1h2v5h2V7h2V6h-2V4h-2ZM7 14v2H5v2h14v-2h-2v-2H7Z"/>
+    <path d="M3 21h18v2H3z"/>
+  </symbol>
+  <symbol id="help" viewBox="0 0 24 24">
+    <path fill-rule="evenodd" d="M7 2h10v2h3v3h2v10h-2v3h-3v2H7v-2H4v-3H2V7h2V4h3V2Zm1 2v2H6v2H4v8h2v2h2v2h8v-2h2v-2h2V8h-2V6h-2V4H8Z"/>
+    <path d="M9 7h6v2h2v3h-2v2h-2v1h-2v-3h2v-2h2V9h-4v2H8V9h1V7Zm2 10h3v2h-3z"/>
+  </symbol>
+  <symbol id="people" viewBox="0 0 24 24">
+    <path d="M10 2h4v2h2v4h-2v2h-4V8H8V4h2V2ZM3 6h3v2h1v3H6v1H3v-1H2V8h1V6Zm15 0h3v2h1v3h-1v1h-3v-1h-1V8h1V6ZM9 12h6v2h2v7H7v-7h2v-2ZM2 14h3v7H1v-5h1v-2Zm17 0h3v2h1v5h-4v-7Z"/>
+  </symbol>
+  <symbol id="speech" viewBox="0 0 24 24">
+    <path fill-rule="evenodd" d="M4 2h16v2h2v12h-2v2H9v2H7v2H4v-4H2V4h2V2Zm2 2v2H4v8h2v4h1v-2h2v-1h9v-1h2V6h-2V4H6Z"/>
+    <path d="M7 8h2v3H7zm4 0h2v3h-2zm4 0h2v3h-2z"/>
+  </symbol>
+  <symbol id="clock" viewBox="0 0 24 24">
+    <path fill-rule="evenodd" d="M7 2h10v2h3v3h2v10h-2v3h-3v2H7v-2H4v-3H2V7h2V4h3V2Zm1 2v2H6v2H4v8h2v2h2v2h8v-2h2v-2h2V8h-2V6h-2V4H8Z"/>
+    <path d="M11 6h2v6h4v2h-6V6Z"/>
+  </symbol>
+  <symbol id="coin" viewBox="0 0 24 24">
+    <path fill-rule="evenodd" d="M7 2h10v2h3v3h2v10h-2v3h-3v2H7v-2H4v-3H2V7h2V4h3V2Zm1 3v1H6v2H5v8h1v2h2v1h8v-1h2v-2h1V8h-1V6h-2V5H8Z"/>
+    <path d="M10 7h4v2h2v6h-2v2h-4v-2H8V9h2V7Zm1 3v4h2v-4h-2Z" fill-rule="evenodd"/>
+  </symbol>
+  <symbol id="save" viewBox="0 0 24 24">
+    <path d="M10 2h4v9h4v2h-2v2h-2v2h-4v-2H8v-2H6v-2h4V2ZM2 16h3v4h14v-4h3v6H2v-6Z"/>
+  </symbol>
+  <symbol id="restore" viewBox="0 0 24 24">
+    <path d="M7 2h10v2h3v3h2v10h-2v3h-3v2H7v-2H4v-3H2v-3h3v2h1v2h2v1h8v-1h2v-2h1V8h-1V6h-2V5H8v1H6v2h3v3H1V3h3v3h1V4h2V2Z"/>
+    <path d="M11 7h2v5h4v2h-6V7Z"/>
+  </symbol>
+</svg>

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import { execFileSync } from "node:child_process";
+import axe from "axe-core";
 import { chromium } from "playwright";
 
 // Disposable synthetic towns and browser-only transport. Never attach to a
@@ -178,6 +179,33 @@ async function respond(page, id, decision, known = true) {
 async function capture(page, filename) {
   await page.screenshot({ path: join(out, filename), fullPage: false });
 }
+async function auditManuscript(page, result, name) {
+  if (!(await page.evaluate(() => Boolean(window.axe))))
+    await page.addScriptTag({ content: axe.source });
+  const audit = await page.evaluate(async () => {
+    const panel = document.querySelector(".manuscript-tools");
+    if (!panel)
+      throw new Error("The manuscript controls must be present for their accessibility audit");
+    const result = await window.axe.run(panel, {
+      runOnly: {
+        type: "tag",
+        values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"],
+      },
+      resultTypes: ["violations", "incomplete"],
+    });
+    const compact = (rule) => ({
+      id: rule.id,
+      impact: rule.impact,
+      nodes: rule.nodes.map(({ target, failureSummary }) => ({ target, failureSummary })),
+    });
+    return {
+      violations: result.violations.map(compact),
+      incomplete: result.incomplete.map(compact),
+    };
+  });
+  (result.audits ??= []).push({ name, ...audit });
+  assert.deepEqual(audit.violations, [], `${name} accessibility`);
+}
 try {
   for (const viewport of [
     { name: "desktop", width: 1280, height: 800 },
@@ -247,6 +275,8 @@ try {
           beforeCanvas,
           "Ground reading must not draw a held manuscript or change the paused world image",
         );
+        if (layout === "adjacent")
+          await auditManuscript(page, result, "inventory manuscript reader");
         await capture(page, `${viewport.name}-ground-read-${layout}-panel.png`);
         await closeInventory(page);
         await capture(page, `${viewport.name}-ground-read-${layout}.png`);
@@ -299,6 +329,7 @@ try {
     );
     await page.getByText(/Invite Northern when they are beside or holding/).waitFor();
     result.assertions.push("Blank introduction once; distant resident invitation is disabled");
+    await auditManuscript(page, result, "inventory trial controls and resident selector");
     await closeInventory(page);
     const canvas = page.locator("canvas[data-camx]");
     const point = await canvas.evaluate((canvas) => ({
@@ -477,6 +508,11 @@ try {
       .locator(".manuscript-tools")
       .getByText("Inspect manuscript", { exact: true })
       .click();
+    const diagnostics = page.locator(".manuscript-diagnostics");
+    const diagnosticsWasOpen = (await diagnostics.getAttribute("open")) !== null;
+    if (!diagnosticsWasOpen) await diagnostics.locator("summary").click();
+    await auditManuscript(page, result, "expanded manuscript trial diagnostics");
+    if (!diagnosticsWasOpen) await diagnostics.locator("summary").click();
     for (const count of [1, 2]) {
       const read = page.getByRole("button", { name: "Read manuscript", exact: true });
       assert.equal(await read.isEnabled(), true);

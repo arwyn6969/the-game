@@ -113,10 +113,44 @@ export async function runUiInterruptionChecks(browser, url, outputDirectory) {
       await focused(page.getByRole("button", { name: "Close board", exact: true }));
       const boardBox = await board.boundingBox();
       const navBox = await nav.boundingBox();
+      assert.ok(boardBox && navBox, "The board and town navigation have visible layout boxes");
       assert.ok(
-        boardBox.y >= navBox.y + navBox.height,
-        "The board must leave town navigation visible",
+        boardBox.x + boardBox.width <= navBox.x ||
+          navBox.x + navBox.width <= boardBox.x ||
+          boardBox.y + boardBox.height <= navBox.y ||
+          navBox.y + navBox.height <= boardBox.y,
+        "The board must not overlap town navigation above, below or beside it",
       );
+      const navigationTargets = await nav.getByRole("button").evaluateAll((buttons) =>
+        buttons.flatMap((button) => {
+          const box = button.getBoundingClientRect();
+          const x = box.x + box.width / 2;
+          const y = box.y + box.height / 2;
+          if (
+            box.width <= 0 ||
+            box.height <= 0 ||
+            x < 0 ||
+            x >= innerWidth ||
+            y < 0 ||
+            y >= innerHeight
+          )
+            return [];
+          return [
+            {
+              name: button.getAttribute("aria-label") || button.textContent.trim(),
+              center: { x, y },
+              reachable: button.contains(document.elementFromPoint(x, y)),
+            },
+          ];
+        }),
+      );
+      for (const button of navigationTargets)
+        assert.equal(
+          button.reachable,
+          true,
+          `${button.name} remains reachable while the board is open`,
+        );
+      result.boardNavigation = { board: boardBox, navigation: navBox, targets: navigationTargets };
       await page.screenshot({ path: join(out, `${viewport.name}-noticeboard.png`) });
       await nav.getByRole("button", { name: "Help & privacy", exact: true }).click();
       await onePanel(page.getByRole("dialog", { name: "Help & privacy", exact: true }));

@@ -1,0 +1,33 @@
+{
+  "url": "https://www.arwyn.party/thegame/",
+  "release": "7949f01b8338",
+  "assetChecks": [
+    {
+      "path": "/thegame/assets/index-BycXFDnc.js",
+      "bytes": 432278,
+      "sha256": "e0bc52764d64ef787c509ebd884a8223acadff06514d672c2967ffeefc95f12a"
+    },
+    {
+      "path": "/thegame/assets/routes-BMdmhdbG.js",
+      "bytes": 586599,
+      "sha256": "29790f7aa9235ed19571a61c5877d173db80c31712918e6ac34513a9a277a544"
+    },
+    {
+      "path": "/thegame/assets/styles-CM7PeiPI.css",
+      "bytes": 100112,
+      "sha256": "03441fd26096356eb8dc3064976cc64b7152b8e18a79cb08c48bd9c3b4cebebf"
+    },
+    {
+      "path": "/thegame/game/ui/retro-icons.svg",
+      "bytes": 2999,
+      "sha256": "60b0f0032ca9ece3e6fd3adb5e306ad938ea3849c70814c672c1461b2cbe6eea"
+    }
+  ],
+  "manifest": {
+    "id": "/thegame/",
+    "scope": "/thegame/",
+    "start_url": "/thegame/"
+  },
+  "anonymousSession": null,
+  "privacyBytes": 3887
+}

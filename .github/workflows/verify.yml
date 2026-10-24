@@ -8,7 +8,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     env:
       DATABASE_URL: ""
       XAI_API_KEY: ""
@@ -53,6 +53,7 @@ jobs:
           JS
           node scripts/quality-ai-browser.mjs
           DISCUSSION_QA_URL=http://127.0.0.1:8094/ npm run test:browser:meetings
+          GAME_SKIN_QA_URL=http://127.0.0.1:8094/ GAME_SKIN_QA_OUT=artifacts/ui-interfaces node scripts/skin-browser.mjs
       - name: Accessibility checks
         run: |
           node scripts/with-app-env.mjs node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 8198 --strictPort > /tmp/game-a11y-preview.log 2>&1 &
@@ -92,4 +93,5 @@ jobs:
             artifacts/stamp-identity-browser
             artifacts/agent-wallet-browser
             artifacts/accessibility-browser
+            artifacts/ui-interfaces
           if-no-files-found: ignore
