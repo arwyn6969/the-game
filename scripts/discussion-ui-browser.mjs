@@ -3,6 +3,13 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import axe from "axe-core";
 import { chromium } from "playwright";
+import {
+  advanceDiscussionWindow,
+  assertOfferedDecision,
+  discussionMockModule,
+  offeredKinds,
+  runAutomaticMeetingJourneys,
+} from "./discussion-auto-browser.mjs";
 
 // Disposable towns and intercepted browser transport only. Never attach to a
 // personal browser/account or send a request to a model provider.
@@ -18,11 +25,6 @@ const report = {
   journeys: [],
   failures: [],
 };
-const mockModule = `
-export async function mindAvailability() { return { online:true, configured:true, actions:globalThis.__discussionAvailable !== false }; }
-const mock=globalThis.__discussionMock??={calls:[],pending:new Map(),resolve(id,res){const row=this.pending.get(id);if(row){this.pending.delete(id);row.resolve(res);}},reject(id){const row=this.pending.get(id);if(row){this.pending.delete(id);row.reject(new Error('Synthetic unavailable'));}}};
-export function thinkTown({data}) { if(data.kind!=='act')return Promise.resolve({ok:false,error:'synthetic-offline'});const id=mock.calls.length;mock.calls.push({id,user:data.user});return new Promise((resolve,reject)=>mock.pending.set(id,{resolve,reject})); }
-`;
 const browser = await chromium.launch({ headless: true });
 let active;
 const savedTown = (page) =>
@@ -62,6 +64,7 @@ async function openMeeting(page) {
   await tab.click();
 }
 async function requestDecision(page) {
+  await advanceDiscussionWindow(page);
   const count = await page.evaluate(() => window.__discussionMock.calls.length);
   await page.getByRole("button", { name: "Request next AI decision", exact: true }).click();
   await page.waitForFunction((before) => window.__discussionMock.calls.length > before, count);
@@ -70,6 +73,23 @@ async function requestDecision(page) {
       JSON.parse(localStorage.getItem("the-game-town-v2")).town.discussions.sessions.at(-1).pending,
   );
   return count;
+}
+async function requestNpcFloor(page) {
+  for (let step = 0; step < 4; step++) {
+    const id = await requestDecision(page);
+    const state = await availableDecision(page);
+    if (offeredKinds(state).includes("speak")) {
+      assertOfferedDecision(state, { kind: "speak" });
+      return id;
+    }
+    assert.equal(
+      state.session.members.find((member) => member.id === state.actor).mode,
+      "listening",
+    );
+    assertOfferedDecision(state, { kind: "listen" });
+    await respond(page, id, { kind: "listen" });
+  }
+  assert.fail("A current NPC floor must follow the bounded attentive-listener cues");
 }
 async function respond(page, id, decision) {
   await page.evaluate(
@@ -135,53 +155,59 @@ async function draftField(page) {
   return field;
 }
 
+async function createJourney(viewport, kind) {
+  const result = {
+    kind,
+    viewport,
+    assertions: [],
+    errors: [],
+    unexpectedServerRequests: [],
+    externalRequests: [],
+    mockedModules: 0,
+  };
+  report.journeys.push(result);
+  const context = await browser.newContext({ viewport, hasTouch: viewport.name === "phone" });
+  await context.route("**/*", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.origin !== target.origin) {
+      result.externalRequests.push(url.origin);
+      return route.fulfill({ status: 200, contentType: "text/css", body: "" });
+    }
+    if (url.pathname.includes("_serverFn")) {
+      result.unexpectedServerRequests.push(url.pathname);
+      return route.fulfill({ status: 503, contentType: "application/json", body: '{"ok":false}' });
+    }
+    return route.continue();
+  });
+  await context.route("**/src/lib/mind.functions.ts*", (route) => {
+    result.mockedModules++;
+    return route.fulfill({
+      status: 200,
+      contentType: "application/javascript",
+      body: discussionMockModule,
+    });
+  });
+  const page = (active = await context.newPage());
+  page.on("pageerror", (error) => result.errors.push(error.message));
+  await seed(page);
+  // Install after the fixture has loaded; advancing time never means waiting
+  // 31 real seconds or transmitting a real provider request.
+  await page.clock.install({ time: new Date("2026-10-24T12:00:00.000Z") });
+  return { result, context, page };
+}
+
 try {
   for (const viewport of [
     { name: "desktop", width: 1280, height: 800 },
     { name: "phone", width: 390, height: 844 },
   ]) {
-    const result = {
-      viewport,
-      assertions: [],
-      errors: [],
-      unexpectedServerRequests: [],
-      externalRequests: [],
-      mockedModules: 0,
-    };
-    report.journeys.push(result);
-    const context = await browser.newContext({ viewport, hasTouch: viewport.name === "phone" });
-    await context.route("**/*", async (route) => {
-      const url = new URL(route.request().url());
-      if (url.origin !== target.origin) {
-        result.externalRequests.push(url.origin);
-        return route.fulfill({ status: 200, contentType: "text/css", body: "" });
-      }
-      if (url.pathname.includes("_serverFn")) {
-        result.unexpectedServerRequests.push(url.pathname);
-        return route.fulfill({
-          status: 503,
-          contentType: "application/json",
-          body: '{"ok":false}',
-        });
-      }
-      return route.continue();
-    });
-    await context.route("**/src/lib/mind.functions.ts*", (route) => {
-      result.mockedModules++;
-      return route.fulfill({
-        status: 200,
-        contentType: "application/javascript",
-        body: mockModule,
-      });
-    });
-    const page = (active = await context.newPage());
-    page.on("pageerror", (error) => result.errors.push(error.message));
-    await seed(page);
+    const { result, context, page } = await createJourney(viewport, "manual");
     await openMeeting(page);
     await page.getByLabel("Enable library meetings (experimental)", { exact: true }).check();
     await page
       .getByLabel("Propose one topic", { exact: true })
       .fill("A shared library activity — synthetic test");
+    await page.getByLabel("Proposed facilitator", { exact: true }).selectOption("northern");
     await auditMeeting(page, result, "meeting proposal");
     await page.getByRole("button", { name: "Propose library meeting", exact: true }).click();
     await page.waitForFunction(() =>
@@ -200,6 +226,12 @@ try {
     result.assertions.push(
       "Normal proposal creates no authored NPC dialogue and does not make the player listen",
     );
+    // Normal nearby invitations save three read decisions in this regression
+    // journey, leaving its unchanged sixteen-decision cap for recovery checks.
+    await page.getByText("Your invitations", { exact: true }).click();
+    for (const name of ["Northern", "Arwyn", "Sub"])
+      await page.getByRole("button", { name: `Invite ${name}`, exact: true }).click();
+    await page.getByText("Your invitations", { exact: true }).click();
 
     await page.evaluate(() =>
       Object.defineProperty(document, "visibilityState", {
@@ -272,7 +304,7 @@ try {
     const draft = await draftField(page);
     await draft.fill("Could we consider a short public reading?");
     await auditMeeting(page, result, "expanded meeting composer");
-    const second = await requestDecision(page);
+    const second = await requestNpcFloor(page);
     await page.getByRole("button", { name: "Stop listening", exact: true }).click();
     await page.waitForFunction(
       () =>
@@ -290,7 +322,7 @@ try {
 
     await page.getByRole("button", { name: "Join as a speaker", exact: true }).click();
     for (let step = 0; step < 3 && (await meeting(page)).floor?.actor !== "player"; step++) {
-      const id = await requestDecision(page);
+      const id = await requestNpcFloor(page);
       await respond(page, id, { kind: "pass" });
     }
     assert.equal((await meeting(page)).floor.actor, "player");
@@ -328,7 +360,7 @@ try {
     );
 
     await page.getByRole("button", { name: "Resume meeting", exact: true }).click();
-    const cancelled = await requestDecision(page);
+    const cancelled = await requestNpcFloor(page);
     await page.getByRole("button", { name: "Pause meeting decisions", exact: true }).click();
     await page.getByRole("button", { name: "Resume meeting", exact: true }).click();
     assert.equal(
@@ -430,6 +462,20 @@ try {
       false,
     );
     await context.close();
+    await runAutomaticMeetingJourneys(
+      {
+        createJourney,
+        openMeeting,
+        savedTown,
+        meeting,
+        availableDecision,
+        respond,
+        draftField,
+        auditMeeting,
+        capture,
+      },
+      viewport,
+    );
   }
 } catch (error) {
   report.failures.push(error.stack || String(error));

@@ -224,7 +224,10 @@ function actions(town: Town, meeting: DiscussionSession, id: AgentId): Discussio
     return result;
   }
   add("stop-listening", "Stop listening");
-  if (member.mode === "listening") add("participate", "Join as a speaker");
+  if (member.mode === "listening") {
+    add("listen", "Keep listening");
+    add("participate", "Join as a speaker");
+  }
   if (meeting.status === "active") {
     if (meeting.floor?.actor === id) {
       add("speak", "Say it");
@@ -349,10 +352,12 @@ export function applyDiscussionCommand(
         break;
       case "request-turn":
         member.mode = "participating";
+        member.decisionNeeded = false;
         if (!meeting.queue.includes(id)) meeting.queue.push(id);
         break;
       case "withdraw-turn":
         member.mode = "listening";
+        member.decisionNeeded = false;
         meeting.queue = meeting.queue.filter((other) => other !== id);
         break;
       case "pass":
@@ -391,6 +396,15 @@ export function applyDiscussionCommand(
               { source: "statement", turns: [{ speaker: id, text: utterance.text }] },
             ),
           );
+        }
+        // A heard statement can offer one new choice; proximity and viewing
+        // the public transcript never change an inattentive resident's cue.
+        for (const recipientId of recipients) {
+          const listener = memberOf(meeting, recipientId);
+          if (listener && listener.id !== "player" && listener.mode === "listening") {
+            listener.decisionNeeded = true;
+            touch(meeting, listener);
+          }
         }
         source.bubble = { text: utterance.text, until: absMinute(town.day, town.minute) + 8 };
         finishFloor(meeting, member);
@@ -538,6 +552,9 @@ export function nextDiscussionJob(town: Town): DiscussionJob | null {
         member.decisionNeeded &&
         canHear(DISCUSSION_VENUE, actor(town, member.id)!.tile),
     ) ??
+    candidates.find(
+      (member) => member.arrived && member.mode === "listening" && member.decisionNeeded,
+    ) ??
     candidates.find((member) => meeting.floor?.actor === member.id);
   if (!next || !actions(town, meeting, next.id).length) return null;
   return {
@@ -551,6 +568,38 @@ export function nextDiscussionJob(town: Town): DiscussionJob | null {
     actorRevision: next.revision,
     turnId: meeting.floor?.actor === next.id ? meeting.floor.id : null,
   };
+}
+
+/** One explicit Start cue; idle polling must never call this helper. */
+export function requestDiscussionFacilitation(town: Town): boolean {
+  const meeting = active(town);
+  if (
+    !meeting ||
+    !["gathering", "active"].includes(meeting.status) ||
+    meeting.pending ||
+    meeting.floor ||
+    meeting.utterances.length >= DISCUSSION_LIMITS.turns ||
+    meeting.decisions >= DISCUSSION_LIMITS.decisions ||
+    nextDiscussionJob(town)
+  )
+    return false;
+  const facilitator = memberOf(meeting, meeting.facilitator);
+  const present = (member: DiscussionMember) =>
+    member.choice === "accepted" &&
+    member.arrived &&
+    member.mode !== "off" &&
+    inRoom(town, member.id) &&
+    !isCommitted(town, member.id);
+  if (
+    !facilitator ||
+    facilitator.mode !== "listening" ||
+    !present(facilitator) ||
+    meeting.members.filter(present).length < 2
+  )
+    return false;
+  facilitator.decisionNeeded = true;
+  touch(meeting, facilitator);
+  return true;
 }
 export function isDiscussionJobFresh(town: Town, job: DiscussionJob): boolean {
   const meeting = active(town, job.meetingId);
