@@ -30,16 +30,19 @@ let active;
 const savedTown = (page) =>
   page.evaluate(() => JSON.parse(localStorage.getItem("the-game-town-v2")).town);
 const meeting = async (page) => (await savedTown(page)).discussions?.sessions.at(-1);
-async function seed(page) {
+async function seed(page, backgroundDue = false) {
   await page.goto(target.href, { waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => Boolean(globalThis.__discussionMock));
-  await page.evaluate(async () => {
+  await page.evaluate(async (backgroundDue) => {
     const { createTown } = await import("/src/game/town.ts");
     const { exportTown } = await import("/src/game/save.ts");
     const value = createTown("Meeting QA");
     value.paused = true;
     value.sawHint = true;
     value.guide = 3;
+    // A labelled next-day fixture leaves genuine stale plans for the armed
+    // meeting's normal minute loop to process without background AI dispatch.
+    if (backgroundDue) value.day = 2;
     const positions = {
       player: [43, 22],
       northern: [42, 21],
@@ -54,7 +57,7 @@ async function seed(page) {
     }
     localStorage.setItem("the-game-town-v2", exportTown(value));
     localStorage.setItem("the-game-local-dialogue-only", "false");
-  });
+  }, backgroundDue);
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => Boolean(window.__game && window.__discussionMock));
 }
@@ -155,7 +158,7 @@ async function draftField(page) {
   return field;
 }
 
-async function createJourney(viewport, kind) {
+async function createJourney(viewport, kind, options = {}) {
   const result = {
     kind,
     viewport,
@@ -189,7 +192,7 @@ async function createJourney(viewport, kind) {
   });
   const page = (active = await context.newPage());
   page.on("pageerror", (error) => result.errors.push(error.message));
-  await seed(page);
+  await seed(page, options.backgroundDue === true);
   // Install after the fixture has loaded; advancing time never means waiting
   // 31 real seconds or transmitting a real provider request.
   await page.clock.install({ time: new Date("2026-10-24T12:00:00.000Z") });
