@@ -1,25 +1,34 @@
 import { useEffect, useRef, useState } from "react";
+import { NPC_IDS } from "@/game/types";
 import type { AgentId, Town } from "@/game/types";
 import type { DiscussionDecision, DiscussionView } from "@/game/discussion-types";
 import { formatClock } from "@/game/text";
 
 export type DiscussionInput = DiscussionDecision | { kind: "invite"; invitee: AgentId };
+export type DiscussionFacilitator = "northern" | "arwyn";
+
+const FACILITATOR_IDS = NPC_IDS.filter(
+  (id): id is DiscussionFacilitator => id === "northern" || id === "arwyn",
+);
 
 export type DiscussionControls = {
   view: DiscussionView;
   enabled: boolean;
   available: boolean;
   busy: boolean;
+  autoRunning: boolean;
   decisionPending: boolean;
   replaying: boolean;
   note: string;
   draft: string;
   onDraft: (value: string) => void;
   onEnable: (value: boolean) => void;
-  onCreate: (topic: string) => void;
+  onCreate: (topic: string, facilitator: DiscussionFacilitator) => void;
   onCommand: (decision: DiscussionInput) => void;
   onGo: () => void;
   onDecision: () => void;
+  onAutoStart: () => void;
+  onAutoStop: () => void;
   onCheck: () => void;
   onPause: () => void;
   onResume: () => void;
@@ -30,6 +39,7 @@ export function DiscussionPanel({ town, controls }: { town: Town; controls: Disc
   const { view } = controls;
   const meeting = view.meeting;
   const [topic, setTopic] = useState("What activity would we like to share at the library?");
+  const [facilitator, setFacilitator] = useState<DiscussionFacilitator>("arwyn");
   const [proposing, setProposing] = useState(false);
   const [following, setFollowing] = useState(true);
   const [composeOpen, setComposeOpen] = useState(view.ownTurn);
@@ -94,7 +104,7 @@ export function DiscussionPanel({ town, controls }: { town: Town; controls: Disc
             className="discussion-proposal"
             onSubmit={(event) => {
               event.preventDefault();
-              controls.onCreate(topic.trim());
+              controls.onCreate(topic.trim(), facilitator);
             }}
           >
             <label htmlFor="discussion-topic">Propose one topic</label>
@@ -106,9 +116,27 @@ export function DiscussionPanel({ town, controls }: { town: Town; controls: Disc
               onChange={(event) => setTopic(event.target.value)}
             />
             <p className="character-note">One topic, up to 160 characters.</p>
+            <label htmlFor="discussion-facilitator">Proposed facilitator</label>
+            <select
+              id="discussion-facilitator"
+              className="field"
+              value={facilitator}
+              disabled={!controls.enabled || controls.busy}
+              onChange={(event) => {
+                const selected = FACILITATOR_IDS.find((id) => id === event.currentTarget.value);
+                if (selected) setFacilitator(selected);
+              }}
+            >
+              {FACILITATOR_IDS.map((id) => (
+                <option key={id} value={id}>
+                  {name(id)}
+                </option>
+              ))}
+            </select>
             <p className="character-note">
-              Northern, Arwyn and Sub may read the library invitation and decide for themselves. A
-              proposal does not promise their attendance or choose their words.
+              {name("northern")}, {name("arwyn")} and {name("sub")} may read the library invitation
+              and decide for themselves. A proposal does not promise their attendance or choose
+              their words.
             </p>
             <button
               className="btn"
@@ -121,6 +149,7 @@ export function DiscussionPanel({ town, controls }: { town: Town; controls: Disc
         ) : (
           <>
             <h4 className="discussion-topic">{meeting.topic}</h4>
+            <p className="character-note">Proposed facilitator: {name(meeting.facilitator)}.</p>
             <p className="discussion-state">
               {meeting.status === "active"
                 ? "Meeting in progress"
@@ -253,8 +282,9 @@ export function DiscussionPanel({ town, controls }: { town: Town; controls: Disc
             {meeting.status !== "closed" && (
               <div className="discussion-decisions">
                 <p className="character-note">
-                  Residents choose their own actions through AI. Each click asks one resident to
-                  decide and may use the town's AI allowance. No local reply is substituted.
+                  Start once to run resident AI decisions at the free service's pace while this tab
+                  is visible. Residents choose for themselves. Errors, limits or no ready decision
+                  stop the run; no local reply is substituted.
                 </p>
                 {!controls.available && (
                   <p className="character-note">
@@ -267,6 +297,32 @@ export function DiscussionPanel({ town, controls }: { town: Town; controls: Disc
                   </p>
                 )}
                 <div className="discussion-actions">
+                  {controls.autoRunning ? (
+                    <button
+                      className="btn"
+                      type="button"
+                      onClick={controls.onAutoStop}
+                      disabled={readOnly}
+                    >
+                      Stop automatic meeting
+                    </button>
+                  ) : (
+                    <button
+                      className="btn"
+                      type="button"
+                      onClick={controls.onAutoStart}
+                      disabled={
+                        readOnly ||
+                        !controls.enabled ||
+                        !controls.available ||
+                        controls.busy ||
+                        meeting.decisions >= 16 ||
+                        meeting.utterances.length >= 6
+                      }
+                    >
+                      Start automatic meeting
+                    </button>
+                  )}
                   <button
                     className="btn"
                     type="button"
@@ -276,6 +332,7 @@ export function DiscussionPanel({ town, controls }: { town: Town; controls: Disc
                       !controls.enabled ||
                       !controls.available ||
                       controls.busy ||
+                      controls.autoRunning ||
                       meeting.status === "paused"
                     }
                   >
@@ -305,7 +362,14 @@ export function DiscussionPanel({ town, controls }: { town: Town; controls: Disc
               </div>
             )}
             {meeting.status === "closed" && (
-              <button className="btn" type="button" onClick={() => setProposing(true)}>
+              <button
+                className="btn"
+                type="button"
+                onClick={() => {
+                  setFacilitator("arwyn");
+                  setProposing(true);
+                }}
+              >
                 Propose another meeting
               </button>
             )}
