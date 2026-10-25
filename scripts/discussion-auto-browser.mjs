@@ -24,16 +24,86 @@ export function assertOfferedDecision(state, decision) {
 
 export async function advanceDiscussionWindow(page, elapsedMs = 31_100) {
   const elapsed = await page.evaluate(() => {
-    const last = window.__discussionMock.calls.at(-1);
+    const last = window.__discussionMock.allInvocations.at(-1);
     return last ? performance.now() - last.startedAt : null;
   });
   if (elapsed !== null) await page.clock.fastForward(Math.max(0, elapsedMs - elapsed));
 }
 
+export async function discussionTransportReceipt(page) {
+  return page.evaluate(() => {
+    const mock = window.__discussionMock;
+    if (!mock) return null;
+    return {
+      allInvocations: mock.allInvocations.map(({ kind, startedAt }) => ({ kind, startedAt })),
+      actCalls: mock.calls.map(({ id, startedAt }) => ({ id, startedAt })),
+      pendingCallIds: [...mock.pending.keys()],
+      observedAt: performance.now(),
+    };
+  });
+}
+
+export async function discussionFailureReceipt(page) {
+  const transport = await discussionTransportReceipt(page);
+  const state = await page.evaluate(() => {
+    let town;
+    try {
+      town = JSON.parse(localStorage.getItem("the-game-town-v2"))?.town;
+    } catch {
+      /* A missing/unreadable synthetic save is itself useful evidence. */
+    }
+    const meeting = town?.discussions?.sessions.at(-1);
+    return {
+      visibility: document.visibilityState,
+      clock: document.querySelector(".hud-clock")?.textContent,
+      feedback: document.querySelector(".discussion-feedback")?.textContent,
+      town: town ? { day: town.day, minute: town.minute, paused: town.paused } : null,
+      // Deliberately omit prompts, response bodies, topic, player drafts,
+      // memories, identity records and all other private character fields.
+      meeting: meeting
+        ? {
+            id: meeting.id,
+            status: meeting.status,
+            reason: meeting.reason,
+            epoch: meeting.epoch,
+            decisions: meeting.decisions,
+            usage: meeting.usage,
+            pending: meeting.pending,
+            floor: meeting.floor,
+            queue: meeting.queue,
+            members: meeting.members.map((member) => ({
+              id: member.id,
+              choice: member.choice,
+              invitation: member.invitation,
+              mode: member.mode,
+              arrived: member.arrived,
+              decisionNeeded: member.decisionNeeded,
+              revision: member.revision,
+              tile: town.agents.find((agent) => agent.id === member.id)?.tile,
+            })),
+            utterances: meeting.utterances.map(({ id, speaker, recipientIds }) => ({
+              id,
+              speaker,
+              recipientIds,
+            })),
+          }
+        : null,
+    };
+  });
+  return { transport, ...state };
+}
+
 async function assertStartSpacing(page) {
-  const starts = await page.evaluate(() => window.__discussionMock.calls.map((c) => c.startedAt));
+  const { allInvocations, actCalls } = await discussionTransportReceipt(page);
+  const starts = actCalls.map((call) => call.startedAt);
   for (let index = 1; index < starts.length; index++)
     assert.ok(starts[index] - starts[index - 1] >= 31_000, "All act starts retain free pacing");
+  for (let index = 1; index < allInvocations.length; index++)
+    if (allInvocations[index].kind === "act")
+      assert.ok(
+        allInvocations[index].startedAt - allInvocations[index - 1].startedAt >= 31_000,
+        "Every act start retains free pacing after the immediately preceding AI request of any kind",
+      );
 }
 
 async function assertOnlyArmedDiscussion(page, since) {
@@ -128,6 +198,7 @@ export async function runAutomaticMeetingJourneys(helpers, viewport) {
     );
   }
   async function finish(result, context, page) {
+    result.transport = await discussionTransportReceipt(page);
     assert.ok(result.mockedModules > 0);
     assert.deepEqual(result.errors, []);
     assert.deepEqual(result.unexpectedServerRequests, []);
@@ -345,6 +416,12 @@ export async function runAutomaticMeetingJourneys(helpers, viewport) {
     }
     const pending = await automaticRequest(page, choices.length + 1);
     await assertOnlyArmedDiscussion(page, armedFrom);
+    result.armedInvocationRanges = [
+      {
+        from: armedFrom,
+        until: (await discussionTransportReceipt(page)).allInvocations.length,
+      },
+    ];
     assertOfferedDecision(await availableDecision(page), { kind: "speak" });
     const field = await draftField(page);
     await field.fill("SYNTHETIC retained player draft");
@@ -382,6 +459,7 @@ export async function runAutomaticMeetingJourneys(helpers, viewport) {
 
     await page.getByRole("button", { name: "Start automatic meeting", exact: true }).click();
     await automaticRequest(page, hiddenId + 2);
+    result.transportBeforeReload = await discussionTransportReceipt(page);
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForFunction(() => Boolean(window.__game && window.__discussionMock));
     await openMeeting(page);

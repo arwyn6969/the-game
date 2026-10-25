@@ -6,7 +6,9 @@ import { chromium } from "playwright";
 import {
   advanceDiscussionWindow,
   assertOfferedDecision,
+  discussionFailureReceipt,
   discussionMockModule,
+  discussionTransportReceipt,
   offeredKinds,
   runAutomaticMeetingJourneys,
 } from "./discussion-auto-browser.mjs";
@@ -420,6 +422,7 @@ try {
 
     const pending = await requestDecision(page);
     assert.ok(Number.isInteger(pending));
+    result.transportBeforeReload = await discussionTransportReceipt(page);
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForFunction(() => Boolean(window.__game && window.__discussionMock));
     await openMeeting(page);
@@ -484,6 +487,7 @@ try {
       await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),
       false,
     );
+    result.transport = await discussionTransportReceipt(page);
     await context.close();
     await runAutomaticMeetingJourneys(
       {
@@ -502,7 +506,12 @@ try {
   }
 } catch (error) {
   report.failures.push(error.stack || String(error));
-  if (active) await capture(active, "failure.png").catch(() => {});
+  if (active) {
+    report.failureState = await discussionFailureReceipt(active).catch((error) => ({
+      unavailable: error.message,
+    }));
+    await capture(active, "failure.png").catch(() => {});
+  }
 } finally {
   await writeFile(join(out, "browser-results.json"), JSON.stringify(report, null, 2) + "\n");
   await browser.close();
