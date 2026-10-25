@@ -1,0 +1,56 @@
+{
+  "source": "e019735f8707624787ea38b4a147734dcea22b82",
+  "mainMerge": "b4cc195ed3cb26d03aa3408b2b05d906363da464",
+  "workerVersion": "8a7d7405-031c-4502-91b1-208d9db5fa8e",
+  "rollbackVersion": "c66bb68a-7c96-414a-9a38-72e2d62766e9",
+  "verifyRun": 40146517763,
+  "configSha256": "af0c6b5b609f05e193f3eac38430a427760e7938ecc2cacec1b11e1889bc8e2f",
+  "assets": [
+    {
+      "path": "/thegame/assets/styles-ChFpMlMT.css",
+      "sha256": "6b3c55b43bc84ed281b9d0892b1a0475c74d88283e56ee470c13512ad1a2acc0",
+      "matches": true
+    },
+    {
+      "path": "/thegame/assets/routes-DhRP_Pg-.js",
+      "sha256": "4a90d38bcb8cb1e200671087b8b33808e22af8d48adc799f3454721aa735b5e3",
+      "matches": true
+    },
+    {
+      "path": "/thegame/assets/client-Btbz33Sq.js",
+      "sha256": "a4368d757496c30f594b126c446362df42fb1c2aac91a375dc39f5be36f819ad",
+      "matches": true
+    },
+    {
+      "path": "/thegame/assets/index-BOrZYX8i.js",
+      "sha256": "d43a439141bfec7ab9904a43227cc665968566a07fa237453b800f4b8f3187a0",
+      "matches": true
+    }
+  ],
+  "publicChecks": [
+    {
+      "path": "/thegame/",
+      "status": 200
+    },
+    {
+      "path": "/thegame/privacy",
+      "status": 200
+    },
+    {
+      "path": "/thegame/api/auth/get-session",
+      "status": 200
+    },
+    {
+      "path": "/thegame/__grok/manifest.webmanifest",
+      "status": 200
+    },
+    {
+      "path": "/",
+      "status": 200
+    }
+  ],
+  "entirePausedTownPreserved": true,
+  "realProviderCalls": 0,
+  "productionMigrations": false,
+  "secretOrBindingChanges": false
+}
