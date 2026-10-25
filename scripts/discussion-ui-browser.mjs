@@ -40,9 +40,29 @@ async function seed(page, backgroundDue = false) {
     value.paused = true;
     value.sawHint = true;
     value.guide = 3;
-    // A labelled next-day fixture leaves genuine stale plans for the armed
-    // meeting's normal minute loop to process without background AI dispatch.
-    if (backgroundDue) value.day = 2;
+    // A labelled next-day fixture leaves uninvolved residents' plans stale.
+    // The invitees have normal current-day library schedules, so the real
+    // minute tick cannot send an uninvited sleeper home before they can read.
+    // These plans choose no meeting invitation, attention mode or response.
+    if (backgroundDue) {
+      value.day = 2;
+      const { planFromBlocks } = await import("/src/game/plan.ts");
+      for (const id of ["arwyn", "northern", "sub"]) {
+        value.agents.find((agent) => agent.id === id).plan = planFromBlocks(
+          value.day,
+          "SYNTHETIC fixture: spend the day at the library.",
+          [
+            {
+              from: 0,
+              to: 24,
+              place: "library",
+              spot: "out",
+              status: "spending the day at the library (synthetic fixture)",
+            },
+          ],
+        );
+      }
+    }
     const positions = {
       player: [43, 22],
       northern: [42, 21],

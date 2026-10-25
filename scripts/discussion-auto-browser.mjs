@@ -259,9 +259,18 @@ export async function runAutomaticMeetingJourneys(helpers, viewport) {
     await respond(page, firstId, { kind: "read-invitation" });
     const afterFirst = await meeting(page);
     const dueTown = await savedTown(page);
+    const involved = ["arwyn", "northern", "sub"];
+    for (const id of involved) {
+      const plan = dueTown.agents.find((agent) => agent.id === id).plan;
+      assert.equal(plan.day, dueTown.day);
+      assert.ok(plan.beats.every((beat) => beat.place === "library" && beat.spot === "out"));
+    }
     assert.ok(
-      dueTown.agents.some((agent) => agent.id !== "player" && agent.plan.day < dueTown.day),
-      "The pacing window has an actual stale background plan due on the next normal tick",
+      dueTown.agents.some(
+        (agent) =>
+          agent.id !== "player" && !involved.includes(agent.id) && agent.plan.day < dueTown.day,
+      ),
+      "The pacing window has an uninvolved resident's stale plan due on the next normal tick",
     );
     const beforeNormalTick = await page.locator(".hud-clock").innerText();
     // Exercise the real minute loop while there is no pending meeting request.
