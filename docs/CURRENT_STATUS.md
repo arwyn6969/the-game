@@ -4,7 +4,7 @@
 
 Owner: this social assessment chat, checkout `social-experience-fix/`, branch
 `codex/full-meeting-budget-20261026`, based on main
-`a40867e5ca977453a5f42df2aff2cb9fbf022f82`. The user requested limits that allow
+`a40867e5ca977453a5f42df2aff2cb9fbf022f82`, [PR #58](https://github.com/arwyn6969/the-game/pull/58). The user requested limits that allow
 a full meeting within the existing free allowance and a fresh start-to-finish
 test. Profile: 48 shared calls/day, 32/player/day, aligned conservative token
 reservations; exact free model, zero spend, one concurrent action, slow pacing
