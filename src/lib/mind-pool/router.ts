@@ -1,4 +1,5 @@
 import { candidatesFor } from "./config.ts";
+import { actionTimeoutMs } from "../mind-timing.ts";
 import {
   decodeCompletion,
   readJsonBounded,
@@ -29,7 +30,8 @@ export async function routeMind(input: {
   // Bytes + max output is intentionally conservative and includes every retry.
   // Report actual usage separately; never refund a possibly executed attempt.
   const inputBytes = new TextEncoder().encode(system + user).byteLength + 256;
-  const deadline = now() + config.deadlineMs;
+  const attemptTimeout = kind === "act" ? actionTimeoutMs(config) : config.timeoutMs;
+  const deadline = now() + (kind === "act" ? attemptTimeout : config.deadlineMs);
   let attempts = 0;
   try {
     for (const candidate of candidates) {
@@ -37,7 +39,7 @@ export async function routeMind(input: {
       const reservedTokens = inputBytes + tokens;
       let formatRetry = false;
       while (attempts < maxAttempts && now() < deadline) {
-        const timeout = Math.min(config.timeoutMs, deadline - now());
+        const timeout = Math.min(attemptTimeout, deadline - now());
         const lease = await store.reserve(candidate, kind, reservedTokens, timeout + 10_000);
         if (!lease) break;
         const remaining = Math.min(timeout, deadline - now());

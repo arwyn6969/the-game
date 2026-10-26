@@ -29,6 +29,7 @@ export function validateConfig(value: unknown): PoolConfig {
     value.providers.length > 20 ||
     !integer(value.timeoutMs, 100, 12_000) ||
     !integer(value.deadlineMs, 100, 30_000) ||
+    (value.actionTimeoutMs !== undefined && !integer(value.actionTimeoutMs, 100, 30_000)) ||
     !integer(value.maxAttempts, 1, 4) ||
     Number(value.timeoutMs) > Number(value.deadlineMs)
   ) {

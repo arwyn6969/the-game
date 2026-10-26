@@ -50,6 +50,92 @@ test("pool is opt-in and all catalog providers start disabled", () => {
   assert.equal(candidatesFor(config, "plan", {}).length, 0);
   assert.ok(config.providers.every((p) => !p.enabled && !p.freeTierConfirmed));
 });
+test("action deadline overrides are optional, finite and at most thirty seconds", () => {
+  const config = defaultConfig();
+  assert.equal(validateConfig(config).actionTimeoutMs, undefined);
+  assert.equal(validateConfig({ ...config, actionTimeoutMs: 30_000 }).actionTimeoutMs, 30_000);
+  for (const actionTimeoutMs of [0, -1, 30_001, 120.5, "30000", NaN, Infinity])
+    assert.throws(() => validateConfig({ ...config, actionTimeoutMs }));
+});
+test("an action body may complete after the legacy deadline without retry or extra tokens", async () => {
+  const f = fixture(["gemini"]);
+  f.kind = "act";
+  f.config.timeoutMs = 25;
+  f.config.deadlineMs = 25;
+  f.config.actionTimeoutMs = 150;
+  f.config.providers[0].routes.act = { ...f.config.providers[0].routes.player, maxTokens: 4000 };
+  let calls = 0;
+  const result = await routeMind({
+    ...f,
+    fetcher: async (_url, { signal, body }) => {
+      calls++;
+      assert.ok(JSON.parse(body).max_tokens <= 1200);
+      return new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode(" "));
+            const timer = setTimeout(() => {
+              controller.enqueue(
+                new TextEncoder().encode(
+                  JSON.stringify({
+                    choices: [
+                      {
+                        message: { content: '{"task":"discussion","decision":{"kind":"listen"}}' },
+                        finish_reason: "stop",
+                      },
+                    ],
+                    usage: { total_tokens: 40 },
+                  }),
+                ),
+              );
+              controller.close();
+            }, 65);
+            signal.addEventListener(
+              "abort",
+              () => {
+                clearTimeout(timer);
+                controller.error(signal.reason);
+              },
+              { once: true },
+            );
+          },
+        }),
+        { status: 200 },
+      );
+    },
+  });
+  assert.equal(result.ok, true);
+  assert.equal(calls, 1);
+  assert.equal((await rows())[0].outcome, "ok");
+});
+test("action deadline still aborts and settles exactly one attempt", async () => {
+  const f = fixture(["gemini"]);
+  f.kind = "act";
+  f.config.actionTimeoutMs = 100;
+  f.config.maxAttempts = 4;
+  f.config.providers[0].routes.act = { ...f.config.providers[0].routes.player };
+  let calls = 0;
+  const keepAlive = setTimeout(() => undefined, 1000);
+  try {
+    const result = await routeMind({
+      ...f,
+      fetcher: async (_url, { signal }) => {
+        calls++;
+        return new Promise((_resolve, reject) =>
+          signal.addEventListener("abort", () => reject(signal.reason), { once: true }),
+        );
+      },
+    });
+    assert.equal(result.ok, false);
+    assert.equal(calls, 1);
+    const attempts = await rows();
+    assert.equal(attempts.length, 1);
+    assert.equal(attempts[0].outcome, "timeout");
+    assert.ok(attempts[0].completed_at !== null);
+  } finally {
+    clearTimeout(keepAlive);
+  }
+});
 test("quality preference is per service and independent of catalog order", () => {
   const f = fixture();
   f.config.providers.reverse();
@@ -217,12 +303,17 @@ for (const phase of ["headers", "body"]) {
             return new Promise((_resolve, reject) =>
               signal.addEventListener("abort", () => reject(signal.reason), { once: true }),
             );
-          return new Response(new ReadableStream({
-            start(controller) {
-              controller.enqueue(new TextEncoder().encode(" "));
-              signal.addEventListener("abort", () => controller.error(signal.reason), { once: true });
-            },
-          }), { status: 200 });
+          return new Response(
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue(new TextEncoder().encode(" "));
+                signal.addEventListener("abort", () => controller.error(signal.reason), {
+                  once: true,
+                });
+              },
+            }),
+            { status: 200 },
+          );
         },
       });
       assert.deepEqual(result, { ok: false, error: "unreachable" });

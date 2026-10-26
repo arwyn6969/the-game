@@ -35,6 +35,8 @@ export type PoolConfig = {
   version: 1;
   timeoutMs: number;
   deadlineMs: number;
+  /** Optional shorter action deadline; legacy configs use a bounded 30 seconds. */
+  actionTimeoutMs?: number;
   maxAttempts: number;
   providers: Provider[];
 };

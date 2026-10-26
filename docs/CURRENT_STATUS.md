@@ -1,5 +1,36 @@
 # Current project status
 
+## Social facilitation and action deadlines — verified candidate, 26 October 2026
+
+Owner: current social assessment chat, isolated checkout `social-experience-fix/`,
+branch `codex/social-experience-20261026`, based on freshly fetched main
+`4a5ae77d531b984320203daa86449c168bd0fe15`, [draft PR #57](https://github.com/arwyn6969/the-game/pull/57). The user requested facilitator and
+timeout repairs followed by a real social retest within existing free limits.
+The user authorized merge and publication after current CI passes, followed by
+quota-bound multi-speaker and opt-out acceptance; mobile stays on hold. The
+combined release now also retains merged coin-label PR #45 at main `2e5de22`.
+Scope: role-aware discussion prompts, bounded action transport/client deadlines,
+regressions and qualification evidence. Existing residents retain every offered
+decline/listen/pass/leave choice. Action requests still transmit once, with the
+same output, call, concurrency and monetary limits; other AI jobs keep their
+existing deadlines. No production configuration or mobile change.
+
+The earlier actual trial used seven transmissions: six valid acceptance/listen
+choices and one timeout after a labelled player opening. The retest must retain
+that saved meeting and its seven settled accounting rows, use at most the five
+remaining calls under the original twelve-call daily player ceiling, and retain
+the twenty-four-call account ceiling. Provider counters may lag; the local
+attempt ledger also counts the timed-out transmission. Tested runtime
+`86895092768a22edf3a563522af042941eff1dba` passes 1,095 script + 55 typed tests,
+425 town tests, typecheck/lint, diagnostics and both builds. All five new real
+requests succeeded: Arwyn participated and spoke, Northern first listened then
+participated, and Sub listened. Exactly Northern and Sub received the statement;
+the late player gained no earlier knowledge. Offline replay, save/reload and all
+twelve settled accounting rows pass. The daily player ceiling stopped generation.
+The [handoff and remaining cases](handoffs/social-reliability-2026-10-26.md)
+distinguish this bounded contribution from an unqualified multi-speaker flow,
+post-opt-out speech and fresh unattended opening. No hosted publication.
+
 ## Coin balance clarity — current-main refresh, 26 October 2026
 
 Owner: this mobile release chat, reusing `coin-balance-label/` and existing

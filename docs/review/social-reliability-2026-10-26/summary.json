@@ -1,0 +1,71 @@
+{
+  "source": "86895092768a22edf3a563522af042941eff1dba",
+  "base": "4a5ae77d531b984320203daa86449c168bd0fe15",
+  "method": "social-reliability-retest-default-scheduler",
+  "newCalls": 5,
+  "previousCalls": 7,
+  "totalCalls": 12,
+  "newTimeouts": 0,
+  "newKnownTokens": 8468,
+  "choices": [
+    {
+      "actor": "arwyn",
+      "decision": {
+        "kind": "participate"
+      },
+      "latencyMs": 1010
+    },
+    {
+      "actor": "northern",
+      "decision": {
+        "kind": "listen"
+      },
+      "latencyMs": 820
+    },
+    {
+      "actor": "sub",
+      "decision": {
+        "kind": "listen"
+      },
+      "latencyMs": 990
+    },
+    {
+      "actor": "arwyn",
+      "decision": {
+        "kind": "speak",
+        "text": "I'd come for a short reading if the text were something people already know by heart \u2014 a lullaby, a market chant, the notice board's oldest joke. That way nobody needs to perform familiarity. What would you change?"
+      },
+      "latencyMs": 3609
+    },
+    {
+      "actor": "northern",
+      "decision": {
+        "kind": "participate"
+      },
+      "latencyMs": 933
+    }
+  ],
+  "speechRecipients": ["northern", "sub"],
+  "hearing": {
+    "actualSpokenTurns": 1,
+    "independentlyAuditedTurns": 1,
+    "onlyOptedInResidentsReceivedObservedSpeech": true,
+    "nearbyBabaExcluded": true,
+    "playerExcludedBeforeListening": true,
+    "playerReceivedAfterJoining": null,
+    "playerExcludedAfterStopping": null,
+    "unexercisedCasesRemainUnqualified": true
+  },
+  "financeUnchanged": true,
+  "reloadPreserved": true,
+  "allAccountingSettled": true,
+  "providerReportedDailyCostUSD": 0,
+  "remainingCases": [
+    "second NPC spoken response",
+    "real speech after player opt-out",
+    "new unattended meeting opening from fresh invitations",
+    "hosted/device acceptance"
+  ],
+  "privateReportSha256": "9477896c4b252388f73f785b6d1e0bf5eed90099ac54ed2f9c649eff8f2ea98e",
+  "verificationSha256": "dc84e2e119f3cd611d412dbca37077487599c0acc13f6d8745b4bb8ac238169e"
+}
