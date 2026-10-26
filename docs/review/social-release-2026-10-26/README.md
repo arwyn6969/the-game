@@ -35,25 +35,23 @@ after refresh and matched the package's rollback/binding baseline. Raw protected
 metadata, build/package/deploy logs, public checks and the live screenshot remain
 ignored under `artifacts/social-release-20261026/`. [Sanitized receipt](release.json).
 
-## Remaining social acceptance
+## Subsequent bounded social acceptance
 
-Publication consumed **zero real model requests**. The actual social checkpoint
-still contains twelve charged attempts, all settled. One facilitator speech and
-Northern's voluntary participation are verified; a second distinct NPC's spoken
-reply and a genuine subsequent spoken turn after player opt-out remain open.
-See the [continuation packet](../../handoffs/social-acceptance-continuation-2026-10-26.md).
+Publication consumed zero model requests. The user subsequently asked to run the
+four-call continuation now. The same synthetic meeting retained all twelve old
+charges and used a recorded local operator exception, without changing any
+production limit. **A second NPC's spoken response and genuine speech after
+player opt-out passed.** Arwyn spoke to the listening player, who then explicitly
+stopped; Northern's actual reply reached Arwyn/Sub and excluded the player.
+All four requests succeeded, $0, with independent exact-town replay, attributed
+memory/recipient checks, all eight knowledge projections, save/reload and all
+sixteen settled charges. [Social result and usage assessment](../social-acceptance-now-2026-10-26/README.md).
 
-Inspection of a copy of the closed ledger places the last charged attempt at
-**26 October 20:37:40.842 UTC**. Its entire rolling 24-hour player allowance cannot
-be available before **27 October 20:37:41.842 UTC**, and other usage may postpone
-that. Provider UTC-day counters alone do not establish SQL allowance.
-
-The user explicitly approved a single scheduled continuation at **27 October
-20:45 UK time**, with at most four physical free requests in the existing meeting.
-Automation `complete-remaining-social-test-once` is active in this chat with one
-occurrence; its saved instructions require actual quota checks, preserved choices
-and accounting, honest reporting and stopping after that run. Scheduling was
-created only after that explicit approval. Mobile work stays on hold.
+The previously approved 27 October continuation was disabled when the user
+requested immediate execution: automation `complete-remaining-social-test-once`
+is PAUSED and no duplicate or replacement run is scheduled. Fresh unattended
+opening, sustained group flow and hosted/device acceptance remain unqualified.
+Mobile stays on hold.
 
 ## Rollback
 

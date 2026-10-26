@@ -3,7 +3,27 @@
 The user authorized merging and deploying PR #57 after its current Verify passes,
 then finishing multi-speaker and opt-out acceptance when existing free allowance
 permits. Mobile work stays on hold until the social experience is established.
-This packet does not claim those remaining cases have passed.
+The completed bounded observations are recorded below; the original packet is
+retained as historical context.
+
+## Completed immediately at the user's request
+
+The user superseded the later timing with “let's just do it now.” The same
+meeting used four extra free operator test calls, with all twelve prior charges
+retained. Multi-speaker speech and genuine speech after explicit player opt-out
+both passed. All sixteen cumulative rows settled; live production limits and
+runtime remain unchanged. The local operator exception and the additional
+conservative token guard discovered during dry verification are fully recorded
+in the [26 October receipt](../review/social-acceptance-now-2026-10-26/README.md).
+Automation `complete-remaining-social-test-once` is PAUSED, so no duplicate
+scheduled continuation remains. Mobile is still on hold. Fresh unattended
+opening and sustained/hosted/device acceptance remain unqualified; no additional
+call or meeting is authorized by this completed receipt.
+
+## Historical continuation packet
+
+The following checkpoint and quota instructions describe the originally
+scheduled run before the user's immediate operator exception above.
 
 ## Checkpoint to preserve
 

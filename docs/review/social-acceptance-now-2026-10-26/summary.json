@@ -1,0 +1,117 @@
+{
+  "sourceHead": "b486c383148aca77a0574460f242461faf59b0e4",
+  "deployedSource": "9e610475b535b04587dc02603d2e3e16e7ebd9b0",
+  "worker": "87687764-4b95-478d-b1bb-f3dfbd5329dc",
+  "method": "social-acceptance-now-default-scheduler",
+  "startedAt": "2026-10-26T23:12:32.537Z",
+  "finishedAt": "2026-10-26T23:14:11.091Z",
+  "newCalls": 4,
+  "cumulativeCalls": 16,
+  "newTimeouts": 0,
+  "newKnownTokens": 7554,
+  "cumulativeKnownTokens": 23877,
+  "inheritedUnknownTokenSamples": 1,
+  "latencyMs": [
+    718,
+    2841,
+    4351,
+    4426
+  ],
+  "minPhysicalSpacingMs": 31093,
+  "reportedCostUSD": 0,
+  "choices": [
+    {
+      "actor": "sub",
+      "decision": {
+        "kind": "listen"
+      }
+    },
+    {
+      "actor": "arwyn",
+      "decision": {
+        "kind": "speak",
+        "text": "If the reading were a lullaby or market chant, I'd want the reader to stumble a little — hesitate, repeat a line, laugh at their own mistake. That signals it's safe to be imperfect. Would you change the setting, the text, or who's invited?"
+      }
+    },
+    {
+      "actor": "sub",
+      "decision": {
+        "kind": "listen"
+      }
+    },
+    {
+      "actor": "northern",
+      "decision": {
+        "kind": "speak",
+        "text": "I'd come if it's short and low stakes — ten minutes, standing room, no introduction round. A market chant or the notice board joke works because nobody has to prep. What I'd change: keep the library door open so people can drift in or out without making a scene."
+      }
+    }
+  ],
+  "operatorException": {
+    "newFreeCalls": 4,
+    "priorChargesRetained": 12,
+    "localCallCeiling": 16,
+    "localTokenReservationCeiling": 180000,
+    "productionPlayerDailyCallsUnchanged": 12,
+    "productionSharedDailyCallsUnchanged": 24,
+    "productionTokenReservationsUnchanged": 100000
+  },
+  "providerBefore": {
+    "used": 18,
+    "limit": 50,
+    "remaining": 32
+  },
+  "providerSettledAfter": {
+    "at": "2026-10-26T23:15:29.080Z",
+    "used": 22,
+    "limit": 50,
+    "remaining": 28,
+    "monetaryUsageToday": 0
+  },
+  "multiSpeakerPassed": true,
+  "postOptOutSpeechPassed": true,
+  "receipts": [
+    {
+      "speaker": "arwyn",
+      "text": "I'd come for a short reading if the text were something people already know by heart — a lullaby, a market chant, the notice board's oldest joke. That way nobody needs to perform familiarity. What would you change?",
+      "recipientIds": [
+        "northern",
+        "sub"
+      ]
+    },
+    {
+      "speaker": "arwyn",
+      "text": "If the reading were a lullaby or market chant, I'd want the reader to stumble a little — hesitate, repeat a line, laugh at their own mistake. That signals it's safe to be imperfect. Would you change the setting, the text, or who's invited?",
+      "recipientIds": [
+        "northern",
+        "sub",
+        "player"
+      ]
+    },
+    {
+      "speaker": "northern",
+      "text": "I'd come if it's short and low stakes — ten minutes, standing room, no introduction round. A market chant or the notice board joke works because nobody has to prep. What I'd change: keep the library door open so people can drift in or out without making a scene.",
+      "recipientIds": [
+        "arwyn",
+        "sub"
+      ]
+    }
+  ],
+  "allEightKnowledgeProjectionsChecked": true,
+  "exactFinalTownReproduced": true,
+  "originalTwelveLedgerRowsAndChargesUnchanged": true,
+  "financeAndIdentitiesUnchanged": true,
+  "allAccountingSettled": true,
+  "automation": {
+    "id": "complete-remaining-social-test-once",
+    "status": "PAUSED",
+    "reason": "User requested the four-call continuation now; duplicate scheduled run disabled."
+  },
+  "remainingUnqualified": [
+    "new unattended meeting opening from fresh invitations",
+    "sustained and hosted/device acceptance"
+  ],
+  "privateReportSha256": "aaf59c094032876e66b37ba1b7f9905d37a36e185cfb66e56fa6cfb55f4132a1",
+  "verificationSha256": "a2c3c6abf4ec9f98a9dc1c425b9b12827a4a565cfd5e0bbba2ea9a6a940d5e42",
+  "sourceHashesSha256": "2c43b2eeb253e0d06a74d1f64089523df52490640db684c442384bc8aef668a8"
+}

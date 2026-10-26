@@ -11,15 +11,19 @@ definitions, runtime settings and 52 route records remain unchanged. The live
 Help panel confirms the build. Publication made no real model call or migration.
 [Release evidence and rollback](review/social-release-2026-10-26/README.md).
 
-Remaining owner: this social assessment chat, checkout `social-experience-fix/`,
-branch `codex/social-acceptance-followup-20261026` from merged main. The twelve-call
-checkpoint is preserved. Multi-speaker and post-opt-out actual speech await real
-quota headroom; the complete rolling allowance cannot return before 27 October
-20:37:41.842 UTC. After the user's explicit scheduling approval, one continuation
-is scheduled in this chat for **27 October at 20:45 UK time**, capped at four
-existing free requests. Automation `complete-remaining-social-test-once` is active
-with one occurrence and stops after that run. Mobile stays on hold. The earlier
-implementation/retest evidence follows.
+Follow-up owner: this social assessment chat, checkout `social-experience-fix/`,
+branch `codex/social-acceptance-followup-20261026` from merged main. At the user's
+request the four-call continuation ran now, retaining all twelve original
+charges through a recorded local operator exception. **Multi-speaker response
+and actual speech after player opt-out pass**: Arwyn spoke to Northern/Sub/player;
+after explicit player opt-out Northern spoke to Arwyn/Sub. All four calls
+succeeded, 718–4,426 ms, 7,554 tokens, $0. Independent offline replay matched
+the exact canonical final town, all eight knowledge projections and the original
+ledger rows; all sixteen cumulative charges settled. Production limits and
+deployed code remain unchanged. Automation `complete-remaining-social-test-once`
+is **PAUSED**; tomorrow's duplicate was disabled. [Evidence and usage assessment](review/social-acceptance-now-2026-10-26/README.md).
+Fresh unattended opening, sustained flow and hosted/device acceptance remain
+unqualified. Mobile stays on hold; no further inference is scheduled.
 
 ### Earlier implementation and bounded retest
 
