@@ -7,9 +7,12 @@ Owner: this mobile release chat, reusing `coin-balance-label/` and existing
 coin-label branch is merged forward from current main `4a5ae77d531b984320203daa86449c168bd0fe15`,
 which includes verified AI-recovery PR #56. The runtime diff remains the three
 player-facing balance labels: an explicit coin unit, with singular for one.
-Fresh phone/desktop checks will cover zero, singular/plural, journal and card,
-normal controls and portable saves. Next gates: current-head Verify, merge and
-publication, explicitly authorized by the user on 26 October. The AI recovery release is now live independently; its receipt is below.
+Fresh phone/desktop checks pass for 0, 1, 4 and 120 coins in the header, player
+card and journal, reload, movement, pause, conversation and portable saves.
+Typecheck, lint (one inherited warning) and a credential-free build pass.
+[Current evidence](review/coin-balance-2026-10-26/README.md). Next gates:
+current-head Verify, merge and publication, explicitly authorized by the user
+on 26 October. The AI recovery release is now live independently; its receipt is below.
 
 ## Mobile AI recovery — published, 26 October 2026
 
