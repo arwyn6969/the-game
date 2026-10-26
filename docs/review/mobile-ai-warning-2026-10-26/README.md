@@ -1,7 +1,8 @@
 # Mobile AI failure and dismissible connection notice — 26 October 2026
 
 Candidate branch: `codex/mobile-ai-warning-20261026`, based on current main
-`66d161d343dedb411c0a3fdfc0dc55cbf44952e4`. This change is not deployed.
+`66d161d343dedb411c0a3fdfc0dc55cbf44952e4`. Runtime source `520a9c418f352bb3dbaca97994cbf017df84cf80`,
+[draft PR #56](https://github.com/arwyn6969/the-game/pull/56). This change is not deployed.
 
 Production records confirm successful player replies, followed by one call
 blocked before provider transmission while the two-per-minute window was full,

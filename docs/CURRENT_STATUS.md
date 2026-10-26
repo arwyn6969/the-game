@@ -17,8 +17,9 @@ diagnostics and both credential-free builds pass. Full synthetic desktop/phone
 AI journeys pass; the final focused pass additionally checks all card tabs and
 actual town download after dismissal. No model calls, browser-profile access
 or production writes were used. [Review evidence](review/mobile-ai-warning-2026-10-26/README.md).
-Next gate: draft PR current-head Verify, then separately authorized integration
-and publication.
+Runtime source `520a9c418f352bb3dbaca97994cbf017df84cf80`;
+[draft PR #56](https://github.com/arwyn6969/the-game/pull/56). Next gate:
+current-head Verify, then separately authorized integration and publication.
 
 ## Mobile session recovery and short-link routing — 26 October 2026
 
