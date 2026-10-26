@@ -48,12 +48,12 @@ Inspection of a copy of the closed ledger places the last charged attempt at
 be available before **27 October 20:37:41.842 UTC**, and other usage may postpone
 that. Provider UTC-day counters alone do not establish SQL allowance.
 
-The user authorized completing those cases when free allowance permits. Automatic
-approval review rejected both recurring and one-off scheduled execution without
-explicit scheduling consent; no automation has been created. A specific one-off
-continuation at **27 October 20:45 UK time**, with at most four physical free
-requests in the existing meeting, is awaiting that consent. Mobile work stays
-on hold. Do not infer scheduling approval from this receipt.
+The user explicitly approved a single scheduled continuation at **27 October
+20:45 UK time**, with at most four physical free requests in the existing meeting.
+Automation `complete-remaining-social-test-once` is active in this chat with one
+occurrence; its saved instructions require actual quota checks, preserved choices
+and accounting, honest reporting and stopping after that run. Scheduling was
+created only after that explicit approval. Mobile work stays on hold.
 
 ## Rollback
 

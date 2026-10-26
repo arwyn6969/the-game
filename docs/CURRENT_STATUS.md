@@ -15,9 +15,11 @@ Remaining owner: this social assessment chat, checkout `social-experience-fix/`,
 branch `codex/social-acceptance-followup-20261026` from merged main. The twelve-call
 checkpoint is preserved. Multi-speaker and post-opt-out actual speech await real
 quota headroom; the complete rolling allowance cannot return before 27 October
-20:37:41.842 UTC. Explicit scheduling consent is pending after automatic approval
-review rejected future autonomous execution; no automation exists. Mobile stays
-on hold. The earlier implementation/retest evidence follows.
+20:37:41.842 UTC. After the user's explicit scheduling approval, one continuation
+is scheduled in this chat for **27 October at 20:45 UK time**, capped at four
+existing free requests. Automation `complete-remaining-social-test-once` is active
+with one occurrence and stops after that run. Mobile stays on hold. The earlier
+implementation/retest evidence follows.
 
 ### Earlier implementation and bounded retest
 
