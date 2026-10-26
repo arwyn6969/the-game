@@ -2941,7 +2941,7 @@ export function TownApp() {
         </div>
         <p className="hud-wallet">
           <span className="pixel-coin" aria-hidden />
-          {player.money} on you
+          {player.money} {player.money === 1 ? "coin" : "coins"}
         </p>
       </header>
       <div className="status-strip">
@@ -3985,7 +3985,7 @@ function Mind({
               {replay
                 ? "Recorded positions"
                 : agent.id === "player"
-                  ? `${player.money} on you`
+                  ? `${player.money} ${player.money === 1 ? "coin" : "coins"}`
                   : canTalk
                     ? "Nearby · you can talk"
                     : "Walk closer to talk"}

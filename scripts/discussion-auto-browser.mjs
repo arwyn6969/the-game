@@ -158,7 +158,10 @@ async function assertStopped(page, meeting) {
     const stop = Array.from(document.querySelectorAll("button")).find(
       (button) => button.textContent.trim() === "Stop automatic meeting",
     );
-    return !stop;
+    // Stop updates the controls before its Web Locks save has committed. Wait
+    // for the durable state too; disappearance alone can still expose the old save.
+    const saved = JSON.parse(localStorage.getItem("the-game-town-v2"));
+    return !stop && saved.town.discussions.sessions.at(-1).status === "paused";
   });
   assert.equal((await meeting(page)).status, "paused");
 }
