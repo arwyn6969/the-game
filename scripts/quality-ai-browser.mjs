@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import { chromium } from "playwright";
 
@@ -265,7 +265,7 @@ async function checkExpiredSessionRecovery(page, viewport, result, authSession) 
   await signIn.waitFor();
   await checkSession({
     data: syntheticSession,
-    expectedNotice: /sign-in and AI connection are ready/i,
+    expectedNotice: /sign-in is working and AI is configured/i,
   });
   assert.equal(
     await warning.count(),
@@ -281,12 +281,112 @@ async function checkExpiredSessionRecovery(page, viewport, result, authSession) 
     sessionChecks: authSession.calls.slice(sessionCallsBefore),
   };
   await page.screenshot({ path: join(out, `${viewport.name}-session-reconnected.png`) });
+  await page.getByRole("button", { name: "Dismiss AI connection message", exact: true }).click();
+  assert.equal(await page.locator("[data-ai-connection-note]").count(), 0);
+  await page.getByRole("button", { name: "Show AI connection details", exact: true }).click();
+  await page.locator("[data-ai-connection-note]").waitFor();
+  await assertUnsentDraft();
+  result.expiredSessionRecovery.successNoticeCanBeDismissedAndReopened = true;
   await send(page, line);
   await requestCount(page, id + 2);
   await resolveRequest(page, id + 1, reply(`Session recovered ${viewport.name}`));
   await page.waitForFunction(() => document.querySelector("#mind-line")?.value === "");
   assert.equal(chatCount(await readTown(page), line), 1);
   result.expiredSessionRecovery.explicitResendSucceedsOnce = true;
+}
+async function checkDismissibleWarning(page, viewport, result, authSession) {
+  const line = `Dismiss keeps my line ${viewport.name}`;
+  const id = (await calls(page)).length;
+  const warning = page.locator("[data-ai-warning]");
+  const reopen = page.getByRole("button", { name: "Show AI connection details", exact: true });
+  const dismiss = page.getByRole("button", { name: "Dismiss AI connection message", exact: true });
+  const field = page.getByLabel("Your line to Kevin", { exact: true });
+  await send(page, line);
+  await requestCount(page, id + 1);
+  await page.evaluate(id => window.__qualityMindMock.resolve(id, { ok: false, error: "slow" }), id);
+  await warning.waitFor();
+  await pause(page);
+  const box = await dismiss.boundingBox();
+  assert.ok(box && box.width >= 44 && box.height >= 44);
+  assert.ok(box.y >= 0 && box.y + box.height <= viewport.height);
+  await dismiss.click();
+  assert.equal(await warning.count(), 0);
+  await reopen.waitFor();
+  const reopenBox = await reopen.boundingBox();
+  assert.ok(reopenBox && reopenBox.height >= 44);
+  await page.clock.fastForward(16_000);
+  assert.equal(await warning.count(), 0, "Availability polling cannot reopen a dismissed warning");
+  assert.equal(await field.inputValue(), line);
+  assert.equal((await calls(page)).length, id + 1);
+  await page.getByRole("button", { name: "Close conversation", exact: true }).click();
+  assert.equal(await warning.count(), 0, "Closing the card cannot reopen the banner over the town");
+  const downloaded = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download town", exact: true }).click();
+  const download = await downloaded;
+  const exportPath = join(out, `${viewport.name}-dismissed-synthetic-town.json`);
+  await download.saveAs(exportPath);
+  const exported = JSON.parse(await readFile(exportPath, "utf8"));
+  assert.equal(exported.town.identityRegistry.worldId, (await readTown(page)).identityRegistry.worldId);
+  result.exportWithDismissedWarningRetainsTown = true;
+  await reopen.click();
+  await warning.waitFor();
+  await dismiss.click();
+  await openKevin(page);
+  assert.equal(await warning.count(), 0, "Reopening a card keeps the warning dismissed");
+  await page.getByRole("tab", { name: "Overview", exact: true }).click();
+  await reopen.click();
+  await warning.waitFor();
+  await dismiss.click();
+  await page.getByRole("tab", { name: "Together", exact: true }).click();
+  assert.equal(await warning.count(), 0);
+  await reopen.click();
+
+  authSession.data = syntheticSession;
+  authSession.status = 200;
+  authSession.hold = true;
+  const observed = new Promise(resolve => authSession.observers.push(resolve));
+  await page.getByRole("button", { name: "Check AI connection", exact: true }).click();
+  await observed;
+  await page.getByRole("button", { name: "Checking AI connection", exact: true }).waitFor();
+  await dismiss.click();
+  const settled = page.waitForResponse(response => isSessionRequest(response.url()));
+  authSession.hold = false;
+  for (const release of authSession.pending.splice(0)) release();
+  await (await settled).finished();
+  await page.waitForTimeout(150);
+  assert.equal(await warning.count(), 0, "A late check result cannot reopen the dismissed banner");
+  assert.equal(await page.locator("[data-ai-connection-note]").count(), 0);
+  assert.equal(await field.inputValue(), line);
+  assert.equal((await calls(page)).length, id + 1);
+  await reopen.click();
+  await page.locator("[data-ai-connection-note]").filter({
+    hasText: /does not test a reply or available limits/i,
+  }).waitFor();
+  assert.match(await warning.innerText(), /limited|busy/i);
+  await dismiss.click();
+  await page.screenshot({ path: join(out, `${viewport.name}-dismissed-warning.png`) });
+
+  // A genuinely new failure of the same kind must become visible again.
+  await send(page, line);
+  await requestCount(page, id + 2);
+  await page.evaluate(id => window.__qualityMindMock.resolve(id, { ok: false, error: "slow" }), id + 1);
+  await warning.waitFor();
+  assert.equal(chatCount(await readTown(page), line), 0);
+  await send(page, line);
+  await requestCount(page, id + 3);
+  await resolveRequest(page, id + 2, reply(`Dismissal recovered ${viewport.name}`));
+  await page.waitForFunction(() => document.querySelector("#mind-line")?.value === "");
+  assert.equal(chatCount(await readTown(page), line), 1);
+  assert.equal(await warning.count(), 0);
+  result.dismissibleWarning = {
+    touchTargetReachable: true,
+    pollingAndLateCheckStayDismissed: true,
+    townAndCardReopenStayDismissed: true,
+    detailsCanBeReopened: true,
+    checkDoesNotClaimProviderReadiness: true,
+    newFailureResurfaces: true,
+    draftRetainedAndExplicitRetryLandsOnce: true,
+  };
 }
 async function checkSupersededSessionRecovery(page, viewport, result, authSession) {
   for (const outcome of ["accepted", "limited"]) {
@@ -602,7 +702,8 @@ try {
       await pause(page);
       const warningBox = await page.locator("[data-ai-warning]").boundingBox();
       const composerBox = await page.locator(".mind-say").boundingBox();
-      assert.ok(warningBox && composerBox && warningBox.y >= composerBox.y - 1);
+      assert.ok(warningBox && composerBox && warningBox.y + warningBox.height <= composerBox.y + 1,
+        "The warning must have its own space above the composer, without covering it");
       assert.ok(warningBox.y + warningBox.height <= viewport.height);
       const close = page.getByRole("button", { name: "Close conversation", exact: true });
       const closeBox = await close.boundingBox();
@@ -618,6 +719,7 @@ try {
       assert.equal(await page.locator("[data-ai-warning]").count(), 0);
       assert.equal(chatCount(await readTown(page), line), 1);
       result.failureWarningControlsAndResend = true;
+      await checkDismissibleWarning(page, viewport, result, authSession);
       await checkExpiredSessionRecovery(page, viewport, result, authSession);
       await checkSupersededSessionRecovery(page, viewport, result, authSession);
       await checkSignInDraftReturn(page, viewport, result);
@@ -774,6 +876,11 @@ try {
     const failureScenarios = [
       { name: "limited", response: { ok: false, error: "slow" }, reason: /limited|busy/i },
       {
+        name: "timeout-body",
+        response: { ok: false, error: "unreachable", diagnostics: { outcome: "timeout", status: 200 } },
+        reason: /too long/i,
+      },
+      {
         name: "invalid",
         response: { ok: true, text: "not JSON" },
         reason: /invalid|usable|safely use|understand|incomplete/i,
@@ -824,6 +931,7 @@ try {
       assert.equal(chatCount(await readTown(page), line), 1);
     }
     result.failedAIKeepsDraftAndRecoversWithoutReload = failureScenarios.map(({ name }) => name);
+    await checkDismissibleWarning(page, viewport, result, authSession);
     await checkExpiredSessionRecovery(page, viewport, result, authSession);
     await checkSupersededSessionRecovery(page, viewport, result, authSession);
     await page.getByRole("button", { name: "Close conversation", exact: true }).click();

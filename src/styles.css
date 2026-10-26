@@ -288,18 +288,32 @@ kbd {
 .ai-warning .btn {
   margin-top: 0.3rem;
 }
-.mind-say .ai-warning {
+.ai-connection-message {
+  max-height: min(16rem, 35dvh);
+  overflow-y: auto;
+}
+.ai-connection-heading {
   position: sticky;
   top: 0;
-  z-index: 1;
-  padding: 0.4rem 0.6rem;
-  margin-bottom: 0.5rem;
-  font-size: 0.75rem;
+  background: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
-.mind-say:has(.ai-warning) {
+.ai-connection-heading .btn {
+  min-width: 44px;
+  min-height: 44px;
+  margin-top: 0;
+}
+.ai-connection-reopen {
+  min-height: 44px;
+}
+.mind > .ai-connection-message {
   flex: 0 1 auto;
-  min-height: 0;
-  overflow-y: auto;
+  min-height: 44px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.75rem;
 }
 .welcome-tip {
   position: relative;

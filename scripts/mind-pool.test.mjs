@@ -201,6 +201,43 @@ test("provider timeout aborts the request and fails over", async () => {
     clearTimeout(keepAlive);
   }
 });
+for (const phase of ["headers", "body"]) {
+  test(`provider timeout during ${phase} is settled as timeout without another call`, async () => {
+    const f = fixture(["gemini"]);
+    f.config.timeoutMs = 25;
+    f.config.maxAttempts = 1;
+    let calls = 0;
+    const keepAlive = setTimeout(() => undefined, 1000);
+    try {
+      const result = await routeMind({
+        ...f,
+        fetcher: async (_url, { signal }) => {
+          calls++;
+          if (phase === "headers")
+            return new Promise((_resolve, reject) =>
+              signal.addEventListener("abort", () => reject(signal.reason), { once: true }),
+            );
+          return new Response(new ReadableStream({
+            start(controller) {
+              controller.enqueue(new TextEncoder().encode(" "));
+              signal.addEventListener("abort", () => controller.error(signal.reason), { once: true });
+            },
+          }), { status: 200 });
+        },
+      });
+      assert.deepEqual(result, { ok: false, error: "unreachable" });
+      assert.equal(calls, 1);
+      const attempts = await rows();
+      assert.equal(attempts.length, 1);
+      assert.equal(attempts[0].outcome, "timeout");
+      assert.equal(attempts[0].status, phase === "body" ? 200 : null);
+      assert.equal(attempts[0].actual_tokens, null);
+      assert.ok(attempts[0].completed_at !== null);
+    } finally {
+      clearTimeout(keepAlive);
+    }
+  });
+}
 test("401/403/402 disable the account and never fall back to paid Grok", async () => {
   for (const status of [401, 403, 402]) {
     await db.exec("truncate mind_pool_attempts, mind_pool_health");
