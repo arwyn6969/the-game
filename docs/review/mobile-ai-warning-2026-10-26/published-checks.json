@@ -1,0 +1,249 @@
+{
+  "source": "4a5ae77d531b984320203daa86449c168bd0fe15",
+  "pr": 56,
+  "verifiedHead": "c88c90059389161ba240652a833a968550b3c23f",
+  "verifyRun": "https://github.com/arwyn6969/the-game/actions/runs/40382182700",
+  "workerVersion": "673fe14a-ba0f-450c-87bb-dc4cd96130c2",
+  "rollbackVersion": "14548f3b-b385-4cc9-b4fe-db05ac5e5676",
+  "bindings": {
+    "identicalBindings": 18,
+    "identicalRuntimeSettings": true,
+    "version": "673fe14a-ba0f-450c-87bb-dc4cd96130c2"
+  },
+  "public": {
+    "source": "4a5ae77d531b984320203daa86449c168bd0fe15",
+    "checkedAt": "2026-10-26T20:03:04.891Z",
+    "assets": [
+      {
+        "path": "/thegame/assets/client-BqF64lgw.js",
+        "status": 200,
+        "expectedSha256": "3370b6cef14bd488ddef5b89a131ac84a96b2eadb08be72864cfd7604f93ca53",
+        "actualSha256": "3370b6cef14bd488ddef5b89a131ac84a96b2eadb08be72864cfd7604f93ca53",
+        "matches": true
+      },
+      {
+        "path": "/thegame/assets/index-Bf1tev91.js",
+        "status": 200,
+        "expectedSha256": "ad6b865f26cd938d4aab3f8d623a3d218211cf124f53046cc13cb64594d847c9",
+        "actualSha256": "ad6b865f26cd938d4aab3f8d623a3d218211cf124f53046cc13cb64594d847c9",
+        "matches": true
+      },
+      {
+        "path": "/thegame/assets/routes-COw2M14Y.js",
+        "status": 200,
+        "expectedSha256": "f491977916978a7c3912696f8288bef24236c458186ee81508fdb9082d5f20c5",
+        "actualSha256": "f491977916978a7c3912696f8288bef24236c458186ee81508fdb9082d5f20c5",
+        "matches": true
+      },
+      {
+        "path": "/thegame/assets/styles-1d7yAuM6.css",
+        "status": 200,
+        "expectedSha256": "d59f16298ad2f04f485374656474a7e35ea19da24638689624ac49674898ba7c",
+        "actualSha256": "d59f16298ad2f04f485374656474a7e35ea19da24638689624ac49674898ba7c",
+        "matches": true
+      }
+    ],
+    "endpoints": [
+      {
+        "path": "/thegame/",
+        "status": 200
+      },
+      {
+        "path": "/thegame/privacy",
+        "status": 200
+      },
+      {
+        "path": "/thegame/api/auth/get-session",
+        "status": 200
+      },
+      {
+        "path": "/thegame/__grok/manifest.webmanifest",
+        "status": 200
+      },
+      {
+        "path": "/thegame-other",
+        "status": 404,
+        "homepageReleasePreserved": true
+      },
+      {
+        "path": "/thegame%2Fprivacy",
+        "status": 404,
+        "homepageReleasePreserved": true
+      },
+      {
+        "path": "www/",
+        "status": 308,
+        "location": "https://arwyn.party/"
+      },
+      {
+        "path": "www/bitcoinart",
+        "status": 308,
+        "location": "https://arwyn.party/bitcoinart"
+      }
+    ],
+    "links": [
+      {
+        "url": "https://arwyn.party/thegame",
+        "status": 200,
+        "finalUrl": "https://www.arwyn.party/thegame/",
+        "expected": "https://www.arwyn.party/thegame/"
+      },
+      {
+        "url": "https://arwyn.party/thegame/",
+        "status": 200,
+        "finalUrl": "https://www.arwyn.party/thegame/",
+        "expected": "https://www.arwyn.party/thegame/"
+      },
+      {
+        "url": "https://arwyn.party/thegame?routing=20261026",
+        "status": 200,
+        "finalUrl": "https://www.arwyn.party/thegame/?routing=20261026",
+        "expected": "https://www.arwyn.party/thegame/?routing=20261026"
+      },
+      {
+        "url": "https://arwyn.party/thegame/?routing=20261026",
+        "status": 200,
+        "finalUrl": "https://www.arwyn.party/thegame/?routing=20261026",
+        "expected": "https://www.arwyn.party/thegame/?routing=20261026"
+      },
+      {
+        "url": "https://arwyn.party/thegame/privacy?routing=20261026",
+        "status": 200,
+        "finalUrl": "https://www.arwyn.party/thegame/privacy?routing=20261026",
+        "expected": "https://www.arwyn.party/thegame/privacy?routing=20261026"
+      },
+      {
+        "url": "http://arwyn.party/thegame",
+        "status": 200,
+        "finalUrl": "https://www.arwyn.party/thegame/",
+        "expected": "https://www.arwyn.party/thegame/"
+      },
+      {
+        "url": "https://www.arwyn.party/thegame?routing=20261026",
+        "status": 200,
+        "finalUrl": "https://www.arwyn.party/thegame/?routing=20261026",
+        "expected": "https://www.arwyn.party/thegame/?routing=20261026"
+      }
+    ],
+    "passed": true
+  },
+  "liveSmoke": {
+    "executedAt": "2026-10-26T20:02:57.611Z",
+    "target": "https://www.arwyn.party/thegame/",
+    "disposableAnonymousContexts": true,
+    "authOrAIResponsesMocked": false,
+    "maximumPlayerPostsPerViewport": 1,
+    "externalOriginsBlocked": true,
+    "journeys": [
+      {
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "initialSession": {
+          "status": 200,
+          "isNull": true
+        },
+        "sessionRequests": [
+          {
+            "method": "GET",
+            "status": 200,
+            "disableCookieCache": true
+          }
+        ],
+        "serverFunctionRequests": [
+          {
+            "method": "GET",
+            "path": "/thegame/_serverFn/ea3f3a95003368d56a0728ba522d56c59bd9b564967222bb03ad5a127549bcfb",
+            "status": 200
+          },
+          {
+            "method": "POST",
+            "path": "/thegame/_serverFn/d333dd04813ede0dc074d6c3a5cb5aac4a506a8cf9be8e6b4972a3b9cb101f41",
+            "status": 200
+          },
+          {
+            "method": "GET",
+            "path": "/thegame/_serverFn/ea3f3a95003368d56a0728ba522d56c59bd9b564967222bb03ad5a127549bcfb",
+            "status": 200
+          }
+        ],
+        "blockedExternalOrigins": [
+          "https://fonts.googleapis.com"
+        ],
+        "blockedUnexpectedRequests": [],
+        "pageErrorCount": 0,
+        "actualPlayerPosts": 1,
+        "playerPostAttempts": 1,
+        "playerRejection": {
+          "transportStatus": 200,
+          "serializedHeader": true,
+          "stableUnauthorizedError": true
+        },
+        "liveDismissalAndReopen": true,
+        "closeTouchTargetReachable": true,
+        "anonymousUnauthorizedShowsSignInAgain": true,
+        "freshNullSessionCheckShowsFeedback": true,
+        "draftAndTownPreserved": true,
+        "noAutomaticReplayAcrossAvailabilityPoll": true,
+        "oauthWasNotStarted": true
+      },
+      {
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "initialSession": {
+          "status": 200,
+          "isNull": true
+        },
+        "sessionRequests": [
+          {
+            "method": "GET",
+            "status": 200,
+            "disableCookieCache": true
+          }
+        ],
+        "serverFunctionRequests": [
+          {
+            "method": "GET",
+            "path": "/thegame/_serverFn/ea3f3a95003368d56a0728ba522d56c59bd9b564967222bb03ad5a127549bcfb",
+            "status": 200
+          },
+          {
+            "method": "POST",
+            "path": "/thegame/_serverFn/d333dd04813ede0dc074d6c3a5cb5aac4a506a8cf9be8e6b4972a3b9cb101f41",
+            "status": 200
+          },
+          {
+            "method": "GET",
+            "path": "/thegame/_serverFn/ea3f3a95003368d56a0728ba522d56c59bd9b564967222bb03ad5a127549bcfb",
+            "status": 200
+          }
+        ],
+        "blockedExternalOrigins": [
+          "https://fonts.googleapis.com"
+        ],
+        "blockedUnexpectedRequests": [],
+        "pageErrorCount": 0,
+        "actualPlayerPosts": 1,
+        "playerPostAttempts": 1,
+        "playerRejection": {
+          "transportStatus": 200,
+          "serializedHeader": true,
+          "stableUnauthorizedError": true
+        },
+        "liveDismissalAndReopen": true,
+        "closeTouchTargetReachable": true,
+        "anonymousUnauthorizedShowsSignInAgain": true,
+        "freshNullSessionCheckShowsFeedback": true,
+        "draftAndTownPreserved": true,
+        "noAutomaticReplayAcrossAvailabilityPoll": true,
+        "oauthWasNotStarted": true
+      }
+    ],
+    "failures": []
+  }
+}

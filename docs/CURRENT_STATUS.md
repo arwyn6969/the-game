@@ -9,29 +9,34 @@ which includes verified AI-recovery PR #56. The runtime diff remains the three
 player-facing balance labels: an explicit coin unit, with singular for one.
 Fresh phone/desktop checks will cover zero, singular/plural, journal and card,
 normal controls and portable saves. Next gates: current-head Verify, merge and
-publication, explicitly authorized by the user on 26 October. The separate AI
-recovery release is being prepared without waiting for this copy change.
+publication, explicitly authorized by the user on 26 October. The AI recovery release is now live independently; its receipt is below.
 
-## Mobile AI failure diagnosis and dismissible connection notice — verified candidate, 26 October 2026
+## Mobile AI recovery — published, 26 October 2026
 
-Owner: current mobile AI diagnosis chat, checkout `library-meeting/`, branch
-`codex/mobile-ai-warning-20261026`, based on freshly fetched `origin/main`
-`66d161d343dedb411c0a3fdfc0dc55cbf44952e4`. Scope: dismiss/reopen connection
-notices, accurate configuration-check feedback, provider timeout classification,
-and focused regressions. Read-only production ledgers show successful player
-calls at 18:34:12, 18:34:46 and 18:37:31 UTC; a budget-only call at 18:35:05
-matches the existing two-per-minute provider gate, and an 18:38:09 call settled
-as `unreachable`, HTTP 200, 11,816 ms, unknown usage. The latter record cannot
-distinguish a body timeout from another body-read/decode error; preserve that
-uncertainty. No new model call, quota/configuration change or publication.
-Node 24 typecheck/lint, 1,092 script tests, 55 typed tests, 425 town tests,
-diagnostics and both credential-free builds pass. Full synthetic desktop/phone
-AI journeys pass; the final focused pass additionally checks all card tabs and
-actual town download after dismissal. No model calls, browser-profile access
-or production writes were used. [Review evidence](review/mobile-ai-warning-2026-10-26/README.md).
-Runtime source `520a9c418f352bb3dbaca97994cbf017df84cf80`;
-[draft PR #56](https://github.com/arwyn6969/the-game/pull/56). Next gate:
-current-head Verify, then separately authorized integration and publication.
+Live: **https://www.arwyn.party/thegame/**. [PR #56](https://github.com/arwyn6969/the-game/pull/56)
+passed [Verify](https://github.com/arwyn6969/the-game/actions/runs/40382182700) at
+`c88c90059389161ba240652a833a968550b3c23f` and merged as
+`4a5ae77d531b984320203daa86449c168bd0fe15`; their complete source trees match.
+The clean merged package is deployed as existing production Worker version
+`673fe14a-ba0f-450c-87bb-dc4cd96130c2`. Owner: this mobile release chat.
+[Validation, live checks and rollback](review/mobile-ai-warning-2026-10-26/README.md).
+
+The warning has reachable close/reopen controls, occupies its own area above
+Send, and stays dismissed through polling and late checks. Drafts and failure
+status remain. The connection check describes its actual sign-in/configuration
+scope; future provider deadline failures retain the timeout category. Existing
+limits and deadlines remain. Production's earlier 11.8-second body failure
+cannot be classified retrospectively from the old ledger alone.
+
+All 18 binding definitions and runtime settings compare identical before/after
+publication. Four public client assets match the clean build. Game, privacy,
+manifest, anonymous session and canonical links pass. Real deployed desktop and
+phone disposable anonymous contexts each made one deliberately unauthorized
+player POST, verified the serialized rejection, fresh session feedback,
+44px dismissal/reopen, retained draft/town and no automatic replay across the
+availability poll. No OAuth, existing profile, model inference, migration,
+secret upload or production configuration change. Rollback Worker:
+`14548f3b-b385-4cc9-b4fe-db05ac5e5676`. Coin-label PR #45 remains separate.
 
 ## Mobile session recovery and short-link routing — 26 October 2026
 
