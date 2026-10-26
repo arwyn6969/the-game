@@ -1,0 +1,269 @@
+{
+  "source": "efa88b6edc4bb41987bb2210cc9d9d038919db60",
+  "method": "fresh-full-meeting-default-scheduler",
+  "scope": "real free provider, actual engine/scheduler/automatic-run helper, local SQL; not a hosted browser session",
+  "startedAt": "2026-10-26T23:38:42.844Z",
+  "finishedAt": "2026-10-26T23:45:29.298Z",
+  "passed": true,
+  "newCalls": 14,
+  "inheritedCharges": 16,
+  "cumulativeCharges": 30,
+  "newKnownTokens": 24550,
+  "newFailures": 0,
+  "newTimeouts": 0,
+  "reportedCostUSD": 0,
+  "latencyMs": [749, 765, 724, 720, 1409, 1202, 1671, 1304, 1043, 1075, 1256, 11595, 1788, 1365],
+  "minPhysicalSpacingMs": 31078,
+  "automaticRun": {
+    "status": "stopped",
+    "reason": "This meeting is finished.",
+    "requestsStarted": 14,
+    "explicitStarts": 1
+  },
+  "playerAuthoredOpening": false,
+  "actualNpcSpeakers": ["arwyn", "northern", "sub"],
+  "spokenTurns": 6,
+  "closed": true,
+  "closureReason": "The six-turn meeting is complete. Its statements remain recorded; no agreement was invented.",
+  "choices": [
+    {
+      "actor": "arwyn",
+      "decision": {
+        "kind": "accept"
+      }
+    },
+    {
+      "actor": "northern",
+      "decision": {
+        "kind": "accept"
+      }
+    },
+    {
+      "actor": "sub",
+      "decision": {
+        "kind": "accept"
+      }
+    },
+    {
+      "actor": "arwyn",
+      "decision": {
+        "kind": "participate"
+      }
+    },
+    {
+      "actor": "northern",
+      "decision": {
+        "kind": "listen"
+      }
+    },
+    {
+      "actor": "sub",
+      "decision": {
+        "kind": "listen"
+      }
+    },
+    {
+      "actor": "arwyn",
+      "decision": {
+        "kind": "speak",
+        "text": "I'm happy to facilitate. Let's start with something concrete: what's one short text — a lullaby, a market chant, an old notice — that most people here already know by heart? If we can name a few, we can test whether reading one badly on purpose actually helps newcomers relax."
+      }
+    },
+    {
+      "actor": "northern",
+      "decision": {
+        "kind": "participate"
+      }
+    },
+    {
+      "actor": "sub",
+      "decision": {
+        "kind": "request-turn"
+      }
+    },
+    {
+      "actor": "arwyn",
+      "decision": {
+        "kind": "speak",
+        "text": "I'm happy to facilitate. Let's start with something concrete: what's one short text — a lullaby, a market chant, an old notice — that most people here already know by heart? If we can name a few, we can test whether reading one badly on purpose actually helps newcomers relax."
+      }
+    },
+    {
+      "actor": "northern",
+      "decision": {
+        "kind": "speak",
+        "text": "The market chant about the baker's early loaves — everyone knows the rhythm even if they mumble the words. Reading that badly would feel like stumbling over your own footsteps, which is the point."
+      }
+    },
+    {
+      "actor": "sub",
+      "decision": {
+        "kind": "speak",
+        "text": "There's the notice by the well that's been there since before I arrived — 'Mind the bucket, mind the rope, mind the hands that hold both.' Everyone knows it because everyone's broken it once. Reading it badly would mean forgetting which 'mind' you're on, and that's honest."
+      }
+    },
+    {
+      "actor": "arwyn",
+      "decision": {
+        "kind": "speak",
+        "text": "Good — the baker's chant and the well notice both have that worn-in quality. Northern, when you say 'mumble the words,' do you mean people skip verses or just blur the rhythm? And Sub, has anyone ever read the well notice aloud at a gathering, or is it only ever muttered while hauling water?"
+      }
+    },
+    {
+      "actor": "northern",
+      "decision": {
+        "kind": "speak",
+        "text": "People blur the rhythm on the baker's chant — they know the beat but swap verses depending on who's buying. The well notice gets muttered one 'mind' at a time while hauling, never read straight through. If we read either badly on purpose, we'd have to pick which 'mind' to fumble first."
+      }
+    }
+  ],
+  "utterances": [
+    {
+      "speaker": "arwyn",
+      "text": "I'm happy to facilitate. Let's start with something concrete: what's one short text — a lullaby, a market chant, an old notice — that most people here already know by heart? If we can name a few, we can test whether reading one badly on purpose actually helps newcomers relax.",
+      "recipientIds": ["northern", "sub", "player"]
+    },
+    {
+      "speaker": "arwyn",
+      "text": "I'm happy to facilitate. Let's start with something concrete: what's one short text — a lullaby, a market chant, an old notice — that most people here already know by heart? If we can name a few, we can test whether reading one badly on purpose actually helps newcomers relax.",
+      "recipientIds": ["northern", "sub", "player"]
+    },
+    {
+      "speaker": "northern",
+      "text": "The market chant about the baker's early loaves — everyone knows the rhythm even if they mumble the words. Reading that badly would feel like stumbling over your own footsteps, which is the point.",
+      "recipientIds": ["arwyn", "sub", "player"]
+    },
+    {
+      "speaker": "sub",
+      "text": "There's the notice by the well that's been there since before I arrived — 'Mind the bucket, mind the rope, mind the hands that hold both.' Everyone knows it because everyone's broken it once. Reading it badly would mean forgetting which 'mind' you're on, and that's honest.",
+      "recipientIds": ["arwyn", "northern", "player"]
+    },
+    {
+      "speaker": "arwyn",
+      "text": "Good — the baker's chant and the well notice both have that worn-in quality. Northern, when you say 'mumble the words,' do you mean people skip verses or just blur the rhythm? And Sub, has anyone ever read the well notice aloud at a gathering, or is it only ever muttered while hauling water?",
+      "recipientIds": ["northern", "sub", "player"]
+    },
+    {
+      "speaker": "northern",
+      "text": "People blur the rhythm on the baker's chant — they know the beat but swap verses depending on who's buying. The well notice gets muttered one 'mind' at a time while hauling, never read straight through. If we read either badly on purpose, we'd have to pick which 'mind' to fumble first.",
+      "recipientIds": ["arwyn", "sub", "player"]
+    }
+  ],
+  "repeatedExactTurnIds": ["discussion:28:speech:2"],
+  "providerBefore": {
+    "used": 22,
+    "limit": 50,
+    "remaining": 28
+  },
+  "providerSettledAfter": {
+    "at": "2026-10-26T23:47:37.112Z",
+    "freeRequests": {
+      "used": 36,
+      "limit": 50,
+      "remaining": 14
+    },
+    "monetaryUsageToday": 0
+  },
+  "profile": {
+    "pool": {
+      "version": 1,
+      "timeoutMs": 12000,
+      "deadlineMs": 12000,
+      "maxAttempts": 1,
+      "providers": [
+        {
+          "id": "openrouter",
+          "protocol": "openai",
+          "baseUrl": "https://openrouter.ai/api/v1",
+          "apiKeyEnv": "OPENROUTER_API_KEY",
+          "jsonMode": false,
+          "enabled": true,
+          "freeTierConfirmed": true,
+          "limits": {
+            "rpm": 2,
+            "rpd": 48,
+            "monthly": 1488,
+            "tpm": 40000,
+            "tpd": 960000,
+            "concurrent": 1
+          },
+          "routes": {
+            "player": {
+              "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+              "rank": 1,
+              "maxTokens": 1500,
+              "reasoningEffort": "none"
+            },
+            "plan": {
+              "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+              "rank": 1,
+              "maxTokens": 1500,
+              "reasoningEffort": "none"
+            },
+            "reflect": {
+              "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+              "rank": 1,
+              "maxTokens": 1500,
+              "reasoningEffort": "none"
+            },
+            "talk": {
+              "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+              "rank": 1,
+              "maxTokens": 1500,
+              "reasoningEffort": "none"
+            },
+            "act": {
+              "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+              "rank": 1,
+              "maxTokens": 1200,
+              "reasoningEffort": "none"
+            }
+          }
+        }
+      ]
+    },
+    "budget": {
+      "version": 1,
+      "dailyCalls": 48,
+      "playerDailyCalls": 32,
+      "playerMinuteCalls": 3,
+      "playerInteractiveReserveCalls": 0,
+      "playerInteractiveReserveMinuteCalls": 0,
+      "concurrent": 1,
+      "backgroundConcurrent": 0,
+      "interactiveReserveCalls": 1,
+      "dailyMicrousd": 0,
+      "interactiveReserveMicrousd": 0,
+      "inputNanousdPerToken": 0,
+      "outputNanousdPerToken": 0,
+      "actionConcurrent": 1
+    }
+  },
+  "originalSixteenLedgerRowsAndChargesUnchanged": true,
+  "exactFinalTownReproduced": true,
+  "allEightKnowledgeProjectionsChecked": true,
+  "financeAndIdentitiesUnchanged": true,
+  "allAccountingSettled": true,
+  "tokenReservations": {
+    "total": 265215,
+    "maximum": 10813
+  },
+  "localChecks": {
+    "scriptTests": 1098,
+    "typedTests": 55,
+    "townTests": 426,
+    "typecheck": true,
+    "lint": "zero errors; one inherited auth warning",
+    "diagnostics": true,
+    "nodeBuild": true,
+    "cloudflareBuild": true
+  },
+  "notProved": [
+    "hosted authenticated browser meeting",
+    "physical-device acceptance",
+    "sustained operation over multiple free-account windows"
+  ],
+  "privateReportSha256": "f492432d48ec856d2b6c528a74f58f0fd8ed970917c44c0946ca09835030ee5c",
+  "verificationSha256": "ea81028acc339a70bca02219d73ac3fd637743c1e145d61d1f89cfdbbd80cbf6",
+  "runnerSha256": "daf4533921d8ee05520e6eae1e0e003fb13152930ffe503ca7ad6cf730c10b7f"
+}
