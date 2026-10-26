@@ -1,0 +1,128 @@
+{
+  "url": "http://127.0.0.1:8197/",
+  "node": "v24.19.0",
+  "builtPreview": true,
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "movement": {
+        "before": {
+          "x": 26,
+          "y": 22
+        },
+        "after": {
+          "x": 27,
+          "y": 22
+        },
+        "input": "keyboard"
+      },
+      "offlineConversation": true,
+      "reload": true,
+      "coinLabel": "4 coins",
+      "balanceVariants": [
+        {
+          "balance": 0,
+          "label": "0 coins",
+          "header": true,
+          "card": true,
+          "journal": true,
+          "reload": true,
+          "fitsViewport": true
+        },
+        {
+          "balance": 1,
+          "label": "1 coin",
+          "header": true,
+          "card": true,
+          "journal": true,
+          "reload": true,
+          "fitsViewport": true
+        },
+        {
+          "balance": 4,
+          "label": "4 coins",
+          "header": true,
+          "card": true,
+          "journal": true,
+          "reload": true,
+          "fitsViewport": true
+        },
+        {
+          "balance": 120,
+          "label": "120 coins",
+          "header": true,
+          "card": true,
+          "journal": true,
+          "reload": true,
+          "fitsViewport": true
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "movement": {
+        "before": {
+          "x": 26,
+          "y": 22
+        },
+        "after": {
+          "x": 27,
+          "y": 22
+        },
+        "input": "touch"
+      },
+      "offlineConversation": true,
+      "reload": true,
+      "coinLabel": "4 coins",
+      "balanceVariants": [
+        {
+          "balance": 0,
+          "label": "0 coins",
+          "header": true,
+          "card": true,
+          "journal": true,
+          "reload": true,
+          "fitsViewport": true
+        },
+        {
+          "balance": 1,
+          "label": "1 coin",
+          "header": true,
+          "card": true,
+          "journal": true,
+          "reload": true,
+          "fitsViewport": true
+        },
+        {
+          "balance": 4,
+          "label": "4 coins",
+          "header": true,
+          "card": true,
+          "journal": true,
+          "reload": true,
+          "fitsViewport": true
+        },
+        {
+          "balance": 120,
+          "label": "120 coins",
+          "header": true,
+          "card": true,
+          "journal": true,
+          "reload": true,
+          "fitsViewport": true
+        }
+      ]
+    }
+  ],
+  "failures": []
+}
