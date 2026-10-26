@@ -4,7 +4,7 @@
 
 Owner: current social assessment chat, isolated checkout `social-experience-fix/`,
 branch `codex/social-experience-20261026`, based on freshly fetched main
-`4a5ae77d531b984320203daa86449c168bd0fe15`. The user requested facilitator and
+`4a5ae77d531b984320203daa86449c168bd0fe15`, [draft PR #57](https://github.com/arwyn6969/the-game/pull/57). The user requested facilitator and
 timeout repairs followed by a real social retest within existing free limits.
 Scope: role-aware discussion prompts, bounded action transport/client deadlines,
 regressions and qualification evidence. Existing residents retain every offered

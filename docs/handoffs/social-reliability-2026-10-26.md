@@ -3,6 +3,7 @@
 Owner: current social assessment chat. Branch `codex/social-experience-20261026`,
 isolated checkout `social-experience-fix/`, base `4a5ae77d531b984320203daa86449c168bd0fe15`.
 Runtime/tested source: `86895092768a22edf3a563522af042941eff1dba`.
+Review: [draft PR #57](https://github.com/arwyn6969/the-game/pull/57).
 
 ## Change
 
