@@ -1,6 +1,6 @@
 # Current project status
 
-## Social facilitation and action deadlines — in verification, 26 October 2026
+## Social facilitation and action deadlines — verified candidate, 26 October 2026
 
 Owner: current social assessment chat, isolated checkout `social-experience-fix/`,
 branch `codex/social-experience-20261026`, based on freshly fetched main
@@ -17,10 +17,16 @@ choices and one timeout after a labelled player opening. The retest must retain
 that saved meeting and its seven settled accounting rows, use at most the five
 remaining calls under the original twelve-call daily player ceiling, and retain
 the twenty-four-call account ceiling. Provider counters may lag; the local
-attempt ledger also counts the timed-out transmission. Next evidence: focused
-and full checks, then the bounded real retest with exact source, audience,
-memory/reload and accounting receipts. This record does not claim social
-qualification or hosted publication.
+attempt ledger also counts the timed-out transmission. Tested runtime
+`86895092768a22edf3a563522af042941eff1dba` passes 1,095 script + 55 typed tests,
+425 town tests, typecheck/lint, diagnostics and both builds. All five new real
+requests succeeded: Arwyn participated and spoke, Northern first listened then
+participated, and Sub listened. Exactly Northern and Sub received the statement;
+the late player gained no earlier knowledge. Offline replay, save/reload and all
+twelve settled accounting rows pass. The daily player ceiling stopped generation.
+The [handoff and remaining cases](handoffs/social-reliability-2026-10-26.md)
+distinguish this bounded contribution from an unqualified multi-speaker flow,
+post-opt-out speech and fresh unattended opening. No hosted publication.
 
 ## Mobile AI failure diagnosis and dismissible connection notice — verified candidate, 26 October 2026
 
