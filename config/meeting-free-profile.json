@@ -1,0 +1,75 @@
+{
+  "pool": {
+    "version": 1,
+    "timeoutMs": 12000,
+    "deadlineMs": 12000,
+    "maxAttempts": 1,
+    "providers": [
+      {
+        "id": "openrouter",
+        "protocol": "openai",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "apiKeyEnv": "OPENROUTER_API_KEY",
+        "jsonMode": false,
+        "enabled": true,
+        "freeTierConfirmed": true,
+        "limits": {
+          "rpm": 2,
+          "rpd": 48,
+          "monthly": 1488,
+          "tpm": 40000,
+          "tpd": 960000,
+          "concurrent": 1
+        },
+        "routes": {
+          "player": {
+            "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+            "rank": 1,
+            "maxTokens": 1500,
+            "reasoningEffort": "none"
+          },
+          "plan": {
+            "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+            "rank": 1,
+            "maxTokens": 1500,
+            "reasoningEffort": "none"
+          },
+          "reflect": {
+            "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+            "rank": 1,
+            "maxTokens": 1500,
+            "reasoningEffort": "none"
+          },
+          "talk": {
+            "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+            "rank": 1,
+            "maxTokens": 1500,
+            "reasoningEffort": "none"
+          },
+          "act": {
+            "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+            "rank": 1,
+            "maxTokens": 1200,
+            "reasoningEffort": "none"
+          }
+        }
+      }
+    ]
+  },
+  "budget": {
+    "version": 1,
+    "dailyCalls": 48,
+    "playerDailyCalls": 32,
+    "playerMinuteCalls": 3,
+    "playerInteractiveReserveCalls": 0,
+    "playerInteractiveReserveMinuteCalls": 0,
+    "concurrent": 1,
+    "backgroundConcurrent": 0,
+    "interactiveReserveCalls": 1,
+    "dailyMicrousd": 0,
+    "interactiveReserveMicrousd": 0,
+    "inputNanousdPerToken": 0,
+    "outputNanousdPerToken": 0,
+    "actionConcurrent": 1
+  }
+}

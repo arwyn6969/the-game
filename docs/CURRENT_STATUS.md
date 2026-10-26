@@ -1,5 +1,22 @@
 # Current project status
 
+## Full-meeting free allowance — in progress, 26 October 2026
+
+Owner: this social assessment chat, checkout `social-experience-fix/`, branch
+`codex/full-meeting-budget-20261026`, based on current main
+`a40867e5ca977453a5f42df2aff2cb9fbf022f82`. The user requested game limits that
+permit a full meeting within the existing free allowance, followed by a fresh
+start-to-finish test. Mobile remains on hold. Scope: a validated, explicit
+free-only hosted profile (48 shared calls/day, 32/player/day), aligned conservative
+token reservations, and closing the existing sixteen-decision meeting boundary
+with its actual transcript preserved. One request at a time, slow pacing, zero
+spend, free-only routing, failed-attempt charges and all existing towns remain.
+No new provider, authentication change, SQL migration or mobile work. Prior
+social evidence and the paused duplicate automation are preserved on
+`codex/social-acceptance-followup-20261026`. Next gates: SQL/lifecycle regression
+checks, a real fresh meeting retaining the closed sixteen-attempt test ledger,
+independent replay, current-head Verify and scoped hosted settings verification.
+
 ## Social facilitation and action deadlines — verified candidate, 26 October 2026
 
 Owner: current social assessment chat, isolated checkout `social-experience-fix/`,
