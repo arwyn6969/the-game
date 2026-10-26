@@ -5,6 +5,7 @@ dist
 .env.*
 config/mind-pool.local.json
 .vercel
+.wrangler
 .grok
 screenshots
 artifacts

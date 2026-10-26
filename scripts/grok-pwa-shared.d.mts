@@ -11,10 +11,16 @@ export declare function acceptsHtml(accept: string | null | undefined): boolean;
 export declare function stripInstallParams(url: string | null | undefined): string;
 export declare function renderInstallPageHtml(
   template: string,
-  context?: { host?: string | null; url?: string | null },
+  context?: { host?: string | null; url?: string | null; basePath?: string; appName?: string },
 ): string;
-export declare function renderWebManifest(hostHeader: string | null | undefined): string;
-export declare function grokPwaHeadTags(appName?: string): Array<[string, string]>;
+export declare function renderWebManifest(
+  hostHeader: string | null | undefined,
+  context?: { basePath?: string; appName?: string },
+): string;
+export declare function grokPwaHeadTags(
+  appName?: string,
+  basePath?: string,
+): Array<[string, string]>;
 export declare const GROK_EXTENSIONS_SCRIPT_SRC: string;
 export declare function readGrokProjectId(): string;
 export declare function readGrokExtensionsEnabled(): boolean;
@@ -35,6 +41,7 @@ export type OgSite = {
 
 export type GrokHeadContext = {
   appName?: string;
+  basePath?: string;
   projectId?: string;
   creator?: string;
   creatorId?: string;
@@ -59,6 +66,7 @@ export declare function resolveOgTitle(
 export declare function siteHasCustomCard(site?: OgSite): boolean;
 export declare function grokOgHeadTags(ctx?: {
   host?: string;
+  basePath?: string;
   appName?: string;
   site?: OgSite;
   documentTitle?: string;
@@ -67,6 +75,7 @@ export declare function grokOgHeadTags(ctx?: {
 export declare function stripShareMetaTags(html: string): string;
 export declare function normalizeHeadContext(ctx?: GrokHeadContext): {
   appName: string;
+  basePath: string;
   projectId: string;
   creator: string;
   creatorId: string;

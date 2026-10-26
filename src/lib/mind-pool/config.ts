@@ -71,8 +71,9 @@ export function validateConfig(value: unknown): PoolConfig {
     for (const key of LIMIT_KEYS) {
       if (!integer(p.limits[key], 1, 1_000_000_000)) throw new Error("Invalid mind pool quota");
     }
-    for (const kind of MIND_KINDS) {
+    for (const kind of [...MIND_KINDS, "act"] as const) {
       const r = p.routes[kind];
+      if (kind === "act" && r === undefined) continue;
       if (
         !object(r) ||
         typeof r.model !== "string" ||
@@ -129,7 +130,19 @@ export function candidatesFor(
           (Boolean(env[p.apiKeyEnv]?.trim()) &&
             credentialMatchesEndpoint(p.baseUrl, env[p.apiKeyEnv]!))),
     )
-    .map((provider) => ({ provider, route: provider.routes[kind] }))
+    .flatMap((provider) => {
+      const route = provider.routes[kind];
+      // Both quota/cost reservation and transport see the same bounded allowance.
+      return route
+        ? [
+            {
+              provider,
+              route:
+                kind === "act" ? { ...route, maxTokens: Math.min(route.maxTokens, 1200) } : route,
+            },
+          ]
+        : [];
+    })
     .sort((a, b) => a.route.rank - b.route.rank);
 }
 

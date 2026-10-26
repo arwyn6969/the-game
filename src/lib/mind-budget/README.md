@@ -16,6 +16,7 @@ Production requires `DATABASE_URL`, existing authentication, the `20261013_mind_
   "playerInteractiveReserveMinuteCalls": 2,
   "concurrent": 4,
   "backgroundConcurrent": 2,
+  "actionConcurrent": 0,
   "interactiveReserveCalls": 100,
   "dailyMicrousd": 1000000,
   "interactiveReserveMicrousd": 200000,
@@ -23,6 +24,21 @@ Production requires `DATABASE_URL`, existing authentication, the `20261013_mind_
   "outputNanousdPerToken": null
 }
 ```
+
+`actionConcurrent` is optional and defaults to zero, preserving the historical
+background gate for `act`. A positive value gives explicitly requested actions
+their own concurrency gate; it must not exceed `concurrent`. Apply
+`20261022_mind_actions.sql` followed by `20261023_manual_action_budget.sql` before
+enabling it. This does not enable a provider route or autonomous plan, talk or
+reflection calls. With `concurrent: 1`, `backgroundConcurrent: 0` and
+`actionConcurrent: 1`, a manual action and a direct reply cannot overlap.
+
+Actions retain the same shared and per-user daily/minute totals, monetary cap,
+interactive reserve deductions and conservative unknown-attempt charges. The
+new lane adds no call allowance. Availability requires both a configured budget
+lane and an optional `act` pool route; each actual reservation still checks live
+shared headroom. Existing production totals and tariffs must be retained when
+adding the optional action gate.
 
 Set both tariff fields to conservative **maximum** input/output nanodollars per token across every enabled model, tier and failover provider. One nanodollar is 0.000000001 USD. Include billed reasoning and avoid assuming cache discounts. Null tariffs are accepted only for local ephemeral development. Zero tariffs are an explicit operator assertion that all enabled services cannot bill; configuration cannot verify a provider's billing dashboard. Review tariffs whenever models, provider pricing or account tiers change. This caps the application's conservative reservations under the declared tariffs, not charges made by other applications or provider accounting differences.
 

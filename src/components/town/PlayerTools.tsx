@@ -14,6 +14,8 @@ import { formatClock } from "@/game/text";
 import { fundedWorkSummary } from "@/game/funded-work";
 import type { FundedTown } from "@/game/economy-types";
 import { placeTitle, zoneAt } from "@/game/world";
+import { ManuscriptTools, type ManuscriptControls } from "./ManuscriptTools";
+import { heldItem } from "@/game/physical-items";
 
 export type ToolPage = "help" | "journal" | "inventory" | "map" | "library";
 const TITLES: Record<ToolPage, string> = {
@@ -45,6 +47,7 @@ export function PlayerTools({
   onLibraryAction,
   onGoReading,
   replaying,
+  manuscriptControls,
 }: {
   page: ToolPage;
   town: Town;
@@ -66,6 +69,7 @@ export function PlayerTools({
   onLibraryAction: (id: string) => void;
   onGoReading: () => void;
   replaying: boolean;
+  manuscriptControls: ManuscriptControls;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
@@ -83,6 +87,7 @@ export function PlayerTools({
   const player = agentById(town, "player");
   const reading = page === "map" ? libraryView(town).story : null;
   const carried = player.projects.filter((p) => p.status === "open" && p.text === BABA_LOAF);
+  const manuscript = heldItem(town, "player");
   const agreements = player.projects.filter((p) => p.status === "open" && p.text !== BABA_LOAF);
   const debts = town.favors.filter((f) => f.from === "player" || f.to === "player");
   const events = player.memories
@@ -141,14 +146,17 @@ export function PlayerTools({
           </p>
         )}
         {page === "library" && (
-          <LibraryProject
-            town={town}
-            busy={busy}
-            actionNote={actionNote}
-            onAction={onLibraryAction}
-            onGoReading={onGoReading}
-            replaying={replaying}
-          />
+          <>
+            <ManuscriptTools town={town} controls={manuscriptControls} />
+            <LibraryProject
+              town={town}
+              busy={busy}
+              actionNote={actionNote}
+              onAction={onLibraryAction}
+              onGoReading={onGoReading}
+              replaying={replaying}
+            />
+          </>
         )}
         {page === "help" && (
           <>
@@ -405,11 +413,19 @@ export function PlayerTools({
               {actionNote}
             </p>
             <section className="inventory-summary">
-              <h3>{carried.length ? "Baba’s loaf" : "Your bag is empty"}</h3>
+              <h3>
+                {carried.length
+                  ? "Baba’s loaf"
+                  : manuscript
+                    ? manuscript.title
+                    : "Your bag is empty"}
+              </h3>
               <p>
                 {carried.length
                   ? `You carry ${carried.length} ${carried.length === 1 ? "loaf" : "loaves"}. Choose how to use it below.`
-                  : "Accepted items appear here. You can get a loaf from Baba at the grocery."}
+                  : manuscript
+                    ? `You carry the shared manuscript: ${manuscript.title}.`
+                    : "Accepted items appear here. You can get a loaf from Baba at the grocery."}
               </p>
               <p className="text-muted">
                 Eating or sharing uses one whole loaf. Any unpaid tab stays open; Journal keeps the
@@ -426,6 +442,7 @@ export function PlayerTools({
                 <ActionCards actions={inventoryActions} busy={busy} onAction={onAction} />
               </section>
             )}
+            <ManuscriptTools town={town} controls={manuscriptControls} />
           </>
         )}
         {page === "map" && (

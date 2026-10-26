@@ -92,7 +92,7 @@ test("holdings use a fixed GET route, 24-row pages and lossless whole-edition qu
     `https://stampchain.io/api/v2/stamps/balance/${address}?limit=24&page=1`,
   );
   assert.equal(calls[0].options.method, "GET");
-  assert.equal(calls[0].options.redirect, "error");
+  assert.equal(calls[0].options.redirect, "manual");
   assert.equal(calls[0].options.cache, "no-store");
   assert.ok(calls[0].options.signal instanceof AbortSignal);
   assert.equal(result.assets[0].quantity, "18446744073709551615");
@@ -486,7 +486,7 @@ test("media requests reject redirects and excessive advertised lengths", async (
     await assert.rejects(
       media.loadStampImage(asset(), {
         fetch: async (_url, options) => {
-          assert.equal(options.redirect, "error");
+          assert.equal(options.redirect, "manual");
           return response;
         },
       }),

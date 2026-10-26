@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { ArcadeMark, PixelUniverse } from "./ArcadeArt";
+import { TownUiIcon } from "./appearance/TownUiIcon";
 import {
   CharacterOverview,
   CharacterProgress,
@@ -24,7 +25,51 @@ import {
   SocialPanel,
 } from "./CharacterSocial";
 import { visibleSocialEvents } from "@/game/social";
-import type { Agent, AgentId, Face, PlaceId, ThinkJob, Town } from "@/game/types";
+import type { Agent, AgentId, Face, NpcId, PlaceId, ThinkJob, Town } from "@/game/types";
+import type {
+  PhysicalActionResult,
+  PhysicalDecision,
+  PhysicalUsageSample,
+} from "@/game/physical-types";
+import {
+  initializePhysicalItems,
+  physicalItem,
+  nearbyPhysicalItems,
+  applyPhysicalCommand,
+  startPhysicalSession,
+  stopPhysicalSession,
+  pausePhysicalSession,
+  nextPhysicalJob,
+  markPhysicalRequest,
+  recordPhysicalUsage,
+} from "@/game/physical-items";
+import type { ManuscriptControls } from "./ManuscriptTools";
+import { DiscussionPanel, type DiscussionControls, type DiscussionInput } from "./DiscussionPanel";
+import {
+  advanceDiscussions,
+  applyDiscussionCommand,
+  applyDiscussionResult,
+  createLibraryDiscussion,
+  discussionView,
+  isDiscussionJobFresh,
+  markDiscussionRequest,
+  nextDiscussionJob,
+  pauseDiscussion,
+  recordDiscussionUsage,
+  requestDiscussionFacilitation,
+  resumeDiscussion,
+} from "@/game/discussions";
+import {
+  DISCUSSION_RUN_INTERVAL_MS,
+  evaluateDiscussionRun,
+  markDiscussionRunStarted,
+  settleDiscussionRun,
+  startDiscussionRun,
+  stopDiscussionRun,
+  type DiscussionRunSnapshot,
+  type DiscussionRunState,
+  type DiscussionRunToken,
+} from "@/game/discussion-run";
 
 import { NPC_IDS } from "@/game/types";
 import { applyLibraryAction, libraryActions, libraryView } from "@/game/community";
@@ -49,7 +94,17 @@ import {
   spreadView,
 } from "@/game/effects";
 import { agentById } from "@/game/memory";
-import { mindAvailability, thinkTown } from "@/lib/mind.functions";
+import { thinkTown } from "@/lib/mind.functions";
+import { useMindAvailability } from "./use-mind-availability";
+import { GROK_PROVIDERS, signIn } from "@/lib/auth/client";
+import { checkGameSession } from "@/lib/auth/session-recovery";
+import { clearSignInDrafts, readSignInDrafts, saveSignInDrafts } from "./sign-in-drafts";
+import {
+  mindFailure,
+  mindFailureFromResult,
+  mindFailureMessage,
+  type MindFailure,
+} from "./mind-status";
 import { offlineResult, prepareRetrievals } from "@/game/offline";
 import { beatAt } from "@/game/plan";
 import { buildPrompt, parseMind } from "@/game/prompt";
@@ -59,6 +114,7 @@ import {
   onBoard,
   paint,
   pickAgents,
+  pickPhysicalItem,
   resetGlide,
   syncGlide,
 } from "@/game/render";
@@ -122,10 +178,44 @@ declare global {
 
 type Replay = { d: number; m: number };
 const LOCAL_DIALOGUE_KEY = "the-game-local-dialogue-only";
+const MEETING_PROTOTYPE_KEY = "the-game-library-meeting-prototype";
+const PHYSICAL_REQUEST_INTERVAL_MS = DISCUSSION_RUN_INTERVAL_MS;
+
+function physicalUsageSample(
+  response: unknown,
+  elapsedMs: number,
+  success: boolean,
+): PhysicalUsageSample {
+  const object =
+    response && typeof response === "object" ? (response as Record<string, unknown>) : null;
+  const diagnostic =
+    object?.diagnostics && typeof object.diagnostics === "object"
+      ? (object.diagnostics as Record<string, unknown>)
+      : null;
+  const count = (value: unknown) =>
+    typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
+  const input = count(diagnostic?.inputTokens),
+    output = count(diagnostic?.outputTokens);
+  return {
+    elapsedMs: Math.round(elapsedMs),
+    attempts: count(diagnostic?.attempts),
+    totalTokens:
+      count(diagnostic?.totalTokens) ?? (input !== null && output !== null ? input + output : null),
+    success,
+  };
+}
 
 function savedLocalPreference(): boolean {
   try {
     return localStorage.getItem(LOCAL_DIALOGUE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function savedMeetingPreference(): boolean {
+  try {
+    return localStorage.getItem(MEETING_PROTOTYPE_KEY) === "true";
   } catch {
     return false;
   }
@@ -233,7 +323,6 @@ export function TownApp() {
   const townRef = useRef<Town | null>(boot.current);
   const keysRef = useRef(new Set<string>());
   const speedRef = useRef<0 | 1 | 4>(townRef.current?.paused ? 0 : 1);
-  const onlineRef = useRef(true);
   const replayRef = useRef<Replay | null>(null);
   const pendingRef = useRef(false);
   const foregroundPendingRef = useRef(false);
@@ -261,6 +350,8 @@ export function TownApp() {
   const hourLock = useRef(false);
   const mounted = useRef(true);
   const runMindRef = useRef<(live: Town, job: ThinkJob) => Promise<void>>(async () => {});
+  const dispatchPhysicalRef = useRef<(live: Town) => void>(() => {});
+  const dispatchDiscussionRef = useRef<(live: Town) => void>(() => {});
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const worldFrameRef = useRef<HTMLDivElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -278,9 +369,7 @@ export function TownApp() {
   const [recoverNote, setRecoverNote] = useState("");
   const [farNote, setFarNote] = useState("");
   const [tick, setTick] = useState(0);
-  const [online, setOnline] = useState(true);
-  const [checked, setChecked] = useState(false);
-  const [lastMind, setLastMind] = useState<"online" | "offline" | null>(null);
+  const [lastMind, setLastMind] = useState<"online" | null>(null);
   const [speed, setSpeed] = useState<0 | 1 | 4>(speedRef.current);
   const [replay, setReplay] = useState<Replay | null>(null);
   const [panel, setPanel] = useState<AgentId | null>(null);
@@ -359,13 +448,121 @@ export function TownApp() {
 
   const [board, setBoard] = useState(false);
   const [thinking, setThinking] = useState("");
-  const [hiccup, setHiccup] = useState(false);
+  const [replyFailure, setReplyFailure] = useState<MindFailure | null>(null);
+  const [connectionNote, setConnectionNote] = useState("");
+  const [connectionDismissed, setConnectionDismissed] = useState(false);
+  const connectionDetailsRef = useRef<HTMLButtonElement>(null);
+  const [checkingSession, setCheckingSession] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
+  const connectionCheckRef = useRef(false);
+  const {
+    online,
+    onlineRef,
+    checked,
+    checking,
+    actionsAvailable,
+    actionsAvailableRef,
+    check: checkAI,
+  } = useMindAvailability(localOnly, replyFailure !== null);
   const [importText, setImportText] = useState<string | null>(null);
   const [importMode, setImportMode] = useState<"restore" | "fork">("restore");
   importTextRef.current = importText;
   toolsRef.current = tools;
   const [importError, setImportError] = useState("");
-  const [drafts, setDrafts] = useState<Partial<Record<AgentId, string>>>({});
+  const [drafts, setDrafts] = useState<Partial<Record<AgentId, string>>>(() => {
+    try {
+      return readSignInDrafts(townRef.current?.identityRegistry?.worldId, sessionStorage);
+    } catch {
+      return {};
+    }
+  });
+  useEffect(() => {
+    try {
+      clearSignInDrafts(sessionStorage);
+    } catch {
+      /* The in-memory draft remains available when storage is blocked. */
+    }
+  }, []);
+
+  async function checkConnection() {
+    if (connectionCheckRef.current) return;
+    connectionCheckRef.current = true;
+    setConnectionDismissed(false);
+    setCheckingSession(true);
+    setConnectionNote("Checking sign-in and AI connection.");
+    const currentTown = townRef.current;
+    const currentRequest = requestSerial.current;
+    const isCurrent = () =>
+      mounted.current &&
+      townRef.current === currentTown &&
+      requestSerial.current === currentRequest;
+    try {
+      const signedIn = await checkGameSession();
+      if (!isCurrent()) return;
+      if (!signedIn) {
+        setReplyFailure("sign-in");
+        setConnectionNote("Sign in again to reconnect. Your line is kept.");
+        setSendNote("Sign in again to reconnect. Your line is kept.");
+        return;
+      }
+      setReplyFailure((failure) => (failure === "sign-in" ? null : failure));
+      const ready = await checkAI();
+      if (!isCurrent()) return;
+      setConnectionNote(
+        ready
+          ? "Sign-in is working and AI is configured. This check does not test a reply or available limits. Your line is kept."
+          : "You are signed in, but AI is unavailable. Your line is kept; try the check again shortly.",
+      );
+      setSendNote(
+        ready
+          ? "Sign-in checked. Your line is still here; send it when you want to retry."
+          : "AI is unavailable. Your line is still here.",
+      );
+    } catch {
+      if (isCurrent())
+        setConnectionNote(
+          "The sign-in check could not finish. Check your connection and try again. Your line is kept.",
+        );
+    } finally {
+      connectionCheckRef.current = false;
+      if (mounted.current) {
+        setCheckingSession(false);
+        if (!isCurrent())
+          setConnectionNote((note) => (note === "Checking sign-in and AI connection." ? "" : note));
+      }
+    }
+  }
+
+  async function signInAgain() {
+    const live = townRef.current;
+    const provider = GROK_PROVIDERS[0];
+    if (!live?.identityRegistry || !provider || signingIn) return;
+    setSigningIn(true);
+    try {
+      saveSignInDrafts(live.identityRegistry.worldId, drafts, sessionStorage);
+      const saved = await persistTownSave(live);
+      if (!saved.ok) throw new Error("save");
+      if (!mounted.current || townRef.current !== live) throw new Error("town changed");
+      await signIn(provider.providerId, {
+        callbackURL: window.location.pathname + window.location.search,
+      });
+      if (mounted.current && townRef.current === live) {
+        // Preview popups return to this mounted page; they need no reload snapshot.
+        if (window.location.hostname.endsWith(".grok-sandbox.com"))
+          clearSignInDrafts(sessionStorage);
+        await checkConnection();
+      }
+    } catch {
+      try {
+        clearSignInDrafts(sessionStorage);
+      } catch {
+        /* The original in-memory draft remains in this tab. */
+      }
+      setConnectionNote("Sign-in could not start. Your town and line are still here; try again.");
+    } finally {
+      if (mounted.current) setSigningIn(false);
+    }
+  }
   const draft = drafts[panel ?? "player"] ?? "";
   const setDraft = (
     value: string | ((current: string) => string),
@@ -378,6 +575,24 @@ export function TownApp() {
   const [hint, setHint] = useState(townRef.current ? !townRef.current.sawHint : true);
   const [inspect, setInspect] = useState(false);
   const [sendNote, setSendNote] = useState("");
+  const [physicalNote, setPhysicalNote] = useState("");
+  const [physicalRead, setPhysicalRead] = useState<PhysicalActionResult["content"] | null>(null);
+  const [physicalSelected, setPhysicalSelected] = useState<string | null>(null);
+  const physicalSelectedRef = useRef<string | null>(null);
+  const lastMindRequestStartedAtRef = useRef<number | null>(null);
+  const [discussionEnabled, setDiscussionEnabled] = useState(savedMeetingPreference);
+  const [discussionDraft, setDiscussionDraft] = useState("");
+  const [discussionNote, setDiscussionNote] = useState("");
+  const discussionStartedRef = useRef<number | null>(null);
+  const discussionRunRef = useRef<DiscussionRunState | null>(null);
+  const [discussionAutoRunning, setDiscussionAutoRunning] = useState(false);
+  const discussionStartingRef = useRef(false);
+  const discussionStartSerialRef = useRef(0);
+  const [discussionStarting, setDiscussionStarting] = useState(false);
+  const discussionAutoNoteRef = useRef("");
+  const pauseMeetingRef = useRef<(reason: string) => void>(() => {});
+  const transportBusyRef = useRef(false);
+  const [transportBusy, setTransportBusy] = useState(false);
   const [crowd, setCrowd] = useState<AgentId[] | null>(null);
   const [exportNote, setExportNote] = useState("");
   const [saveStatus, setSaveStatus] = useState<SaveResult | null>(null);
@@ -388,6 +603,15 @@ export function TownApp() {
     void persistTownSave(live).then((result) => {
       if (mounted.current && townRef.current === live) {
         setSaveStatus(result);
+        if (!result.ok && discussionRunRef.current?.status === "running") {
+          const reason =
+            "Automatic meeting stopped because the town could not be saved. Resolve the save before starting again.";
+          discussionRunRef.current = stopDiscussionRun(discussionRunRef.current, reason);
+          discussionAutoNoteRef.current = reason;
+          setDiscussionAutoRunning(false);
+          setDiscussionNote(reason);
+          pauseDiscussion(live, reason);
+        }
         if (!result.ok && result.reason === "conflict") {
           speedRef.current = 0;
           live.paused = true;
@@ -396,6 +620,33 @@ export function TownApp() {
         }
       }
     });
+  }
+
+  function requestMind(kind: ThinkJob["kind"], user: string) {
+    if (transportBusyRef.current)
+      return Promise.reject(new Error("Previous AI request is still settling"));
+    transportBusyRef.current = true;
+    lastMindRequestStartedAtRef.current = performance.now();
+    setTransportBusy(true);
+    const settled = () => {
+      transportBusyRef.current = false;
+      if (mounted.current) setTransportBusy(false);
+    };
+    try {
+      return thinkTown({ data: { kind, user } }).then(
+        (result) => {
+          settled();
+          return result;
+        },
+        (error: unknown) => {
+          settled();
+          throw error;
+        },
+      );
+    } catch (error) {
+      settled();
+      return Promise.reject(error);
+    }
   }
 
   async function acceptImportedTown(next: Town, intent: "replace" | "load" = "replace") {
@@ -412,6 +663,7 @@ export function TownApp() {
       }
       setSaveStatus(result);
     } else setSaveStatus(null);
+    stopAutomaticDiscussion("The town changed. Start automatic meeting decisions explicitly.");
     requestSerial.current += 1;
     pendingRef.current = false;
     foregroundPendingRef.current = false;
@@ -429,7 +681,19 @@ export function TownApp() {
     setSpeed(speedRef.current);
     setHint(!next.sawHint);
     setDrafts({});
+    setConnectionDismissed(false);
+    setConnectionNote("");
     setSendNote("");
+    setPhysicalNote("");
+    setPhysicalRead(null);
+    setPhysicalSelected(null);
+    physicalSelectedRef.current = null;
+    setDiscussionEnabled(savedMeetingPreference());
+    setDiscussionDraft("");
+    setDiscussionNote("");
+    discussionStartedRef.current = null;
+    setReplyFailure(null);
+    setLastMind(null);
     setInspect(false);
     resetGlide(next);
     setImportText(null);
@@ -479,6 +743,362 @@ export function TownApp() {
     setSendNote(result.reply);
     setTick((n) => n + 1);
   }
+
+  function inspectManuscript(id: string) {
+    const live = townRef.current;
+    if (!live || replayRef.current || !physicalItem(live, id)) return;
+    physicalSelectedRef.current = id;
+    setPhysicalSelected(id);
+    openTools("inventory");
+  }
+
+  function changeManuscript(decision?: PhysicalDecision) {
+    const live = townRef.current;
+    if (!live || replayRef.current || pendingRef.current || importTextRef.current !== null) return;
+    let result: { ok: boolean; message: string };
+    if (decision) {
+      const applied = applyPhysicalCommand(live, "player", decision);
+      if (decision.kind === "read" && applied.ok && applied.content)
+        setPhysicalRead(applied.content);
+      result = applied;
+    } else result = initializePhysicalItems(live);
+    setPhysicalNote(result.message);
+    persistTown(live);
+    setTick((n) => n + 1);
+  }
+
+  function watchManuscript(actor: NpcId) {
+    const live = townRef.current;
+    if (
+      !live ||
+      replayRef.current ||
+      pendingRef.current ||
+      importTextRef.current !== null ||
+      !actionsAvailableRef.current ||
+      localOnlyRef.current
+    )
+      return;
+    if (!nearbyPhysicalItems(live, actor).length) {
+      setPhysicalNote("Invite this resident when they are beside or holding the manuscript.");
+      return;
+    }
+    const result = startPhysicalSession(live, actor, 8);
+    setPhysicalNote(result.message);
+    if (result.ok) {
+      setRate(1);
+      setWatching(actor);
+      watchingRef.current = actor;
+      closeTools();
+    }
+    persistTown(live);
+    setTick((n) => n + 1);
+  }
+
+  function stopManuscript() {
+    const live = townRef.current;
+    if (!live || replayRef.current) return;
+    stopPhysicalSession(live);
+    setPhysicalNote("Resident trial stopped. The manuscript stays where it is.");
+    persistTown(live);
+    setTick((n) => n + 1);
+  }
+
+  function stopAutomaticDiscussion(reason: string) {
+    discussionStartSerialRef.current += 1;
+    discussionRunRef.current = stopDiscussionRun(discussionRunRef.current, reason);
+    discussionAutoNoteRef.current = reason;
+    if (mounted.current) setDiscussionAutoRunning(false);
+  }
+
+  function pauseMeeting(reason: string) {
+    stopAutomaticDiscussion(reason);
+    const live = townRef.current;
+    if (!live) return;
+    const pending = activeJobRef.current;
+    if (pending?.town === live && pending.job.kind === "act" && pending.job.task === "discussion") {
+      recordDiscussionUsage(
+        live,
+        pending.job,
+        physicalUsageSample(
+          null,
+          discussionStartedRef.current === null
+            ? 0
+            : performance.now() - discussionStartedRef.current,
+          false,
+        ),
+      );
+      requestSerial.current += 1;
+      activeJobRef.current = null;
+      pendingRef.current = false;
+      foregroundPendingRef.current = false;
+      discussionStartedRef.current = null;
+      setThinking("");
+    }
+    pauseDiscussion(live, reason);
+    setDiscussionNote(reason);
+    persistTown(live);
+    setTick((n) => n + 1);
+  }
+  pauseMeetingRef.current = pauseMeeting;
+
+  function changeDiscussion(decision: DiscussionInput) {
+    const live = townRef.current;
+    if (!live || !discussionEnabled || replayRef.current || importTextRef.current !== null) return;
+    advanceDiscussions(live);
+    const view = discussionView(live);
+    if (!view.meeting) return;
+    const result = applyDiscussionCommand(live, "player", {
+      ...decision,
+      meetingId: view.meeting.id,
+      expectedRevision: view.actorRevision,
+      commandId: crypto.randomUUID(),
+    });
+    setDiscussionNote(result.message);
+    if (result.ok && decision.kind === "speak")
+      setDiscussionDraft((current) => (current.trim() === decision.text.trim() ? "" : current));
+    if (result.ok) persistTown(live);
+    setTick((n) => n + 1);
+  }
+
+  function proposeDiscussion(topic: string, facilitator: "northern" | "arwyn") {
+    const live = townRef.current;
+    if (
+      !live ||
+      !discussionEnabled ||
+      pendingRef.current ||
+      replayRef.current ||
+      importTextRef.current !== null
+    )
+      return;
+    const result = createLibraryDiscussion(live, topic, facilitator);
+    setDiscussionNote(result.message);
+    if (result.ok) persistTown(live);
+    setTick((n) => n + 1);
+  }
+
+  async function checkDiscussionAvailability() {
+    if (pendingRef.current || document.visibilityState !== "visible") return;
+    const ready = await checkAI();
+    setDiscussionNote(
+      localOnlyRef.current
+        ? "Local dialogue is selected. Turn it off in Help before requesting a meeting decision."
+        : actionsAvailableRef.current && ready
+          ? "Resident AI actions are configured. Request a decision when ready."
+          : "Resident AI actions are unavailable. The meeting waits without generating dialogue.",
+    );
+  }
+
+  function discussionRunSnapshot(live: Town): DiscussionRunSnapshot {
+    const meeting =
+      [...(live.discussions?.sessions ?? [])]
+        .reverse()
+        .find((session) => session.status !== "closed") ?? live.discussions?.sessions.at(-1);
+    const job = nextDiscussionJob(live);
+    return {
+      town: live,
+      townIdentity: live.identityRegistry?.worldId ?? null,
+      meeting: meeting
+        ? {
+            id: meeting.id,
+            epoch: meeting.epoch,
+            status: meeting.status,
+            decisions: meeting.decisions,
+            utteranceCount: meeting.utterances.length,
+            floorActor: meeting.floor?.actor ?? null,
+          }
+        : null,
+      job,
+      jobFresh: Boolean(job && isDiscussionJobFresh(live, job)),
+      visible: document.visibilityState === "visible",
+      replaying: replayRef.current !== null,
+      importing: importTextRef.current !== null,
+      localOnly: localOnlyRef.current,
+      enabled: discussionEnabled,
+      available: actionsAvailableRef.current && onlineRef.current,
+      busy: pendingRef.current || transportBusyRef.current,
+      lastRequestStartedAt: lastMindRequestStartedAtRef.current,
+      waitingForArrival:
+        meeting?.status === "gathering" &&
+        meeting.members.some(
+          (member) => member.id !== "player" && member.choice === "accepted" && !member.arrived,
+        ),
+    };
+  }
+
+  async function startAutomaticDiscussion() {
+    const live = townRef.current;
+    if (
+      !live ||
+      discussionStartingRef.current ||
+      discussionRunRef.current?.status === "running" ||
+      pendingRef.current ||
+      transportBusyRef.current ||
+      replayRef.current ||
+      importTextRef.current !== null ||
+      document.visibilityState !== "visible" ||
+      !discussionEnabled ||
+      !actionsAvailableRef.current ||
+      !onlineRef.current ||
+      localOnlyRef.current
+    )
+      return;
+    if (saveStatus && !saveStatus.ok) {
+      setDiscussionNote(
+        "Resolve the town save problem before starting automatic meeting decisions.",
+      );
+      return;
+    }
+    const startSerial = ++discussionStartSerialRef.current;
+    discussionStartingRef.current = true;
+    setDiscussionStarting(true);
+    try {
+      if (discussionView(live).meeting?.status === "paused") {
+        const resumed = resumeDiscussion(live);
+        if (!resumed.ok) {
+          setDiscussionNote(resumed.message);
+          return;
+        }
+      }
+      advanceDiscussions(live);
+      // One new invitation to facilitate belongs to this explicit Start only.
+      requestDiscussionFacilitation(live);
+      const expected = discussionRunSnapshot(live).meeting;
+      if (!expected) return;
+      const saved = await persistTownSave(live);
+      if (
+        !mounted.current ||
+        townRef.current !== live ||
+        discussionStartSerialRef.current !== startSerial
+      )
+        return;
+      setSaveStatus(saved);
+      if (!saved.ok) {
+        const reason = "The town could not be saved. Automatic meeting decisions have not started.";
+        pauseDiscussion(live, reason);
+        setDiscussionNote(reason);
+        return;
+      }
+      const snapshot = discussionRunSnapshot(live);
+      if (
+        snapshot.meeting?.id !== expected.id ||
+        snapshot.meeting.epoch !== expected.epoch ||
+        snapshot.busy ||
+        !snapshot.visible ||
+        snapshot.replaying ||
+        snapshot.importing ||
+        snapshot.localOnly ||
+        !snapshot.available ||
+        !snapshot.enabled
+      )
+        return;
+      discussionRunRef.current = startDiscussionRun(
+        snapshot,
+        performance.now(),
+        discussionRunRef.current,
+      );
+      const running = discussionRunRef.current.status === "running";
+      setDiscussionAutoRunning(running);
+      const note = running
+        ? "Automatic meeting started. Town time runs at normal speed; residents choose their own actions within the existing free AI allowance."
+        : (discussionRunRef.current.reason ?? "No resident decision is ready.");
+      discussionAutoNoteRef.current = note;
+      setDiscussionNote(note);
+      setTick((n) => n + 1);
+      if (running) {
+        setRate(1);
+        dispatchDiscussionRef.current(live);
+      }
+    } catch {
+      pauseDiscussion(
+        live,
+        "Automatic meeting could not start safely. Check the saved town before trying again.",
+      );
+      setDiscussionNote("Automatic meeting could not start. No substitute dialogue was generated.");
+    } finally {
+      discussionStartingRef.current = false;
+      if (mounted.current) setDiscussionStarting(false);
+    }
+  }
+
+  dispatchDiscussionRef.current = (live: Town) => {
+    if (discussionRunRef.current?.status !== "running") return;
+    advanceDiscussions(live);
+    const decision = evaluateDiscussionRun(
+      discussionRunRef.current,
+      discussionRunSnapshot(live),
+      performance.now(),
+    );
+    discussionRunRef.current = decision.state;
+    if (decision.kind === "stopped") {
+      stopAutomaticDiscussion(decision.reason);
+      setDiscussionNote(decision.reason);
+      return;
+    }
+    if (decision.kind === "wait") {
+      const note =
+        decision.waitingFor === "pacing"
+          ? "Automatic meeting is waiting between free AI requests (up to 31 seconds). No request is used while waiting."
+          : decision.reason;
+      if (discussionAutoNoteRef.current !== note && decision.waitingFor !== "request") {
+        discussionAutoNoteRef.current = note;
+        setDiscussionNote(note);
+      }
+      return;
+    }
+    void runMindRef.current(live, decision.job);
+  };
+
+  function requestDiscussionDecision() {
+    const live = townRef.current;
+    if (
+      !live ||
+      !discussionEnabled ||
+      discussionStartingRef.current ||
+      discussionRunRef.current?.status === "running" ||
+      pendingRef.current ||
+      transportBusyRef.current ||
+      replayRef.current ||
+      importTextRef.current !== null ||
+      document.visibilityState !== "visible"
+    )
+      return;
+    if (!actionsAvailableRef.current || !onlineRef.current || localOnlyRef.current) {
+      setDiscussionNote(
+        "Resident AI actions are unavailable. The meeting waits; no local reply is substituted.",
+      );
+      return;
+    }
+    advanceDiscussions(live);
+    const job = nextDiscussionJob(live);
+    if (!job) {
+      setDiscussionNote(
+        "No resident decision is ready. Residents may need to arrive, read the invitation or receive a turn.",
+      );
+      return;
+    }
+    void runMindRef.current(live, job);
+  }
+
+  dispatchPhysicalRef.current = (live: Town) => {
+    if (
+      pendingRef.current ||
+      transportBusyRef.current ||
+      replayRef.current ||
+      importTextRef.current !== null ||
+      document.visibilityState !== "visible"
+    )
+      return;
+    const job = nextPhysicalJob(live);
+    if (!job) return;
+    if (!actionsAvailableRef.current || localOnlyRef.current) {
+      pausePhysicalSession(live, "AI actions are unavailable. Trial paused.");
+      setPhysicalNote("AI actions are unavailable. Trial paused.");
+      persistTown(live);
+      setTick((n) => n + 1);
+      return;
+    }
+    void runMindRef.current(live, job);
+  };
 
   function openTools(page: ToolPage | "stamps" | "agent-wallets") {
     setSocialOpen(false);
@@ -544,59 +1164,29 @@ export function TownApp() {
     });
   }
 
-  function localReplyNow() {
-    const current = activeJobRef.current;
+  function cancelAIRequest() {
     requestSerial.current += 1;
     activeJobRef.current = null;
     pendingRef.current = false;
     foregroundPendingRef.current = false;
     setThinking("");
-    if (!current || townRef.current !== current.town || current.job.kind !== "player") return;
-    if (replayRef.current !== null) {
-      setSendNote("Return to now to send your line again; your draft is still here.");
-      return;
-    }
-    const player = agentById(current.town, "player");
-    const resident = agentById(current.town, current.job.agentId);
-    if (!inTalkRange(player.tile.x, player.tile.y, resident.tile.x, resident.tile.y)) {
-      setSendNote(
-        "You walked out of earshot. Walk closer to send your line again; your draft is still here.",
-      );
-      return;
-    }
-    const job = current.job;
-    try {
-      const before = playerChatIds(agentById(current.town, job.agentId).memories ?? []);
-      applyResult(current.town, offlineResult(current.town, job));
-      const landed = exchangeLanded(
-        before,
-        playerChatIds(agentById(current.town, job.agentId).memories ?? []),
-      );
-      // The resident's own draft remains the same context even with their card closed.
-      setDraft((text) => nextDraft(text, job.text, true, landed), job.agentId);
-      if (panelRef.current === job.agentId)
-        setSendNote(
-          landed
-            ? "They answered with local dialogue."
-            : "That did not land. Your line is still here.",
-        );
-      if (landed) {
-        current.town.guide = 3;
-        current.town.sawHint = true;
-        setHint(false);
-      }
-      setLastMind("offline");
-      persistTown(current.town);
-      setTick((n) => n + 1);
-    } catch {
-      setSendNote("That did not land. Your line is still here.");
-    }
+    setSendNote("AI request cancelled. Your line is still here; no local reply was substituted.");
   }
 
   function setLocalPreference(value: boolean) {
     localOnlyRef.current = value;
     setLocalOnly(value);
-    if (value) localReplyNow();
+    if (value) {
+      const live = townRef.current;
+      if (live && discussionView(live).meeting && discussionView(live).meeting?.status !== "closed")
+        pauseMeeting("Meeting decisions paused while local dialogue is selected.");
+      if (live?.physicalItems?.session?.enabled) {
+        pausePhysicalSession(live, "Resident trial paused while local dialogue is selected.");
+        persistTown(live);
+      }
+      cancelAIRequest();
+      setReplyFailure(null);
+    }
     try {
       localStorage.setItem(LOCAL_DIALOGUE_KEY, String(value));
       setPreferenceNote("Dialogue preference saved in this browser.");
@@ -636,6 +1226,13 @@ export function TownApp() {
   const importing = importText !== null;
   useEffect(() => {
     if (!importing) return;
+    const live = townRef.current;
+    if (live && discussionView(live).meeting)
+      pauseMeetingRef.current("Meeting paused while reviewing an import.");
+    if (live?.physicalItems?.session?.enabled) {
+      pausePhysicalSession(live, "Resident trial paused while reviewing an import.");
+      persistTown(live);
+    }
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const canvas = canvasRef.current;
     if (routeRef.current) setFarNote("Destination walk stopped while reviewing an import.");
@@ -652,13 +1249,17 @@ export function TownApp() {
   }, [importing]);
 
   useEffect(() => {
-    onlineRef.current = online;
-  }, [online]);
-  useEffect(() => {
     replayRef.current = replay;
     keysRef.current.clear();
     stepInputRef.current = null;
     if (replay) {
+      const live = townRef.current;
+      if (live && discussionView(live).meeting)
+        pauseMeetingRef.current("Meeting paused for replay. Return to now and resume explicitly.");
+      if (live?.physicalItems?.session?.enabled) {
+        pausePhysicalSession(live, "Resident trial paused for replay.");
+        persistTown(live);
+      }
       const pendingPlayer = activeJobRef.current?.job.kind === "player";
       requestSerial.current += 1;
       activeJobRef.current = null;
@@ -677,29 +1278,32 @@ export function TownApp() {
   }, [replay]);
 
   useEffect(() => {
-    let gone = false;
-    mindAvailability()
-      .then((res) => {
-        if (gone) return;
-        setOnline(res.online);
-        onlineRef.current = res.online;
-        setChecked(true);
-      })
-      .catch(() => {
-        if (gone) return;
-        setOnline(false);
-        onlineRef.current = false;
-        setChecked(true);
-      });
-    return () => {
-      gone = true;
+    const hidden = () => {
+      if (document.visibilityState !== "visible") {
+        const pending = activeJobRef.current;
+        if (
+          discussionStartingRef.current ||
+          discussionRunRef.current?.status === "running" ||
+          (pending?.job.kind === "act" && pending.job.task === "discussion")
+        )
+          pauseMeetingRef.current(
+            "Meeting paused while the browser is hidden. Resume explicitly to request another decision.",
+          );
+      }
     };
+    document.addEventListener("visibilitychange", hidden);
+    return () => document.removeEventListener("visibilitychange", hidden);
   }, []);
 
   useEffect(() => {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      discussionStartSerialRef.current += 1;
+      discussionRunRef.current = stopDiscussionRun(
+        discussionRunRef.current,
+        "This page was closed.",
+      );
     };
   }, []);
 
@@ -732,15 +1336,276 @@ export function TownApp() {
     return () => observer.disconnect();
   }, [phase]);
 
-  useEffect(() => {
-    if (!hiccup) return;
-    const id = window.setTimeout(() => setHiccup(false), 4000);
-    return () => window.clearTimeout(id);
-  }, [hiccup]);
-
   runMindRef.current = async (live, job) => {
-    if (townRef.current !== live || pendingRef.current) return;
+    if (townRef.current !== live || pendingRef.current || transportBusyRef.current) return;
     if (localOnlyRef.current) return;
+    const automaticMeeting = discussionRunRef.current?.status === "running";
+    if (
+      (discussionStartingRef.current || automaticMeeting) &&
+      job.kind !== "player" &&
+      !(automaticMeeting && job.kind === "act" && job.task === "discussion")
+    )
+      return;
+    if (job.kind === "act" && job.task === "discussion") {
+      if (
+        document.visibilityState !== "visible" ||
+        !actionsAvailableRef.current ||
+        !onlineRef.current
+      )
+        return;
+      const previousStart = lastMindRequestStartedAtRef.current;
+      if (
+        previousStart !== null &&
+        performance.now() - previousStart < DISCUSSION_RUN_INTERVAL_MS
+      ) {
+        setDiscussionNote(
+          "Waiting between free AI requests (up to 31 seconds). No request is used while waiting.",
+        );
+        return;
+      }
+      const automaticSnapshot =
+        discussionRunRef.current?.status === "running" ? discussionRunSnapshot(live) : null;
+      if (
+        automaticSnapshot &&
+        evaluateDiscussionRun(discussionRunRef.current, automaticSnapshot, performance.now())
+          .kind !== "ready"
+      )
+        return;
+      if (!markDiscussionRequest(live, job)) return;
+      pendingRef.current = true;
+      foregroundPendingRef.current = false;
+      activeJobRef.current = { town: live, job };
+      const serial = ++requestSerial.current;
+      const started = performance.now();
+      discussionStartedRef.current = started;
+      let timed: number | undefined;
+      let response: unknown;
+      let counted = false;
+      let committed = false;
+      let automaticToken: DiscussionRunToken | null = null;
+      let underlyingSettled = false;
+      let logicalSettled = false;
+      const settleAutomaticRequest = () => {
+        if (!automaticToken || !underlyingSettled || !logicalSettled) return;
+        discussionRunRef.current = settleDiscussionRun(
+          discussionRunRef.current,
+          automaticToken,
+          committed,
+        );
+        if (mounted.current && discussionRunRef.current?.status !== "running")
+          setDiscussionAutoRunning(false);
+      };
+      const fresh = () =>
+        mounted.current &&
+        townRef.current === live &&
+        requestSerial.current === serial &&
+        replayRef.current === null &&
+        importTextRef.current === null &&
+        document.visibilityState === "visible" &&
+        !localOnlyRef.current &&
+        isDiscussionJobFresh(live, job);
+      discussionAutoNoteRef.current = "";
+      setThinking("discussion");
+      setDiscussionNote(
+        `Waiting for ${agentById(live, job.agentId).name}'s decision. No words have been added yet.`,
+      );
+      persistTown(live);
+      setTick((n) => n + 1);
+      try {
+        const prompt = buildPrompt(live, job);
+        const res = await new Promise<Awaited<ReturnType<typeof thinkTown>>>((resolve, reject) => {
+          timed = window.setTimeout(() => reject(new Error("timeout")), 15_000);
+          if (!fresh()) throw new Error("The meeting changed before dispatch");
+          if (automaticSnapshot) {
+            const marked = markDiscussionRunStarted(
+              discussionRunRef.current,
+              automaticSnapshot,
+              performance.now(),
+            );
+            if (!marked) throw new Error("Automatic meeting was interrupted before dispatch");
+            discussionRunRef.current = marked.state;
+            automaticToken = marked.token;
+          }
+          requestMind("act", prompt).then(
+            (result) => {
+              underlyingSettled = true;
+              settleAutomaticRequest();
+              resolve(result);
+            },
+            (error: unknown) => {
+              underlyingSettled = true;
+              settleAutomaticRequest();
+              reject(error);
+            },
+          );
+        });
+        response = res;
+        if (!fresh()) return;
+        if (!res.ok || res.text.length > 20_000) throw new Error("unavailable");
+        const parsed = parseMind(job, res.text);
+        if (!parsed || parsed.kind !== "act" || parsed.task !== "discussion")
+          throw new Error("invalid discussion decision");
+        advanceDiscussions(live);
+        const result = applyDiscussionResult(live, parsed);
+        recordDiscussionUsage(
+          live,
+          job,
+          physicalUsageSample(res, performance.now() - started, result.ok),
+        );
+        counted = true;
+        committed = result.ok;
+        setDiscussionNote(result.message);
+        if (!result.ok) pauseDiscussion(live, result.message);
+      } catch {
+        if (fresh()) {
+          if (!counted) {
+            recordDiscussionUsage(
+              live,
+              job,
+              physicalUsageSample(response, performance.now() - started, false),
+            );
+            counted = true;
+          }
+          pauseDiscussion(
+            live,
+            "Resident decision failed or timed out. Meeting paused; no local dialogue was substituted.",
+          );
+          setDiscussionNote(
+            "Resident decision failed or timed out. Your draft remains here. Resume and explicitly request another decision.",
+          );
+        }
+      } finally {
+        if (timed) window.clearTimeout(timed);
+        logicalSettled = true;
+        if (!committed && automaticSnapshot)
+          stopAutomaticDiscussion(
+            "The resident decision stopped. Check the meeting and start again explicitly.",
+          );
+        settleAutomaticRequest();
+        if (requestSerial.current === serial) {
+          if (!counted)
+            recordDiscussionUsage(
+              live,
+              job,
+              physicalUsageSample(response, performance.now() - started, false),
+            );
+          const currentMeeting = discussionView(live).meeting;
+          if (
+            !committed &&
+            currentMeeting?.id === job.meetingId &&
+            currentMeeting.status !== "closed" &&
+            currentMeeting.status !== "paused"
+          ) {
+            pauseDiscussion(
+              live,
+              "The resident decision ended before it could be accepted. Resume explicitly.",
+            );
+            setDiscussionNote(
+              "That resident decision is no longer current. The meeting is paused; no dialogue was added.",
+            );
+          }
+          activeJobRef.current = null;
+          pendingRef.current = false;
+          foregroundPendingRef.current = false;
+          discussionStartedRef.current = null;
+          if (townRef.current === live) persistTown(live);
+          if (mounted.current) {
+            setThinking("");
+            setTick((n) => n + 1);
+          }
+        }
+      }
+      return;
+    }
+    if (job.kind === "act") {
+      if (document.visibilityState !== "visible" || !actionsAvailableRef.current) return;
+      const previousStart = lastMindRequestStartedAtRef.current;
+      if (
+        previousStart !== null &&
+        performance.now() - previousStart < PHYSICAL_REQUEST_INTERVAL_MS
+      ) {
+        const note =
+          "Waiting between free AI requests (up to 31 seconds). No request is used while waiting.";
+        if (physicalNote !== note) setPhysicalNote(note);
+        return;
+      }
+      if (!markPhysicalRequest(live, job)) return;
+      pendingRef.current = true;
+      activeJobRef.current = { town: live, job };
+      const serial = ++requestSerial.current;
+      const started = performance.now();
+      let timed: number | undefined;
+      let response: unknown;
+      let counted = false;
+      const fresh = () => {
+        const session = live.physicalItems?.session;
+        return (
+          mounted.current &&
+          townRef.current === live &&
+          requestSerial.current === serial &&
+          replayRef.current === null &&
+          importTextRef.current === null &&
+          !localOnlyRef.current &&
+          session?.enabled === true &&
+          session.actor === job.agentId &&
+          session.revision === job.sessionRevision
+        );
+      };
+      setThinking("act");
+      persistTown(live);
+      setTick((n) => n + 1);
+      try {
+        const prompt = buildPrompt(live, job);
+        const res = await new Promise<Awaited<ReturnType<typeof thinkTown>>>((resolve, reject) => {
+          timed = window.setTimeout(() => reject(new Error("timeout")), 15_000);
+          requestMind(job.kind, prompt).then(resolve, reject);
+        });
+        response = res;
+        if (!fresh()) return;
+        if (!res.ok || res.text.length > 20_000) throw new Error("unavailable");
+        const parsed = parseMind(job, res.text);
+        if (
+          !parsed ||
+          parsed.kind !== "act" ||
+          parsed.task === "discussion" ||
+          parsed.agentId !== job.agentId ||
+          parsed.sessionRevision !== job.sessionRevision
+        )
+          throw new Error("invalid action");
+        recordPhysicalUsage(live, job, physicalUsageSample(res, performance.now() - started, true));
+        counted = true;
+        const result = applyPhysicalCommand(live, parsed.agentId, parsed.decision);
+        setPhysicalNote(result.message);
+        if (!result.ok) pausePhysicalSession(live, result.message);
+      } catch {
+        if (fresh()) {
+          if (!counted)
+            recordPhysicalUsage(
+              live,
+              job,
+              physicalUsageSample(response, performance.now() - started, false),
+            );
+          pausePhysicalSession(
+            live,
+            "AI action unavailable. Trial paused; no local reply was substituted.",
+          );
+          setPhysicalNote("AI action unavailable. Trial paused.");
+        }
+      } finally {
+        if (timed) window.clearTimeout(timed);
+        if (requestSerial.current === serial) {
+          activeJobRef.current = null;
+          pendingRef.current = false;
+          foregroundPendingRef.current = false;
+          if (townRef.current === live) persistTown(live);
+          if (mounted.current) {
+            setThinking("");
+            setTick((n) => n + 1);
+          }
+        }
+      }
+      return;
+    }
     pendingRef.current = true;
     foregroundPendingRef.current = job.kind === "player";
     activeJobRef.current = { town: live, job };
@@ -777,7 +1642,7 @@ export function TownApp() {
     let timed: number | undefined;
     let applied = false;
     let landed = false;
-    let usedLocalReply = false;
+    let failed: MindFailure | null = null;
     const mark = () =>
       job.kind === "player" ? playerChatIds(agentById(live, job.agentId).memories ?? []) : [];
     try {
@@ -793,45 +1658,39 @@ export function TownApp() {
       };
       const res = await new Promise<Awaited<ReturnType<typeof thinkTown>>>((resolve, reject) => {
         timed = window.setTimeout(() => reject(new Error("timeout")), 15_000);
-        thinkTown({ data: { kind: job.kind, user: prompt } }).then(resolve, reject);
+        requestMind(job.kind, prompt).then(resolve, reject);
       });
       if (!fresh()) return;
-      if (!res.ok) throw new Error(res.error);
+      if (!res.ok) {
+        failed = mindFailureFromResult(res);
+        throw new Error("AI request failed");
+      }
       if (res.text.length > 20_000) throw new Error("huge");
       const parsed = parseMind(job, res.text);
-      try {
-        const before = mark();
-        if (parsed) applyResult(live, parsed);
-        else {
-          usedLocalReply = true;
-          applyResult(live, offlineResult(live, job));
-        }
-        if (job.kind === "player") landed = exchangeLanded(before, mark());
-        applied = true;
-        if (mounted.current) {
-          setLastMind(parsed ? "online" : "offline");
-          if (!parsed) setHiccup(true);
-        }
-      } catch {
-        applied = true;
-        if (mounted.current) {
-          setLastMind("offline");
-          setHiccup(true);
-        }
+      if (!parsed) throw new Error("invalid");
+      const before = mark();
+      applyResult(live, parsed);
+      applied = true;
+      if (job.kind === "player") {
+        landed = exchangeLanded(before, mark());
+        if (!landed) throw new Error("invalid");
+        setLastMind("online");
+        setReplyFailure(null);
       }
-    } catch {
-      if (fresh() && !applied) {
-        try {
-          const before = mark();
-          usedLocalReply = true;
-          applyResult(live, offlineResult(live, job));
-          if (job.kind === "player") landed = exchangeLanded(before, mark());
-        } catch {
-          /* The clock must resume even if the fallback cannot land. */
-        }
-        if (mounted.current) {
-          setLastMind("offline");
-          setHiccup(true);
+    } catch (error) {
+      if (fresh()) {
+        if (job.kind === "player") {
+          failed ??= mindFailure(error);
+          setConnectionDismissed(false);
+          setReplyFailure(failed);
+          // Keep the player's draft. A failed model request must never invent
+          // an authored conversation or silently switch this browser to local.
+        } else if (!applied) {
+          try {
+            applyResult(live, offlineResult(live, job));
+          } catch {
+            /* Background simulation may continue without a generated result. */
+          }
         }
       }
     } finally {
@@ -850,10 +1709,10 @@ export function TownApp() {
             if (same) {
               setSendNote(
                 landed
-                  ? usedLocalReply
-                    ? "They answered with local dialogue."
-                    : "They heard you."
-                  : "That did not land. Your line is still here.",
+                  ? "They heard you."
+                  : failed
+                    ? `${mindFailureMessage(failed)} Your line is still here; no local reply was substituted.`
+                    : "That did not land. Your line is still here.",
               );
             }
             if (landed && townRef.current === live && (live.guide ?? 0) < 3) {
@@ -956,8 +1815,12 @@ export function TownApp() {
       const live = townRef.current;
       if (!live || !job) return false;
       const minds =
-        onlineRef.current && !localOnlyRef.current && document.visibilityState === "visible";
-      if (minds && !pendingRef.current) {
+        onlineRef.current &&
+        !localOnlyRef.current &&
+        document.visibilityState === "visible" &&
+        !discussionStartingRef.current &&
+        discussionRunRef.current?.status !== "running";
+      if (minds && !pendingRef.current && !transportBusyRef.current) {
         void runMindRef.current(live, job);
         return true;
       }
@@ -1089,6 +1952,15 @@ export function TownApp() {
         if (live && canvas) {
           moveCool = Math.max(0, moveCool - dt);
           stepPlayer();
+          dispatchDiscussionRef.current(live);
+          if (
+            speedRef.current > 0 &&
+            replayRef.current === null &&
+            importTextRef.current === null &&
+            !discussionStartingRef.current &&
+            discussionRunRef.current?.status !== "running"
+          )
+            dispatchPhysicalRef.current(live);
           if (
             replayRef.current === null &&
             importTextRef.current === null &&
@@ -1105,7 +1977,8 @@ export function TownApp() {
               const minds =
                 onlineRef.current &&
                 !localOnlyRef.current &&
-                document.visibilityState === "visible";
+                document.visibilityState === "visible" &&
+                discussionRunRef.current?.status !== "running";
               let job: ThinkJob | null = null;
               try {
                 job = stepMinute(live, minds);
@@ -1157,6 +2030,7 @@ export function TownApp() {
               positions,
               replay: replayRef.current !== null,
               selected: panelRef.current ?? watchingRef.current,
+              selectedItem: physicalSelectedRef.current,
               stampAppearance: stampAppearanceRef.current,
               readingMarker: readingDestinationRef.current?.target,
               waypoint:
@@ -1185,6 +2059,10 @@ export function TownApp() {
     raf = requestAnimationFrame(loop);
 
     const onLeave = () => {
+      if (discussionStartingRef.current || discussionRunRef.current?.status === "running")
+        pauseMeetingRef.current(
+          "Automatic meeting stopped when leaving this page. Start again explicitly.",
+        );
       if (townRef.current) persistTown(townRef.current);
     };
     const onHide = () => {
@@ -1250,7 +2128,7 @@ export function TownApp() {
       delete window.__controlsTest;
       delete window.__game;
     };
-  }, [phase]);
+  }, [phase, onlineRef]);
 
   async function enter(event: React.FormEvent) {
     event.preventDefault();
@@ -1284,6 +2162,11 @@ export function TownApp() {
   }
 
   function setRate(next: 0 | 1 | 4) {
+    if (
+      next === 0 &&
+      (discussionStartingRef.current || discussionRunRef.current?.status === "running")
+    )
+      pauseMeeting("Automatic meeting stopped when town time was paused. Start again explicitly.");
     speedRef.current = next;
     setSpeed(next);
     const live = townRef.current;
@@ -1295,6 +2178,8 @@ export function TownApp() {
   function nextHour() {
     const live = townRef.current;
     if (!live || foregroundPendingRef.current || hourLock.current) return;
+    if (discussionStartingRef.current || discussionRunRef.current?.status === "running")
+      pauseMeeting("Automatic meeting stopped before advancing an hour. Start again explicitly.");
     hourLock.current = true;
     replayRef.current = null;
     setReplay(null);
@@ -1316,7 +2201,8 @@ export function TownApp() {
         /* keep the hour */
       }
       resetGlide(live);
-      if (job && minds && !pendingRef.current) void runMindRef.current(live, job);
+      if (job && minds && !pendingRef.current && !transportBusyRef.current)
+        void runMindRef.current(live, job);
       else if (job) {
         try {
           applyResult(live, offlineResult(live, job));
@@ -1369,6 +2255,11 @@ export function TownApp() {
     const playerPos = positions.player ?? { x: 0, y: 0 };
     const focus = watchingRef.current ? (positions[watchingRef.current] ?? playerPos) : playerPos;
     const cam = cameraFor(focus.x, focus.y, rect.width, rect.height);
+    const item = pickPhysicalItem(sx, sy, cam.camX, cam.camY, live);
+    if (item) {
+      inspectManuscript(item);
+      return;
+    }
     const hit = pickAgents(sx, sy, cam.camX, cam.camY, positions);
     if (hit.length > 1) {
       setCrowd(hit);
@@ -1393,8 +2284,15 @@ export function TownApp() {
   }
 
   async function sendLine() {
+    if (signingIn) return;
     const live = townRef.current;
     const who = panel;
+    if (transportBusyRef.current) {
+      setSendNote(
+        "The previous AI request is still settling. Your line is kept; send it when the request finishes.",
+      );
+      return;
+    }
     if (
       !live ||
       !who ||
@@ -1405,6 +2303,7 @@ export function TownApp() {
       return;
     const text = draft.trim().slice(0, 400);
     if (!text) return;
+    setConnectionNote("");
     const player = agentById(live, "player");
     const other = agentById(live, who);
     if (!inTalkRange(player.tile.x, player.tile.y, other.tile.x, other.tile.y)) {
@@ -1430,12 +2329,49 @@ export function TownApp() {
       agentId: who,
       text,
     };
-    const minds =
-      onlineRef.current &&
-      !localOnlyRef.current &&
-      !pendingRef.current &&
-      document.visibilityState === "visible";
-    if (!minds) {
+    if (!localOnlyRef.current) {
+      if (pendingRef.current || document.visibilityState !== "visible") {
+        setSendNote(
+          "AI is busy or this tab is inactive. Your line is still here; try again shortly.",
+        );
+        return;
+      }
+      if (!onlineRef.current) {
+        setSendNote("Checking the AI connection. Your line is still here.");
+        const ready = await checkAI();
+        if (townRef.current !== live || panelRef.current !== who || replayRef.current !== null)
+          return;
+        if (!ready) {
+          setSendNote(
+            "AI is unavailable. Connection checks retry automatically. Your line is still here; no local reply was substituted.",
+          );
+          return;
+        }
+        const playerNow = agentById(live, "player");
+        const residentNow = agentById(live, who);
+        if (
+          !inTalkRange(playerNow.tile.x, playerNow.tile.y, residentNow.tile.x, residentNow.tile.y)
+        ) {
+          setSendNote("Walk closer to send your line again. Your draft is still here.");
+          return;
+        }
+      }
+      if (
+        localOnlyRef.current ||
+        pendingRef.current ||
+        foregroundPendingRef.current ||
+        document.visibilityState !== "visible"
+      ) {
+        setSendNote("Return to this tab to send your line again. Your draft is still here.");
+        return;
+      }
+      job.day = live.day;
+      job.minute = live.minute;
+      setSendNote("Waiting for an AI reply.");
+      void runMindRef.current(live, job);
+      return;
+    }
+    {
       try {
         const before = playerChatIds(agentById(live, who).memories ?? []);
         applyResult(live, offlineResult(live, job));
@@ -1458,8 +2394,6 @@ export function TownApp() {
       setTick((n) => n + 1);
       return;
     }
-    setSendNote("Saying it.");
-    void runMindRef.current(live, job);
   }
 
   if (phase === "unavailable") {
@@ -1767,7 +2701,65 @@ export function TownApp() {
     )
     .map((agent) => agent.id);
   const talkChoices = crowd && crowd.length > 1 ? crowd : nearby;
-  const localReplies = localOnly || !online || lastMind === "offline";
+  const aiUnavailable = !online || replyFailure !== null;
+  const aiWarning = replyFailure
+    ? `${mindFailureMessage(replyFailure)} No local reply was substituted. Your line is kept; send it again to retry.`
+    : checked && !online
+      ? "AI is unavailable. Messages stay unsent; no local replies will be substituted."
+      : "";
+
+  const connectionWarning =
+    !localOnly && !connectionDismissed && (aiWarning || connectionNote) ? (
+      <div
+        className={`warn ai-connection-message ${aiWarning ? "ai-warning" : "ai-connection-note"}`}
+        data-ai-warning={aiWarning ? "" : undefined}
+        role={aiWarning ? "alert" : undefined}
+      >
+        <div className="ai-connection-heading">
+          <strong>AI connection</strong>
+          <button
+            className="btn"
+            type="button"
+            aria-label="Dismiss AI connection message"
+            onClick={() => {
+              setConnectionDismissed(true);
+              window.requestAnimationFrame(() => connectionDetailsRef.current?.focus());
+            }}
+          >
+            <X className="size-4" aria-hidden />
+          </button>
+        </div>
+        {aiWarning && <p>{aiWarning}</p>}
+        {connectionNote && (
+          <p data-ai-connection-note role="status">
+            {connectionNote}
+          </p>
+        )}
+        {aiWarning && (
+          <>
+            <p>A connection check does not resend your message.</p>
+            <button
+              className="btn"
+              type="button"
+              disabled={checking || checkingSession || signingIn}
+              onClick={() => void checkConnection()}
+            >
+              {checking || checkingSession ? "Checking AI connection" : "Check AI connection"}
+            </button>
+            {replyFailure === "sign-in" && (
+              <button
+                className="btn"
+                type="button"
+                disabled={checkingSession || signingIn}
+                onClick={() => void signInAgain()}
+              >
+                {signingIn ? "Opening sign-in" : "Sign in again"}
+              </button>
+            )}
+          </>
+        )}
+      </div>
+    ) : null;
 
   const events = visibleSocialEvents(town, watchTown, { day: clockDay, minute: clockMinute });
   const conversations = events.filter((event) => event.kind === "conversation");
@@ -1779,6 +2771,67 @@ export function TownApp() {
     setBoard(false);
     setTools(null);
   };
+  const manuscriptControls: ManuscriptControls = {
+    available: actionsAvailable && !localOnly && checked,
+    busy: Boolean(thinking) || transportBusy || importing,
+    replaying: replay !== null,
+    selected: physicalSelected,
+    note: physicalNote,
+    readContent: physicalRead,
+    onIntroduce: () => changeManuscript(),
+    onStart: watchManuscript,
+    onStop: stopManuscript,
+    onCommand: changeManuscript,
+  };
+  const meetingControls: DiscussionControls = {
+    view: discussionView(town),
+    enabled: discussionEnabled,
+    available: actionsAvailable && online && !localOnly && checked,
+    busy: Boolean(thinking) || transportBusy || importing || discussionStarting,
+    autoRunning: discussionAutoRunning,
+    decisionPending: thinking === "discussion",
+    replaying: replay !== null,
+    note:
+      transportBusy && !thinking
+        ? `${discussionNote} The previous AI request is still settling. No second request will start.`
+        : discussionNote,
+    draft: discussionDraft,
+    onDraft: setDiscussionDraft,
+    onEnable: (value) => {
+      setDiscussionEnabled(value);
+      try {
+        localStorage.setItem(MEETING_PROTOTYPE_KEY, String(value));
+      } catch {
+        /* The preference still applies to this page. */
+      }
+      if (!value) pauseMeeting("Local meeting decisions disabled. The discussion is paused.");
+    },
+    onCreate: proposeDiscussion,
+    onCommand: changeDiscussion,
+    onGo: () => {
+      closeSocial();
+      goTo("library");
+    },
+    onDecision: requestDiscussionDecision,
+    onAutoStart: startAutomaticDiscussion,
+    onAutoStop: () =>
+      pauseMeeting("Automatic meeting stopped by the player. Start again when ready."),
+    onCheck: () => void checkDiscussionAvailability(),
+    onPause: () =>
+      pauseMeeting(
+        "Meeting decisions paused by the player. Listening and the saved transcript remain available.",
+      ),
+    onResume: () => {
+      const live = townRef.current;
+      if (!live || replayRef.current || importTextRef.current !== null || !discussionEnabled)
+        return;
+      const result = resumeDiscussion(live);
+      setDiscussionNote(result.message);
+      persistTown(live);
+      setTick((n) => n + 1);
+    },
+  };
+  const nearbyManuscript = nearbyPhysicalItems(town, "player")[0];
 
   return (
     <main
@@ -1837,49 +2890,59 @@ export function TownApp() {
             <p className="brand-caption">YOUR LITTLE UNIVERSE</p>
           </div>
         </div>
-        <div className="hud-clock">
-          <span className="day-chip">Day {String(clockDay).padStart(2, "0")}</span>
-          <span>{formatClock(clockMinute)}</span>
-          <span className="hud-period text-muted">{periodName(clockMinute)}</span>
-          {replay !== null && <span className="text-purple">Replay</span>}
+        <div className="hud-time-controls">
+          <div className="hud-clock">
+            <span className="day-chip">Day {String(clockDay).padStart(2, "0")}</span>
+            <span>{formatClock(clockMinute)}</span>
+            <span className="hud-period text-muted">{periodName(clockMinute)}</span>
+            {replay !== null && <span className="text-purple">Replay</span>}
+          </div>
+          <div className="transport" role="group" aria-label="Town clock controls">
+            <button
+              className="btn"
+              data-on={speed === 0 ? "true" : "false"}
+              aria-pressed={speed === 0}
+              type="button"
+              onClick={() => setRate(0)}
+              aria-label="Pause"
+              title="Pause"
+            >
+              <Pause className="inline size-4" aria-hidden />
+              <span className="transport-pause-label">Pause</span>
+            </button>
+            <button
+              className="btn"
+              data-on={speed === 1 ? "true" : "false"}
+              aria-pressed={speed === 1}
+              type="button"
+              onClick={() => setRate(1)}
+            >
+              <Play className="inline size-4" aria-hidden /> 1×
+            </button>
+            <button
+              className="btn"
+              data-on={speed === 4 ? "true" : "false"}
+              aria-pressed={speed === 4}
+              type="button"
+              onClick={() => setRate(4)}
+            >
+              4×
+            </button>
+            <button
+              className="btn"
+              type="button"
+              title="Advance up to one hour"
+              onClick={nextHour}
+              disabled={thinking === "player"}
+            >
+              <SkipForward className="inline size-4" aria-hidden /> Hour
+            </button>
+          </div>
         </div>
         <p className="hud-wallet">
           <span className="pixel-coin" aria-hidden />
           {player.money} {player.money === 1 ? "coin" : "coins"}
         </p>
-        <div className="transport" role="group" aria-label="Town clock controls">
-          <button
-            className="btn"
-            data-on={speed === 0 ? "true" : "false"}
-            aria-pressed={speed === 0}
-            type="button"
-            onClick={() => setRate(0)}
-            aria-label="Pause"
-          >
-            <Pause className="inline size-4" aria-hidden /> Pause
-          </button>
-          <button
-            className="btn"
-            data-on={speed === 1 ? "true" : "false"}
-            aria-pressed={speed === 1}
-            type="button"
-            onClick={() => setRate(1)}
-          >
-            <Play className="inline size-4" aria-hidden /> 1×
-          </button>
-          <button
-            className="btn"
-            data-on={speed === 4 ? "true" : "false"}
-            aria-pressed={speed === 4}
-            type="button"
-            onClick={() => setRate(4)}
-          >
-            4×
-          </button>
-          <button className="btn" type="button" onClick={nextHour} disabled={thinking === "player"}>
-            <SkipForward className="inline size-4" aria-hidden /> Hour
-          </button>
-        </div>
       </header>
       <div className="status-strip">
         <p className="status-place">
@@ -1892,38 +2955,72 @@ export function TownApp() {
             {farNote}
           </p>
         )}
-        {checked && (
-          <span
-            className="badge"
-            data-off={localReplies ? "true" : lastMind === "online" ? "false" : undefined}
-            title={
-              localReplies
-                ? "Local dialogue is limited. AI responses are currently unavailable."
+        <span
+          className="badge"
+          data-ai-status={
+            localOnly
+              ? "local"
+              : !checked
+                ? "checking"
+                : aiUnavailable
+                  ? "unavailable"
+                  : lastMind === "online"
+                    ? "responded"
+                    : "ready"
+          }
+          data-off={
+            localOnly || aiUnavailable ? "true" : lastMind === "online" ? "false" : undefined
+          }
+          title={
+            localOnly
+              ? "You chose authored local dialogue in Help & privacy."
+              : aiUnavailable
+                ? "AI has not completed a usable reply. Your message is kept for retry."
                 : lastMind === "online"
-                  ? "The latest AI response was received and accepted."
-                  : "AI is configured, but no response has been verified in this session."
-            }
+                  ? "The latest player AI response was received and accepted."
+                  : "AI is configured. Send a message to request a reply."
+          }
+        >
+          {localOnly
+            ? "Local dialogue selected"
+            : !checked
+              ? "Checking AI"
+              : !online
+                ? "AI reconnecting"
+                : replyFailure
+                  ? "AI reply failed"
+                  : lastMind === "online"
+                    ? "AI responded"
+                    : "AI ready"}
+        </span>
+        {!localOnly && connectionDismissed && (aiWarning || connectionNote) && (
+          <button
+            ref={connectionDetailsRef}
+            className="badge ai-connection-reopen"
+            type="button"
+            aria-label="Show AI connection details"
+            onClick={() => setConnectionDismissed(false)}
           >
-            {localReplies
-              ? "local replies"
-              : lastMind === "online"
-                ? "AI responded"
-                : "AI unverified"}
-          </span>
+            AI connection
+          </button>
         )}
         {thinking && (
           <span className="status-message" role="status">
-            {thinking === "player" ? "Waiting for your reply" : "Residents are thinking"}
+            {thinking === "player" ? "Waiting for your AI reply" : "Residents are thinking"}
           </span>
         )}
         {thinking === "player" && (
-          <button className="btn" type="button" onClick={localReplyNow}>
-            Use local reply now
+          <button className="btn" type="button" onClick={cancelAIRequest}>
+            Cancel AI request
           </button>
         )}
-        {hiccup && (
+        {town.physicalItems?.session && !replay && (
           <span className="status-message" role="status">
-            AI reply unavailable.
+            {thinking === "act"
+              ? "A resident is deciding what to do with the manuscript."
+              : physicalNote ||
+                town.physicalItems.session.lastResult?.message ||
+                "The manuscript trial is ready."}
           </span>
         )}
         <div className="status-controls">
@@ -1936,10 +3033,75 @@ export function TownApp() {
         </div>
       </div>
       <nav className="town-tools" aria-label="Your town tools">
-        <button className="btn" type="button" onClick={() => openTools("agent-wallets")}>
-          Agent wallets
+        <button
+          className="btn"
+          type="button"
+          data-on={tools === "journal"}
+          onClick={() => openTools("journal")}
+        >
+          <TownUiIcon name="journal" />
+          Journal
         </button>
-        <button className="btn" type="button" onClick={() => openTools("stamps")}>
+        <button
+          className="btn"
+          type="button"
+          data-on={tools === "inventory"}
+          onClick={() => openTools("inventory")}
+        >
+          <TownUiIcon name="inventory" />
+          Inventory
+        </button>
+        {nearbyManuscript && (
+          <button
+            className="btn"
+            type="button"
+            disabled={replay !== null}
+            onClick={() => inspectManuscript(nearbyManuscript.id)}
+          >
+            <TownUiIcon name="inventory" /> Inspect manuscript
+          </button>
+        )}
+        <button
+          className="btn"
+          type="button"
+          aria-label="Go somewhere"
+          data-on={tools === "map"}
+          onClick={() => openTools("map")}
+        >
+          <TownUiIcon name="map" /> Go to
+        </button>
+        <button
+          className="btn"
+          type="button"
+          aria-label="Library project"
+          data-on={tools === "library"}
+          onClick={() => openTools("library")}
+        >
+          <TownUiIcon name="library" /> Library
+        </button>
+        <button
+          className="btn"
+          type="button"
+          aria-label="Agent wallets"
+          title="Agent wallets"
+          data-on={tools === "agent-wallets"}
+          onClick={() => openTools("agent-wallets")}
+        >
+          <TownUiIcon name="wallets" />
+          <span className="town-tool-label-full">Agent wallets</span>
+          <span className="town-tool-label-compact" aria-hidden="true">
+            Wallets
+          </span>
+        </button>
+        <button
+          className="btn"
+          type="button"
+          aria-label="Stamp identity"
+          title="Stamp identity"
+          data-on={tools === "stamps"}
+          onClick={() => openTools("stamps")}
+        >
+          <TownUiIcon name="stamp" />
           {stampAppearance &&
             stampAppearance.worldId === town.identityRegistry?.worldId &&
             stampAppearance.characterId === town.identityRegistry?.characters.player.characterId &&
@@ -1969,37 +3131,19 @@ export function TownApp() {
                 />
               </span>
             )}
-          Stamp identity
-        </button>
-        <button className="btn" type="button" onClick={() => openTools("journal")}>
-          Journal
-        </button>
-        <button className="btn" type="button" onClick={() => openTools("inventory")}>
-          Inventory
-        </button>
-        <button
-          className="btn"
-          type="button"
-          aria-label="Go somewhere"
-          onClick={() => openTools("map")}
-        >
-          Go to
-        </button>
-        <button
-          className="btn"
-          type="button"
-          aria-label="Library project"
-          onClick={() => openTools("library")}
-        >
-          Library
+          <span className="town-tool-label-full">Stamp identity</span>
+          <span className="town-tool-label-compact" aria-hidden="true">
+            Stamps
+          </span>
         </button>
         <button
           className="btn"
           type="button"
           aria-label="Help & privacy"
+          data-on={tools === "help"}
           onClick={() => openTools("help")}
         >
-          Help
+          <TownUiIcon name="help" /> Help
         </button>
       </nav>
       <div className="social-toolbar">
@@ -2022,12 +3166,23 @@ export function TownApp() {
             setBoard(false);
           }}
         >
-          Town life{" "}
+          <TownUiIcon name="people" /> Town life{" "}
           <span>
             {watchTown ? "Watch · " : ""}
             {conversations.length} exchanges
           </span>
         </button>
+        {discussionAutoRunning && (
+          <button
+            className="btn"
+            type="button"
+            onClick={() =>
+              pauseMeeting("Automatic meeting stopped by the player. Start again when ready.")
+            }
+          >
+            Stop library meeting
+          </button>
+        )}
         {watching && (
           <button className="btn return-to-player" type="button" onClick={() => setWatching(null)}>
             Following {agentById(town, watching).name} · Return to me
@@ -2035,72 +3190,74 @@ export function TownApp() {
         )}
       </div>
 
-      {saveStatus && !saveStatus.ok && (
-        <p className="warn" role="alert">
-          {saveStatus.reason === "conflict"
-            ? "Another tab changed the saved town. This copy has not replaced it. Download this copy before switching or closing the page."
-            : "This town has not saved in this browser. Download a copy before closing the page."}{" "}
-          <button
-            className="btn"
-            type="button"
-            onClick={() => {
-              void saveCopy(town).then(setExportNote);
-            }}
-          >
-            Download this copy
-          </button>
-          {saveStatus.reason === "conflict" && (
+      <div className="town-updates">
+        {saveStatus && !saveStatus.ok && (
+          <p className="warn" role="alert">
+            {saveStatus.reason === "conflict"
+              ? "Another tab changed the saved town. This copy has not replaced it. Download this copy before switching or closing the page."
+              : "This town has not saved in this browser. Download a copy before closing the page."}{" "}
             <button
               className="btn"
               type="button"
               onClick={() => {
-                const report = readTownSave();
-                if (report.status === "ready") void acceptImportedTown(report.town, "load");
-                else
-                  setExportNote(
-                    "The saved town could not be read. Keep a downloaded copy of this town.",
-                  );
+                void saveCopy(town).then(setExportNote);
               }}
             >
-              Load saved town
+              Download this copy
             </button>
-          )}
-        </p>
-      )}
-      {checked && (localOnly || !online) && !shown && !tools && (
-        <p className="warn offline-note" role="status">
-          {localOnly ? "Local dialogue only is on." : "AI is offline."} Residents use authored local
-          dialogue and remember your conversations.
-        </p>
-      )}
-      {hint && (town.guide ?? 0) < 3 && !shown && !tools && (
-        <div className="welcome-tip">
-          <Sparkles className="welcome-icon size-5" aria-hidden />
-          <div>
-            <strong>{library.story.title}</strong>
-            <p>
-              Northern wants to read a first page to his neighbors. Help find a place to begin, or
-              explore on your own.
-            </p>
+            {saveStatus.reason === "conflict" && (
+              <button
+                className="btn"
+                type="button"
+                onClick={() => {
+                  const report = readTownSave();
+                  if (report.status === "ready") void acceptImportedTown(report.town, "load");
+                  else
+                    setExportNote(
+                      "The saved town could not be read. Keep a downloaded copy of this town.",
+                    );
+                }}
+              >
+                Load saved town
+              </button>
+            )}
+          </p>
+        )}
+        {localOnly && !shown && !tools && (
+          <p className="warn offline-note" role="status">
+            Local dialogue only is selected. Turn it off in Help & privacy to use AI.
+          </p>
+        )}
+        {(!shown || tools) && connectionWarning}
+        {hint && (town.guide ?? 0) < 3 && !shown && !tools && (
+          <div className="welcome-tip">
+            <Sparkles className="welcome-icon size-5" aria-hidden />
+            <div>
+              <strong>{library.story.title}</strong>
+              <p>
+                Northern wants to read a first page to his neighbors. Help find a place to begin, or
+                explore on your own.
+              </p>
+            </div>
+            <button className="btn" type="button" onClick={() => openTools("library")}>
+              Library project
+            </button>
+            <details>
+              <summary>How to play</summary>
+              <p>{guideLine}</p>
+            </details>
           </div>
-          <button className="btn" type="button" onClick={() => openTools("library")}>
-            Library project
-          </button>
-          <details>
-            <summary>How to play</summary>
-            <p>{guideLine}</p>
-          </details>
-        </div>
-      )}
-      {yourOpenDebts.length > 0 && !shown && !tools && (
-        <p className="warn" role="status">
-          {yourOpenDebts.length} open{" "}
-          {yourOpenDebts.length === 1 ? "tab or favor" : "tabs or favors"} involving you.{" "}
-          <button className="btn" type="button" onClick={() => approach("player")}>
-            View your journal
-          </button>
-        </p>
-      )}
+        )}
+        {yourOpenDebts.length > 0 && !shown && !tools && (
+          <p className="warn" role="status">
+            {yourOpenDebts.length} open{" "}
+            {yourOpenDebts.length === 1 ? "tab or favor" : "tabs or favors"} involving you.{" "}
+            <button className="btn" type="button" onClick={() => approach("player")}>
+              View your journal
+            </button>
+          </p>
+        )}
+      </div>
       <div className="world-frame" ref={worldFrameRef}>
         <canvas
           ref={canvasRef}
@@ -2185,6 +3342,7 @@ export function TownApp() {
             onClose={closeSocial}
             onFollow={followCharacter}
             onProfile={approach}
+            discussion={<DiscussionPanel town={town} controls={meetingControls} />}
           />
         )}
         {!shown &&
@@ -2277,10 +3435,12 @@ export function TownApp() {
 
             draft={draft}
             setDraft={setDraft}
+            signingIn={signingIn}
             busy={thinking === "player" || replay !== null}
             inspect={inspectorEnabled && inspect}
             sendNote={sendNote}
-            localDialogue={checked && localReplies}
+            localDialogue={localOnly}
+            connectionWarning={connectionWarning}
             inspectorEnabled={inspectorEnabled}
             onInspect={setInspect}
             onClose={() => {
@@ -2323,6 +3483,7 @@ export function TownApp() {
           <PlayerTools
             page={tools}
             town={town}
+            manuscriptControls={manuscriptControls}
             localOnly={localOnly}
             preferenceNote={preferenceNote}
             inspectorEnabled={inspectorEnabled}
@@ -2728,10 +3889,12 @@ function Mind({
   onWatch,
   draft,
   setDraft,
+  signingIn,
   busy,
   inspect,
   sendNote,
   localDialogue,
+  connectionWarning,
   onInspect,
   inspectorEnabled,
   onClose,
@@ -2749,10 +3912,12 @@ function Mind({
   onWatch: () => void;
   draft: string;
   setDraft: (value: string) => void;
+  signingIn: boolean;
   busy: boolean;
   inspect: boolean;
   sendNote: string;
   localDialogue: boolean;
+  connectionWarning: React.ReactNode;
   onInspect: (value: boolean) => void;
   inspectorEnabled: boolean;
   onClose: () => void;
@@ -3012,6 +4177,54 @@ function Mind({
             </ul>
           </section>
         </div>
+        {agent.id !== "player" && tab === "together" && (
+          <section
+            className="conversation-extras"
+            aria-label={`Choices and notes with ${agent.name}`}
+          >
+            {agent.id === "kevin" && (
+              <button className="btn mb-2" type="button" onClick={onLibrary}>
+                Library project
+              </button>
+            )}
+            {actions.length > 0 && (
+              <details
+                className="mind-actions"
+                onToggle={() => {
+                  if (followRef.current && logRef.current)
+                    revealLatest(logRef.current, latestRef.current);
+                }}
+              >
+                <summary>
+                  Choices with {agent.name} · {actions.length}
+                </summary>
+                <ul>
+                  {actions.map((action) => (
+                    <li key={action.id}>
+                      <p>{action.terms}</p>
+                      <button
+                        className="btn mt-2"
+                        type="button"
+                        disabled={busy || Boolean(action.disabledReason)}
+                        onClick={() => onAction(action.id)}
+                      >
+                        {action.label}
+                      </button>
+                      {action.disabledReason && (
+                        <p className="mt-1 text-muted">{action.disabledReason}</p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+            {localDialogue && (
+              <p className="mb-2 text-xs text-muted" role="note">
+                Local dialogue is active. Open-ended conversation needs a live AI connection.
+              </p>
+            )}
+          </section>
+        )}
         {inspectorEnabled && (
           <label className="mt-4 flex items-center gap-2 text-sm text-muted" htmlFor="mind-inspect">
             <input
@@ -3042,6 +4255,7 @@ function Mind({
           Newest reply
         </button>
       )}
+      {connectionWarning}
       {agent.id !== "player" && tab === "together" && (
         <form
           className="mind-say"
@@ -3051,80 +4265,40 @@ function Mind({
             onSend();
           }}
         >
-          {agent.id === "kevin" && (
-            <button className="btn mb-2" type="button" onClick={onLibrary}>
-              Library project
-            </button>
-          )}
-          {actions.length > 0 && (
-            <details
-              className="mind-actions"
-              onToggle={() => {
-                if (followRef.current && logRef.current)
-                  revealLatest(logRef.current, latestRef.current);
-              }}
-            >
-              <summary>
-                Choices with {agent.name} · {actions.length}
-              </summary>
-              <ul>
-                {actions.map((action) => (
-                  <li key={action.id}>
-                    <p>{action.terms}</p>
-                    <button
-                      className="btn mt-2"
-                      type="button"
-                      disabled={busy || Boolean(action.disabledReason)}
-                      onClick={() => onAction(action.id)}
-                    >
-                      {action.label}
-                    </button>
-                    {action.disabledReason && (
-                      <p className="mt-1 text-muted">{action.disabledReason}</p>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
-          {localDialogue && (
-            <p className="mb-2 text-xs text-muted" role="note">
-              Local dialogue is active. Open-ended conversation needs a live AI connection.
-            </p>
-          )}
           {!canTalk && (
             <p className="character-note">Walk closer to speak. Your draft stays on this card.</p>
           )}
           <label className="text-sm text-muted" htmlFor="mind-line">
             Your line to {agent.name}
           </label>
-          <textarea
-            ref={lineRef}
-            id="mind-line"
-            className="field mt-2 min-h-20 py-2"
-            value={draft}
-            maxLength={400}
-            onChange={(event) => setDraft(event.target.value)}
-          />
-          <div className="mt-2 flex items-center gap-2">
+          <div className="reply-entry">
+            <textarea
+              ref={lineRef}
+              id="mind-line"
+              className="field mt-2 min-h-20 py-2"
+              value={draft}
+              maxLength={400}
+              readOnly={signingIn}
+              onChange={(event) => setDraft(event.target.value)}
+            />
             <button
               className="btn"
               data-on="true"
               type="submit"
-              disabled={busy || !draft.trim() || !canTalk}
+              disabled={busy || signingIn || !draft.trim() || !canTalk}
             >
-              {busy ? "Saying it" : "Say it"}
+              {signingIn ? "Opening sign-in" : busy ? "Saying it" : "Say it"}
             </button>
-            <p
-              ref={feedbackRef}
-              tabIndex={-1}
-              className="mind-send-note text-sm text-muted"
-              role="status"
-              aria-live="polite"
-            >
-              {sendNote}
-            </p>
           </div>
+          <p
+            ref={feedbackRef}
+            tabIndex={-1}
+            className="mind-send-note text-sm text-muted"
+            role="status"
+            aria-live="polite"
+          >
+            {sendNote}
+          </p>
         </form>
       )}
     </aside>

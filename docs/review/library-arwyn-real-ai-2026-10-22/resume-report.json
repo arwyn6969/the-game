@@ -1,0 +1,592 @@
+{
+  "sourceHead": "185d72bf5f4a650439c3bd0c467c658d42538d14",
+  "startedAt": "2026-10-22T16:31:14.377Z",
+  "scope": "One operator headless local meeting, real model and engine, synthetic town, local SQL accounting",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "maxCalls": 6,
+  "carryForward": {
+    "priorReportSha256": "14e5e5f85e7721409f37f6664adc5bcc0037119faf2573ee0cb00ae16e3a47dd",
+    "previousTrialSourceHead": "ab3dcb4c422aec3bd1a09c670b6df06f5d8b2d3d",
+    "originalAuthorizedCalls": 12,
+    "previousTransmissions": 1,
+    "remainingAuthorizedCalls": 11,
+    "inheritedAccountCeiling": 37
+  },
+  "resumption": {
+    "pausedReportSha256": "b890059d6dccc05257fa530733c0ea7b96e74f34cf819281f7d79ec7f575e7a6",
+    "pausedTrialSourceHead": "3edcc6aed9576e400422f94833728f9f49a8570c",
+    "meetingId": "discussion:10",
+    "originalAuthorizedCalls": 12,
+    "originalTrialTransmissions": 1,
+    "pausedMeetingTransmissions": 5,
+    "previouslySpentCalls": 6,
+    "remainingAuthorizedCalls": 6,
+    "inheritedAccountCeiling": 37,
+    "copiedLedgerCharges": 5,
+    "copiedLedgerAttempts": 5,
+    "resumedEpoch": 4,
+    "priorChoicesAndMemoriesPreserved": true
+  },
+  "ledgerCallLimit": 11,
+  "preflight": {
+    "at": "2026-10-22T16:31:14.265Z",
+    "freeTier": true,
+    "freeRequests": {
+      "used": 30,
+      "limit": 50,
+      "remaining": 20
+    },
+    "monetaryUsageToday": 0,
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "pricing": {
+      "prompt": "0",
+      "completion": "0"
+    },
+    "requestedMaxCalls": 6,
+    "savedDailyCeiling": 24,
+    "authorizedAdditionalFreeCalls": 0,
+    "carryForward": {
+      "priorReportSha256": "14e5e5f85e7721409f37f6664adc5bcc0037119faf2573ee0cb00ae16e3a47dd",
+      "previousTrialSourceHead": "ab3dcb4c422aec3bd1a09c670b6df06f5d8b2d3d",
+      "originalAuthorizedCalls": 12,
+      "previousTransmissions": 1,
+      "remainingAuthorizedCalls": 11,
+      "inheritedAccountCeiling": 37
+    },
+    "resumption": {
+      "pausedReportSha256": "b890059d6dccc05257fa530733c0ea7b96e74f34cf819281f7d79ec7f575e7a6",
+      "pausedTrialSourceHead": "3edcc6aed9576e400422f94833728f9f49a8570c",
+      "meetingId": "discussion:10",
+      "originalAuthorizedCalls": 12,
+      "originalTrialTransmissions": 1,
+      "pausedMeetingTransmissions": 5,
+      "previouslySpentCalls": 6,
+      "remainingAuthorizedCalls": 6,
+      "inheritedAccountCeiling": 37,
+      "copiedLedgerCharges": 5,
+      "copiedLedgerAttempts": 5,
+      "resumedEpoch": 4,
+      "priorChoicesAndMemoriesPreserved": true
+    },
+    "experimentAccountCeiling": 37,
+    "callAllowance": 6
+  },
+  "transmissions": 2,
+  "decisions": [
+    {
+      "number": 1,
+      "actor": "northern",
+      "at": "2026-10-22T16:31:15.139Z",
+      "observation": {
+        "actor": {
+          "id": "northern",
+          "name": "Northern",
+          "tile": {
+            "x": 42,
+            "y": 21
+          }
+        },
+        "meeting": {
+          "id": "discussion:10",
+          "topic": "Would a short shared reading at the library be worthwhile, and what would make it welcoming?",
+          "venue": "library",
+          "status": "gathering",
+          "proposedRole": "participant",
+          "ownMode": "off",
+          "ownTurn": false
+        },
+        "perceivedCues": [],
+        "receivedTurns": [],
+        "availableActions": [
+          {
+            "kind": "leave",
+            "label": "Leave discussion"
+          },
+          {
+            "kind": "listen",
+            "label": "Join and listen"
+          },
+          {
+            "kind": "participate",
+            "label": "Join as a speaker"
+          }
+        ]
+      },
+      "promptCharacters": 4292,
+      "promptSha256": "30e52573a4ba80b8b255bd22328bbf44ce741646e37a775b08a134f190a80c59",
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 1704,
+          "actualTokens": 1239,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1225,
+            "outputTokens": 14,
+            "reasoningTokens": 0,
+            "responseCharacters": 50,
+            "invalidReason": null
+          }
+        }
+      ],
+      "transmissions": 1,
+      "reportedCostUSD": 0,
+      "elapsedMs": 1738,
+      "ok": true,
+      "rawDecisionJSON": "{\"task\":\"discussion\",\"decision\":{\"kind\":\"listen\"}}",
+      "decision": {
+        "kind": "listen"
+      },
+      "result": {
+        "ok": true,
+        "message": "Meeting action recorded.",
+        "meetingId": "discussion:10"
+      }
+    },
+    {
+      "number": 2,
+      "actor": "sub",
+      "at": "2026-10-22T16:31:46.263Z",
+      "observation": {
+        "actor": {
+          "id": "sub",
+          "name": "Sub",
+          "tile": {
+            "x": 43,
+            "y": 20
+          }
+        },
+        "meeting": {
+          "id": "discussion:10",
+          "topic": "Would a short shared reading at the library be worthwhile, and what would make it welcoming?",
+          "venue": "library",
+          "status": "active",
+          "proposedRole": "participant",
+          "ownMode": "off",
+          "ownTurn": false
+        },
+        "perceivedCues": [],
+        "receivedTurns": [],
+        "availableActions": [
+          {
+            "kind": "leave",
+            "label": "Leave discussion"
+          },
+          {
+            "kind": "listen",
+            "label": "Join and listen"
+          },
+          {
+            "kind": "participate",
+            "label": "Join as a speaker"
+          }
+        ]
+      },
+      "promptCharacters": 4269,
+      "promptSha256": "c438e60addcc71022b7c5ab32c8f576765bb9d597d3528f94196129b62b99332",
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "invalid",
+          "status": 200,
+          "latencyMs": 388,
+          "actualTokens": null,
+          "modelCooldownMs": 30000,
+          "response": {
+            "finishReason": null,
+            "inputTokens": null,
+            "outputTokens": null,
+            "reasoningTokens": null,
+            "responseCharacters": 0,
+            "invalidReason": "empty"
+          }
+        }
+      ],
+      "transmissions": 1,
+      "reportedCostUSD": null,
+      "elapsedMs": 393,
+      "ok": false,
+      "error": "unreachable"
+    }
+  ],
+  "speechAudits": [],
+  "playerAttention": [],
+  "stopReason": "unreachable",
+  "setup": {
+    "proposedFacilitator": "arwyn",
+    "positions": [
+      {
+        "id": "kevin",
+        "tile": {
+          "x": 10,
+          "y": 21
+        }
+      },
+      {
+        "id": "arwyn",
+        "tile": {
+          "x": 44,
+          "y": 21
+        }
+      },
+      {
+        "id": "northern",
+        "tile": {
+          "x": 42,
+          "y": 21
+        }
+      },
+      {
+        "id": "baba",
+        "tile": {
+          "x": 42,
+          "y": 22
+        }
+      },
+      {
+        "id": "sub",
+        "tile": {
+          "x": 43,
+          "y": 20
+        }
+      },
+      {
+        "id": "player",
+        "tile": {
+          "x": 43,
+          "y": 22
+        }
+      },
+      {
+        "id": "data",
+        "tile": {
+          "x": 38,
+          "y": 20
+        }
+      },
+      {
+        "id": "amelia",
+        "tile": {
+          "x": 28,
+          "y": 20
+        }
+      }
+    ],
+    "npcChoices": "Existing AI acceptance and attention choices preserved; same meeting resumed explicitly once",
+    "observer": "Player initially off; joins after first actual speech and stops after second if those turns occur",
+    "nearbyNonmember": "baba",
+    "gameTime": {
+      "day": 1,
+      "minute": 420
+    }
+  },
+  "finishedAt": "2026-10-22T16:31:46.658Z",
+  "aiWaitMs": 2131,
+  "meeting": {
+    "id": "discussion:10",
+    "revision": 23,
+    "epoch": 6,
+    "topic": "Would a short shared reading at the library be worthwhile, and what would make it welcoming?",
+    "venue": "library",
+    "facilitator": "arwyn",
+    "status": "paused",
+    "reason": "unreachable",
+    "createdAt": {
+      "day": 1,
+      "minute": 420
+    },
+    "members": [
+      {
+        "id": "arwyn",
+        "invitation": "delivered",
+        "choice": "accepted",
+        "role": "facilitator",
+        "revision": 6,
+        "mode": "participating",
+        "arrived": true,
+        "decisionNeeded": true,
+        "noticedCue": true
+      },
+      {
+        "id": "northern",
+        "invitation": "delivered",
+        "choice": "accepted",
+        "role": "participant",
+        "revision": 6,
+        "mode": "listening",
+        "arrived": true,
+        "decisionNeeded": false,
+        "noticedCue": true
+      },
+      {
+        "id": "sub",
+        "invitation": "delivered",
+        "choice": "accepted",
+        "role": "participant",
+        "revision": 5,
+        "mode": "off",
+        "arrived": true,
+        "decisionNeeded": true,
+        "noticedCue": true
+      },
+      {
+        "id": "player",
+        "invitation": "delivered",
+        "choice": "accepted",
+        "role": "participant",
+        "revision": 2,
+        "mode": "off",
+        "arrived": true,
+        "decisionNeeded": true,
+        "noticedCue": false
+      }
+    ],
+    "queue": [
+      "arwyn"
+    ],
+    "floor": {
+      "actor": "arwyn",
+      "id": "discussion:10:turn:21"
+    },
+    "utterances": [],
+    "decisions": 7,
+    "usage": {
+      "requests": 7,
+      "providerAttempts": 7,
+      "attemptsUnknown": 0,
+      "knownTokens": 6196,
+      "tokenSamples": 5,
+      "tokensUnknown": 2,
+      "elapsedMs": 10572,
+      "failures": 2
+    },
+    "pending": null,
+    "commands": [
+      "operator:0:invite:northern",
+      "operator:0:invite:arwyn",
+      "operator:0:invite:sub",
+      "discussion:10:1:arwyn:3:decision",
+      "discussion:10:1:northern:3:decision",
+      "discussion:10:1:sub:3:decision",
+      "discussion:10:1:arwyn:5:decision",
+      "discussion:10:4:northern:5:decision"
+    ]
+  },
+  "financeUnchanged": true,
+  "memoryKnowledge": [
+    {
+      "id": "kevin",
+      "receivedTurnIds": [],
+      "newMemories": []
+    },
+    {
+      "id": "arwyn",
+      "receivedTurnIds": [],
+      "newMemories": []
+    },
+    {
+      "id": "northern",
+      "receivedTurnIds": [],
+      "newMemories": []
+    },
+    {
+      "id": "baba",
+      "receivedTurnIds": [],
+      "newMemories": []
+    },
+    {
+      "id": "sub",
+      "receivedTurnIds": [],
+      "newMemories": []
+    },
+    {
+      "id": "player",
+      "receivedTurnIds": [],
+      "newMemories": []
+    },
+    {
+      "id": "data",
+      "receivedTurnIds": [],
+      "newMemories": []
+    },
+    {
+      "id": "amelia",
+      "receivedTurnIds": [],
+      "newMemories": []
+    }
+  ],
+  "saveRoundTrip": true,
+  "reloadKnowledgeUnchanged": true,
+  "reloadAudit": {
+    "meetingId": "discussion:10",
+    "unchangedUtteranceIds": [],
+    "observations": [
+      {
+        "actor": "kevin",
+        "receivedTurnIds": []
+      },
+      {
+        "actor": "arwyn",
+        "receivedTurnIds": []
+      },
+      {
+        "actor": "northern",
+        "receivedTurnIds": []
+      },
+      {
+        "actor": "baba",
+        "receivedTurnIds": []
+      },
+      {
+        "actor": "sub",
+        "receivedTurnIds": []
+      },
+      {
+        "actor": "player",
+        "receivedTurnIds": []
+      },
+      {
+        "actor": "data",
+        "receivedTurnIds": []
+      },
+      {
+        "actor": "amelia",
+        "receivedTurnIds": []
+      }
+    ],
+    "knowledgeBackfilled": false
+  },
+  "hearingQualification": {
+    "actualSpokenTurns": 0,
+    "independentlyAuditedTurns": 0,
+    "onlyOptedInResidentsReceivedObservedSpeech": null,
+    "nearbyBabaExcluded": null,
+    "playerExcludedBeforeListening": null,
+    "playerReceivedAfterJoining": null,
+    "playerExcludedAfterStopping": null,
+    "unexercisedCasesRemainUnqualified": true
+  },
+  "outcome": "no-speech-hearing-unqualified",
+  "ledger": {
+    "budget": [
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      }
+    ],
+    "pool": [
+      {
+        "kind": "act",
+        "actual_tokens": 1238,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 2179,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": 1229,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 1550,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": 1243,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 1886,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": 1247,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 2379,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": null,
+        "outcome": "invalid",
+        "status": 200,
+        "latency_ms": 395,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": 1239,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 1704,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": null,
+        "outcome": "invalid",
+        "status": 200,
+        "latency_ms": 388,
+        "settled": true
+      }
+    ]
+  },
+  "cumulativeTransmissions": 8,
+  "cumulativeMeetingTransmissions": 7,
+  "cumulativeLedgerCharges": 7,
+  "afterAccount": {
+    "at": "2026-10-22T16:31:46.697Z",
+    "freeTier": true,
+    "freeRequests": {
+      "used": 31,
+      "limit": 50,
+      "remaining": 19
+    },
+    "monetaryUsageToday": 0
+  }
+}

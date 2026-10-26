@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import sharp from "sharp";
 import { approvedStampMedia, boundedStampFetch } from "./stampchain.server";
 import type { StampFetchOptions } from "./stampchain.server";
 import type { StampHolding, StampImage } from "./types";
@@ -33,6 +32,15 @@ async function decodeImage(asset: StampHolding, options: StampFetchOptions): Pro
   if (!imageMagic(bytes, mime))
     throw new Error("The stamp artwork does not match its raster file type.");
   try {
+    if (process.env.GAME_HOSTING_TARGET === "cloudflare") {
+      const { cloudflareStampPng } = await import("./cloudflare-image.server");
+      const png = await cloudflareStampPng(bytes, mime);
+      return {
+        pngDataUrl: `data:image/png;base64,${png.toString("base64")}`,
+        contentHash: createHash("sha256").update(png).digest("hex"),
+      };
+    }
+    const { default: sharp } = await import("sharp");
     const decoder = sharp(bytes, {
       limitInputPixels: MAX_INPUT_PIXELS,
       animated: false,

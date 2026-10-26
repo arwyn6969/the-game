@@ -1,5 +1,7 @@
-export type MindKind = "plan" | "reflect" | "talk" | "player";
-export const MIND_KINDS: MindKind[] = ["plan", "reflect", "talk", "player"];
+export type LegacyMindKind = "plan" | "reflect" | "talk" | "player";
+export type MindKind = LegacyMindKind | "act";
+/** Existing configurations require only these four routes. Actions are explicit opt-in. */
+export const MIND_KINDS: LegacyMindKind[] = ["plan", "reflect", "talk", "player"];
 
 export type Limits = {
   rpm: number;
@@ -27,7 +29,7 @@ export type Provider = {
   protocol: "openai" | "cohere";
   jsonMode: boolean;
   limits: Limits;
-  routes: Record<MindKind, Route>;
+  routes: Record<LegacyMindKind, Route> & { act?: Route };
 };
 export type PoolConfig = {
   version: 1;
@@ -39,7 +41,7 @@ export type PoolConfig = {
 export type Candidate = { provider: Provider; route: Route };
 export type Lease = { id: string; jsonMode: boolean };
 export type Outcome =
-  "ok" | "rate_limit" | "auth" | "config" | "format" | "invalid" | "unreachable";
+  "ok" | "rate_limit" | "auth" | "config" | "format" | "invalid" | "unreachable" | "timeout";
 export type MindJsonFailure =
   "empty" | "oversize" | "invalid-json" | "not-object" | "missing-envelope";
 export type CompletionDiagnostics = {

@@ -6,9 +6,10 @@ import type { PoolConfig, MindKind, PoolResult, Completion } from "./types.ts";
 import { routeMind } from "./router.ts";
 import { SqlQuotaStore } from "./store.ts";
 import type { Sql } from "../db.ts";
+import { createPostgresPool } from "../postgres.server.ts";
 
 const globalPool = globalThis as typeof globalThis & {
-  __mindQuotaPool?: import("pg").Pool;
+  __mindQuotaPool?: ReturnType<typeof createPostgresPool>;
 };
 
 async function quotaSql(): Promise<Sql> {
@@ -17,18 +18,14 @@ async function quotaSql(): Promise<Sql> {
     return getSql();
   }
   // Bound ledger latency without changing auth/platform database behaviour.
-  const { default: pg } = await import("pg");
   if (!globalPool.__mindQuotaPool) {
-    globalPool.__mindQuotaPool = new pg.Pool({
+    globalPool.__mindQuotaPool = createPostgresPool({
       connectionString: process.env.DATABASE_URL,
       max: 4,
       connectionTimeoutMillis: 3_000,
       query_timeout: 3_000,
       statement_timeout: 3_000,
       lock_timeout: 3_000,
-    });
-    globalPool.__mindQuotaPool.on("error", () => {
-      /* Requests fail closed; never print connection secrets. */
     });
   }
   const pool = globalPool.__mindQuotaPool;
@@ -61,13 +58,17 @@ export async function loadPoolConfig(env = process.env): Promise<PoolConfig> {
   }
 }
 
-export async function poolAvailable(configSnapshot?: PoolConfig): Promise<boolean> {
+export async function poolAvailable(
+  configSnapshot?: PoolConfig,
+  kind?: MindKind,
+): Promise<boolean> {
   try {
     const config = configSnapshot ?? (await loadPoolConfig());
     // PGLite is process-local; a deployed pool must use shared Postgres.
     if (process.env.GROK_PROJECT_ID && !process.env.DATABASE_URL?.trim()) return false;
     if (process.env.VERCEL && !process.env.DATABASE_URL?.trim()) return false;
-    return MIND_KINDS.every((kind) => candidatesFor(config, kind, process.env).length > 0);
+    const required = kind === "act" ? ["act" as const] : MIND_KINDS;
+    return required.every((routeKind) => candidatesFor(config, routeKind, process.env).length > 0);
   } catch {
     return false;
   }
@@ -88,7 +89,7 @@ export async function thinkWithPool(
     const config = configSnapshot
       ? validateConfig(structuredClone(configSnapshot))
       : await loadPoolConfig();
-    if (!(await poolAvailable(config))) return { ok: false, error: "offline" };
+    if (!(await poolAvailable(config, kind))) return { ok: false, error: "offline" };
     const result = await routeMind({
       kind,
       system,

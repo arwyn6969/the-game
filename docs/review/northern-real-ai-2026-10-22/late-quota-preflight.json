@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-22T13:19:06.328Z",
+  "freeTier": true,
+  "freeRequests": {
+    "used": 13,
+    "limit": 50,
+    "remaining": 37
+  },
+  "monetaryUsageToday": 0,
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "pricing": {
+    "prompt": "0",
+    "completion": "0"
+  }
+}

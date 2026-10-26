@@ -201,6 +201,43 @@ test("provider timeout aborts the request and fails over", async () => {
     clearTimeout(keepAlive);
   }
 });
+for (const phase of ["headers", "body"]) {
+  test(`provider timeout during ${phase} is settled as timeout without another call`, async () => {
+    const f = fixture(["gemini"]);
+    f.config.timeoutMs = 25;
+    f.config.maxAttempts = 1;
+    let calls = 0;
+    const keepAlive = setTimeout(() => undefined, 1000);
+    try {
+      const result = await routeMind({
+        ...f,
+        fetcher: async (_url, { signal }) => {
+          calls++;
+          if (phase === "headers")
+            return new Promise((_resolve, reject) =>
+              signal.addEventListener("abort", () => reject(signal.reason), { once: true }),
+            );
+          return new Response(new ReadableStream({
+            start(controller) {
+              controller.enqueue(new TextEncoder().encode(" "));
+              signal.addEventListener("abort", () => controller.error(signal.reason), { once: true });
+            },
+          }), { status: 200 });
+        },
+      });
+      assert.deepEqual(result, { ok: false, error: "unreachable" });
+      assert.equal(calls, 1);
+      const attempts = await rows();
+      assert.equal(attempts.length, 1);
+      assert.equal(attempts[0].outcome, "timeout");
+      assert.equal(attempts[0].status, phase === "body" ? 200 : null);
+      assert.equal(attempts[0].actual_tokens, null);
+      assert.ok(attempts[0].completed_at !== null);
+    } finally {
+      clearTimeout(keepAlive);
+    }
+  });
+}
 test("401/403/402 disable the account and never fall back to paid Grok", async () => {
   for (const status of [401, 403, 402]) {
     await db.exec("truncate mind_pool_attempts, mind_pool_health");
@@ -260,6 +297,26 @@ test("an unrelated 400 doesn't trigger a second call to the same model", async (
   // A bad planning model doesn't disable the same provider's dialogue model.
   const p = f.config.providers[0];
   assert.ok(await store.reserve({ provider: p, route: p.routes.player }, "player", 20, 5000));
+});
+test("provider redirects are not followed or accepted as completions", async () => {
+  const f = fixture(["groq"]);
+  let calls = 0;
+  const result = await routeMind({
+    ...f,
+    fetcher: async (_url, options) => {
+      calls++;
+      assert.equal(options.redirect, "manual");
+      return new Response(null, {
+        status: 307,
+        headers: { location: "https://unexpected.invalid/completions" },
+      });
+    },
+  });
+  assert.deepEqual(result, { ok: false, error: "unreachable" });
+  assert.equal(calls, 1);
+  const attempts = await rows();
+  assert.equal(attempts[0].status, 307);
+  assert.equal(attempts[0].outcome, "unreachable");
 });
 test("attempt and deadline ceilings prevent a retry storm", async () => {
   const f = fixture(["gemini", "groq", "nvidia", "cohere"]);

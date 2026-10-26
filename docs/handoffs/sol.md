@@ -1,5 +1,38 @@
 # Sol handoff
 
+## 21 October 2026 — Cloudflare production rollout; AI acceptance pending
+
+The user explicitly authorized moving hosting to `www.arwyn.party/thegame`,
+direct Google sign-in and its public audience, superseding this milestone's
+historical hosting freeze. Cloudflare production is deployed, the privacy page
+is live and Google confirms In production. A real login and signed-in owner
+panel passed; production holds one user/session/Google account and zero AI
+attempts. Two narrow game routes and redirect exceptions preserve the existing
+site. No private-world registration, wallet signing, funding or purchase occurred.
+
+The hosted adapter adds the `/thegame` base path, request-local Hyperdrive
+Postgres access, direct Google authentication and native Cloudflare Images.
+Workerd rejected `redirect: "error"` before making AI requests; supported manual
+redirect handling now reaches OpenRouter while rejecting redirects. The free
+account allowance is exhausted. The user chose $0 and to wait for reset; no
+successful generated reply has yet been accepted on Cloudflare. All money caps
+remain zero, background AI is disabled and there is no paid model fallback.
+
+Node 24 checks passed: 943 tests, typecheck, both hosting builds and diagnostics;
+lint has zero errors and one inherited warning. Precise mobile/desktop viewport
+checks, production browser import/export, logout/account switching and a real
+hosted image transformation remain unverified. Production's synthetic town is
+paused with local-only dialogue enabled. A cached old Chrome redirect is avoided
+by the verified entry `https://www.arwyn.party/thegame/?deployment=20261021`.
+
+Next: after 01:00 BST on 22 October, inspect free allowance, disable local-only
+dialogue for a bounded authenticated test and verify an accepted AI response plus
+settled accounting. **No automatic check is scheduled**: approval review failed
+on an account usage limit. Source is still an uncommitted diff on
+`codex/cloudflare-hosted-ai`, with no new migration PR. Preserve all private
+ignored secrets/evidence and existing towns. See
+[deployment and remaining checks](../implementation/cloudflare-hosting.md).
+
 ## 21 October 2026 — NVIDIA Ultra player backup
 
 The existing free NVIDIA endpoint/key passed a bounded qualification. Default requests passed role/shift at 5.18/6.11 seconds, then notebook recall timed out at 12.01 seconds. Three consecutive thinking-off checks passed at 2.27/2.35/4.62 seconds: notebook recall, shift recall and controlled Cohere 429 → Flash-Lite 429 → Ultra fallback. Full prompt, strict router/parser, SQL budget/quota, effects and export/import were reused. Finances, agreements and permanent identity survived accepted outputs. A new-town identity-baseline mistake in the harness was corrected and its retained first response verified offline without another call.

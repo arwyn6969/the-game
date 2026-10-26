@@ -9,6 +9,8 @@ export type BudgetPolicy = {
   playerInteractiveReserveMinuteCalls: number;
   concurrent: number;
   backgroundConcurrent: number;
+  /** Optional explicitly requested action lane; zero keeps legacy background gating. */
+  actionConcurrent?: number;
   interactiveReserveCalls: number;
   dailyMicrousd: number;
   interactiveReserveMicrousd: number;
@@ -39,6 +41,7 @@ export const DEFAULT_BUDGET: BudgetPolicy = {
   playerInteractiveReserveMinuteCalls: 2,
   concurrent: 4,
   backgroundConcurrent: 2,
+  actionConcurrent: 0,
   interactiveReserveCalls: 100,
   dailyMicrousd: 1_000_000,
   interactiveReserveMicrousd: 200_000,
@@ -60,6 +63,8 @@ export function validateBudgetPolicy(value: unknown): BudgetPolicy {
     !whole(policy.playerInteractiveReserveMinuteCalls) ||
     !whole(policy.concurrent, 1) ||
     !whole(policy.backgroundConcurrent) ||
+    (policy.actionConcurrent !== undefined &&
+      (!whole(policy.actionConcurrent) || policy.actionConcurrent > policy.concurrent)) ||
     !whole(policy.interactiveReserveCalls) ||
     !whole(policy.dailyMicrousd) ||
     !whole(policy.interactiveReserveMicrousd) ||
@@ -77,7 +82,7 @@ export function validateBudgetPolicy(value: unknown): BudgetPolicy {
     (policy.inputNanousdPerToken === null) !== (policy.outputNanousdPerToken === null)
   )
     throw new Error("Invalid mind budget policy");
-  return policy;
+  return { ...policy, actionConcurrent: policy.actionConcurrent ?? 0 };
 }
 export function loadBudgetPolicy(env: Record<string, string | undefined>): BudgetPolicy {
   if (!env.MIND_BUDGET_CONFIG?.trim()) return { ...DEFAULT_BUDGET };
@@ -107,7 +112,7 @@ export function validReservation(request: BudgetReservation): boolean {
     typeof request.user === "string" &&
     request.user.length > 0 &&
     request.user.length <= 128 &&
-    ["plan", "reflect", "talk", "player"].includes(request.kind) &&
+    ["plan", "reflect", "talk", "player", "act"].includes(request.kind) &&
     whole(request.calls, 1) &&
     request.calls <= 4 &&
     whole(request.microusd) &&

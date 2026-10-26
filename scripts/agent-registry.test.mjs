@@ -418,6 +418,26 @@ test("storage availability requires explicit local testing or configured persist
     GROK_AUTH_CLIENT_SECRET: "configured",
   };
   assert.equal(http.registryStorageMode(shared, "https://game.example"), "shared");
+  const standalone = {
+    ...shared,
+    VITE_AUTH_MODE: "standalone",
+    GROK_AUTH_CLIENT_ID: "",
+    GROK_AUTH_CLIENT_SECRET: "",
+    GOOGLE_CLIENT_ID: "synthetic-client",
+    GOOGLE_CLIENT_SECRET: "synthetic-secret",
+  };
+  assert.equal(http.registryStorageMode(standalone, "https://game.example"), "shared");
+  for (const overrides of [
+    { GOOGLE_CLIENT_ID: "" },
+    { GOOGLE_CLIENT_SECRET: "" },
+    { VITE_AUTH_ENABLED: "false" },
+    { BETTER_AUTH_URL: "https://other.example" },
+    { BETTER_AUTH_SECRET: "short" },
+  ])
+    assert.equal(
+      http.registryStorageMode({ ...standalone, ...overrides }, "https://game.example"),
+      "unavailable",
+    );
   for (const overrides of [
     { BETTER_AUTH_URL: "https://other.example" },
     { GROK_AUTH_CLIENT_ID: "" },

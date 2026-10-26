@@ -1,0 +1,784 @@
+{
+  "sourceHead": "e3a35c63bf3fe7f06d773fa7f658b2122fccc7cc",
+  "startedAt": "2026-10-22T14:21:25.141Z",
+  "scope": "operator headless real-model/engine trial; local SQL budget and quota ledger",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "maxCalls": 4,
+  "preflight": {
+    "at": "2026-10-22T14:21:24.992Z",
+    "freeTier": true,
+    "freeRequests": {
+      "used": 20,
+      "limit": 50,
+      "remaining": 30
+    },
+    "monetaryUsageToday": 0,
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "pricing": {
+      "prompt": "0",
+      "completion": "0"
+    },
+    "requestedMaxCalls": 8,
+    "dailyCeiling": 24,
+    "callAllowance": 4
+  },
+  "decisions": [
+    {
+      "number": 1,
+      "at": "2026-10-22T14:21:26.277Z",
+      "gameTime": {
+        "day": 1,
+        "minute": 420
+      },
+      "observation": {
+        "actor": {
+          "id": "northern",
+          "name": "Northern",
+          "role": "Student",
+          "tile": {
+            "x": 39,
+            "y": 20
+          },
+          "place": "library",
+          "heldItemId": null
+        },
+        "items": [
+          {
+            "id": "manuscript:town:1",
+            "kind": "manuscript",
+            "title": "Blank manuscript",
+            "author": null,
+            "owner": "town",
+            "revision": 0,
+            "contentRevision": 0,
+            "location": {
+              "kind": "ground",
+              "tile": {
+                "x": 40,
+                "y": 20
+              }
+            }
+          }
+        ],
+        "availableActions": [
+          {
+            "kind": "speak"
+          },
+          {
+            "kind": "wait"
+          },
+          {
+            "kind": "read",
+            "itemId": "manuscript:town:1",
+            "itemRevision": 0
+          },
+          {
+            "kind": "pick-up",
+            "itemId": "manuscript:town:1",
+            "itemRevision": 0
+          },
+          {
+            "kind": "bring",
+            "itemId": "manuscript:town:1",
+            "itemRevision": 0,
+            "destinations": [
+              "cafe",
+              "library",
+              "dorms",
+              "park",
+              "townhouses",
+              "grocery",
+              "noticeboard",
+              "plaza",
+              "street"
+            ]
+          }
+        ],
+        "nearbyResidents": [
+          {
+            "id": "player",
+            "name": "Observer",
+            "tile": {
+              "x": 40,
+              "y": 22
+            },
+            "place": "library"
+          },
+          {
+            "id": "data",
+            "name": "Data",
+            "tile": {
+              "x": 38,
+              "y": 20
+            },
+            "place": "library"
+          }
+        ],
+        "session": {
+          "revision": 1,
+          "decisions": 1,
+          "maxDecisions": 4,
+          "intent": null,
+          "lastResult": null
+        }
+      },
+      "promptCharacters": 4939,
+      "promptSha256": "04f8a8f4c436ab7c0960b87fa6e47d73a22116f43e81695660bc7a085c614de2",
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 2714,
+          "actualTokens": 1470,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1430,
+            "outputTokens": 40,
+            "reasoningTokens": 0,
+            "responseCharacters": 100,
+            "invalidReason": null
+          }
+        }
+      ],
+      "transmissions": 1,
+      "reportedCostUSD": 0,
+      "elapsedMs": 2728,
+      "ok": true,
+      "rawDecisionJSON": "{\n  \"decision\": {\n    \"kind\": \"read\",\n    \"itemId\": \"manuscript:town:1\",\n    \"itemRevision\": 0\n  }\n}",
+      "decision": {
+        "kind": "read",
+        "itemId": "manuscript:town:1",
+        "itemRevision": 0
+      },
+      "result": {
+        "ok": true,
+        "kind": "read",
+        "itemId": "manuscript:town:1",
+        "message": "The manuscript is blank. Nobody has written its text yet.",
+        "content": {
+          "title": "Blank manuscript",
+          "text": "",
+          "revision": 0,
+          "author": null
+        }
+      }
+    },
+    {
+      "number": 2,
+      "at": "2026-10-22T14:21:57.549Z",
+      "gameTime": {
+        "day": 1,
+        "minute": 420
+      },
+      "observation": {
+        "actor": {
+          "id": "northern",
+          "name": "Northern",
+          "role": "Student",
+          "tile": {
+            "x": 39,
+            "y": 20
+          },
+          "place": "library",
+          "heldItemId": null
+        },
+        "items": [
+          {
+            "id": "manuscript:town:1",
+            "kind": "manuscript",
+            "title": "Blank manuscript",
+            "author": null,
+            "owner": "town",
+            "revision": 0,
+            "contentRevision": 0,
+            "location": {
+              "kind": "ground",
+              "tile": {
+                "x": 40,
+                "y": 20
+              }
+            }
+          }
+        ],
+        "availableActions": [
+          {
+            "kind": "speak"
+          },
+          {
+            "kind": "wait"
+          },
+          {
+            "kind": "read",
+            "itemId": "manuscript:town:1",
+            "itemRevision": 0
+          },
+          {
+            "kind": "pick-up",
+            "itemId": "manuscript:town:1",
+            "itemRevision": 0
+          },
+          {
+            "kind": "bring",
+            "itemId": "manuscript:town:1",
+            "itemRevision": 0,
+            "destinations": [
+              "cafe",
+              "library",
+              "dorms",
+              "park",
+              "townhouses",
+              "grocery",
+              "noticeboard",
+              "plaza",
+              "street"
+            ]
+          }
+        ],
+        "nearbyResidents": [
+          {
+            "id": "player",
+            "name": "Observer",
+            "tile": {
+              "x": 40,
+              "y": 22
+            },
+            "place": "library"
+          },
+          {
+            "id": "data",
+            "name": "Data",
+            "tile": {
+              "x": 38,
+              "y": 20
+            },
+            "place": "library"
+          }
+        ],
+        "session": {
+          "revision": 2,
+          "decisions": 2,
+          "maxDecisions": 4,
+          "intent": null,
+          "lastResult": {
+            "ok": true,
+            "kind": "read",
+            "itemId": "manuscript:town:1",
+            "message": "The manuscript is blank. Nobody has written its text yet.",
+            "content": {
+              "title": "Blank manuscript",
+              "text": "",
+              "revision": 0,
+              "author": null
+            }
+          }
+        }
+      },
+      "promptCharacters": 5270,
+      "promptSha256": "5d66a7eac7c00c82f6ba65cb3f516b1b9a7d9396f843b9a1cccf122603df3ee2",
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 1260,
+          "actualTokens": 1547,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1522,
+            "outputTokens": 25,
+            "reasoningTokens": 0,
+            "responseCharacters": 74,
+            "invalidReason": null
+          }
+        }
+      ],
+      "transmissions": 1,
+      "reportedCostUSD": 0,
+      "elapsedMs": 1270,
+      "ok": true,
+      "rawDecisionJSON": "{\"decision\":{\"kind\":\"read\",\"itemId\":\"manuscript:town:1\",\"itemRevision\":0}}",
+      "decision": {
+        "kind": "read",
+        "itemId": "manuscript:town:1",
+        "itemRevision": 0
+      },
+      "result": {
+        "ok": true,
+        "kind": "read",
+        "itemId": "manuscript:town:1",
+        "message": "The manuscript is blank. Nobody has written its text yet.",
+        "content": {
+          "title": "Blank manuscript",
+          "text": "",
+          "revision": 0,
+          "author": null
+        }
+      }
+    },
+    {
+      "number": 3,
+      "at": "2026-10-22T14:22:28.891Z",
+      "gameTime": {
+        "day": 1,
+        "minute": 420
+      },
+      "observation": {
+        "actor": {
+          "id": "northern",
+          "name": "Northern",
+          "role": "Student",
+          "tile": {
+            "x": 39,
+            "y": 20
+          },
+          "place": "library",
+          "heldItemId": null
+        },
+        "items": [
+          {
+            "id": "manuscript:town:1",
+            "kind": "manuscript",
+            "title": "Blank manuscript",
+            "author": null,
+            "owner": "town",
+            "revision": 0,
+            "contentRevision": 0,
+            "location": {
+              "kind": "ground",
+              "tile": {
+                "x": 40,
+                "y": 20
+              }
+            }
+          }
+        ],
+        "availableActions": [
+          {
+            "kind": "speak"
+          },
+          {
+            "kind": "wait"
+          },
+          {
+            "kind": "read",
+            "itemId": "manuscript:town:1",
+            "itemRevision": 0
+          },
+          {
+            "kind": "pick-up",
+            "itemId": "manuscript:town:1",
+            "itemRevision": 0
+          },
+          {
+            "kind": "bring",
+            "itemId": "manuscript:town:1",
+            "itemRevision": 0,
+            "destinations": [
+              "cafe",
+              "library",
+              "dorms",
+              "park",
+              "townhouses",
+              "grocery",
+              "noticeboard",
+              "plaza",
+              "street"
+            ]
+          }
+        ],
+        "nearbyResidents": [
+          {
+            "id": "player",
+            "name": "Observer",
+            "tile": {
+              "x": 40,
+              "y": 22
+            },
+            "place": "library"
+          },
+          {
+            "id": "data",
+            "name": "Data",
+            "tile": {
+              "x": 38,
+              "y": 20
+            },
+            "place": "library"
+          }
+        ],
+        "session": {
+          "revision": 3,
+          "decisions": 3,
+          "maxDecisions": 4,
+          "intent": null,
+          "lastResult": {
+            "ok": true,
+            "kind": "read",
+            "itemId": "manuscript:town:1",
+            "message": "The manuscript is blank. Nobody has written its text yet.",
+            "content": {
+              "title": "Blank manuscript",
+              "text": "",
+              "revision": 0,
+              "author": null
+            }
+          }
+        }
+      },
+      "promptCharacters": 5265,
+      "promptSha256": "1b5bf6bf5e4cac008478c1e34cb0290498119fcc3dea8d7bbe1d105917d65ac4",
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 1914,
+          "actualTokens": 1550,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1519,
+            "outputTokens": 31,
+            "reasoningTokens": 0,
+            "responseCharacters": 80,
+            "invalidReason": null
+          }
+        }
+      ],
+      "transmissions": 1,
+      "reportedCostUSD": 0,
+      "elapsedMs": 1918,
+      "ok": true,
+      "rawDecisionJSON": "{\"decision\": {\"kind\": \"read\", \"itemId\": \"manuscript:town:1\", \"itemRevision\": 0}}",
+      "decision": {
+        "kind": "read",
+        "itemId": "manuscript:town:1",
+        "itemRevision": 0
+      },
+      "result": {
+        "ok": true,
+        "kind": "read",
+        "itemId": "manuscript:town:1",
+        "message": "The manuscript is blank. Nobody has written its text yet.",
+        "content": {
+          "title": "Blank manuscript",
+          "text": "",
+          "revision": 0,
+          "author": null
+        }
+      }
+    },
+    {
+      "number": 4,
+      "at": "2026-10-22T14:23:00.225Z",
+      "gameTime": {
+        "day": 1,
+        "minute": 420
+      },
+      "observation": {
+        "actor": {
+          "id": "northern",
+          "name": "Northern",
+          "role": "Student",
+          "tile": {
+            "x": 39,
+            "y": 20
+          },
+          "place": "library",
+          "heldItemId": null
+        },
+        "items": [
+          {
+            "id": "manuscript:town:1",
+            "kind": "manuscript",
+            "title": "Blank manuscript",
+            "author": null,
+            "owner": "town",
+            "revision": 0,
+            "contentRevision": 0,
+            "location": {
+              "kind": "ground",
+              "tile": {
+                "x": 40,
+                "y": 20
+              }
+            }
+          }
+        ],
+        "availableActions": [
+          {
+            "kind": "speak"
+          },
+          {
+            "kind": "wait"
+          },
+          {
+            "kind": "read",
+            "itemId": "manuscript:town:1",
+            "itemRevision": 0
+          },
+          {
+            "kind": "pick-up",
+            "itemId": "manuscript:town:1",
+            "itemRevision": 0
+          },
+          {
+            "kind": "bring",
+            "itemId": "manuscript:town:1",
+            "itemRevision": 0,
+            "destinations": [
+              "cafe",
+              "library",
+              "dorms",
+              "park",
+              "townhouses",
+              "grocery",
+              "noticeboard",
+              "plaza",
+              "street"
+            ]
+          }
+        ],
+        "nearbyResidents": [
+          {
+            "id": "player",
+            "name": "Observer",
+            "tile": {
+              "x": 40,
+              "y": 22
+            },
+            "place": "library"
+          },
+          {
+            "id": "data",
+            "name": "Data",
+            "tile": {
+              "x": 38,
+              "y": 20
+            },
+            "place": "library"
+          }
+        ],
+        "session": {
+          "revision": 4,
+          "decisions": 4,
+          "maxDecisions": 4,
+          "intent": null,
+          "lastResult": {
+            "ok": true,
+            "kind": "read",
+            "itemId": "manuscript:town:1",
+            "message": "The manuscript is blank. Nobody has written its text yet.",
+            "content": {
+              "title": "Blank manuscript",
+              "text": "",
+              "revision": 0,
+              "author": null
+            }
+          }
+        }
+      },
+      "promptCharacters": 5265,
+      "promptSha256": "69295793f3e8c09ce7eb55adec337d1ab9c6ddaf6ec49d2aa2e755fc74e78829",
+      "attempts": [
+        {
+          "provider": "openrouter",
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "outcome": "ok",
+          "status": 200,
+          "latencyMs": 3299,
+          "actualTokens": 1545,
+          "modelCooldownMs": 0,
+          "response": {
+            "finishReason": "stop",
+            "inputTokens": 1519,
+            "outputTokens": 26,
+            "reasoningTokens": 0,
+            "responseCharacters": 77,
+            "invalidReason": null
+          }
+        }
+      ],
+      "transmissions": 1,
+      "reportedCostUSD": 0,
+      "elapsedMs": 3309,
+      "ok": true,
+      "rawDecisionJSON": "{\"decision\":{\"kind\":\"pick-up\",\"itemId\":\"manuscript:town:1\",\"itemRevision\":0}}",
+      "decision": {
+        "kind": "pick-up",
+        "itemId": "manuscript:town:1",
+        "itemRevision": 0
+      },
+      "result": {
+        "ok": true,
+        "kind": "pick-up",
+        "itemId": "manuscript:town:1",
+        "message": "Northern picked up the manuscript."
+      }
+    }
+  ],
+  "movement": [],
+  "suppressedOtherJobs": {},
+  "transmissions": 4,
+  "simulationMinutes": 0,
+  "stopReason": "4-decision allowance exhausted within the saved daily ceiling.",
+  "setup": {
+    "northern": {
+      "id": "northern",
+      "name": "Northern",
+      "role": "Student",
+      "tile": {
+        "x": 39,
+        "y": 20
+      },
+      "place": "library",
+      "heldItemId": null
+    },
+    "knowledge": "Original current character/profile/goals; no supplied story or manuscript text",
+    "observer": {
+      "x": 40,
+      "y": 22
+    },
+    "item": {
+      "id": "manuscript:town:1",
+      "kind": "manuscript",
+      "title": "Blank manuscript",
+      "text": "",
+      "author": null,
+      "owner": "town",
+      "revision": 0,
+      "contentRevision": 0,
+      "location": {
+        "kind": "ground",
+        "tile": {
+          "x": 40,
+          "y": 20
+        }
+      }
+    }
+  },
+  "finishedAt": "2026-10-22T14:23:03.542Z",
+  "wallTimeMs": 98401,
+  "aiWaitMs": 9225,
+  "finalItem": {
+    "id": "manuscript:town:1",
+    "kind": "manuscript",
+    "title": "Blank manuscript",
+    "text": "",
+    "author": null,
+    "owner": "town",
+    "revision": 1,
+    "contentRevision": 0,
+    "location": {
+      "kind": "held",
+      "holder": "northern"
+    }
+  },
+  "session": {
+    "actor": "northern",
+    "revision": 5,
+    "enabled": false,
+    "waiting": false,
+    "decisions": 4,
+    "maxDecisions": 4,
+    "intent": null,
+    "lastResult": {
+      "ok": true,
+      "kind": "pick-up",
+      "itemId": "manuscript:town:1",
+      "message": "Northern picked up the manuscript."
+    },
+    "usage": {
+      "requests": 4,
+      "providerAttempts": 4,
+      "attemptsUnknown": 0,
+      "knownTokens": 6112,
+      "tokenSamples": 4,
+      "tokensUnknown": 0,
+      "elapsedMs": 9225,
+      "failures": 0
+    }
+  },
+  "financeUnchanged": true,
+  "cashUnchanged": true,
+  "clockScope": "Game time advances only during physical travel; wall-clock pacing is not simulated game time.",
+  "saveRoundTrip": true,
+  "ledger": {
+    "budget": [
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "charged_calls": 1,
+        "charged_microusd": 0,
+        "settled": true
+      }
+    ],
+    "pool": [
+      {
+        "kind": "act",
+        "actual_tokens": 1470,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 2714,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": 1547,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 1260,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": 1550,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 1914,
+        "settled": true
+      },
+      {
+        "kind": "act",
+        "actual_tokens": 1545,
+        "outcome": "ok",
+        "status": 200,
+        "latency_ms": 3299,
+        "settled": true
+      }
+    ]
+  },
+  "afterAccount": {
+    "at": "2026-10-22T14:23:03.654Z",
+    "freeTier": true,
+    "freeRequests": {
+      "used": 24,
+      "limit": 50,
+      "remaining": 26
+    },
+    "monetaryUsageToday": 0
+  }
+}

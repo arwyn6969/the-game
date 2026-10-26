@@ -1,0 +1,12 @@
+{
+  "scripts/library-meeting-real-ai.mjs": "5d7504a96a18f8c66877c1d02f79e6c33350102f9bfa62d2228c080d96d8e492",
+  "scripts/library-meeting-audit.mjs": "fca5cf8df8a50a4cadcdb77dea39a366c41591c2991d7841ab5d55ab47ed0a87",
+  "src/game/discussions.ts": "6b7130a069180207670d7c8309b96bff2547799262ac4baa1039ec2d978aeac6",
+  "src/game/attention.ts": "c19ac63407d44274d1ddbcf17185a8298ed612632c81254242199cda7a07662b",
+  "src/game/prompt.ts": "f77d8d92337a0444a7d29fa9a5fd77629a2a1da1da0d88e5f6f1f0604f356def",
+  "src/game/save.ts": "0e6d626dcbb512c6795ccfb3c74dd02237407845d6761611c2dc0cb7068bfbfd",
+  "src/lib/discussion-actions.ts": "eecb44650a4f8cfefa551a5b709f58b9b0ec3d195dff272898a5f4eaa19773c6",
+  "artifacts/library-meeting-real-ai-20261022-once/prompt-1.txt": "1c0fe99271454f484e56038fb737a056850d60d686f38d06ad2c4f3539b35658",
+  "artifacts/library-meeting-real-ai-20261022-once/initial-town.json": "c9aabe70b0130b900f7953aeafb0113459045f712c20249c4332ea726746268b",
+  "artifacts/library-meeting-real-ai-20261022-once/final-town.json": "0c05ff140997f9c55fb577fcd0fe8df30153b6778b757677fe86ba9eab0777e8"
+}

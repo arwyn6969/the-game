@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { TownApp } from "@/components/town/TownApp";
+import { AppearanceScope } from "@/components/town/appearance/AppearanceScope";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -16,5 +17,9 @@ function Home() {
       </main>
     );
   }
-  return <TownApp />;
+  return (
+    <AppearanceScope>
+      <TownApp />
+    </AppearanceScope>
+  );
 }
