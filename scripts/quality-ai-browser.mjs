@@ -5,6 +5,8 @@ import { chromium } from "playwright";
 
 // Disposable browser-only replacement of the development transport module.
 // Product source, auth, server functions, keys and provider endpoints are untouched.
+// Session recovery enables the auth boundary in the served browser module only
+// and uses synthetic localhost get-session responses.
 const target = new URL(process.env.GAME_AI_QA_URL || "http://127.0.0.1:8094/");
 assert.equal(target.protocol, "http:");
 assert.ok(["localhost", "127.0.0.1"].includes(target.hostname));
@@ -28,7 +30,7 @@ const mock = globalThis.__qualityMindMock ??= {
   availability: { online: true, configured: true },
   availabilityRejects: Number(sessionStorage.getItem('__qualityAvailabilityRejects') || 0),
   resolve(id, response) { const pending = this.pending.get(id); if (pending) { this.pending.delete(id); pending.resolve(response); } },
-  reject(id) { const pending = this.pending.get(id); if (pending) { this.pending.delete(id); pending.reject(new Error('Synthetic provider unavailable')); } }
+  reject(id, message = 'Synthetic provider unavailable') { const pending = this.pending.get(id); if (pending) { this.pending.delete(id); pending.reject(new Error(message)); } }
 };
 sessionStorage.removeItem('__qualityAvailabilityRejects');
 export function mindAvailability() {
@@ -189,6 +191,206 @@ async function checkHiddenWhileAvailabilityPending(page, viewport) {
   });
   await page.locator('[data-ai-status="ready"]').waitFor();
 }
+const isSessionRequest = (url) => /\/api\/auth\/get-session$/.test(new URL(url).pathname);
+const syntheticSession = {
+  session: {
+    id: "quality-session",
+    token: "synthetic-browser-only-token",
+    userId: "quality-user",
+    expiresAt: "2099-01-01T00:00:00.000Z",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+  },
+  user: {
+    id: "quality-user",
+    name: "Synthetic session recovery",
+    email: "quality@example.invalid",
+    emailVerified: true,
+    image: null,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+  },
+};
+async function checkExpiredSessionRecovery(page, viewport, result, authSession) {
+  const line = `Keep my expired-session draft ${viewport.name}`;
+  const id = (await calls(page)).length;
+  const sessionCallsBefore = authSession.calls.length;
+  await send(page, line);
+  await requestCount(page, id + 1);
+  await page.evaluate((id) => window.__qualityMindMock.reject(id, "Unauthorized"), id);
+  const warning = page.locator("[data-ai-warning]");
+  await warning.waitFor();
+  assert.match(await warning.innerText(), /session.*expired|sign in/i);
+  const signIn = page.getByRole("button", { name: "Sign in again", exact: true });
+  await signIn.waitFor();
+  await pause(page);
+
+  const assertUnsentDraft = async () => {
+    assert.equal(await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(), line);
+    assert.equal(chatCount(await readTown(page), line), 0);
+    assert.equal(
+      (await calls(page)).length,
+      id + 1,
+      "A session check cannot replay the failed message or request a model response",
+    );
+  };
+  const checkSession = async ({ data, status = 200, expectedNotice }) => {
+    authSession.data = data;
+    authSession.status = status;
+    authSession.hold = true;
+    const observed = new Promise((resolve) => authSession.observers.push(resolve));
+    await page.getByRole("button", { name: "Check AI connection", exact: true }).click();
+    const request = await observed;
+    assert.equal(request.disableCookieCache, "true", "Recovery must bypass stale session cookies");
+    const checking = page.getByRole("button", { name: "Checking AI connection", exact: true });
+    await checking.waitFor();
+    assert.equal(await checking.isDisabled(), true);
+    await assertUnsentDraft();
+    authSession.hold = false;
+    for (const release of authSession.pending.splice(0)) release();
+    await page.locator("[data-ai-connection-note]").filter({ hasText: expectedNotice }).waitFor();
+    await assertUnsentDraft();
+  };
+
+  await checkSession({ data: null, expectedNotice: /sign in again to reconnect/i });
+  assert.match(await warning.innerText(), /session.*expired|sign in/i);
+  await signIn.waitFor();
+  await page.screenshot({ path: join(out, `${viewport.name}-session-expired.png`) });
+  await checkSession({
+    data: { message: "Synthetic session transport unavailable" },
+    status: 503,
+    expectedNotice: /sign-in check could not finish/i,
+  });
+  await warning.waitFor();
+  await signIn.waitFor();
+  await checkSession({
+    data: syntheticSession,
+    expectedNotice: /sign-in and AI connection are ready/i,
+  });
+  assert.equal(
+    await warning.count(),
+    0,
+    "A confirmed session must clear the expired-session warning",
+  );
+  assert.equal(await signIn.count(), 0);
+  assert.equal(authSession.calls.length - sessionCallsBefore, 3);
+  result.expiredSessionRecovery = {
+    missingSessionKeepsSignInAndDraft: true,
+    transportFailureShowsRetryAndKeepsDraft: true,
+    confirmedSessionClearsWarningWithoutReplay: true,
+    sessionChecks: authSession.calls.slice(sessionCallsBefore),
+  };
+  await page.screenshot({ path: join(out, `${viewport.name}-session-reconnected.png`) });
+  await send(page, line);
+  await requestCount(page, id + 2);
+  await resolveRequest(page, id + 1, reply(`Session recovered ${viewport.name}`));
+  await page.waitForFunction(() => document.querySelector("#mind-line")?.value === "");
+  assert.equal(chatCount(await readTown(page), line), 1);
+  result.expiredSessionRecovery.explicitResendSucceedsOnce = true;
+}
+async function checkSupersededSessionRecovery(page, viewport, result, authSession) {
+  for (const outcome of ["accepted", "limited"]) {
+    const earlierLine = `Earlier expired request before ${outcome} ${viewport.name}`;
+    const newerLine = `Newer ${outcome} request ${viewport.name}`;
+    const id = (await calls(page)).length;
+    await send(page, earlierLine);
+    await requestCount(page, id + 1);
+    await page.evaluate((id) => window.__qualityMindMock.reject(id, "Unauthorized"), id);
+    await page.getByRole("button", { name: "Sign in again", exact: true }).waitFor();
+    authSession.data = null;
+    authSession.status = 200;
+    authSession.hold = true;
+    const observed = new Promise((resolve) => authSession.observers.push(resolve));
+    await page.getByRole("button", { name: "Check AI connection", exact: true }).click();
+    await observed;
+    await page.getByRole("button", { name: "Checking AI connection", exact: true }).waitFor();
+    await send(page, newerLine);
+    await requestCount(page, id + 2);
+    if (outcome === "accepted") {
+      await resolveRequest(page, id + 1, reply(`The newer line landed ${viewport.name}`));
+      await page.locator('[data-ai-status="responded"]').waitFor();
+      assert.equal(await page.locator("[data-ai-warning]").count(), 0);
+    } else {
+      await page.evaluate(
+        (id) => window.__qualityMindMock.resolve(id, { ok: false, error: "slow" }),
+        id + 1,
+      );
+      await page
+        .locator("[data-ai-warning]")
+        .filter({ hasText: /limited|busy/i })
+        .waitFor();
+    }
+    const settled = page.waitForResponse((response) => isSessionRequest(response.url()));
+    authSession.hold = false;
+    for (const release of authSession.pending.splice(0)) release();
+    await (await settled).finished();
+    await page.waitForTimeout(100);
+    assert.equal(
+      await page.getByRole("button", { name: "Sign in again", exact: true }).count(),
+      0,
+      "An older session check cannot replace a newer player request outcome",
+    );
+    assert.equal((await calls(page)).length, id + 2);
+    assert.equal(chatCount(await readTown(page), earlierLine), 0);
+    if (outcome === "accepted") {
+      assert.equal(await page.locator("[data-ai-warning]").count(), 0);
+      assert.equal(chatCount(await readTown(page), newerLine), 1);
+      assert.equal(await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(), "");
+    } else {
+      assert.match(await page.locator("[data-ai-warning]").innerText(), /limited|busy/i);
+      assert.equal(chatCount(await readTown(page), newerLine), 0);
+      assert.equal(
+        await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(),
+        newerLine,
+      );
+    }
+  }
+  authSession.data = syntheticSession;
+  result.supersededSessionCheckPreservesNewerSuccessAndFailure = true;
+}
+async function checkSignInDraftReturn(page, viewport, result) {
+  const line = `My line after sign-in ${viewport.name}`;
+  const original = await readTown(page);
+  const worldId = original.identityRegistry.worldId;
+  const moduleUrl = new URL("/src/components/town/sign-in-drafts.ts", target.origin).href;
+  const saveSnapshot = (savedWorldId, text) =>
+    page.evaluate(
+      async ({ moduleUrl, worldId, text }) => {
+        const { saveSignInDrafts } = await import(moduleUrl);
+        saveSignInDrafts(worldId, { kevin: text }, sessionStorage);
+      },
+      { moduleUrl, worldId: savedWorldId, text },
+    );
+  const returnToTown = async () => {
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.waitForFunction(() => !!window.__game && !!window.__qualityMindMock);
+    await openKevin(page);
+    assert.equal((await readTown(page)).identityRegistry.worldId, worldId);
+    assert.equal(
+      await page.evaluate(() => sessionStorage.getItem("the-game-sign-in-drafts")),
+      null,
+      "A sign-in return consumes its draft snapshot once",
+    );
+    assert.equal((await calls(page)).length, 0, "Restoring a draft cannot send an AI request");
+  };
+  await page.getByLabel("Your line to Kevin", { exact: true }).fill(line);
+  // Simulate only the browser's return from OAuth using the production snapshot
+  // writer and a reload. No sign-in provider, credentials or server is contacted.
+  await saveSnapshot(worldId, line);
+  await returnToTown();
+  assert.equal(await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(), line);
+  assert.equal(chatCount(await readTown(page), line), 0);
+  await page.screenshot({ path: join(out, `${viewport.name}-sign-in-return.png`) });
+  await saveSnapshot(`${worldId}-another-town`, "A line belonging to another town");
+  await returnToTown();
+  assert.equal(await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(), "");
+  result.signInReturnDrafts = {
+    sameWorldRestoresUnsentDraft: true,
+    snapshotConsumedOnce: true,
+    differentWorldDoesNotRestoreDraft: true,
+    zeroModelCallsOnReturn: true,
+  };
+}
 async function startReplay(page) {
   await page.locator("#scrub").focus();
   await page.keyboard.press("ArrowLeft");
@@ -208,13 +410,50 @@ try {
     { name: "desktop", width: 1280, height: 800 },
     { name: "phone", width: 390, height: 844 },
   ].filter((viewport) => !onlyViewport || viewport.name === onlyViewport)) {
-    const result = { viewport, moduleReplacements: 0, networkLeaks: [], errors: [] };
+    const result = {
+      viewport,
+      moduleReplacements: 0,
+      authModuleReplacements: 0,
+      networkLeaks: [],
+      expectedSessionErrors: [],
+      errors: [],
+    };
     report.journeys.push(result);
     const context = await browser.newContext({ viewport, hasTouch: viewport.name === "phone" });
+    const authSession = {
+      data: syntheticSession,
+      status: 200,
+      hold: false,
+      calls: [],
+      pending: [],
+      observers: [],
+    };
     await context.route("**/*", async (route) => {
       const requestUrl = new URL(route.request().url());
       if (requestUrl.origin !== target.origin)
         return route.fulfill({ status: 200, contentType: "text/css", body: "" });
+      if (isSessionRequest(requestUrl.href)) {
+        const request = {
+          disableCookieCache: requestUrl.searchParams.get("disableCookieCache"),
+          method: route.request().method(),
+        };
+        authSession.calls.push(request);
+        const { data, status } = authSession;
+        const held = authSession.hold
+          ? new Promise((resolve) => authSession.pending.push(resolve))
+          : Promise.resolve();
+        for (const notify of authSession.observers.splice(0)) notify(request);
+        await held;
+        return route.fulfill({
+          status,
+          contentType: "application/json",
+          body: JSON.stringify(data),
+        });
+      }
+      if (requestUrl.pathname.includes("/api/auth/")) {
+        result.networkLeaks.push({ path: requestUrl.pathname, method: route.request().method() });
+        return route.fulfill({ status: 503, contentType: "application/json", body: "{}" });
+      }
       if (requestUrl.pathname.includes("_serverFn")) {
         result.networkLeaks.push({ path: requestUrl.pathname, method: route.request().method() });
         return route.fulfill({
@@ -233,11 +472,28 @@ try {
         body: transportModule,
       });
     });
+    await context.route("**/src/lib/auth/client.ts*", async (route) => {
+      const response = await route.fetch();
+      const original = await response.text();
+      const authFlag =
+        /export const authEnabled = import\.meta\.env\.VITE_AUTH_ENABLED !== "false";/;
+      assert.ok(authFlag.test(original), "The real browser auth client must expose its auth flag");
+      result.authModuleReplacements++;
+      return route.fulfill({
+        response,
+        contentType: "application/javascript",
+        body: original.replace(authFlag, "export const authEnabled = true;"),
+      });
+    });
     const page = (activePage = await context.newPage());
     await page.clock.install();
     page.on("pageerror", (error) => result.errors.push(error.message));
     page.on("console", (message) => {
-      if (message.type() === "error") result.errors.push(message.text());
+      if (message.type() !== "error") return;
+      const url = message.location().url;
+      if (url && isSessionRequest(url) && /\b503\b/.test(message.text()))
+        result.expectedSessionErrors.push(message.text());
+      else result.errors.push(message.text());
     });
     await page.goto(target.href, { waitUntil: "domcontentloaded", timeout: 45_000 });
     // A town can appear in another tab while name entry is already open.
@@ -271,6 +527,10 @@ try {
     assert.ok(
       result.moduleReplacements > 0,
       "Development transport replacement must have been used",
+    );
+    assert.ok(
+      result.authModuleReplacements > 0,
+      "The browser-only auth flag must exercise real session validation",
     );
     const initialMove = await step(page, viewport.name === "phone");
     await page.waitForFunction(({ x, y }) => {
@@ -358,6 +618,9 @@ try {
       assert.equal(await page.locator("[data-ai-warning]").count(), 0);
       assert.equal(chatCount(await readTown(page), line), 1);
       result.failureWarningControlsAndResend = true;
+      await checkExpiredSessionRecovery(page, viewport, result, authSession);
+      await checkSupersededSessionRecovery(page, viewport, result, authSession);
+      await checkSignInDraftReturn(page, viewport, result);
       assert.deepEqual(result.networkLeaks, []);
       assert.deepEqual(result.errors, []);
       await page.screenshot({ path: join(out, `${viewport.name}-recovery.png`) });
@@ -561,6 +824,8 @@ try {
       assert.equal(chatCount(await readTown(page), line), 1);
     }
     result.failedAIKeepsDraftAndRecoversWithoutReload = failureScenarios.map(({ name }) => name);
+    await checkExpiredSessionRecovery(page, viewport, result, authSession);
+    await checkSupersededSessionRecovery(page, viewport, result, authSession);
     await page.getByRole("button", { name: "Close conversation", exact: true }).click();
     const replayTown = copy(near);
     const ids = replayTown.agents.map((agent) => agent.id);
@@ -720,6 +985,7 @@ try {
     assert.equal(await page.getByLabel("Your line to Kevin", { exact: true }).inputValue(), "");
     result.importCancelsForegroundAndResetsDrafts = true;
     result.transportCalls = (await calls(page)).map(({ id, kind }) => ({ id, kind }));
+    await checkSignInDraftReturn(page, viewport, result);
     assert.deepEqual(result.networkLeaks, []);
     assert.deepEqual(result.errors, []);
     await page.screenshot({ path: join(out, `${viewport.name}-complete.png`) });

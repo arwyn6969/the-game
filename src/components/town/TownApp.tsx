@@ -96,6 +96,9 @@ import {
 import { agentById } from "@/game/memory";
 import { thinkTown } from "@/lib/mind.functions";
 import { useMindAvailability } from "./use-mind-availability";
+import { GROK_PROVIDERS, signIn } from "@/lib/auth/client";
+import { checkGameSession } from "@/lib/auth/session-recovery";
+import { clearSignInDrafts, readSignInDrafts, saveSignInDrafts } from "./sign-in-drafts";
 import {
   mindFailure,
   mindFailureFromResult,
@@ -446,6 +449,10 @@ export function TownApp() {
   const [board, setBoard] = useState(false);
   const [thinking, setThinking] = useState("");
   const [replyFailure, setReplyFailure] = useState<MindFailure | null>(null);
+  const [connectionNote, setConnectionNote] = useState("");
+  const [checkingSession, setCheckingSession] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
+  const connectionCheckRef = useRef(false);
   const {
     online,
     onlineRef,
@@ -460,7 +467,99 @@ export function TownApp() {
   importTextRef.current = importText;
   toolsRef.current = tools;
   const [importError, setImportError] = useState("");
-  const [drafts, setDrafts] = useState<Partial<Record<AgentId, string>>>({});
+  const [drafts, setDrafts] = useState<Partial<Record<AgentId, string>>>(() => {
+    try {
+      return readSignInDrafts(townRef.current?.identityRegistry?.worldId, sessionStorage);
+    } catch {
+      return {};
+    }
+  });
+  useEffect(() => {
+    try {
+      clearSignInDrafts(sessionStorage);
+    } catch {
+      /* The in-memory draft remains available when storage is blocked. */
+    }
+  }, []);
+
+  async function checkConnection() {
+    if (connectionCheckRef.current) return;
+    connectionCheckRef.current = true;
+    setCheckingSession(true);
+    setConnectionNote("Checking sign-in and AI connection.");
+    const currentTown = townRef.current;
+    const currentRequest = requestSerial.current;
+    const isCurrent = () =>
+      mounted.current &&
+      townRef.current === currentTown &&
+      requestSerial.current === currentRequest;
+    try {
+      const signedIn = await checkGameSession();
+      if (!isCurrent()) return;
+      if (!signedIn) {
+        setReplyFailure("sign-in");
+        setConnectionNote("Sign in again to reconnect. Your line is kept.");
+        setSendNote("Sign in again to reconnect. Your line is kept.");
+        return;
+      }
+      setReplyFailure((failure) => (failure === "sign-in" ? null : failure));
+      const ready = await checkAI();
+      if (!isCurrent()) return;
+      setConnectionNote(
+        ready
+          ? "Sign-in and AI connection are ready. Your line is kept; send it when you are ready."
+          : "You are signed in, but AI is unavailable. Your line is kept; try the check again shortly.",
+      );
+      setSendNote(
+        ready
+          ? "Connection ready. Your line is still here."
+          : "AI is unavailable. Your line is still here.",
+      );
+    } catch {
+      if (isCurrent())
+        setConnectionNote(
+          "The sign-in check could not finish. Check your connection and try again. Your line is kept.",
+        );
+    } finally {
+      connectionCheckRef.current = false;
+      if (mounted.current) {
+        setCheckingSession(false);
+        if (!isCurrent())
+          setConnectionNote((note) => (note === "Checking sign-in and AI connection." ? "" : note));
+      }
+    }
+  }
+
+  async function signInAgain() {
+    const live = townRef.current;
+    const provider = GROK_PROVIDERS[0];
+    if (!live?.identityRegistry || !provider || signingIn) return;
+    setSigningIn(true);
+    try {
+      saveSignInDrafts(live.identityRegistry.worldId, drafts, sessionStorage);
+      const saved = await persistTownSave(live);
+      if (!saved.ok) throw new Error("save");
+      if (!mounted.current || townRef.current !== live) throw new Error("town changed");
+      await signIn(provider.providerId, {
+        callbackURL: window.location.pathname + window.location.search,
+      });
+      if (mounted.current && townRef.current === live) {
+        // Preview popups return to this mounted page; they need no reload snapshot.
+        if (window.location.hostname.endsWith(".grok-sandbox.com"))
+          clearSignInDrafts(sessionStorage);
+        await checkConnection();
+      }
+    } catch {
+      try {
+        clearSignInDrafts(sessionStorage);
+      } catch {
+        /* The original in-memory draft remains in this tab. */
+      }
+      setConnectionNote("Sign-in could not start. Your town and line are still here; try again.");
+    } finally {
+      if (mounted.current) setSigningIn(false);
+    }
+  }
   const draft = drafts[panel ?? "player"] ?? "";
   const setDraft = (
     value: string | ((current: string) => string),
@@ -579,6 +678,7 @@ export function TownApp() {
     setSpeed(speedRef.current);
     setHint(!next.sawHint);
     setDrafts({});
+    setConnectionNote("");
     setSendNote("");
     setPhysicalNote("");
     setPhysicalRead(null);
@@ -2179,6 +2279,7 @@ export function TownApp() {
   }
 
   async function sendLine() {
+    if (signingIn) return;
     const live = townRef.current;
     const who = panel;
     if (transportBusyRef.current) {
@@ -2197,6 +2298,7 @@ export function TownApp() {
       return;
     const text = draft.trim().slice(0, 400);
     if (!text) return;
+    setConnectionNote("");
     const player = agentById(live, "player");
     const other = agentById(live, who);
     if (!inTalkRange(player.tile.x, player.tile.y, other.tile.x, other.tile.y)) {
@@ -2602,15 +2704,41 @@ export function TownApp() {
       : "";
 
   const connectionWarning =
-    !localOnly && aiWarning ? (
-      <div className="warn ai-warning" data-ai-warning role="alert">
-        <p>{aiWarning}</p>
-        <p>
-          Connection checks retry automatically. A connection check does not resend your message.
-        </p>
-        <button className="btn" type="button" disabled={checking} onClick={() => void checkAI()}>
-          {checking ? "Checking AI connection" : "Check AI connection"}
-        </button>
+    !localOnly && (aiWarning || connectionNote) ? (
+      <div
+        className={aiWarning ? "warn ai-warning" : "ai-connection-note"}
+        data-ai-warning={aiWarning ? "" : undefined}
+        role={aiWarning ? "alert" : undefined}
+      >
+        {aiWarning && <p>{aiWarning}</p>}
+        {connectionNote && (
+          <p data-ai-connection-note role="status">
+            {connectionNote}
+          </p>
+        )}
+        {aiWarning && (
+          <>
+            <p>A connection check does not resend your message.</p>
+            <button
+              className="btn"
+              type="button"
+              disabled={checking || checkingSession || signingIn}
+              onClick={() => void checkConnection()}
+            >
+              {checking || checkingSession ? "Checking AI connection" : "Check AI connection"}
+            </button>
+            {replyFailure === "sign-in" && (
+              <button
+                className="btn"
+                type="button"
+                disabled={checkingSession || signingIn}
+                onClick={() => void signInAgain()}
+              >
+                {signingIn ? "Opening sign-in" : "Sign in again"}
+              </button>
+            )}
+          </>
+        )}
       </div>
     ) : null;
 
@@ -3277,6 +3405,7 @@ export function TownApp() {
 
             draft={draft}
             setDraft={setDraft}
+            signingIn={signingIn}
             busy={thinking === "player" || replay !== null}
             inspect={inspectorEnabled && inspect}
             sendNote={sendNote}
@@ -3730,6 +3859,7 @@ function Mind({
   onWatch,
   draft,
   setDraft,
+  signingIn,
   busy,
   inspect,
   sendNote,
@@ -3752,6 +3882,7 @@ function Mind({
   onWatch: () => void;
   draft: string;
   setDraft: (value: string) => void;
+  signingIn: boolean;
   busy: boolean;
   inspect: boolean;
   sendNote: string;
@@ -4117,15 +4248,16 @@ function Mind({
               className="field mt-2 min-h-20 py-2"
               value={draft}
               maxLength={400}
+              readOnly={signingIn}
               onChange={(event) => setDraft(event.target.value)}
             />
             <button
               className="btn"
               data-on="true"
               type="submit"
-              disabled={busy || !draft.trim() || !canTalk}
+              disabled={busy || signingIn || !draft.trim() || !canTalk}
             >
-              {busy ? "Saying it" : "Say it"}
+              {signingIn ? "Opening sign-in" : busy ? "Saying it" : "Say it"}
             </button>
           </div>
           <p

@@ -51,7 +51,9 @@ const BEARER_KEY = "grok-auth.bearer-token";
 
 /** The stored preview bearer token, or null. */
 export function getBearerToken(): string | null {
-  if (typeof window === "undefined") return null;
+  // Standalone hosting authenticates through its own HttpOnly cookie. A token
+  // left by an earlier preview must never replace that fresh cookie session.
+  if (standaloneAuth || typeof window === "undefined") return null;
   try {
     return window.sessionStorage.getItem(BEARER_KEY);
   } catch {

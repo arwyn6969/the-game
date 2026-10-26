@@ -1,0 +1,15 @@
+{
+  "name": "the-game-link-redirect",
+  "account_id": "dcde0fefc3f48090702893970a1b9145",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-26",
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": {
+    "enabled": true,
+    "redact_query_string": true,
+    "traces": { "enabled": true, "head_sampling_rate": 0.01 },
+  },
+  "routes": [{ "pattern": "arwyn.party/thegame*", "zone_name": "arwyn.party" }],
+  "services": [{ "binding": "HOMEPAGE", "service": "emblem-homepage-home" }],
+}
