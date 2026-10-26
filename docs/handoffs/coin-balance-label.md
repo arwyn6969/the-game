@@ -43,3 +43,15 @@ was used. [Current evidence](../review/coin-balance-2026-10-26/README.md).
 
 The full current application run and required PR Verify gate are in progress.
 Coin-label publication is not yet claimed.
+
+## Published follow-up — 26 October 2026
+
+The complete final Verify passed on `ee9ea343a49b8462a360bd82d8631898f2525caf`
+before PR #45 merged as `2e5de222ab0d190b6f49ee51fb0dbdd4707aa092`. The
+verified and merged trees match. Production Worker
+`82c1f2d0-dcf5-4387-8934-549a7ba267f2` now serves explicit coin units and
+retains the AI recovery fix. Actual hosted phone/desktop checks pass all three
+coin surfaces, AI dismissal/reopen, draft retention and no automatic replay.
+Public assets match; all bindings/runtime settings remain.
+[Complete release evidence and rollback](../review/coin-balance-2026-10-26/README.md).
+Earlier candidate statements above describe their pre-publication checkpoints.

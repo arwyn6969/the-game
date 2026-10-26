@@ -1,0 +1,110 @@
+{
+  "failedRun": "https://github.com/arwyn6969/the-game/actions/runs/40392775932",
+  "testFixHead": "ee9ea343a49b8462a360bd82d8631898f2525caf",
+  "originalFailure": "assertStopped observed saved status 'active' before its asynchronous write; the later failure snapshot had status 'paused'.",
+  "correction": "Wait for absent Stop control and durable paused status, then retain the original paused assertion.",
+  "runtimeChangedByCorrection": false,
+  "localJourneys": [
+    {
+      "kind": "manual",
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "unexpectedServerRequests": []
+    },
+    {
+      "kind": "automatic durable Start interrupted by global Pause",
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "unexpectedServerRequests": []
+    },
+    {
+      "kind": "automatic durable Start interrupted by hidden then visible",
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "unexpectedServerRequests": []
+    },
+    {
+      "kind": "automatic lifecycle",
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "unexpectedServerRequests": []
+    },
+    {
+      "kind": "automatic failure and quota",
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "unexpectedServerRequests": []
+    },
+    {
+      "kind": "manual",
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "unexpectedServerRequests": []
+    },
+    {
+      "kind": "automatic durable Start interrupted by global Pause",
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "unexpectedServerRequests": []
+    },
+    {
+      "kind": "automatic durable Start interrupted by hidden then visible",
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "unexpectedServerRequests": []
+    },
+    {
+      "kind": "automatic lifecycle",
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "unexpectedServerRequests": []
+    },
+    {
+      "kind": "automatic failure and quota",
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "unexpectedServerRequests": []
+    }
+  ],
+  "failures": []
+}

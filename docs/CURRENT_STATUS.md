@@ -1,18 +1,40 @@
 # Current project status
 
-## Coin balance clarity — current-main refresh, 26 October 2026
+## Mobile coin units and AI recovery — published, 26 October 2026
 
-Owner: this mobile release chat, reusing `coin-balance-label/` and existing
-[draft PR #45](https://github.com/arwyn6969/the-game/pull/45). The preserved
-coin-label branch is merged forward from current main `4a5ae77d531b984320203daa86449c168bd0fe15`,
-which includes verified AI-recovery PR #56. The runtime diff remains the three
-player-facing balance labels: an explicit coin unit, with singular for one.
-Fresh phone/desktop checks pass for 0, 1, 4 and 120 coins in the header, player
-card and journal, reload, movement, pause, conversation and portable saves.
-Typecheck, lint (one inherited warning) and a credential-free build pass.
-[Current evidence](review/coin-balance-2026-10-26/README.md). Next gates:
-current-head Verify, merge and publication, explicitly authorized by the user
-on 26 October. The AI recovery release is now live independently; its receipt is below.
+Live: **https://www.arwyn.party/thegame/**. [PR #45](https://github.com/arwyn6969/the-game/pull/45)
+passed every required [Verify gate](https://github.com/arwyn6969/the-game/actions/runs/40396181381)
+at `ee9ea343a49b8462a360bd82d8631898f2525caf`, then merged as
+`2e5de222ab0d190b6f49ee51fb0dbdd4707aa092`. The complete trees match. The
+clean verified package is deployed as existing production Worker
+`82c1f2d0-dcf5-4387-8934-549a7ba267f2`. Owner: this mobile release chat, with
+receipt on `codex/mobile-coins-release-receipt-20261026`.
+[Release evidence and rollback](review/coin-balance-2026-10-26/README.md).
+
+The header, player card and journal identify the balance as coins, including
+singular “1 coin”. Actual disposable phone/desktop local checks pass for 0, 1,
+4 and 120 coins across all three surfaces, reload, movement, pause, conversation
+and portable saves. This preserves the already published AI dismiss/reopen,
+kept drafts, accurate connection-check feedback and timeout classification.
+Balances, accounting, save schemas, provider limits and model deadlines remain.
+
+All current application, typed and town tests, diagnostics, builds, browser,
+accessibility and authenticated wallet CI gates pass. The first candidate run
+caught a browser helper observing Stop before its asynchronous save committed;
+the test now waits for both controls and durable paused state, preserving its
+assertion. Ten complete local meeting journeys and the final full CI pass.
+
+Four live client asset hashes match the verified package; game, privacy,
+manifest, anonymous session and canonical links pass. Fresh actual deployed
+phone/desktop contexts each confirm coin units in all three surfaces and
+reachable AI dismissal/reopen, retained draft/town, a fresh null-session check
+and no automatic replay across the availability poll. Each made only one
+unauthorized player POST, rejected by the real middleware; no model inference,
+OAuth, existing user profile or private town was used. All 18 production binding
+definitions and runtime settings compare identical before/after publication.
+No migration, secret upload or provider change. Rollback to
+`673fe14a-ba0f-450c-87bb-dc4cd96130c2` retains AI recovery with the older balance
+wording. Physical-device and fresh authenticated model acceptance are not claimed.
 
 ## Mobile AI recovery — published, 26 October 2026
 
@@ -20,8 +42,8 @@ Live: **https://www.arwyn.party/thegame/**. [PR #56](https://github.com/arwyn696
 passed [Verify](https://github.com/arwyn6969/the-game/actions/runs/40382182700) at
 `c88c90059389161ba240652a833a968550b3c23f` and merged as
 `4a5ae77d531b984320203daa86449c168bd0fe15`; their complete source trees match.
-The clean merged package is deployed as existing production Worker version
-`673fe14a-ba0f-450c-87bb-dc4cd96130c2`. Owner: this mobile release chat.
+The clean merged package was first deployed as existing production Worker version
+`673fe14a-ba0f-450c-87bb-dc4cd96130c2`; the coin release above now retains it. Owner: this mobile release chat.
 [Validation, live checks and rollback](review/mobile-ai-warning-2026-10-26/README.md).
 
 The warning has reachable close/reopen controls, occupies its own area above
