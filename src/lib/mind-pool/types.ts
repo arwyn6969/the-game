@@ -41,7 +41,7 @@ export type PoolConfig = {
 export type Candidate = { provider: Provider; route: Route };
 export type Lease = { id: string; jsonMode: boolean };
 export type Outcome =
-  "ok" | "rate_limit" | "auth" | "config" | "format" | "invalid" | "unreachable";
+  "ok" | "rate_limit" | "auth" | "config" | "format" | "invalid" | "unreachable" | "timeout";
 export type MindJsonFailure =
   "empty" | "oversize" | "invalid-json" | "not-object" | "missing-envelope";
 export type CompletionDiagnostics = {

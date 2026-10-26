@@ -62,6 +62,7 @@ export async function routeMind(input: {
         };
         let text: string | undefined;
         let retryFormat = false;
+        const signal = AbortSignal.timeout(Math.max(1, Math.floor(remaining)));
         try {
           const key = env[candidate.provider.apiKeyEnv]?.trim();
           const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -75,7 +76,7 @@ export async function routeMind(input: {
               // redirect with its credential; a 3xx is handled as unreachable.
               redirect: "manual",
               body: JSON.stringify(requestBody(candidate, system, user, tokens, jsonMode)),
-              signal: AbortSignal.timeout(Math.max(1, Math.floor(remaining))),
+              signal,
             },
           );
           completion.status = response.status;
@@ -134,6 +135,7 @@ export async function routeMind(input: {
           }
         } catch {
           // Do not store provider bodies/errors: they can echo prompts or keys.
+          if (signal.aborted) completion.outcome = "timeout";
         }
         completion.latencyMs = Math.max(0, now() - started);
         await store.finish(candidate, lease, completion);

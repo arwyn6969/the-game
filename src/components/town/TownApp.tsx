@@ -450,6 +450,8 @@ export function TownApp() {
   const [thinking, setThinking] = useState("");
   const [replyFailure, setReplyFailure] = useState<MindFailure | null>(null);
   const [connectionNote, setConnectionNote] = useState("");
+  const [connectionDismissed, setConnectionDismissed] = useState(false);
+  const connectionDetailsRef = useRef<HTMLButtonElement>(null);
   const [checkingSession, setCheckingSession] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
   const connectionCheckRef = useRef(false);
@@ -485,6 +487,7 @@ export function TownApp() {
   async function checkConnection() {
     if (connectionCheckRef.current) return;
     connectionCheckRef.current = true;
+    setConnectionDismissed(false);
     setCheckingSession(true);
     setConnectionNote("Checking sign-in and AI connection.");
     const currentTown = townRef.current;
@@ -507,12 +510,12 @@ export function TownApp() {
       if (!isCurrent()) return;
       setConnectionNote(
         ready
-          ? "Sign-in and AI connection are ready. Your line is kept; send it when you are ready."
+          ? "Sign-in is working and AI is configured. This check does not test a reply or available limits. Your line is kept."
           : "You are signed in, but AI is unavailable. Your line is kept; try the check again shortly.",
       );
       setSendNote(
         ready
-          ? "Connection ready. Your line is still here."
+          ? "Sign-in checked. Your line is still here; send it when you want to retry."
           : "AI is unavailable. Your line is still here.",
       );
     } catch {
@@ -678,6 +681,7 @@ export function TownApp() {
     setSpeed(speedRef.current);
     setHint(!next.sawHint);
     setDrafts({});
+    setConnectionDismissed(false);
     setConnectionNote("");
     setSendNote("");
     setPhysicalNote("");
@@ -1677,6 +1681,7 @@ export function TownApp() {
       if (fresh()) {
         if (job.kind === "player") {
           failed ??= mindFailure(error);
+          setConnectionDismissed(false);
           setReplyFailure(failed);
           // Keep the player's draft. A failed model request must never invent
           // an authored conversation or silently switch this browser to local.
@@ -2704,12 +2709,26 @@ export function TownApp() {
       : "";
 
   const connectionWarning =
-    !localOnly && (aiWarning || connectionNote) ? (
+    !localOnly && !connectionDismissed && (aiWarning || connectionNote) ? (
       <div
-        className={aiWarning ? "warn ai-warning" : "ai-connection-note"}
+        className={`warn ai-connection-message ${aiWarning ? "ai-warning" : "ai-connection-note"}`}
         data-ai-warning={aiWarning ? "" : undefined}
         role={aiWarning ? "alert" : undefined}
       >
+        <div className="ai-connection-heading">
+          <strong>AI connection</strong>
+          <button
+            className="btn"
+            type="button"
+            aria-label="Dismiss AI connection message"
+            onClick={() => {
+              setConnectionDismissed(true);
+              window.requestAnimationFrame(() => connectionDetailsRef.current?.focus());
+            }}
+          >
+            <X className="size-4" aria-hidden />
+          </button>
+        </div>
         {aiWarning && <p>{aiWarning}</p>}
         {connectionNote && (
           <p data-ai-connection-note role="status">
@@ -2974,6 +2993,17 @@ export function TownApp() {
                     ? "AI responded"
                     : "AI ready"}
         </span>
+        {!localOnly && connectionDismissed && (aiWarning || connectionNote) && (
+          <button
+            ref={connectionDetailsRef}
+            className="badge ai-connection-reopen"
+            type="button"
+            aria-label="Show AI connection details"
+            onClick={() => setConnectionDismissed(false)}
+          >
+            AI connection
+          </button>
+        )}
         {thinking && (
           <span className="status-message" role="status">
             {thinking === "player" ? "Waiting for your AI reply" : "Residents are thinking"}
@@ -4225,6 +4255,7 @@ function Mind({
           Newest reply
         </button>
       )}
+      {connectionWarning}
       {agent.id !== "player" && tab === "together" && (
         <form
           className="mind-say"
@@ -4234,7 +4265,6 @@ function Mind({
             onSend();
           }}
         >
-          {connectionWarning}
           {!canTalk && (
             <p className="character-note">Walk closer to speak. Your draft stays on this card.</p>
           )}

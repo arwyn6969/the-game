@@ -1,0 +1,149 @@
+{
+  "url": "http://127.0.0.1:8094/",
+  "mockedTransport": true,
+  "liveProviderCalls": 0,
+  "recoveryOnly": true,
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "moduleReplacements": 5,
+      "authModuleReplacements": 5,
+      "networkLeaks": [],
+      "expectedSessionErrors": [
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "errors": [],
+      "namingConflictOffersRecovery": true,
+      "emptySaveOffersRecovery": true,
+      "pausedMovementAutosavesWithoutAnotherAction": {
+        "before": {
+          "x": 26,
+          "y": 22
+        },
+        "after": {
+          "x": 27,
+          "y": 22
+        },
+        "key": "ArrowRight",
+        "input": "keyboard"
+      },
+      "startupFailureRecoversOnFocusWithoutReload": true,
+      "unavailableConfigurationRecoversAutomatically": true,
+      "hiddenDuringAvailabilityKeepsDraftWithoutRequest": true,
+      "failureWarningControlsAndResend": true,
+      "exportWithDismissedWarningRetainsTown": true,
+      "dismissibleWarning": {
+        "touchTargetReachable": true,
+        "pollingAndLateCheckStayDismissed": true,
+        "townAndCardReopenStayDismissed": true,
+        "detailsCanBeReopened": true,
+        "checkDoesNotClaimProviderReadiness": true,
+        "newFailureResurfaces": true,
+        "draftRetainedAndExplicitRetryLandsOnce": true
+      },
+      "expiredSessionRecovery": {
+        "missingSessionKeepsSignInAndDraft": true,
+        "transportFailureShowsRetryAndKeepsDraft": true,
+        "confirmedSessionClearsWarningWithoutReplay": true,
+        "sessionChecks": [
+          {
+            "disableCookieCache": "true",
+            "method": "GET"
+          },
+          {
+            "disableCookieCache": "true",
+            "method": "GET"
+          },
+          {
+            "disableCookieCache": "true",
+            "method": "GET"
+          }
+        ],
+        "successNoticeCanBeDismissedAndReopened": true,
+        "explicitResendSucceedsOnce": true
+      },
+      "supersededSessionCheckPreservesNewerSuccessAndFailure": true,
+      "signInReturnDrafts": {
+        "sameWorldRestoresUnsentDraft": true,
+        "snapshotConsumedOnce": true,
+        "differentWorldDoesNotRestoreDraft": true,
+        "zeroModelCallsOnReturn": true
+      }
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "moduleReplacements": 5,
+      "authModuleReplacements": 5,
+      "networkLeaks": [],
+      "expectedSessionErrors": [
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "errors": [],
+      "namingConflictOffersRecovery": true,
+      "emptySaveOffersRecovery": true,
+      "pausedMovementAutosavesWithoutAnotherAction": {
+        "before": {
+          "x": 26,
+          "y": 22
+        },
+        "after": {
+          "x": 27,
+          "y": 22
+        },
+        "key": "ArrowRight",
+        "input": "touch"
+      },
+      "startupFailureRecoversOnFocusWithoutReload": true,
+      "unavailableConfigurationRecoversAutomatically": true,
+      "hiddenDuringAvailabilityKeepsDraftWithoutRequest": true,
+      "failureWarningControlsAndResend": true,
+      "exportWithDismissedWarningRetainsTown": true,
+      "dismissibleWarning": {
+        "touchTargetReachable": true,
+        "pollingAndLateCheckStayDismissed": true,
+        "townAndCardReopenStayDismissed": true,
+        "detailsCanBeReopened": true,
+        "checkDoesNotClaimProviderReadiness": true,
+        "newFailureResurfaces": true,
+        "draftRetainedAndExplicitRetryLandsOnce": true
+      },
+      "expiredSessionRecovery": {
+        "missingSessionKeepsSignInAndDraft": true,
+        "transportFailureShowsRetryAndKeepsDraft": true,
+        "confirmedSessionClearsWarningWithoutReplay": true,
+        "sessionChecks": [
+          {
+            "disableCookieCache": "true",
+            "method": "GET"
+          },
+          {
+            "disableCookieCache": "true",
+            "method": "GET"
+          },
+          {
+            "disableCookieCache": "true",
+            "method": "GET"
+          }
+        ],
+        "successNoticeCanBeDismissedAndReopened": true,
+        "explicitResendSucceedsOnce": true
+      },
+      "supersededSessionCheckPreservesNewerSuccessAndFailure": true,
+      "signInReturnDrafts": {
+        "sameWorldRestoresUnsentDraft": true,
+        "snapshotConsumedOnce": true,
+        "differentWorldDoesNotRestoreDraft": true,
+        "zeroModelCallsOnReturn": true
+      }
+    }
+  ],
+  "failures": []
+}

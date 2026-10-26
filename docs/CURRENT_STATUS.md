@@ -1,5 +1,25 @@
 # Current project status
 
+## Mobile AI failure diagnosis and dismissible connection notice — verified candidate, 26 October 2026
+
+Owner: current mobile AI diagnosis chat, checkout `library-meeting/`, branch
+`codex/mobile-ai-warning-20261026`, based on freshly fetched `origin/main`
+`66d161d343dedb411c0a3fdfc0dc55cbf44952e4`. Scope: dismiss/reopen connection
+notices, accurate configuration-check feedback, provider timeout classification,
+and focused regressions. Read-only production ledgers show successful player
+calls at 18:34:12, 18:34:46 and 18:37:31 UTC; a budget-only call at 18:35:05
+matches the existing two-per-minute provider gate, and an 18:38:09 call settled
+as `unreachable`, HTTP 200, 11,816 ms, unknown usage. The latter record cannot
+distinguish a body timeout from another body-read/decode error; preserve that
+uncertainty. No new model call, quota/configuration change or publication.
+Node 24 typecheck/lint, 1,092 script tests, 55 typed tests, 425 town tests,
+diagnostics and both credential-free builds pass. Full synthetic desktop/phone
+AI journeys pass; the final focused pass additionally checks all card tabs and
+actual town download after dismissal. No model calls, browser-profile access
+or production writes were used. [Review evidence](review/mobile-ai-warning-2026-10-26/README.md).
+Next gate: draft PR current-head Verify, then separately authorized integration
+and publication.
+
 ## Mobile session recovery and short-link routing — 26 October 2026
 
 Owner: this mobile recovery chat, reusing the clean `library-meeting/` checkout on `codex/mobile-session-recovery-20261026`, freshly based on fetched `origin/main` `b4cc195`, [PR #54](https://github.com/arwyn6969/the-game/pull/54). Scope: auth recovery, conversation draft preservation, focused browser/auth tests and a dedicated apex redirect Worker. No simulation, save-schema, provider, budget or production-secret change. Production remains at runtime `e019735f8707`, Worker `8a7d7405-031c-4502-91b1-208d9db5fa8e`, published after PR #52; its release receipt remains at commit `0548956` on the preserved documentation branch `codex/library-auto-meeting-receipt-20261025`.
