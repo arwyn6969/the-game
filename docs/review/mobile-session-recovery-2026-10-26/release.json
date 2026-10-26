@@ -1,0 +1,171 @@
+{
+  "source": "b41eeebab2bb56926a65084fde7cb35da592d8cc",
+  "mergedSource": "66d161d343dedb411c0a3fdfc0dc55cbf44952e4",
+  "pullRequest": "https://github.com/arwyn6969/the-game/pull/54",
+  "verify": "https://github.com/arwyn6969/the-game/actions/runs/40328592346",
+  "gameVersion": "14548f3b-b385-4cc9-b4fe-db05ac5e5676",
+  "previousGameVersion": "8a7d7405-031c-4502-91b1-208d9db5fa8e",
+  "redirectVersion": "1a44f41b-2b19-47d5-b0be-ca495abffbee",
+  "redirectRoute": {
+    "id": "cdc62f1fbb6548fba198d5afa918ecd9",
+    "pattern": "arwyn.party/thegame*",
+    "script": "the-game-link-redirect",
+    "request_limit_fail_open": false
+  },
+  "previousRoutesUnchanged": true,
+  "oldRouteCount": 51,
+  "newRouteCount": 52,
+  "allGameBindingsUnchanged": true,
+  "allRuntimeSettingsUnchanged": true,
+  "publicChecks": {
+    "source": "b41eeebab2bb56926a65084fde7cb35da592d8cc",
+    "checkedAt": "2026-10-26T13:45:25.761Z",
+    "assets": [
+      {
+        "path": "/thegame/assets/client-bfVFwoQa.js",
+        "status": 200,
+        "expectedSha256": "bc1f3703b46da2fd5920445b4e852db80bf7bb511b228073744f5d11ed75d6b2",
+        "actualSha256": "bc1f3703b46da2fd5920445b4e852db80bf7bb511b228073744f5d11ed75d6b2",
+        "matches": true
+      },
+      {
+        "path": "/thegame/assets/index-Bf9COiXb.js",
+        "status": 200,
+        "expectedSha256": "e1f8106f296841289d8f40786089f7cc55e85e201ac217aeb9500730611428eb",
+        "actualSha256": "e1f8106f296841289d8f40786089f7cc55e85e201ac217aeb9500730611428eb",
+        "matches": true
+      },
+      {
+        "path": "/thegame/assets/routes-D2bd1oOa.js",
+        "status": 200,
+        "expectedSha256": "0bea68836ac6fde50bac2494da85dbbd164b3d5c50e459a95409dd632e305db4",
+        "actualSha256": "0bea68836ac6fde50bac2494da85dbbd164b3d5c50e459a95409dd632e305db4",
+        "matches": true
+      },
+      {
+        "path": "/thegame/assets/styles-ChFpMlMT.css",
+        "status": 200,
+        "expectedSha256": "6b3c55b43bc84ed281b9d0892b1a0475c74d88283e56ee470c13512ad1a2acc0",
+        "actualSha256": "6b3c55b43bc84ed281b9d0892b1a0475c74d88283e56ee470c13512ad1a2acc0",
+        "matches": true
+      }
+    ],
+    "endpoints": [
+      {
+        "path": "/thegame/",
+        "status": 200
+      },
+      {
+        "path": "/thegame/privacy",
+        "status": 200
+      },
+      {
+        "path": "/thegame/api/auth/get-session",
+        "status": 200
+      },
+      {
+        "path": "/thegame/__grok/manifest.webmanifest",
+        "status": 200
+      },
+      {
+        "path": "/thegame-other",
+        "status": 404,
+        "homepageReleasePreserved": true
+      },
+      {
+        "path": "/thegame%2Fprivacy",
+        "status": 404,
+        "homepageReleasePreserved": true
+      },
+      {
+        "path": "www/",
+        "status": 308,
+        "location": "https://arwyn.party/"
+      },
+      {
+        "path": "www/bitcoinart",
+        "status": 308,
+        "location": "https://arwyn.party/bitcoinart"
+      }
+    ],
+    "links": [
+      {
+        "url": "https://arwyn.party/thegame",
+        "status": 200,
+        "finalUrl": "https://www.arwyn.party/thegame/",
+        "expected": "https://www.arwyn.party/thegame/"
+      },
+      {
+        "url": "https://arwyn.party/thegame/",
+        "status": 200,
+        "finalUrl": "https://www.arwyn.party/thegame/",
+        "expected": "https://www.arwyn.party/thegame/"
+      },
+      {
+        "url": "https://arwyn.party/thegame?routing=20261026",
+        "status": 200,
+        "finalUrl": "https://www.arwyn.party/thegame/?routing=20261026",
+        "expected": "https://www.arwyn.party/thegame/?routing=20261026"
+      },
+      {
+        "url": "https://arwyn.party/thegame/?routing=20261026",
+        "status": 200,
+        "finalUrl": "https://www.arwyn.party/thegame/?routing=20261026",
+        "expected": "https://www.arwyn.party/thegame/?routing=20261026"
+      },
+      {
+        "url": "https://arwyn.party/thegame/privacy?routing=20261026",
+        "status": 200,
+        "finalUrl": "https://www.arwyn.party/thegame/privacy?routing=20261026",
+        "expected": "https://www.arwyn.party/thegame/privacy?routing=20261026"
+      },
+      {
+        "url": "http://arwyn.party/thegame",
+        "status": 200,
+        "finalUrl": "https://www.arwyn.party/thegame/",
+        "expected": "https://www.arwyn.party/thegame/"
+      },
+      {
+        "url": "https://www.arwyn.party/thegame?routing=20261026",
+        "status": 200,
+        "finalUrl": "https://www.arwyn.party/thegame/?routing=20261026",
+        "expected": "https://www.arwyn.party/thegame/?routing=20261026"
+      }
+    ],
+    "passed": true
+  },
+  "browser": {
+    "failures": [],
+    "journeys": [
+      {
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "actualPlayerPosts": 1,
+        "freshNullSessionCheckShowsFeedback": true,
+        "draftAndTownPreserved": true,
+        "noAutomaticReplayAcrossAvailabilityPoll": true,
+        "pageErrorCount": 0,
+        "anonymousUnauthorizedShowsSignInAgain": true
+      },
+      {
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "actualPlayerPosts": 1,
+        "freshNullSessionCheckShowsFeedback": true,
+        "draftAndTownPreserved": true,
+        "noAutomaticReplayAcrossAvailabilityPoll": true,
+        "pageErrorCount": 0,
+        "anonymousUnauthorizedShowsSignInAgain": true
+      }
+    ]
+  },
+  "oauthTested": false,
+  "physicalDeviceTested": false,
+  "realProviderCalls": 0
+}
