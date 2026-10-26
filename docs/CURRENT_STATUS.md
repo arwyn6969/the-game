@@ -1,6 +1,25 @@
 # Current project status
 
-## Social facilitation and action deadlines — verified candidate, 26 October 2026
+## Social facilitation and action deadlines — published, 26 October 2026
+
+Live: **https://www.arwyn.party/thegame/**. [PR #57](https://github.com/arwyn6969/the-game/pull/57)
+passed the complete [Verify run](https://github.com/arwyn6969/the-game/actions/runs/40401155916)
+at `9e610475b535b04587dc02603d2e3e16e7ebd9b0` and merged as `a40867e5ca977453a5f42df2aff2cb9fbf022f82`.
+Worker `87687764-4b95-478d-b1bb-f3dfbd5329dc` publishes build `9e610475b535`.
+All four client asset hashes match; all 18 binding definitions, seven secret
+definitions, runtime settings and 52 route records remain unchanged. The live
+Help panel confirms the build. Publication made no real model call or migration.
+[Release evidence and rollback](review/social-release-2026-10-26/README.md).
+
+Remaining owner: this social assessment chat, checkout `social-experience-fix/`,
+branch `codex/social-acceptance-followup-20261026` from merged main. The twelve-call
+checkpoint is preserved. Multi-speaker and post-opt-out actual speech await real
+quota headroom; the complete rolling allowance cannot return before 27 October
+20:37:41.842 UTC. Explicit scheduling consent is pending after automatic approval
+review rejected future autonomous execution; no automation exists. Mobile stays
+on hold. The earlier implementation/retest evidence follows.
+
+### Earlier implementation and bounded retest
 
 Owner: current social assessment chat, isolated checkout `social-experience-fix/`,
 branch `codex/social-experience-20261026`, based on freshly fetched main

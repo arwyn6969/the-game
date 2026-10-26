@@ -1,0 +1,23 @@
+{
+  "pr": 57,
+  "merge": "a40867e5ca977453a5f42df2aff2cb9fbf022f82",
+  "runtime": "9e610475b535b04587dc02603d2e3e16e7ebd9b0",
+  "worker": "the-game-production",
+  "version": "87687764-4b95-478d-b1bb-f3dfbd5329dc",
+  "rollbackVersion": "82c1f2d0-dcf5-4387-8934-549a7ba267f2",
+  "bindingDefinitionsUnchanged": 18,
+  "retainedSecretDefinitions": 7,
+  "runtimeSettingsUnchanged": [
+    "compatibility_date",
+    "compatibility_flags",
+    "usage_model",
+    "logpush",
+    "observability",
+    "placement",
+    "tail_consumers"
+  ],
+  "routesUnchanged": 52,
+  "matchingClientAssets": 4,
+  "publicChecksPassed": true,
+  "modelCallsDuringRelease": 0
+}
