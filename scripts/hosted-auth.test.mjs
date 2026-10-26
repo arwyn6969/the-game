@@ -4,6 +4,7 @@ import { after, before, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { requestHandler } from "@tanstack/react-start/server";
 import { createServer } from "vite";
+import { serializeSignedCookie } from "better-call";
 import {
   createHeadInjector,
   renderWebManifest,
@@ -12,6 +13,7 @@ import {
 
 const origin = "http://localhost:8080";
 let server, database, auth, handlers, configured, cookieName;
+let verify;
 const settings = {
   VITE_AUTH_ENABLED: "true",
   VITE_AUTH_MODE: "standalone",
@@ -38,6 +40,7 @@ before(async () => {
   auth = module.auth;
   configured = module.authConfigured;
   cookieName = module.SESSION_TOKEN_COOKIE;
+  verify = await server.ssrLoadModule("/src/lib/auth/verify.server.ts");
   handlers = (await server.ssrLoadModule("/src/routes/api.auth.$.ts")).Route.options.server
     .handlers;
 });
@@ -86,6 +89,92 @@ test("standalone Google login uses the mounted callback and isolated secure cook
   assert.equal(url.searchParams.get("prompt"), "select_account");
   assert.equal(url.searchParams.get("code_challenge_method"), "S256");
   assert.ok(url.searchParams.get("state"));
+});
+
+test("mounted cookie sessions work and standalone clients ignore stale preview bearer tokens", async () => {
+  const context = await auth.$context;
+  const user = await context.internalAdapter.createUser({
+    name: "Disposable hosted owner",
+    email: `${randomBytes(12).toString("hex")}@example.invalid`,
+    emailVerified: true,
+  });
+  const session = await context.internalAdapter.createSession(user.id);
+  const signed = await serializeSignedCookie(cookieName, session.token, context.secret, {
+    path: "/",
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+  });
+  const req = new Request(`${origin}/thegame/_serverFn/synthetic-session-check`, {
+    method: "POST",
+    headers: { cookie: signed.split(";", 1)[0], "sec-fetch-site": "same-origin" },
+  });
+  const resolveUser = async (bearer) => {
+    const response = await inRequest(req, async () => {
+      try {
+        return Response.json({ userId: await verify.requireUserId(bearer) });
+      } catch (error) {
+        return Response.json({ error: error.message, status: error.status });
+      }
+    });
+    return response.json();
+  };
+  assert.deepEqual(await resolveUser(), { userId: user.id });
+  // A stale bearer overrides the cookie in Better Auth. Hosted callers must not
+  // forward preview credentials into this otherwise working session.
+  assert.deepEqual(await resolveUser("stale-preview-session"), {
+    error: "Unauthorized",
+    status: 401,
+  });
+  const oldWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
+  try {
+    Object.defineProperty(globalThis, "window", {
+      configurable: true,
+      value: { sessionStorage: { getItem: () => "stale-preview-session" } },
+    });
+    const client = await server.ssrLoadModule("/src/lib/auth/client.ts");
+    assert.equal(client.getBearerToken(), null);
+    assert.deepEqual(await resolveUser(client.getBearerToken() ?? undefined), { userId: user.id });
+  } finally {
+    if (oldWindow) Object.defineProperty(globalThis, "window", oldWindow);
+    else delete globalThis.window;
+  }
+});
+
+test("an authoritative mounted session check rejects a revoked session despite its cached cookie", async () => {
+  const context = await auth.$context;
+  const user = await context.internalAdapter.createUser({
+    name: "Disposable restored tab",
+    email: `${randomBytes(12).toString("hex")}@example.invalid`,
+    emailVerified: true,
+  });
+  const session = await context.internalAdapter.createSession(user.id);
+  const signed = await serializeSignedCookie(cookieName, session.token, context.secret, {
+    path: "/",
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+  });
+  const tokenCookie = signed.split(";", 1)[0];
+  const get = (cookies, fresh = false) =>
+    new Request(
+      `${origin}/thegame/api/auth/get-session${fresh ? "?disableCookieCache=true" : ""}`,
+      { headers: { cookie: cookies, "sec-fetch-site": "same-origin" } },
+    );
+  const first = get(tokenCookie);
+  const response = await inRequest(first, () => handlers.GET({ request: first }));
+  assert.equal((await response.json()).user.id, user.id);
+  const cache = response.headers.getSetCookie().map((value) => value.split(";", 1)[0]);
+  assert.ok(cache.some((value) => value.startsWith("__Host-the-game-auth.session_data=")));
+  const cookies = [tokenCookie, ...cache].join("; ");
+  await context.internalAdapter.deleteSession(session.token);
+  const restored = get(cookies);
+  const cached = await inRequest(restored, () => handlers.GET({ request: restored }));
+  assert.equal((await cached.json()).user.id, user.id);
+  const fresh = get(cookies, true);
+  const checked = await inRequest(fresh, () => handlers.GET({ request: fresh }));
+  assert.equal(checked.status, 200);
+  assert.equal(await checked.json(), null);
 });
 
 test("mounted account linking still requires a live authenticated owner", async () => {
