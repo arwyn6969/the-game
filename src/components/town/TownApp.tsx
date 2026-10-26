@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ACTION_CLIENT_TIMEOUT_MS } from "@/lib/mind-timing";
 import {
   ArrowRight,
   Download,
@@ -1414,7 +1415,7 @@ export function TownApp() {
       try {
         const prompt = buildPrompt(live, job);
         const res = await new Promise<Awaited<ReturnType<typeof thinkTown>>>((resolve, reject) => {
-          timed = window.setTimeout(() => reject(new Error("timeout")), 15_000);
+          timed = window.setTimeout(() => reject(new Error("timeout")), ACTION_CLIENT_TIMEOUT_MS);
           if (!fresh()) throw new Error("The meeting changed before dispatch");
           if (automaticSnapshot) {
             const marked = markDiscussionRunStarted(
@@ -1557,7 +1558,7 @@ export function TownApp() {
       try {
         const prompt = buildPrompt(live, job);
         const res = await new Promise<Awaited<ReturnType<typeof thinkTown>>>((resolve, reject) => {
-          timed = window.setTimeout(() => reject(new Error("timeout")), 15_000);
+          timed = window.setTimeout(() => reject(new Error("timeout")), ACTION_CLIENT_TIMEOUT_MS);
           requestMind(job.kind, prompt).then(resolve, reject);
         });
         response = res;

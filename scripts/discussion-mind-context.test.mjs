@@ -101,6 +101,10 @@ test("recorded pre-step04 Arwyn attention offers have complete strict wire choic
   });
   const before = structuredClone(town);
   const prompt = buildPrompt(town, job);
+  assert.match(prompt, /You are the proposed facilitator/);
+  assert.match(prompt, /choosing participate when offered/);
+  assert.match(prompt, /ask a short, concrete opening question/);
+  assert.match(prompt, /You may still decline, listen, pass, leave or close when offered/);
   const observation = JSON.parse(prompt.split("\nCurrent observation: ")[1]);
   assert.deepEqual(observation.availableActions, [
     { kind: "leave", label: "Leave discussion" },

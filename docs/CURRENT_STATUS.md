@@ -1,5 +1,27 @@
 # Current project status
 
+## Social facilitation and action deadlines — in verification, 26 October 2026
+
+Owner: current social assessment chat, isolated checkout `social-experience-fix/`,
+branch `codex/social-experience-20261026`, based on freshly fetched main
+`4a5ae77d531b984320203daa86449c168bd0fe15`. The user requested facilitator and
+timeout repairs followed by a real social retest within existing free limits.
+Scope: role-aware discussion prompts, bounded action transport/client deadlines,
+regressions and qualification evidence. Existing residents retain every offered
+decline/listen/pass/leave choice. Action requests still transmit once, with the
+same output, call, concurrency and monetary limits; other AI jobs keep their
+existing deadlines. No production configuration or mobile change.
+
+The earlier actual trial used seven transmissions: six valid acceptance/listen
+choices and one timeout after a labelled player opening. The retest must retain
+that saved meeting and its seven settled accounting rows, use at most the five
+remaining calls under the original twelve-call daily player ceiling, and retain
+the twenty-four-call account ceiling. Provider counters may lag; the local
+attempt ledger also counts the timed-out transmission. Next evidence: focused
+and full checks, then the bounded real retest with exact source, audience,
+memory/reload and accounting receipts. This record does not claim social
+qualification or hosted publication.
+
 ## Mobile AI failure diagnosis and dismissible connection notice — verified candidate, 26 October 2026
 
 Owner: current mobile AI diagnosis chat, checkout `library-meeting/`, branch
