@@ -1,5 +1,27 @@
 # Current project status
 
+## Player controls and project feedback — verified local candidate, 27 October 2026
+
+Owner: current agent-player assessment chat, isolated checkout
+`player-controls-feedback/`, branch `codex/player-controls-feedback-20261027`,
+base current `origin/main` `c7fa07ad1fc20fcbd6ecc99a7aae82e05421c2d3`.
+Implementation head: `d52e4fead3f1d7b252588a6081233aacb029d758`.
+The user requested fixes for the Grok and Emblem playtest findings while their
+separate lookup test continues. Scope: reliable quick keyboard taps and focus,
+replay guidance, reachable library controls, accurate local-only cancellation
+feedback, project action/draft/budget clarity and Northern's public work guidance.
+No save-schema, economy-rule, provider, hosting or active meeting-work change.
+Root owns TownApp, PlayerTools, styles, integration and delivery; scoped agents
+own LibraryProject/display-only community projection, offline guidance, and
+new bounded regression helpers. Local acceptance passes: 1,105 script + 55
+typed tests, 431 town tests, typecheck/lint (one inherited warning), diagnostics,
+credential-free build, complete built-browser gate and mocked AI browser gate.
+Focused controls pass at desktop/phone sizes across all four skins; library
+arrival with the project open, paid source check, draft review, lookup, public
+receipts and reload pass. [Changes and evidence](review/player-controls-2026-10-27/README.md).
+Next evidence: draft PR and current-head Verify. Publication is a separate step;
+no hosted release is claimed.
+
 ## Full-meeting free allowance — complete local acceptance, 26 October 2026
 
 Owner: this social assessment chat, checkout `social-experience-fix/`, branch
