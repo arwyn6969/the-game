@@ -105,6 +105,9 @@
 .game-appearance[data-ui-skin="original"] .transport {
   order: 2;
 }
+.game-appearance[data-ui-skin="original"] .town > :is(.hud, .status-strip, .world-controls, .foot) {
+  flex-shrink: 0;
+}
 
 .game-appearance[data-ui-skin]:not([data-ui-skin="original"]) {
   --ui-chrome: #302039;
