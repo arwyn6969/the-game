@@ -1,5 +1,32 @@
 # Current project status
 
+## Full-meeting free allowance — complete local acceptance, 26 October 2026
+
+Owner: this social assessment chat, checkout `social-experience-fix/`, branch
+`codex/full-meeting-budget-20261026`, based on main
+`a40867e5ca977453a5f42df2aff2cb9fbf022f82`, [PR #58](https://github.com/arwyn6969/the-game/pull/58). The user requested limits that allow
+a full meeting within the existing free allowance and a fresh start-to-finish
+test. Profile: 48 shared calls/day, 32/player/day, aligned conservative token
+reservations; exact free model, zero spend, one concurrent action, slow pacing
+and failed-attempt charges remain. The sixteen-decision boundary now closes
+after its last committed result, without invented dialogue.
+
+Actual source `efa88b6` completed a fresh six-turn meeting in **14 real calls**,
+24,550 tokens, zero new failures/timeouts, $0. All three NPCs accepted and spoke;
+Arwyn opened without player-authored words. One Start and the ordinary lifecycle
+continued through natural six-turn closure. Independent replay matched the
+exact canonical final town, all six audiences/memories and all eight knowledge
+projections. All sixteen earlier ledger identities/timestamps/charges remain;
+all thirty cumulative charges settled. Provider now reports 36/50 used, 14 free
+calls remaining. [Dialogue, limits and acceptance evidence](review/full-meeting-free-2026-10-26/README.md).
+
+Local checks pass: 1,098 script + 55 typed tests, 426 town tests, typecheck/lint
+(one inherited warning), diagnostics and both builds. Next gates: current-head
+Verify, reviewable PR and scoped production settings/code publication. The
+earlier duplicate automation remains PAUSED; no new future run is scheduled.
+Hosted authenticated browser and physical-device meetings remain unqualified.
+Mobile stays on hold and is not started by this completed local acceptance.
+
 ## Social facilitation and action deadlines — verified candidate, 26 October 2026
 
 Owner: current social assessment chat, isolated checkout `social-experience-fix/`,

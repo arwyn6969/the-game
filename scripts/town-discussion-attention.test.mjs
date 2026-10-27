@@ -291,7 +291,11 @@ test("Start respects presence, quorum, pauses, six turns and sixteen decisions",
     assert.equal(d.requestDiscussionFacilitation(bounded), true);
     decide(bounded, { kind: "listen" });
   }
-  assert.equal(meeting(bounded).status, "paused");
+  assert.equal(meeting(bounded).status, "closed");
+  assert.equal(meeting(bounded).pending, null);
+  assert.equal(meeting(bounded).floor, null);
+  assert.deepEqual(meeting(bounded).queue, []);
+  assert.ok(meeting(bounded).members.every((m) => m.mode === "off" && !m.decisionNeeded));
   assert.equal(d.requestDiscussionFacilitation(bounded), false);
   assert.equal(d.nextDiscussionJob(bounded), null);
   assert.equal(meeting(bounded).decisions, 16);
@@ -304,4 +308,30 @@ test("Start respects presence, quorum, pauses, six turns and sixteen decisions",
   assert.ok(meeting(complete).members.every((m) => !m.decisionNeeded));
   assert.equal(d.requestDiscussionFacilitation(complete), false);
   assert.equal(d.nextDiscussionJob(complete), null);
+});
+
+test("the sixteenth real reply commits before closure and survives reload without another job", () => {
+  const town = allListening();
+  for (let i = 0; i < 15; i++) {
+    assert.equal(d.requestDiscussionFacilitation(town), true);
+    decide(town, { kind: "listen" });
+  }
+  command(town, "arwyn", "participate");
+  const money = town.agents.map(({ id, money }) => ({ id, money }));
+  const finalLine = "Let us try one short reading with the library door open.";
+  decide(town, { kind: "speak", text: finalLine });
+  assert.equal(meeting(town).status, "closed");
+  assert.equal(meeting(town).decisions, 16);
+  assert.equal(meeting(town).usage.providerAttempts, 16);
+  assert.equal(meeting(town).utterances.at(-1).text, finalLine);
+  assert.deepEqual(meeting(town).utterances.at(-1).recipientIds, ["northern", "sub"]);
+  const restored = save.parseTownFile(save.exportTown(town));
+  assert.deepEqual(restored.discussions, town.discussions);
+  assert.equal(d.nextDiscussionJob(restored), null);
+  assert.equal(d.resumeDiscussion(restored).ok, false);
+  assert.deepEqual(
+    restored.agents.map(({ id, money }) => ({ id, money })),
+    money,
+  );
+  assert.deepEqual(d.validateDiscussions(restored), []);
 });

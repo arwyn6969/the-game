@@ -683,7 +683,7 @@ export function applyDiscussionResult(
   });
   if (!response.ok) pauseDiscussion(town, response.message);
   else if (meeting.decisions >= DISCUSSION_LIMITS.decisions && meeting.status !== "closed")
-    pauseDiscussion(town, "The meeting reached its sixteen-decision limit.");
+    close(meeting, "The sixteen-decision meeting is complete. Its actual discussion is preserved.");
   return response;
 }
 
