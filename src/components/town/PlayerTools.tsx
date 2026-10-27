@@ -178,14 +178,19 @@ export function PlayerTools({
             <section>
               <h3>Move and talk</h3>
               <p>
-                Use WASD or arrow keys to walk. On a phone, hold a direction on the map. Go
-                somewhere offers destination buttons and single-step directions. Press Enter beside
-                a resident, click their sprite, or use Talk nearby.
+                Select Town controls or click the town, then use WASD or arrow keys to walk. On a
+                phone, use the direction buttons. Go somewhere offers destination buttons and
+                single-step directions. Press Enter within two tiles of a resident, click their
+                sprite, or use Talk nearby.
               </p>
               <p>
                 The clock starts paused. You can walk while paused. Press 1× or 4× to move town
                 time; Hour skips forward. Pause gives you time to read. A direction stops a
                 destination walk.
+              </p>
+              <p>
+                Arrow keys adjust the replay slider when it is focused. Choose Back to now to return
+                to the town before moving or talking.
               </p>
             </section>
             <section>
@@ -305,6 +310,13 @@ export function PlayerTools({
             {funded && (
               <section>
                 <h3>Funded work & payment</h3>
+                <p>
+                  Your agreements and payments appear here. The Library project keeps its public
+                  budget, other workers’ payments and lookup results.
+                </p>
+                <button className="btn" type="button" onClick={onLibrary}>
+                  View library project accounts
+                </button>
                 {funded.agreements.length === 0 && funded.payables.length === 0 && (
                   <p>No funded work accepted yet.</p>
                 )}
@@ -501,8 +513,8 @@ export function PlayerTools({
             <section>
               <h3>People nearby</h3>
               <p>
-                Close this panel and use Talk nearby or press Enter to speak. Residents keep their
-                own schedules.
+                Stand within two tiles of a resident, then close this panel and use Talk nearby or
+                focus the town and press Enter. Residents keep their own schedules.
               </p>
             </section>
           </>
