@@ -4,8 +4,8 @@
 
 Owner: current agent-player assessment chat, isolated checkout
 `player-controls-feedback/`, branch `codex/player-controls-feedback-20261027`,
-base current `origin/main` `c7fa07ad1fc20fcbd6ecc99a7aae82e05421c2d3`.
-Implementation head: `03d4502335b7fbb3171bd8fc012a24b5a2e3fd3a`.
+initial base `origin/main` `c7fa07ad1fc20fcbd6ecc99a7aae82e05421c2d3`.
+Implementation head: `072d5f4d43c30b9d40d51bc73775abe94da90bc9`.
 Integration checkpoint `842341f` merges current main `a26714e` (PR #60),
 preserving its meeting recovery and both workstream records. The initial
 validation counts below refer to the original base; current-head Verify also
@@ -30,6 +30,10 @@ The full interface gate passes (27 desktop / 29 phone checks); automated
 accessibility passes 54 audited surfaces with zero violations and 20 incomplete
 rule results retained for manual review. Next evidence: current-head Verify. Publication is a
 separate step; no hosted release is claimed.
+The integrated 320px gate also exposed Original's status row compressing under
+its Interface selector. Chrome rows now retain their intrinsic height; a new
+direct overlap assertion passes in all four skins alongside the existing 44px
+and hit-test checks. Integrated script/typed tests pass 1,107 + 55.
 
 ## Hosted meeting pass recovery — active, 27 October 2026
 

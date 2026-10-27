@@ -3,7 +3,7 @@
 27 October 2026. Owner: agent-player assessment chat. Branch:
 `codex/player-controls-feedback-20261027`, base main
 `c7fa07ad1fc20fcbd6ecc99a7aae82e05421c2d3`.
-Implementation head: `03d4502335b7fbb3171bd8fc012a24b5a2e3fd3a`.
+Implementation head: `072d5f4d43c30b9d40d51bc73775abe94da90bc9`.
 Integration checkpoint `842341f` merges current main `a26714e` / PR #60.
 The source merged automatically; only the two CURRENT_STATUS entries needed
 combining. Initial test counts below retain their original base qualification;
@@ -76,6 +76,12 @@ town, real account, wallet, provider call or production migration was used.
 - Automated accessibility checks pass 54 audited surfaces and 27 essential
   checks with zero WCAG/best-practice violations. Twenty incomplete rule results
   remain for manual review; this is not a claim of WCAG conformance.
+- Integrated script/typed tests pass 1,107 + 55. The integrated CI run also
+  exposed a 320px Original status row compressing below its selector. The
+  reproduced geometry put the selector 37px into the toolbar. Original chrome
+  now keeps its intrinsic height, leaving 6.59px clearance in the same fixture.
+  A direct selector/toolbar separation assertion supplements the unchanged 44px
+  and hit-test checks in every skin. All 27 desktop / 29 phone checks pass.
 
 The complete built-browser regression gate passes, including keyboard/touch,
 conversation, pause, reload, import/export, conflicting tabs, v1 migration,
@@ -96,6 +102,8 @@ this local packet.
 ![Phone public project accounts](phone-project-budget.png)
 
 ![Original phone panel leaves clock controls reachable](phone-original-controls.png)
+
+![Original 320px interface selector clears the toolbar](phone-original-320-controls.png)
 
 Detailed disposable evidence remains in ignored `artifacts/quality-browser/`,
 `artifacts/quality-ai-browser/`, `artifacts/player-controls-browser/`,

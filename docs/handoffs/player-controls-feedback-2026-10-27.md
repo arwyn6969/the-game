@@ -2,7 +2,7 @@
 
 Owner: agent-player assessment chat. Branch `codex/player-controls-feedback-20261027`.
 Base main `c7fa07ad1fc20fcbd6ecc99a7aae82e05421c2d3`.
-Implementation head `03d4502335b7fbb3171bd8fc012a24b5a2e3fd3a`.
+Implementation head `072d5f4d43c30b9d40d51bc73775abe94da90bc9`.
 Integration checkpoint `842341f` includes current main `a26714e` / PR #60.
 Only CURRENT_STATUS conflicted; both workstream records were retained. No
 meeting code needed manual conflict resolution.
@@ -25,3 +25,8 @@ The first Verify run found a real Original-phone compact-panel overlap with
 Pause. Commit `03d4502` uses the existing measured toolbar inset. Local complete
 interface and automated accessibility checks pass; current-head CI must include
 that correction.
+
+The later integrated CI gate caught Original's 320px status row compressing
+below its 44px selector. The intrinsic-height guard fixes the reproduced
+overlap; the existing interface gate now directly asserts selector/toolbar
+separation. All 27 desktop / 29 phone checks pass without relaxing hit targets.
