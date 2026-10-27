@@ -23,8 +23,14 @@ shared 48, preserving the one direct-reply reserve, every previous charge,
 zero monetary ceiling, free model, one concurrent call, two starts/minute,
 31-second pacing, sixteen decisions, six utterances and existing deadlines.
 
-Focused forty-two tests pass. Full checks, real-provider retained-ledger
-acceptance, current Verify, release receipt and hosted retest remain pending.
+Local 1,100 script + 55 typed tests, 428 town tests, typecheck/lint, diagnostics
+and both builds pass. Application source bb66aa8 completed sixteen successful
+real-provider calls, four spoken turns and two distinct NPC speakers, $0, with
+all thirty prior ledger rows retained. Independent full-town/knowledge replay
+passes. The first CI run caught an old fixture assumption about parked speakers;
+its cancellation case now tests a late legal request-turn and retains automatic
+late-speech coverage. [Evidence](../review/meeting-pass-recovery-2026-10-27/README.md).
+Current-head Verify, release receipt and hosted retest remain pending.
 At most sixteen new operator calls and sixteen new hosted calls, with actual
 provider-day headroom checked first and total provider-day ceiling 48. Any
 failure or legitimate quiet choice must be recorded honestly. Never reset a

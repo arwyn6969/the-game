@@ -4,7 +4,8 @@
 
 Owner: this social assessment chat, checkout `social-experience-fix/`, branch
 `codex/meeting-pass-recovery-20261027`, base main
-`c7fa07ad1fc20fcbd6ecc99a7aae82e05421c2d3` (merged PR #58). The user requested
+`c7fa07ad1fc20fcbd6ecc99a7aae82e05421c2d3` (merged PR #58),
+[PR #60](https://github.com/arwyn6969/the-game/pull/60). The user requested
 adjusted limits and a full real meeting before mobile resumes. Current live
 Worker `c13e181a-8360-4559-aed9-0b10c66be579`, runtime `4780d7b2f4cb`, preserves
 all routes, bindings and unrelated settings. PR #58 passed Verify run
@@ -28,9 +29,17 @@ remains. This gives the prototype caller access to available shared headroom;
 it creates no additional account-wide allowance. One direct-reply reserve,
 zero spend, one attempt, slow pacing and deadlines remain.
 
-Next evidence: complete regression checks, one capped real-provider run with
-the existing thirty-row operator ledger, current PR Verify and scoped
-publication, then one fresh hosted meeting. The hosted shared ledger currently
+Application source `bb66aa8` completed a real-provider meeting with one Start,
+sixteen successful free calls, four spoken turns by Arwyn/Northern and Sub
+listening, followed by both speakers passing. Normal sixteen-decision closure,
+29,274 tokens, $0. Independent offline replay exactly matched the final town,
+all speech knowledge and all thirty retained ledger identities/timestamps/charges;
+all forty-six cumulative attempts settled. [Evidence](review/meeting-pass-recovery-2026-10-27/README.md).
+Local 1,100 script + 55 typed tests, 428 town tests, typecheck/lint, diagnostics
+and both builds pass. CI's first browser run exposed an outdated fixture
+assumption after pass recovery; its cancellation case now tests a legal late
+request-turn without manufacturing another speaking floor. Current-head Verify,
+scoped publication and the new hosted run remain next gates. The hosted shared ledger currently
 contains 22 recent charges; current provider-day consumption must be checked
 before each test. No reset, fake identity, forced floor or paid fallback.
 [Handoff](handoffs/meeting-pass-recovery-2026-10-27.md). Mobile remains on hold;

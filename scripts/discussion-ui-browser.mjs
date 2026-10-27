@@ -385,7 +385,23 @@ try {
     );
 
     await page.getByRole("button", { name: "Resume meeting", exact: true }).click();
-    const cancelled = await requestNpcFloor(page);
+    // The speakers yielded to the player, then actually heard the new line.
+    // Their fresh cue is a voluntary request-turn choice, not another forced
+    // speaking floor. Cancel that legal action without burning extra decisions
+    // to manufacture a floor under this journey's same sixteen-call cap.
+    const cancelled = await requestDecision(page);
+    const cancelledState = await availableDecision(page);
+    assert.equal(
+      cancelledState.session.members.find((member) => member.id === cancelledState.actor).mode,
+      "participating",
+    );
+    const cancelledDecision = { kind: "request-turn" };
+    assertOfferedDecision(cancelledState, cancelledDecision);
+    assert.ok(!cancelledState.session.queue.includes(cancelledState.actor));
+    const queueBeforeCancellation = [...cancelledState.session.queue];
+    const actorBeforeCancellation = cancelledState.session.members.find(
+      (member) => member.id === cancelledState.actor,
+    );
     await page.getByRole("button", { name: "Pause meeting decisions", exact: true }).click();
     await page.getByRole("button", { name: "Resume meeting", exact: true }).click();
     assert.equal(
@@ -396,16 +412,13 @@ try {
     );
     const beforeLate = (await meeting(page)).utterances.length;
     await page.evaluate(
-      (id) =>
+      ({ id, decision }) =>
         window.__discussionMock.resolve(id, {
           ok: true,
-          text: JSON.stringify({
-            task: "discussion",
-            decision: { kind: "speak", text: "STALE_CANCELLED_WORDS" },
-          }),
+          text: JSON.stringify({ task: "discussion", decision }),
           diagnostics: { mode: "pool", attempts: 1, totalTokens: 44 },
         }),
-      cancelled,
+      { id: cancelled, decision: cancelledDecision },
     );
     await page.getByRole("button", { name: "Request next AI decision", exact: true }).waitFor();
     await page.waitForFunction(() =>
@@ -414,10 +427,17 @@ try {
       ),
     );
     assert.equal(await page.evaluate(() => window.__discussionMock.calls.length), cancelled + 1);
-    assert.equal((await meeting(page)).utterances.length, beforeLate);
+    const afterCancellation = await meeting(page);
+    assert.equal(afterCancellation.utterances.length, beforeLate);
+    assert.deepEqual(afterCancellation.queue, queueBeforeCancellation);
+    assert.deepEqual(
+      afterCancellation.members.find((member) => member.id === cancelledState.actor),
+      actorBeforeCancellation,
+      "A late legal request-turn must not change the parked resident's choice or revision",
+    );
     assert.equal(await draft.inputValue(), "A newer unsent draft");
     result.assertions.push(
-      "Cancellation never permits a second underlying request before settlement; its delayed response cannot add speech or erase the draft",
+      "Cancellation never permits a second underlying request before settlement; a late legal request-turn cannot change the queue, resident or draft (automatic journeys separately reject late speech)",
     );
 
     const pending = await requestDecision(page);
