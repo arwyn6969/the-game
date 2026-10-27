@@ -1,5 +1,40 @@
 # Current project status
 
+## Player controls and project feedback — verified local candidate, 27 October 2026
+
+Owner: current agent-player assessment chat, isolated checkout
+`player-controls-feedback/`, branch `codex/player-controls-feedback-20261027`,
+initial base `origin/main` `c7fa07ad1fc20fcbd6ecc99a7aae82e05421c2d3`.
+Implementation head: `072d5f4d43c30b9d40d51bc73775abe94da90bc9`.
+Integration checkpoint `842341f` merges current main `a26714e` (PR #60),
+preserving its meeting recovery and both workstream records. The initial
+validation counts below refer to the original base; current-head Verify also
+qualifies that integration.
+The user requested fixes for the Grok and Emblem playtest findings while their
+separate lookup test continues. Scope: reliable quick keyboard taps and focus,
+replay guidance, reachable library controls, accurate local-only cancellation
+feedback, project action/draft/budget clarity and Northern's public work guidance.
+No save-schema, economy-rule, provider, hosting or active meeting-work change.
+Root owns TownApp, PlayerTools, styles, integration and delivery; scoped agents
+own LibraryProject/display-only community projection, offline guidance, and
+new bounded regression helpers. Local acceptance passes: 1,105 script + 55
+typed tests, 431 town tests, typecheck/lint (one inherited warning), diagnostics,
+credential-free build, complete built-browser gate and mocked AI browser gate.
+Focused controls pass at desktop/phone sizes across all four skins; library
+arrival with the project open, paid source check, draft review, lookup, public
+receipts and reload pass. [Changes and evidence](review/player-controls-2026-10-27/README.md).
+[Draft PR #61](https://github.com/arwyn6969/the-game/pull/61) contains the reviewed
+source and screenshots. Its first CI run found an Original-skin phone panel
+covering Pause; compact panels now respect the existing measured toolbar inset.
+The full interface gate passes (27 desktop / 29 phone checks); automated
+accessibility passes 54 audited surfaces with zero violations and 20 incomplete
+rule results retained for manual review. Next evidence: current-head Verify. Publication is a
+separate step; no hosted release is claimed.
+The integrated 320px gate also exposed Original's status row compressing under
+its Interface selector. Chrome rows now retain their intrinsic height; a new
+direct overlap assertion passes in all four skins alongside the existing 44px
+and hit-test checks. Integrated script/typed tests pass 1,107 + 55.
+
 ## Hosted meeting pass recovery — active, 27 October 2026
 
 Owner: this social assessment chat, checkout `social-experience-fix/`, branch

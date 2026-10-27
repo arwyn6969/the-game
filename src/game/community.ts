@@ -727,9 +727,22 @@ export function libraryView(town: Town) {
           }
         : null,
     budget: 8,
+    funded: funding?.project?.contributions.reduce((sum, item) => sum + item.amount, 0) ?? 0,
     custody: funding?.balance ?? 0,
+    available: funding?.available ?? 0,
     reserved,
     spent: funding?.paid ?? 0,
+    refunded: (funding?.project?.refunds ?? 0) * (funding?.project?.contributions.length ?? 0),
+    payments:
+      economy?.work?.payables
+        .filter((item) => item.payer === `project:${LIBRARY_PROJECT}` && item.status === "settled")
+        .map((item) => ({
+          id: item.id,
+          worker: agentById(town, item.worker).name,
+          task: economy?.work?.agreements.find((agreement) => agreement.id === item.agreementId)
+            ?.task,
+          amount: item.amount,
+        })) ?? [],
     progress: `${state?.reports.filter((item) => item.role !== "correction").length ?? 0}/2 preparation reports; ${state?.lookup?.status === "done" ? 1 : 0}/1 independent lookup`,
     entries: latestEntries(state),
     evidence: FIXTURE.map((item) => ({
