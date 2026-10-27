@@ -96,11 +96,11 @@ function hasQuorum(meeting: DiscussionSession): boolean {
   );
   return present.some((member) => member.id === meeting.facilitator) && present.length >= 2;
 }
-function finishFloor(meeting: DiscussionSession, member: DiscussionMember) {
+function finishFloor(meeting: DiscussionSession, member: DiscussionMember, requeue = true) {
   meeting.floor = null;
   meeting.queue = meeting.queue.filter((id) => id !== member.id);
   member.decisionNeeded = false;
-  if (member.mode === "participating" && member.arrived && member.choice === "accepted")
+  if (requeue && member.mode === "participating" && member.arrived && member.choice === "accepted")
     meeting.queue.push(member.id);
 }
 function close(meeting: DiscussionSession, reason: string) {
@@ -361,7 +361,8 @@ export function applyDiscussionCommand(
         meeting.queue = meeting.queue.filter((other) => other !== id);
         break;
       case "pass":
-        finishFloor(meeting, member);
+        // A pass yields until genuinely new input or a deliberate turn request.
+        finishFloor(meeting, member, false);
         break;
       case "speak": {
         if (!safeText(command.text, DISCUSSION_LIMITS.text))
@@ -401,7 +402,14 @@ export function applyDiscussionCommand(
         // the public transcript never change an inattentive resident's cue.
         for (const recipientId of recipients) {
           const listener = memberOf(meeting, recipientId);
-          if (listener && listener.id !== "player" && listener.mode === "listening") {
+          if (
+            listener &&
+            listener.id !== "player" &&
+            (listener.mode === "listening" ||
+              (listener.mode === "participating" &&
+                !meeting.queue.includes(listener.id) &&
+                meeting.floor?.actor !== listener.id))
+          ) {
             listener.decisionNeeded = true;
             touch(meeting, listener);
           }
@@ -553,7 +561,11 @@ export function nextDiscussionJob(town: Town): DiscussionJob | null {
         canHear(DISCUSSION_VENUE, actor(town, member.id)!.tile),
     ) ??
     candidates.find(
-      (member) => member.arrived && member.mode === "listening" && member.decisionNeeded,
+      (member) =>
+        member.arrived &&
+        member.decisionNeeded &&
+        (member.mode === "listening" ||
+          (member.mode === "participating" && meeting.floor?.actor !== member.id)),
     ) ??
     candidates.find((member) => meeting.floor?.actor === member.id);
   if (!next || !actions(town, meeting, next.id).length) return null;

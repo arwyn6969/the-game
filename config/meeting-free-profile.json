@@ -59,7 +59,7 @@
   "budget": {
     "version": 1,
     "dailyCalls": 48,
-    "playerDailyCalls": 32,
+    "playerDailyCalls": 48,
     "playerMinuteCalls": 3,
     "playerInteractiveReserveCalls": 0,
     "playerInteractiveReserveMinuteCalls": 0,
