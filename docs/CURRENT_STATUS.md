@@ -5,7 +5,7 @@
 Owner: current agent-player assessment chat, isolated checkout
 `player-controls-feedback/`, branch `codex/player-controls-feedback-20261027`,
 base current `origin/main` `c7fa07ad1fc20fcbd6ecc99a7aae82e05421c2d3`.
-Implementation head: `d52e4fead3f1d7b252588a6081233aacb029d758`.
+Implementation head: `03d4502335b7fbb3171bd8fc012a24b5a2e3fd3a`.
 The user requested fixes for the Grok and Emblem playtest findings while their
 separate lookup test continues. Scope: reliable quick keyboard taps and focus,
 replay guidance, reachable library controls, accurate local-only cancellation
@@ -20,7 +20,11 @@ Focused controls pass at desktop/phone sizes across all four skins; library
 arrival with the project open, paid source check, draft review, lookup, public
 receipts and reload pass. [Changes and evidence](review/player-controls-2026-10-27/README.md).
 [Draft PR #61](https://github.com/arwyn6969/the-game/pull/61) contains the reviewed
-source and screenshots. Next evidence: current-head Verify. Publication is a
+source and screenshots. Its first CI run found an Original-skin phone panel
+covering Pause; compact panels now respect the existing measured toolbar inset.
+The full interface gate passes (27 desktop / 29 phone checks); automated
+accessibility passes 54 audited surfaces with zero violations and 20 incomplete
+rule results retained for manual review. Next evidence: current-head Verify. Publication is a
 separate step; no hosted release is claimed.
 
 ## Full-meeting free allowance — complete local acceptance, 26 October 2026

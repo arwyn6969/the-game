@@ -3,7 +3,7 @@
 27 October 2026. Owner: agent-player assessment chat. Branch:
 `codex/player-controls-feedback-20261027`, base main
 `c7fa07ad1fc20fcbd6ecc99a7aae82e05421c2d3`.
-Implementation head: `d52e4fead3f1d7b252588a6081233aacb029d758`.
+Implementation head: `03d4502335b7fbb3171bd8fc012a24b5a2e3fd3a`.
 
 ## Changes and evidence
 
@@ -64,6 +64,14 @@ town, real account, wallet, provider call or production migration was used.
   including cancellation, drafts, sign-in recovery and no automatic replay.
 - Independent source review found and corrected a WASD direction-feedback bug;
   no outstanding actionable findings remain.
+- The first [CI run](https://github.com/arwyn6969/the-game/actions/runs/40433724972)
+  passed the primary browser gates but found the Original-phone compact panel
+  covering Pause. This was reproduced locally and corrected by using the
+  existing measured toolbar inset. The full interface gate now passes all 27
+  desktop and 29 phone checks, including narrow widths and enlarged text.
+- Automated accessibility checks pass 54 audited surfaces and 27 essential
+  checks with zero WCAG/best-practice violations. Twenty incomplete rule results
+  remain for manual review; this is not a claim of WCAG conformance.
 
 The complete built-browser regression gate passes, including keyboard/touch,
 conversation, pause, reload, import/export, conflicting tabs, v1 migration,
@@ -82,6 +90,8 @@ this local packet.
 ![Phone controls beside a conversation](phone-controls.png)
 
 ![Phone public project accounts](phone-project-budget.png)
+
+![Original phone panel leaves clock controls reachable](phone-original-controls.png)
 
 Detailed disposable evidence remains in ignored `artifacts/quality-browser/`,
 `artifacts/quality-ai-browser/`, `artifacts/player-controls-browser/`,
