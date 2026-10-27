@@ -78,8 +78,9 @@ All model responses are synthetic and no model allowance was consumed.
 
 Node 24 results: **1,107 script + 55 typed tests, 425 town tests**, including
 all 12 focused transport tests; typecheck, full lint (zero errors, one inherited
-`use-current-user.ts` warning), diagnostics and the credential-free production
-build pass. Database migrations were skipped because `DATABASE_URL` was unset.
+`use-current-user.ts` warning), diagnostics and both credential-free Node and
+Cloudflare production builds pass. Database migrations were skipped because
+`DATABASE_URL` was unset.
 The new personal-source browser journeys and unchanged full hosted AI browser
 regression both pass desktop and phone. An earlier hosted run lost its open
 conversation while a development build/source edits were concurrent; the full
@@ -88,6 +89,9 @@ assertion change. Canonical hosted evidence is
 `artifacts/hosted-ai-regression-final/results.json`.
 
 Draft PR/current-head Verify and authorization to merge/publish remain next.
+Implementation commit: `6796b31`. Automatic approval review rejected the
+feature-branch push to `arwyn6969/the-game`, requiring explicit user approval
+of repository-content egress to that destination. No push or PR was completed.
 Real personal-provider compatibility, actual Ollama/LM Studio inference, physical
 devices and hosted-origin browser permissions are not qualified by mocks.
 No production migration, deployment, secret or provider configuration changed.

@@ -21,10 +21,15 @@ selection, accepted replies, pending-request locks, failure/draft retention,
 key-free exports/storage, reload, movement, pause and portable saves. Local
 model readiness also works with the browser's internet flag off. No real model
 request was made. Node 24 validation passes 1,107 script + 55 typed tests,
-425 town tests, typecheck, lint (one inherited warning), diagnostics and the
-credential-free build with migrations skipped. The unchanged full hosted AI
+425 town tests, typecheck, lint (one inherited warning), diagnostics and both
+credential-free Node/Cloudflare builds with migrations skipped. The unchanged full hosted AI
 browser harness also passes both sizes. A draft PR/current-head Verify and
 authorization to merge/publish remain next; production is unchanged.
+Implementation commit: `6796b31`. Automatic approval review rejected the push
+because sending the feature branch's repository contents to
+`arwyn6969/the-game` requires the user's explicit payload/destination approval.
+The branch remains local, with a clean reviewable diff against main; no PR was
+created and no remote change occurred.
 [Implementation and setup](handoffs/player-model-choice-2026-10-27.md).
 
 ## Social facilitation and action deadlines — verified candidate, 26 October 2026
