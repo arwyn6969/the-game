@@ -70,7 +70,8 @@ conversation, pause, reload, import/export, conflicting tabs, v1 migration,
 identity restore/fork, library/readings and interruption/focus cases. Its phone
 reading overlap finding was repaired. The final palette-only invitation contrast
 adjustment is covered by the focused reading check and a fresh build.
-Current-head PR Verify is a separate next check.
+Current-head [PR #61 Verify](https://github.com/arwyn6969/the-game/pull/61/checks)
+is a separate next check.
 Physical-device/assistive-technology acceptance and live deployment are outside
 this local packet.
 

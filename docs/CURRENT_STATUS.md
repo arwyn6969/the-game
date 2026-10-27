@@ -19,8 +19,9 @@ credential-free build, complete built-browser gate and mocked AI browser gate.
 Focused controls pass at desktop/phone sizes across all four skins; library
 arrival with the project open, paid source check, draft review, lookup, public
 receipts and reload pass. [Changes and evidence](review/player-controls-2026-10-27/README.md).
-Next evidence: draft PR and current-head Verify. Publication is a separate step;
-no hosted release is claimed.
+[Draft PR #61](https://github.com/arwyn6969/the-game/pull/61) contains the reviewed
+source and screenshots. Next evidence: current-head Verify. Publication is a
+separate step; no hosted release is claimed.
 
 ## Full-meeting free allowance — complete local acceptance, 26 October 2026
 

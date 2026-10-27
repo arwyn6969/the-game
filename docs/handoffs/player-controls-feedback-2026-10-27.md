@@ -13,6 +13,7 @@ Scoped agents implemented library presentation/read-only projections, offline
 public guidance, and separate browser regressions. No other active checkout or
 meeting-recovery work was changed.
 
-Local required checks and both full browser gates pass. Next: create a draft PR
-and record its current-head Verify result. Merge/publication remain separate; this source
+Local required checks and both full browser gates pass.
+[Draft PR #61](https://github.com/arwyn6969/the-game/pull/61) is attached to the
+assessment chat. Next: current-head Verify. Merge/publication remain separate; this source
 packet does not change the live build or the external agents' towns.
