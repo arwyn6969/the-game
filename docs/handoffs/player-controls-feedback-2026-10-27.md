@@ -3,6 +3,9 @@
 Owner: agent-player assessment chat. Branch `codex/player-controls-feedback-20261027`.
 Base main `c7fa07ad1fc20fcbd6ecc99a7aae82e05421c2d3`.
 Implementation head `03d4502335b7fbb3171bd8fc012a24b5a2e3fd3a`.
+Integration checkpoint `842341f` includes current main `a26714e` / PR #60.
+Only CURRENT_STATUS conflicted; both workstream records were retained. No
+meeting code needed manual conflict resolution.
 
 The user requested implementation of the Grok/Emblem control and feedback
 findings while Emblem completes its independent lookup. Source changes and

@@ -4,6 +4,10 @@
 `codex/player-controls-feedback-20261027`, base main
 `c7fa07ad1fc20fcbd6ecc99a7aae82e05421c2d3`.
 Implementation head: `03d4502335b7fbb3171bd8fc012a24b5a2e3fd3a`.
+Integration checkpoint `842341f` merges current main `a26714e` / PR #60.
+The source merged automatically; only the two CURRENT_STATUS entries needed
+combining. Initial test counts below retain their original base qualification;
+current-head Verify covers the integrated candidate.
 
 ## Changes and evidence
 

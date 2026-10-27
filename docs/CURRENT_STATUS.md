@@ -6,6 +6,10 @@ Owner: current agent-player assessment chat, isolated checkout
 `player-controls-feedback/`, branch `codex/player-controls-feedback-20261027`,
 base current `origin/main` `c7fa07ad1fc20fcbd6ecc99a7aae82e05421c2d3`.
 Implementation head: `03d4502335b7fbb3171bd8fc012a24b5a2e3fd3a`.
+Integration checkpoint `842341f` merges current main `a26714e` (PR #60),
+preserving its meeting recovery and both workstream records. The initial
+validation counts below refer to the original base; current-head Verify also
+qualifies that integration.
 The user requested fixes for the Grok and Emblem playtest findings while their
 separate lookup test continues. Scope: reliable quick keyboard taps and focus,
 replay guidance, reachable library controls, accurate local-only cancellation
