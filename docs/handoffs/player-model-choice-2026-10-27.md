@@ -2,7 +2,8 @@
 
 Owner: model-choice chat. Branch `codex/player-model-choice-20261026`, isolated
 checkout `player-model-choice/`; base `a40867e5ca977453a5f42df2aff2cb9fbf022f82`.
-This feature is a source candidate. It has not been merged or published.
+This feature is a source candidate in
+[draft PR #59](https://github.com/arwyn6969/the-game/pull/59). It has not been merged or published.
 
 ## Player behavior
 
@@ -88,10 +89,12 @@ stable-source rerun passes the same timeout assertion without a product or
 assertion change. Canonical hosted evidence is
 `artifacts/hosted-ai-regression-final/results.json`.
 
-Draft PR/current-head Verify and authorization to merge/publish remain next.
-Implementation commit: `6796b31`. Automatic approval review rejected the
-feature-branch push to `arwyn6969/the-game`, requiring explicit user approval
-of repository-content egress to that destination. No push or PR was completed.
+The user explicitly authorized pushing the tested branch to `arwyn6969/the-game`
+and opening a draft PR on 27 October. The branch is pushed and draft PR #59 is
+open. Implementation commit: `6796b31`; initial review head: `75eddba`.
+The earlier automatic push-approval rejection is resolved by that explicit
+authorization. Current-head Verify, review and authorization to merge/publish
+remain next.
 Real personal-provider compatibility, actual Ollama/LM Studio inference, physical
 devices and hosted-origin browser permissions are not qualified by mocks.
 No production migration, deployment, secret or provider configuration changed.

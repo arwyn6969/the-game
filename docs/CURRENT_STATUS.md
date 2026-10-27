@@ -4,7 +4,8 @@
 
 Owner: this model-choice chat, isolated checkout `player-model-choice/`, branch
 `codex/player-model-choice-20261026`, based on freshly fetched main
-`a40867e5ca977453a5f42df2aff2cb9fbf022f82`. Scope: player AI-source settings,
+`a40867e5ca977453a5f42df2aff2cb9fbf022f82`,
+[draft PR #59](https://github.com/arwyn6969/the-game/pull/59). Scope: player AI-source settings,
 direct browser transport and availability, privacy copy and focused regressions.
 No hosting, server provider/budget configuration, authentication or save-schema
 change. Other active social work retains its own checkout and ownership.
@@ -23,13 +24,12 @@ model readiness also works with the browser's internet flag off. No real model
 request was made. Node 24 validation passes 1,107 script + 55 typed tests,
 425 town tests, typecheck, lint (one inherited warning), diagnostics and both
 credential-free Node/Cloudflare builds with migrations skipped. The unchanged full hosted AI
-browser harness also passes both sizes. A draft PR/current-head Verify and
-authorization to merge/publish remain next; production is unchanged.
-Implementation commit: `6796b31`. Automatic approval review rejected the push
-because sending the feature branch's repository contents to
-`arwyn6969/the-game` requires the user's explicit payload/destination approval.
-The branch remains local, with a clean reviewable diff against main; no PR was
-created and no remote change occurred.
+browser harness also passes both sizes. The user explicitly authorized pushing
+the tested branch to `arwyn6969/the-game` and opening a draft PR on 27 October.
+The branch is pushed and draft PR #59 is open. Implementation commit: `6796b31`;
+initial review head: `75eddba`. Current-head Verify, review and authorization to
+merge/publish remain next; production is unchanged. The earlier automatic
+push-approval rejection is resolved by the user's explicit authorization.
 [Implementation and setup](handoffs/player-model-choice-2026-10-27.md).
 
 ## Social facilitation and action deadlines — verified candidate, 26 October 2026
