@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { mindAvailability } from "@/lib/mind.functions";
+import { personalModelReady, type PersonalModelSettings } from "@/lib/personal-model";
 
 /** Recheck configuration/connectivity only. Never replay a player's AI request. */
-export function useMindAvailability(localOnly: boolean, replyFailed: boolean) {
+export function useMindAvailability(
+  localOnly: boolean,
+  replyFailed: boolean,
+  personalModel?: PersonalModelSettings,
+) {
   const onlineRef = useRef(false);
   const actionsAvailableRef = useRef(false);
   const retryingRef = useRef(replyFailed);
@@ -30,6 +35,15 @@ export function useMindAvailability(localOnly: boolean, replyFailed: boolean) {
       if (inFlight) return inFlight;
       if (!alive || localOnly || document.visibilityState !== "visible")
         return Promise.resolve(false);
+      // Personal routes check configuration only, without contacting the hosted
+      // service or spending a request. Loopback works without internet access.
+      if (personalModel && personalModel.mode !== "hosted") {
+        const ready =
+          personalModelReady(personalModel) && (personalModel.mode === "local" || navigator.onLine);
+        update(ready, ready);
+        setChecking(false);
+        return Promise.resolve(ready);
+      }
       if (!navigator.onLine) {
         update(false);
         return Promise.resolve(false);
@@ -59,10 +73,15 @@ export function useMindAvailability(localOnly: boolean, replyFailed: boolean) {
     };
     checkRef.current = probe;
     const wake = () => void probe();
-    const offline = () => update(false);
+    const offline = () => {
+      if (personalModel?.mode === "local") void probe();
+      else update(false);
+    };
     const interval = window.setInterval(() => {
       if (!onlineRef.current || retryingRef.current) void probe();
     }, 15_000);
+    update(false);
+    setChecking(false);
     void probe();
     window.addEventListener("focus", wake);
     window.addEventListener("online", wake);
@@ -78,7 +97,7 @@ export function useMindAvailability(localOnly: boolean, replyFailed: boolean) {
       document.removeEventListener("visibilitychange", wake);
       checkRef.current = async () => false;
     };
-  }, [localOnly]);
+  }, [localOnly, personalModel]);
 
   return { online, onlineRef, actionsAvailable, actionsAvailableRef, checked, checking, check };
 }

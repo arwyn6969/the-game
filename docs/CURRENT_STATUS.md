@@ -1,5 +1,32 @@
 # Current project status
 
+## Player API keys and local models — verified candidate, 27 October 2026
+
+Owner: this model-choice chat, isolated checkout `player-model-choice/`, branch
+`codex/player-model-choice-20261026`, based on freshly fetched main
+`a40867e5ca977453a5f42df2aff2cb9fbf022f82`. Scope: player AI-source settings,
+direct browser transport and availability, privacy copy and focused regressions.
+No hosting, server provider/budget configuration, authentication or save-schema
+change. Other active social work retains its own checkout and ownership.
+
+Help & privacy now offers hosted AI, a personal API key with an HTTPS
+OpenAI-compatible endpoint, or a loopback local model such as Ollama/LM Studio.
+All existing jobs use the selected source and the same simulation validation.
+Keys stay in tab memory and are excluded from persisted preferences and town
+backups; API-key mode requires key entry after reload. Personal failures never
+fall back to hosted inference. Authored local dialogue still suppresses AI.
+
+Desktop 1280×800 and phone 390×844 synthetic browser journeys pass source
+selection, accepted replies, pending-request locks, failure/draft retention,
+key-free exports/storage, reload, movement, pause and portable saves. Local
+model readiness also works with the browser's internet flag off. No real model
+request was made. Node 24 validation passes 1,107 script + 55 typed tests,
+425 town tests, typecheck, lint (one inherited warning), diagnostics and the
+credential-free build with migrations skipped. The unchanged full hosted AI
+browser harness also passes both sizes. A draft PR/current-head Verify and
+authorization to merge/publish remain next; production is unchanged.
+[Implementation and setup](handoffs/player-model-choice-2026-10-27.md).
+
 ## Social facilitation and action deadlines — verified candidate, 26 October 2026
 
 Owner: current social assessment chat, isolated checkout `social-experience-fix/`,

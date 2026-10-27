@@ -96,6 +96,14 @@ import {
 } from "@/game/effects";
 import { agentById } from "@/game/memory";
 import { thinkTown } from "@/lib/mind.functions";
+import {
+  readPersonalModelSettings,
+  savePersonalModelSettings,
+  validatePersonalModelSettings,
+  requestPersonalModel,
+  personalModelTimeoutMs,
+  type PersonalModelSettings,
+} from "@/lib/personal-model";
 import { useMindAvailability } from "./use-mind-availability";
 import { GROK_PROVIDERS, signIn } from "@/lib/auth/client";
 import { checkGameSession } from "@/lib/auth/session-recovery";
@@ -436,6 +444,10 @@ export function TownApp() {
   }, [phase, stampWorldId, stampCharacterId, tools, acceptStampAppearance]);
   const [browserBackups, setBrowserBackups] = useState<{ key: string; raw: string }[]>([]);
   const [localOnly, setLocalOnly] = useState(localOnlyRef.current);
+  const [personalModelSettings, setPersonalModelSettings] = useState(readPersonalModelSettings);
+  const personalModelRef = useRef(personalModelSettings);
+  const personalRequestAbortRef = useRef<AbortController | null>(null);
+  const [modelSettingsNote, setModelSettingsNote] = useState("");
   const [preferenceNote, setPreferenceNote] = useState("");
   const [inspectorEnabled, setInspectorEnabled] = useState(false);
   const [watchTown, setWatchTown] = useState(false);
@@ -464,7 +476,7 @@ export function TownApp() {
     actionsAvailable,
     actionsAvailableRef,
     check: checkAI,
-  } = useMindAvailability(localOnly, replyFailure !== null);
+  } = useMindAvailability(localOnly, replyFailure !== null, personalModelSettings);
   const [importText, setImportText] = useState<string | null>(null);
   const [importMode, setImportMode] = useState<"restore" | "fork">("restore");
   importTextRef.current = importText;
@@ -498,6 +510,16 @@ export function TownApp() {
       townRef.current === currentTown &&
       requestSerial.current === currentRequest;
     try {
+      if (personalModelRef.current.mode !== "hosted") {
+        const ready = await checkAI();
+        if (!isCurrent()) return;
+        setConnectionNote(
+          ready
+            ? "Your AI source settings are complete. This check makes no model request; send your line to test a reply."
+            : "Open Help & privacy to check your AI source and re-enter your key after reload. Your line is kept.",
+        );
+        return;
+      }
       const signedIn = await checkGameSession();
       if (!isCurrent()) return;
       if (!signedIn) {
@@ -629,12 +651,20 @@ export function TownApp() {
     transportBusyRef.current = true;
     lastMindRequestStartedAtRef.current = performance.now();
     setTransportBusy(true);
+    const controller = new AbortController();
+    const personal = personalModelRef.current;
+    if (personal.mode !== "hosted") personalRequestAbortRef.current = controller;
     const settled = () => {
+      if (personalRequestAbortRef.current === controller) personalRequestAbortRef.current = null;
       transportBusyRef.current = false;
       if (mounted.current) setTransportBusy(false);
     };
     try {
-      return thinkTown({ data: { kind, user } }).then(
+      const result =
+        personal.mode === "hosted"
+          ? thinkTown({ data: { kind, user } })
+          : requestPersonalModel({ kind, user }, personal, { signal: controller.signal });
+      return result.then(
         (result) => {
           settled();
           return result;
@@ -648,6 +678,12 @@ export function TownApp() {
       settled();
       return Promise.reject(error);
     }
+  }
+
+  function mindClientTimeout(kind: ThinkJob["kind"]) {
+    const settings = personalModelRef.current;
+    if (settings.mode !== "hosted") return personalModelTimeoutMs(settings, kind) + 5_000;
+    return kind === "act" ? ACTION_CLIENT_TIMEOUT_MS : 15_000;
   }
 
   async function acceptImportedTown(next: Town, intent: "replace" | "load" = "replace") {
@@ -1166,12 +1202,38 @@ export function TownApp() {
   }
 
   function cancelAIRequest() {
+    personalRequestAbortRef.current?.abort();
     requestSerial.current += 1;
     activeJobRef.current = null;
     pendingRef.current = false;
     foregroundPendingRef.current = false;
     setThinking("");
     setSendNote("AI request cancelled. Your line is still here; no local reply was substituted.");
+  }
+
+  function setPersonalModelPreference(value: PersonalModelSettings) {
+    if (transportBusyRef.current) return;
+    const next = validatePersonalModelSettings(value);
+    stopAutomaticDiscussion("AI source changed. Start meeting decisions explicitly when ready.");
+    const live = townRef.current;
+    if (live?.physicalItems?.session?.enabled) {
+      pausePhysicalSession(live, "AI source changed. Resume the resident trial explicitly.");
+      persistTown(live);
+    }
+    cancelAIRequest();
+    onlineRef.current = false;
+    actionsAvailableRef.current = false;
+    personalModelRef.current = next;
+    setPersonalModelSettings(next);
+    setReplyFailure(null);
+    setLastMind(null);
+    setConnectionNote("");
+    setConnectionDismissed(false);
+    setModelSettingsNote(
+      savePersonalModelSettings(next)
+        ? "AI source saved. Keys stay in this tab only. No model request was made."
+        : "AI source applies in this tab, but the browser could not save the settings. Keys stay in this tab only.",
+    );
   }
 
   function setLocalPreference(value: boolean) {
@@ -1300,6 +1362,7 @@ export function TownApp() {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      personalRequestAbortRef.current?.abort();
       discussionStartSerialRef.current += 1;
       discussionRunRef.current = stopDiscussionRun(
         discussionRunRef.current,
@@ -1415,7 +1478,7 @@ export function TownApp() {
       try {
         const prompt = buildPrompt(live, job);
         const res = await new Promise<Awaited<ReturnType<typeof thinkTown>>>((resolve, reject) => {
-          timed = window.setTimeout(() => reject(new Error("timeout")), ACTION_CLIENT_TIMEOUT_MS);
+          timed = window.setTimeout(() => reject(new Error("timeout")), mindClientTimeout("act"));
           if (!fresh()) throw new Error("The meeting changed before dispatch");
           if (automaticSnapshot) {
             const marked = markDiscussionRunStarted(
@@ -1558,7 +1621,7 @@ export function TownApp() {
       try {
         const prompt = buildPrompt(live, job);
         const res = await new Promise<Awaited<ReturnType<typeof thinkTown>>>((resolve, reject) => {
-          timed = window.setTimeout(() => reject(new Error("timeout")), ACTION_CLIENT_TIMEOUT_MS);
+          timed = window.setTimeout(() => reject(new Error("timeout")), mindClientTimeout("act"));
           requestMind(job.kind, prompt).then(resolve, reject);
         });
         response = res;
@@ -1658,7 +1721,7 @@ export function TownApp() {
         y: playerBeforeRequest.y,
       };
       const res = await new Promise<Awaited<ReturnType<typeof thinkTown>>>((resolve, reject) => {
-        timed = window.setTimeout(() => reject(new Error("timeout")), 15_000);
+        timed = window.setTimeout(() => reject(new Error("timeout")), mindClientTimeout(job.kind));
         requestMind(job.kind, prompt).then(resolve, reject);
       });
       if (!fresh()) return;
@@ -2606,8 +2669,9 @@ export function TownApp() {
               Use local dialogue only
             </label>
             <p className="gate-privacy-note">
-              With AI enabled, your words and relevant town context are sent to the configured AI
-              service. Local mode sends no AI requests.
+              With AI enabled, your words and relevant town context are sent to your selected AI
+              source. Authored local dialogue sends no AI requests. Choose your own API key or local
+              model under Help &amp; privacy after entering.
             </p>
             {preferenceNote && <p role="status">{preferenceNote}</p>}
             <button className="btn" data-on="true" type="submit" disabled={!name.trim()}>
@@ -2706,7 +2770,9 @@ export function TownApp() {
   const aiWarning = replyFailure
     ? `${mindFailureMessage(replyFailure)} No local reply was substituted. Your line is kept; send it again to retry.`
     : checked && !online
-      ? "AI is unavailable. Messages stay unsent; no local replies will be substituted."
+      ? personalModelSettings.mode !== "hosted"
+        ? "Your AI source needs attention. Open Help & privacy to check the endpoint and model, and re-enter your API key after reload. Your line stays unsent."
+        : "AI is unavailable. Messages stay unsent; no local replies will be substituted."
       : "";
 
   const connectionWarning =
@@ -3486,6 +3552,10 @@ export function TownApp() {
             town={town}
             manuscriptControls={manuscriptControls}
             localOnly={localOnly}
+            personalModelSettings={personalModelSettings}
+            onPersonalModelSettings={setPersonalModelPreference}
+            modelSettingsNote={modelSettingsNote}
+            modelSettingsBusy={transportBusy}
             preferenceNote={preferenceNote}
             inspectorEnabled={inspectorEnabled}
             inventoryActions={playerActions(town, "player")}
