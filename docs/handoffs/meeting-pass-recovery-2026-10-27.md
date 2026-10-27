@@ -35,3 +35,27 @@ At most sixteen new operator calls and sixteen new hosted calls, with actual
 provider-day headroom checked first and total provider-day ceiling 48. Any
 failure or legitimate quiet choice must be recorded honestly. Never reset a
 ledger or force another resident to manufacture acceptance. Mobile stays on hold.
+
+## Published and hosted result
+
+PR #60 passed Verify 40432562897 at 01470e2, merged as a26714e and published
+Worker c4b89bfc-d9e4-48d1-ba1d-930280eaa8f5, runtime 01470e291065. All public
+assets, routes, binding definitions and runtime settings pass preservation.
+Rollback c13e181a-8360-4559-aed9-0b10c66be579. Current receipts live on branch
+codex/meeting-pass-recovery-receipt-20261027 from merged main.
+
+Fresh hosted test FAILED unattended acceptance: sixteen settled calls, five
+spoken turns, two actual speakers, $0, 31,200 known tokens. Decision 11 proposed
+an unavailable action (the precise kind was not saved). One same-meeting resume
+retained eleven charges; the final decision 16 was an invalid HTTP 200
+completion (subtype unknown), not a timeout. Operator manually closed the
+exhausted meeting, with no new inference; all lines/four coins/paused Day 2
+23:08 survived reload. Opt-out UI continuation was observed; exact hosted
+recipient replay is unverified because the raw export was unavailable.
+
+Next focus: non-content rejection diagnostics and legal action/completion
+reliability; final failed request must not leave an unusable Resume at 16/16.
+Do not guess a rejected kind, silently coerce an NPC decision, refund charges,
+force speech, or spend remaining free requests as though they could fund a
+fresh full test. Provider reports 48/50 used, two remaining; production has
+38 rolling settled charges. Mobile and future automation stay on hold.

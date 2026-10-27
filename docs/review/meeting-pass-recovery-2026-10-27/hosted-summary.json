@@ -1,0 +1,102 @@
+{
+  "newCalls": 16,
+  "settled": 16,
+  "chargedMicrousd": 0,
+  "knownTokens": 31200,
+  "providerOk": 15,
+  "providerInvalid": 1,
+  "providerTimeouts": 0,
+  "maximumLatencyMs": 5170,
+  "minServerStartSpacingMs": 29948,
+  "maxRollingMinuteStarts": 2,
+  "allExactFreeModel": true,
+  "applicationRejectedUnavailableActionAtDecision": 11,
+  "finalCompletionRejectedAtDecision": 16,
+  "explicitStarts": 2,
+  "spokenTurns": 5,
+  "actualNpcSpeakers": [
+    "arwyn",
+    "sub"
+  ],
+  "automatedAcceptancePassed": false,
+  "operatorClosedAfterAllowanceExhausted": true,
+  "noBudgetOrIdentityReset": true,
+  "noAdditionalModelCallsAfterCap": true,
+  "startedAt": "2026-10-27T12:02:45.354Z",
+  "preflight": {
+    "at": "2026-10-27T12:02:31.294Z",
+    "freeTier": true,
+    "freeRequests": {
+      "used": 32,
+      "limit": 50,
+      "remaining": 18
+    },
+    "monetaryUsageToday": 0,
+    "exactFreeModel": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "allPricesKnownZero": true
+  },
+  "afterProvider": {
+    "at": "2026-10-27T12:29:03.002Z",
+    "freeTier": true,
+    "freeRequests": {
+      "used": 48,
+      "limit": 50,
+      "remaining": 2
+    },
+    "monetaryUsageToday": 0,
+    "exactFreeModel": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "allPricesKnownZero": true
+  },
+  "rollingProductionCallsAfter": 38,
+  "allProductionChargesSettled": true,
+  "hostedExactRecipientReplay": false,
+  "hostedRawTownExportAvailable": false,
+  "playerCoinsAfterReload": 4,
+  "pausedSavedTownAfterReload": {
+    "day": 2,
+    "minute": 1388
+  },
+  "optOut": {
+    "lastPreActionObservedTurns": 2,
+    "firstPostActionObservedTurns": 3,
+    "assertOnlySubsequentTurns": true,
+    "laterTurnsObservedWhilePlayerNotListening": [
+      4,
+      5
+    ],
+    "exactHostedRecipientAudit": false,
+    "note": "Player journal UI does not expose meeting recipient records. The exact eight-actor recipient checks are headless, not this hosted run."
+  },
+  "dialogue": [
+    {
+      "speaker": "arwyn",
+      "displayedTurn": "Day  2  \u00b7  02:34 I'll take the facilitator role. Let's start with a practical question: which text do each of you already know well enough to read aloud without performing it \u2014 something you've actually noticed a door or window in, rather than something you think would sound welcoming?"
+    },
+    {
+      "speaker": "sub",
+      "displayedTurn": "Day  2  \u00b7  03:06 I know the first paragraph of 'The Door in the Wall' by H.G. Wells \u2014 the one where Lionel Wallace describes the green door in the white wall, the one he found as a child and never found again. I've read it aloud to myself enough times that the rhythm has settled into something like muscle memory. The door isn't a metaphor there; it's a door. The wall is a wall. That's why it works."
+    },
+    {
+      "speaker": "arwyn",
+      "displayedTurn": "Day  2  \u00b7  03:35 Thank you, Sub. That paragraph fits exactly what I meant: a door that is simply a door, remembered because you've noticed it, not because you're performing welcome. Who else has a text like that \u2014 one you've read aloud until the rhythm settled, where the door or window is just itself?"
+    },
+    {
+      "speaker": "arwyn",
+      "displayedTurn": "Day  2  \u00b7  04:39 I'm glad that paragraph resonated, Sub. It's rare to hear someone describe a door as just a door and have it land. I'll wait to hear if anyone else has a text like that before I offer one of my own."
+    },
+    {
+      "speaker": "arwyn",
+      "displayedTurn": "Day  2  \u00b7  08:03 Good. I'll keep the floor open for a moment longer. If no one else offers a text they've worn smooth by reading, I have one \u2014 a passage from a field notebook, not a story, where the observer describes a window they passed every morning for a year and only noticed the crack in the glass on the last day. But I'd rather hear yours first."
+    }
+  ],
+  "evidenceHashes": {
+    "hosted-initial-ax.txt": "ed49849cabf808686884edb2b989aa2bf9ee79f020ffb5a8b8fc0361238279c4",
+    "hosted-opt-out-ax.txt": "3d42f9aa3717034adcacdada3ada69d4940cfaf2f838b38805d3977928a2f5f9",
+    "hosted-final-ax.txt": "9f805c7879ebed7a6e6f597f01fbd1cd595264b016b1bcdec039d09c169a1fee",
+    "hosted-stopped-ax.txt": "dcf3e1c5e7703c2b0ffd6832d56d3c0f6c9c6282d2bab7696bf401f205ca79c5",
+    "hosted-operator-closed-ax.txt": "f997f09574c7bb00dc482cde1fa51700061a96bf5e19adaa9a446ee6d19e7317",
+    "hosted-reload-ax.txt": "3e4858b47c78de098ba8a0383f6eafa3affb1b636d3988be2469ce179ffe8c6b",
+    "hosted-final-pool.json": "323844d800fcc77564ab4bcf266a2f0c02da6b15d8b67c3ba86bba5e60394b25",
+    "hosted-final-budget.json": "8a45dfc12a183c424e7a08675032c5eaf21323fd760d75d537fe08c4b02b93e7"
+  }
+}

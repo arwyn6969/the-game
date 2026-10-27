@@ -61,3 +61,12 @@ The actual automatic-run lifecycle and scheduler control each request. Audit
 real speech, attributed memories, all eight knowledge projections, exact
 save/reload, unchanged finances, normal closure and settled accounting. Mobile
 work remains on hold until this end-to-end social gate passes.
+
+The 27 October release and hosted test are recorded in
+[the current receipt](../review/meeting-pass-recovery-2026-10-27/README.md).
+The quota admits a full meeting, and real headless full runs passed. The new
+hosted run reached five spoken turns in sixteen free calls, then an invalid
+completion stopped it; an earlier unavailable proposal required a resume.
+Manual closure/reload preserved the record. This does not qualify unattended
+social reliability or lift the mobile hold. More quota does not repair invalid
+model output; retain failed charges and fix the response/terminal-state case.

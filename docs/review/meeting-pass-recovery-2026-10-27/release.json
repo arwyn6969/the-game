@@ -1,0 +1,29 @@
+{
+  "at": "2026-10-27T11:25:39.258Z",
+  "source": "01470e2910657cbf9650adb0a2291ab5da89b056",
+  "worker": "the-game-production",
+  "version": "c4b89bfc-d9e4-48d1-ba1d-930280eaa8f5",
+  "rollbackVersion": "c13e181a-8360-4559-aed9-0b10c66be579",
+  "matchingPublicAssets": 4,
+  "bindingDefinitionsPreserved": 18,
+  "secretDefinitionsPreserved": 7,
+  "changedPolicyValues": [
+    "MIND_BUDGET_CONFIG",
+    "MIND_POOL_CONFIG"
+  ],
+  "runtimeSettingsUnchanged": true,
+  "routesPreserved": 52,
+  "publicChecksPassed": true,
+  "modelCallsDuringPublication": 0,
+  "sourceLabelCorrection": "Receipt string replacement corrected to the exact packaged source; package, deployment, tag and asset verification are unchanged.",
+  "pr": "https://github.com/arwyn6969/the-game/pull/60",
+  "merge": "a26714e03192a17acaa963d7d2681e74a1ac425b",
+  "ci": {
+    "url": "https://github.com/arwyn6969/the-game/actions/runs/40432562897",
+    "head": "01470e2910657cbf9650adb0a2291ab5da89b056",
+    "passed": true,
+    "successfulSteps": 22
+  },
+  "deployedAt": "2026-10-27T01:53:41.596898Z",
+  "hostedAcceptance": "failed: sixteen free calls, five spoken turns, unavailable proposal and invalid final completion; operator closed after cap"
+}
