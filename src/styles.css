@@ -1490,7 +1490,7 @@ textarea.field {
    world scrollable and move its reading panels into the viewport in that case. */
 .town[data-cramped-world="true"] .mind {
   position: fixed;
-  inset: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom)) auto;
+  inset: var(--ui-sheet-top, 0.5rem) 0.75rem calc(0.5rem + env(safe-area-inset-bottom)) auto;
   width: min(27rem, calc(100% - 1.5rem));
   height: auto;
   max-height: none;
