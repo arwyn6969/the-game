@@ -104,6 +104,9 @@ test("recorded pre-step04 Arwyn attention offers have complete strict wire choic
   assert.match(prompt, /You are the proposed facilitator/);
   assert.match(prompt, /choosing participate when offered/);
   assert.match(prompt, /ask a short, concrete opening question/);
+  assert.match(prompt, /Open only once/);
+  assert.match(prompt, /If you rejoin after a pause/);
+  assert.match(prompt, /answer or build on what you heard/);
   assert.match(prompt, /You may still decline, listen, pass, leave or close when offered/);
   const observation = JSON.parse(prompt.split("\nCurrent observation: ")[1]);
   assert.deepEqual(observation.availableActions, [

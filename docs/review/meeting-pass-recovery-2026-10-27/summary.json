@@ -1,0 +1,382 @@
+{
+  "scope": "Real free-provider headless meeting; hosted retest pending",
+  "source": "bb66aa83cd4075addcf9cb80fac0bbba37ef9b37",
+  "calls": 16,
+  "knownTokens": 29274,
+  "costUSD": 0,
+  "newFailures": 0,
+  "closed": true,
+  "reason": "The sixteen-decision meeting is complete. Its actual discussion is preserved.",
+  "explicitStarts": 1,
+  "speakers": [
+    "arwyn",
+    "northern"
+  ],
+  "npcChoices": [
+    {
+      "number": 1,
+      "actor": "arwyn",
+      "decision": {
+        "kind": "accept"
+      },
+      "success": true,
+      "elapsedMs": 842,
+      "knownTokens": 1641
+    },
+    {
+      "number": 2,
+      "actor": "northern",
+      "decision": {
+        "kind": "accept"
+      },
+      "success": true,
+      "elapsedMs": 774,
+      "knownTokens": 1529
+    },
+    {
+      "number": 3,
+      "actor": "sub",
+      "decision": {
+        "kind": "accept"
+      },
+      "success": true,
+      "elapsedMs": 935,
+      "knownTokens": 1530
+    },
+    {
+      "number": 4,
+      "actor": "arwyn",
+      "decision": {
+        "kind": "participate"
+      },
+      "success": true,
+      "elapsedMs": 773,
+      "knownTokens": 1664
+    },
+    {
+      "number": 5,
+      "actor": "northern",
+      "decision": {
+        "kind": "participate"
+      },
+      "success": true,
+      "elapsedMs": 781,
+      "knownTokens": 1553
+    },
+    {
+      "number": 6,
+      "actor": "sub",
+      "decision": {
+        "kind": "listen"
+      },
+      "success": true,
+      "elapsedMs": 1332,
+      "knownTokens": 1553
+    },
+    {
+      "number": 7,
+      "actor": "arwyn",
+      "decision": {
+        "kind": "speak",
+        "text": "I'm glad we're trying this. For a first reading, I'd suggest something already known by heart \u2014 a lullaby, a market chant, the notice board's oldest joke. That way nobody needs to perform familiarity. If the reader stumbles a little, it signals it's safe to be imperfect. Who has a short text like that in mind?"
+      },
+      "success": true,
+      "elapsedMs": 2476,
+      "knownTokens": 1821
+    },
+    {
+      "number": 8,
+      "actor": "sub",
+      "decision": {
+        "kind": "listen"
+      },
+      "success": true,
+      "elapsedMs": 971,
+      "knownTokens": 1745
+    },
+    {
+      "number": 9,
+      "actor": "northern",
+      "decision": {
+        "kind": "speak",
+        "text": "I'll bring the notice board's oldest joke \u2014 the one about the baker who charged extra for 'fresh air' in his loaves. It's short, everyone's heard it, and if I trip over the punchline it just makes it funnier. Good place to start."
+      },
+      "success": true,
+      "elapsedMs": 1428,
+      "knownTokens": 1809
+    },
+    {
+      "number": 10,
+      "actor": "sub",
+      "decision": {
+        "kind": "listen"
+      },
+      "success": true,
+      "elapsedMs": 1059,
+      "knownTokens": 1867
+    },
+    {
+      "number": 11,
+      "actor": "arwyn",
+      "decision": {
+        "kind": "speak",
+        "text": "That's perfect \u2014 the baker's 'fresh air' joke is exactly the kind of shared, imperfect start I was hoping for. Northern, would you be willing to read it first, stumbles and all? And if anyone else has a lullaby or market chant they'd offer for a second round, I'd love to hear it."
+      },
+      "success": true,
+      "elapsedMs": 2013,
+      "knownTokens": 2078
+    },
+    {
+      "number": 12,
+      "actor": "sub",
+      "decision": {
+        "kind": "listen"
+      },
+      "success": true,
+      "elapsedMs": 2469,
+      "knownTokens": 2002
+    },
+    {
+      "number": 13,
+      "actor": "northern",
+      "decision": {
+        "kind": "speak",
+        "text": "Yeah, I'll read it. Short, known, and if I flub the punchline it only helps. Anyone else got a lullaby or chant for round two?"
+      },
+      "success": true,
+      "elapsedMs": 2001,
+      "knownTokens": 2043
+    },
+    {
+      "number": 14,
+      "actor": "sub",
+      "decision": {
+        "kind": "listen"
+      },
+      "success": true,
+      "elapsedMs": 779,
+      "knownTokens": 2101
+    },
+    {
+      "number": 15,
+      "actor": "arwyn",
+      "decision": {
+        "kind": "pass"
+      },
+      "success": true,
+      "elapsedMs": 793,
+      "knownTokens": 2236
+    },
+    {
+      "number": 16,
+      "actor": "northern",
+      "decision": {
+        "kind": "pass"
+      },
+      "success": true,
+      "elapsedMs": 1321,
+      "knownTokens": 2102
+    }
+  ],
+  "utterances": [
+    {
+      "speaker": "arwyn",
+      "text": "I'm glad we're trying this. For a first reading, I'd suggest something already known by heart \u2014 a lullaby, a market chant, the notice board's oldest joke. That way nobody needs to perform familiarity. If the reader stumbles a little, it signals it's safe to be imperfect. Who has a short text like that in mind?",
+      "recipientIds": [
+        "northern",
+        "sub",
+        "player"
+      ]
+    },
+    {
+      "speaker": "northern",
+      "text": "I'll bring the notice board's oldest joke \u2014 the one about the baker who charged extra for 'fresh air' in his loaves. It's short, everyone's heard it, and if I trip over the punchline it just makes it funnier. Good place to start.",
+      "recipientIds": [
+        "arwyn",
+        "sub",
+        "player"
+      ]
+    },
+    {
+      "speaker": "arwyn",
+      "text": "That's perfect \u2014 the baker's 'fresh air' joke is exactly the kind of shared, imperfect start I was hoping for. Northern, would you be willing to read it first, stumbles and all? And if anyone else has a lullaby or market chant they'd offer for a second round, I'd love to hear it.",
+      "recipientIds": [
+        "northern",
+        "sub",
+        "player"
+      ]
+    },
+    {
+      "speaker": "northern",
+      "text": "Yeah, I'll read it. Short, known, and if I flub the punchline it only helps. Anyone else got a lullaby or chant for round two?",
+      "recipientIds": [
+        "arwyn",
+        "sub",
+        "player"
+      ]
+    }
+  ],
+  "verification": {
+    "at": "2026-10-27T01:19:43.769Z",
+    "sourceHead": "bb66aa83cd4075addcf9cb80fac0bbba37ef9b37",
+    "passed": true,
+    "scope": "real free provider, actual engine/scheduler/automatic-run helper, local SQL; not a hosted browser session",
+    "newCalls": 16,
+    "inheritedCharges": 30,
+    "cumulativeCharges": 46,
+    "explicitStarts": 1,
+    "playerAuthoredOpening": false,
+    "freshInvitationChoices": [
+      {
+        "actor": "arwyn",
+        "decision": {
+          "kind": "accept"
+        }
+      },
+      {
+        "actor": "northern",
+        "decision": {
+          "kind": "accept"
+        }
+      },
+      {
+        "actor": "sub",
+        "decision": {
+          "kind": "accept"
+        }
+      }
+    ],
+    "closed": true,
+    "closureReason": "The sixteen-decision meeting is complete. Its actual discussion is preserved.",
+    "actualNpcSpeakers": [
+      "arwyn",
+      "northern"
+    ],
+    "spokenTurns": 4,
+    "minPhysicalSpacingMs": 31080,
+    "originalThirtyLedgerRowsAndChargesUnchanged": true,
+    "exactFinalTownReproduced": true,
+    "allEightKnowledgeProjectionsChecked": true,
+    "financeAndIdentitiesUnchanged": true,
+    "reload": {
+      "meetingId": "discussion:56",
+      "unchangedUtteranceIds": [
+        "discussion:56:speech:1",
+        "discussion:56:speech:2",
+        "discussion:56:speech:3",
+        "discussion:56:speech:4"
+      ],
+      "observations": [
+        {
+          "actor": "kevin",
+          "receivedTurnIds": []
+        },
+        {
+          "actor": "arwyn",
+          "receivedTurnIds": [
+            "discussion:56:speech:1",
+            "discussion:56:speech:2",
+            "discussion:56:speech:3",
+            "discussion:56:speech:4"
+          ]
+        },
+        {
+          "actor": "northern",
+          "receivedTurnIds": [
+            "discussion:56:speech:1",
+            "discussion:56:speech:2",
+            "discussion:56:speech:3",
+            "discussion:56:speech:4"
+          ]
+        },
+        {
+          "actor": "baba",
+          "receivedTurnIds": []
+        },
+        {
+          "actor": "sub",
+          "receivedTurnIds": [
+            "discussion:56:speech:1",
+            "discussion:56:speech:2",
+            "discussion:56:speech:3",
+            "discussion:56:speech:4"
+          ]
+        },
+        {
+          "actor": "player",
+          "receivedTurnIds": [
+            "discussion:56:speech:1",
+            "discussion:56:speech:2",
+            "discussion:56:speech:3",
+            "discussion:56:speech:4"
+          ]
+        },
+        {
+          "actor": "data",
+          "receivedTurnIds": []
+        },
+        {
+          "actor": "amelia",
+          "receivedTurnIds": []
+        }
+      ],
+      "knowledgeBackfilled": false
+    },
+    "budget": {
+      "rows": 46,
+      "calls": 46,
+      "settled": true
+    },
+    "pool": [
+      {
+        "outcome": "ok",
+        "rows": 45,
+        "settled": true
+      },
+      {
+        "outcome": "timeout",
+        "rows": 1,
+        "settled": true
+      }
+    ],
+    "reservations": {
+      "total": 417596,
+      "maximum": 11033
+    },
+    "networkCallsDuringReplay": 0
+  },
+  "limits": {
+    "sharedRolling24hCalls": 48,
+    "playerRolling24hCalls": 48,
+    "providerReportedFreeUtcDayLimit": 50,
+    "physicalDayTestPlanMaximum": 48,
+    "actionReserveForDirectReply": 1,
+    "attemptsPerAction": 1,
+    "maxConcurrent": 1,
+    "physicalStartSpacingMs": 31000,
+    "meetingDecisionLimit": 16,
+    "meetingUtteranceLimit": 6,
+    "providerActionDeadlineMs": 30000,
+    "browserActionDeadlineMs": 45000,
+    "zeroMonetaryCeiling": true
+  },
+  "priorHostedTest": {
+    "build": "4780d7b2f4cb",
+    "newCalls": 16,
+    "successes": 15,
+    "timeouts": 1,
+    "npcSpokenTurns": 1,
+    "closed": true,
+    "socialAcceptance": false,
+    "reloadVerified": true,
+    "coins": 4
+  },
+  "rawEvidenceHashes": {
+    "report.json": "43de9fe0ac94d4171a157b6e3ba171f67641777f8520084ac25bef42b4e747fa",
+    "verification.json": "b2caee142ae8ede97741c528aaa035be6483fa8e3c7e0ef7fe231002f07723f0",
+    "initial-town.json": "55849d304316c4d84502d5ae80ec8c0821a837a854774ad3e447d05314583b18",
+    "final-town.json": "7501314b8280666f40dd54e318debfeb4205fd6aee0b427fd5870dfd80428af6"
+  },
+  "mobile": "on hold",
+  "futureAutomation": "paused"
+}

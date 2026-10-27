@@ -8,15 +8,16 @@ The active deployment and evidence belong in `docs/CURRENT_STATUS.md`.
 | Setting | Previous | Full-meeting profile |
 | --- | ---: | ---: |
 | Shared calls / rolling 24 hours | 24 | 48 |
-| Player calls / rolling 24 hours | 12 | 32 |
+| Player calls / rolling 24 hours | 12 | 48 |
 | Provider calls / rolling 31 days | 744 | 1,488 |
 | Conservative token reservation units / minute | 20,000 | 40,000 |
 | Conservative token reservation units / day | 100,000 | 960,000 |
 
 The provider account currently reports 50 free calls per UTC day. Forty-eight
 shared calls leaves two requests of margin; one shared call remains reserved
-for direct player replies. Thirty-two per player admits two complete
-sixteen-decision meetings from fresh allowance. Other players or prior usage can
+for direct player replies. A player can use the available
+shared pool, including recovery after earlier attempts, without increasing the
+account-wide ceiling. Other players or prior usage can
 reduce headroom, so a full real playtest checks sixteen available starts first.
 No call is promised when shared, player or provider allowance is exhausted.
 
@@ -32,7 +33,9 @@ The existing controls remain: exact `:free` model, no paid fallback, zero
 monetary ceiling/tariffs, one concurrent call/action, no autonomous background
 calls, 2 physical starts/minute with at least 31 seconds between starts, one
 attempt per action, 1,200 action output tokens and the 30-second action deadline.
-The meeting retains six utterances and sixteen AI decisions. The sixteenth
+The meeting retains six utterances and sixteen AI decisions. A pass yields the floor without requeuing unchanged input. Only real newly
+heard speech or a deliberate turn request cues the passed resident again.
+The sixteenth
 successful decision now closes the meeting after recording its result, rather
 than leaving an unresumable paused meeting. No extra summary or NPC words are
 generated. Failure and Stop still pause/stop without replay.

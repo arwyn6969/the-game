@@ -79,6 +79,38 @@ function ai(town, decision) {
   return { job, result };
 }
 
+test("passing parks the speaker until new input instead of spending another unchanged decision", () => {
+  const town = gathered();
+  ok(ai(town, { kind: "pass" }).result);
+  assert.equal(meeting(town).floor, null);
+  assert.deepEqual(meeting(town).queue, []);
+  assert.equal(member(town, "northern").mode, "participating");
+  assert.equal(d.nextDiscussionJob(town), null);
+  for (let i = 0; i < 5; i++) d.advanceDiscussions(town);
+  assert.equal(d.nextDiscussionJob(town), null);
+  assert.equal(meeting(town).usage.providerAttempts, 1);
+  assert.equal(meeting(town).decisions, 1);
+});
+
+test("a passed speaker can freely request another turn after actually hearing new speech", () => {
+  const town = gathered();
+  ok(ai(town, { kind: "pass" }).result);
+  join(town, "player", "participate");
+  ok(command(town, "player", "speak", { text: "Which short paragraph would you choose?" }));
+  const reconsider = d.nextDiscussionJob(town);
+  assert.equal(reconsider.agentId, "northern");
+  assert.equal(reconsider.turnId, null);
+  assert.ok(
+    d
+      .discussionObservation(town, "northern")
+      .availableActions.some((a) => a.kind === "request-turn"),
+  );
+  ok(ai(town, { kind: "request-turn" }).result);
+  assert.equal(member(town, "northern").decisionNeeded, false);
+  assert.ok(d.nextDiscussionJob(town));
+  assert.equal(meeting(town).utterances.length, 1, "No NPC speech was invented by the new cue");
+});
+
 test("old towns stay opt out and proposal creates no NPC choice or speech", () => {
   const old = createTown("Legacy");
   assert.equal(save.parseTownFile(save.exportTown(old)).discussions, undefined);

@@ -1,5 +1,50 @@
 # Current project status
 
+## Hosted meeting pass recovery — active, 27 October 2026
+
+Owner: this social assessment chat, checkout `social-experience-fix/`, branch
+`codex/meeting-pass-recovery-20261027`, base main
+`c7fa07ad1fc20fcbd6ecc99a7aae82e05421c2d3` (merged PR #58),
+[PR #60](https://github.com/arwyn6969/the-game/pull/60). The user requested
+adjusted limits and a full real meeting before mobile resumes. Current live
+Worker `c13e181a-8360-4559-aed9-0b10c66be579`, runtime `4780d7b2f4cb`, preserves
+all routes, bindings and unrelated settings. PR #58 passed Verify run
+[40422353634](https://github.com/arwyn6969/the-game/actions/runs/40422353634)
+and published its matching tree. Rollback: `87687764-4b95-478d-b1bb-f3dfbd5329dc`.
+
+The headless six-turn acceptance below passed. The subsequent authenticated
+hosted browser test did **not**: sixteen settled calls produced one NPC line,
+with fifteen successes and one thirty-second upstream timeout. An explicit
+resume retained the same meeting and decision cap; the boundary closed it and
+reload preserved the record and four coins. Source reproduction found that a
+speaker passing immediately requeued themselves, spending unchanged decisions.
+
+Current fix parks a pass until real new heard speech or an explicit turn
+request. A parked participant may reconsider after actually hearing another
+line; NPC attention and every decline/listen/pass/leave choice remain voluntary.
+Facilitator guidance also distinguishes rejoining and following up from another
+opening. Proposed player allocation is 48 within the **unchanged shared 48**
+rolling-day ceiling and existing provider free limit of 50. Every prior charge
+remains. This gives the prototype caller access to available shared headroom;
+it creates no additional account-wide allowance. One direct-reply reserve,
+zero spend, one attempt, slow pacing and deadlines remain.
+
+Application source `bb66aa8` completed a real-provider meeting with one Start,
+sixteen successful free calls, four spoken turns by Arwyn/Northern and Sub
+listening, followed by both speakers passing. Normal sixteen-decision closure,
+29,274 tokens, $0. Independent offline replay exactly matched the final town,
+all speech knowledge and all thirty retained ledger identities/timestamps/charges;
+all forty-six cumulative attempts settled. [Evidence](review/meeting-pass-recovery-2026-10-27/README.md).
+Local 1,100 script + 55 typed tests, 428 town tests, typecheck/lint, diagnostics
+and both builds pass. CI's first browser run exposed an outdated fixture
+assumption after pass recovery; its cancellation case now tests a legal late
+request-turn without manufacturing another speaking floor. Current-head Verify,
+scoped publication and the new hosted run remain next gates. The hosted shared ledger currently
+contains 22 recent charges; current provider-day consumption must be checked
+before each test. No reset, fake identity, forced floor or paid fallback.
+[Handoff](handoffs/meeting-pass-recovery-2026-10-27.md). Mobile remains on hold;
+the old follow-up automation stays PAUSED.
+
 ## Full-meeting free allowance — complete local acceptance, 26 October 2026
 
 Owner: this social assessment chat, checkout `social-experience-fix/`, branch
@@ -21,8 +66,8 @@ all thirty cumulative charges settled. Provider now reports 36/50 used, 14 free
 calls remaining. [Dialogue, limits and acceptance evidence](review/full-meeting-free-2026-10-26/README.md).
 
 Local checks pass: 1,098 script + 55 typed tests, 426 town tests, typecheck/lint
-(one inherited warning), diagnostics and both builds. Next gates: current-head
-Verify, reviewable PR and scoped production settings/code publication. The
+(one inherited warning), diagnostics and both builds. PR #58 subsequently passed current-head Verify, merged and published; the
+hosted result and follow-up above supersede the earlier next gates. The
 earlier duplicate automation remains PAUSED; no new future run is scheduled.
 Hosted authenticated browser and physical-device meetings remain unqualified.
 Mobile stays on hold and is not started by this completed local acceptance.

@@ -7,7 +7,7 @@ import { SqlMindBudgetStore } from "../src/lib/mind-budget/store.ts";
 import { SqlQuotaStore } from "../src/lib/mind-pool/store.ts";
 import { candidatesFor } from "../src/lib/mind-pool/config.ts";
 
-test("free meeting profile fits two sixteen-decision meetings without paid or background routes", async () => {
+test("one player can use the shared free meeting allowance without paid or background routes", async () => {
   const { pool, budget } = await meetingFreeProfile();
   assert.equal(pool.providers.length, 1);
   const p = pool.providers[0];
@@ -23,7 +23,7 @@ test("free meeting profile fits two sixteen-decision meetings without paid or ba
   assert.equal(p.limits.monthly, 48 * 31);
   assert.equal(p.limits.tpm, 2 * 20_000);
   assert.equal(p.limits.tpd, 48 * 20_000);
-  assert.equal(budget.playerDailyCalls, 2 * 16);
+  assert.equal(budget.playerDailyCalls, budget.dailyCalls);
   assert.equal(budget.dailyCalls, p.limits.rpd);
   assert.equal(budget.concurrent, 1);
   assert.equal(budget.actionConcurrent, 1);
@@ -59,7 +59,7 @@ test("shared SQL retains previous charges and admits every remaining meeting dec
       microusd: 0,
       leaseMs: 90000,
     };
-    for (let i = 0; i < 32; i++) {
+    for (let i = 0; i < 47; i++) {
       // Simulated elapsed pacing applies only to this synthetic in-memory ledger.
       await db.exec(
         "update mind_budget_attempts set started_at = started_at - 31000; update mind_pool_attempts set started_at = started_at - 31000",
@@ -76,16 +76,39 @@ test("shared SQL retains previous charges and admits every remaining meeting dec
       await q.finish(c, attempt, { outcome: "ok", status: 200, latencyMs: 1, actualTokens: 2000 });
       await b.finish(lease, 1);
     }
-    await db.exec("update mind_budget_attempts set started_at = started_at - 61000");
-    assert.equal(await b.reserve(request, budget), null, "player cap blocks a thirty-third call");
+    await db.exec(
+      "update mind_budget_attempts set started_at = started_at - 61000; update mind_pool_attempts set started_at = started_at - 61000",
+    );
+    assert.equal(
+      await b.reserve(request, budget),
+      null,
+      "actions preserve the one direct-reply reserve",
+    );
+    const reply = await b.reserve({ ...request, kind: "player" }, budget);
+    assert.ok(reply);
+    const foreground = candidatesFor(pool, "player", { OPENROUTER_API_KEY: "sk-or-v1-fixture" })[0];
+    const last = await q.reserve(foreground, "player", 20_000, 40_000);
+    assert.ok(last);
+    await q.finish(foreground, last, {
+      outcome: "ok",
+      status: 200,
+      latencyMs: 1,
+      actualTokens: 2000,
+    });
+    await b.finish(reply, 1);
+    assert.equal(
+      await b.reserve({ ...request, kind: "player" }, budget),
+      null,
+      "the shared forty-eight-call ceiling remains hard",
+    );
     const rows = await sql.query(
       "select count(*)::int as n, sum(charged_calls)::int as calls, bool_and(completed_at is not null) as settled from mind_budget_attempts",
     );
-    assert.deepEqual(rows[0], { n: 32, calls: 32, settled: true });
+    assert.deepEqual(rows[0], { n: 48, calls: 48, settled: true });
     const tokens = await sql.query(
       "select sum(reserved_tokens)::int as reserved from mind_pool_attempts",
     );
-    assert.equal(tokens[0].reserved, 640_000);
+    assert.equal(tokens[0].reserved, 960_000);
   } finally {
     await db.close();
   }

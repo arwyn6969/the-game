@@ -62,7 +62,9 @@ test("an action body may complete after the legacy deadline without retry or ext
   f.kind = "act";
   f.config.timeoutMs = 25;
   f.config.deadlineMs = 25;
-  f.config.actionTimeoutMs = 150;
+  // Keep the legacy deadline below the delayed body while allowing CPU contention
+  // in the full parallel suite; this verifies routing, not wall-clock precision.
+  f.config.actionTimeoutMs = 2_000;
   f.config.providers[0].routes.act = { ...f.config.providers[0].routes.player, maxTokens: 4000 };
   let calls = 0;
   const result = await routeMind({
