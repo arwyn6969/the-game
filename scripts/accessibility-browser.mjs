@@ -610,7 +610,7 @@ async function keyboardChecks(page, journey) {
     await importNear(page, "baba");
     await page.getByRole("button", { name: "Talk with Baba", exact: true }).click();
     const choices = page.locator(".mind-actions");
-    await choices.locator("summary").click();
+    if ((await choices.getAttribute("open")) === null) await choices.locator("summary").click();
     const accept = choices.getByRole("button", { name: "Accept bread tab · 2", exact: true });
     await accept.focus();
     await page.keyboard.press("Enter");

@@ -141,6 +141,7 @@ import {
   cell,
   nearestWalkable,
   placeTitle,
+  placeTitleOf,
   TILE,
   walkable,
   zoneAt,
@@ -1217,7 +1218,7 @@ export function TownApp() {
   }
 
   function goTo(place: PlaceId) {
-    walkTo(placeTitle(place), ANCHORS[place]);
+    walkTo(placeTitleOf(place), ANCHORS[place]);
   }
 
   function walkTo(title: string, target: { x: number; y: number }, arrivalRadius = 1) {
@@ -3992,12 +3993,22 @@ function Mind({
   const logRef = useRef<HTMLDivElement | null>(null);
   const latestRef = useRef<HTMLLIElement | null>(null);
   const keyboardTabRef = useRef(false);
+  const choicesRef = useRef<HTMLDetailsElement | null>(null);
+  const reviewChoicesRef = useRef(false);
   const followRef = useRef(true);
   const [behind, setBehind] = useState(false);
+  const [choicesOpen, setChoicesOpen] = useState(true);
   const [tab, setTab] = useState<"overview" | "strengths" | "together" | "progress">(
     startTalking || agent.id === "player" ? "together" : "overview",
   );
   useEffect(() => {
+    if (reviewChoicesRef.current && tab === "together") {
+      reviewChoicesRef.current = false;
+      followRef.current = false;
+      choicesRef.current?.querySelector("summary")?.focus();
+      choicesRef.current?.scrollIntoView({ block: "start" });
+      return;
+    }
     followRef.current = true;
     if (!keyboardTabRef.current) {
       if (tab === "together" && lineRef.current) lineRef.current.focus();
@@ -4127,6 +4138,29 @@ function Mind({
           aria-labelledby="character-tab-overview"
           hidden={tab !== "overview"}
         >
+          {actions.length > 0 && (
+            <section className="character-choice-preview" aria-label="Choices to review">
+              <h3>Work and other choices</h3>
+              <p className="character-note">
+                {actions
+                  .map(
+                    (action) => `${action.label}${action.disabledReason ? " (unavailable)" : ""}`,
+                  )
+                  .join(" · ")}
+              </p>
+              <button
+                className="btn"
+                type="button"
+                onClick={() => {
+                  reviewChoicesRef.current = true;
+                  setChoicesOpen(true);
+                  setTab("together");
+                }}
+              >
+                Review choices with {agent.name}
+              </button>
+            </section>
+          )}
           <CharacterOverview town={town} agent={agent} watch={watch} replay={replay} />
           {agent.id !== "player" && (
             <div className="character-overview-actions">
@@ -4259,8 +4293,11 @@ function Mind({
             )}
             {actions.length > 0 && (
               <details
+                ref={choicesRef}
                 className="mind-actions"
-                onToggle={() => {
+                open={choicesOpen}
+                onToggle={(event) => {
+                  setChoicesOpen(event.currentTarget.open);
                   if (followRef.current && logRef.current)
                     revealLatest(logRef.current, latestRef.current);
                 }}
@@ -4268,6 +4305,11 @@ function Mind({
                 <summary>
                   Choices with {agent.name} · {actions.length}
                 </summary>
+                {!canTalk && (
+                  <p className="character-note">
+                    Walk within two tiles of {agent.name} to choose. You can read the terms here.
+                  </p>
+                )}
                 <ul>
                   {actions.map((action) => (
                     <li key={action.id}>
@@ -4275,7 +4317,7 @@ function Mind({
                       <button
                         className="btn mt-2"
                         type="button"
-                        disabled={busy || Boolean(action.disabledReason)}
+                        disabled={busy || replay || !canTalk || Boolean(action.disabledReason)}
                         onClick={() => onAction(action.id)}
                       >
                         {action.label}

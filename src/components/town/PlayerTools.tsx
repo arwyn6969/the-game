@@ -13,7 +13,7 @@ import { agentById } from "@/game/memory";
 import { formatClock } from "@/game/text";
 import { fundedWorkSummary } from "@/game/funded-work";
 import type { FundedTown } from "@/game/economy-types";
-import { placeTitle, zoneAt } from "@/game/world";
+import { placeTitle, placeTitleOf, zoneAt } from "@/game/world";
 import { ManuscriptTools, type ManuscriptControls } from "./ManuscriptTools";
 import { heldItem } from "@/game/physical-items";
 
@@ -469,7 +469,7 @@ export function PlayerTools({
               {reading?.gathering && reading.scene.length === 0 && (
                 <div className="library-gathering">
                   <p>
-                    {reading.gathering.label} · {placeTitle(reading.gathering.place)}
+                    {reading.gathering.label} · {placeTitleOf(reading.gathering.place)}
                   </p>
                   <p>
                     <ReadingStatus status={reading.gathering.status} />
@@ -488,7 +488,7 @@ export function PlayerTools({
                     onClick={() => onGo(place)}
                     disabled={replaying}
                   >
-                    {placeTitle(place)}
+                    {placeTitleOf(place)}
                   </button>
                 ))}
               </div>
