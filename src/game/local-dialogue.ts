@@ -196,7 +196,7 @@ function fundedPlayerWork(town: Town) {
 function fundedShiftReply(town: Town, agent: Agent): string {
   const workplace = agent.id === "kevin" ? "cafe" : agent.id === "baba" ? "grocery" : null;
   if (!workplace)
-    return "Ask Kevin at Hobbs about the cafe shift: 16:00–19:00, with 5 reserved before you accept. Ask Baba about any preserved grocery work. Only eligible attendance counts; I cannot give you a paid job through this conversation.";
+    return "Ask Kevin at Hobbs about the cafe shift: 16:00–19:00, with 5 reserved before you accept. Baba can check grocery work already recorded; there is no new grocery shift offer. Only eligible attendance counts; I cannot give you a paid job through this conversation.";
   const work = fundedPlayerWork(town);
   const payer = `till:${workplace}`;
   const agreement = [...(work?.agreements ?? [])]
@@ -256,7 +256,7 @@ function wageReply(
 ): string {
   const workplace = agent.id === "kevin" ? "cafe" : agent.id === "baba" ? "grocery" : null;
   if (!workplace)
-    return "Ask Kevin about cafe wages, or Baba about grocery wages. The employer and your recorded work determine payment; I cannot pay you through a conversation.";
+    return "Ask Kevin about cafe wages. Baba can check grocery work already recorded; there is no new grocery shift offer. The employer and your recorded work determine payment; I cannot pay you through a conversation.";
   const player = agentById(town, "player");
   const work = fundedPlayerWork(town);
   const economy = (town as FundedTown).economy;
@@ -291,7 +291,11 @@ function wageReply(
     const legacy = work.legacyClaims.find(
       (claim) => claim.payer === payer && ["unresolved", "underfunded"].includes(claim.resolution),
     );
-    return `${evidence}${status}${legacy ? ` Earlier work is preserved as legacy evidence: ${legacy.reason}` : ""} Asking does not pay a second wage.`;
+    const noGroceryOffer =
+      workplace === "grocery" && !pending.length && !agreement && !legacy
+        ? " I have no new grocery shift offer."
+        : "";
+    return `${evidence}${status}${legacy ? ` Earlier work is preserved as legacy evidence: ${legacy.reason}` : ""}${noGroceryOffer} Asking does not pay a second wage.`;
   }
   const receipts = wageReceipts(town, workplace);
   const receipt = [...receipts].reverse().find((memory) => memory.day === requestedDay);
@@ -319,6 +323,7 @@ function wageReply(
     status += ` ${choice.terms}${choice.disabledReason ? ` ${choice.disabledReason}` : ""} Read ${choice.label} below; this conversation does not apply it.`;
   else if (player.paidToday)
     status += " The saved record is already marked paid; that cannot create another wage.";
+  if (workplace === "grocery" && !shift && !choice) status += " I have no new grocery shift offer.";
   return `${evidence} ${status} Asking does not pay a second wage.`;
 }
 

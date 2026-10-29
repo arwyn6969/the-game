@@ -314,6 +314,7 @@ export function placeTitle(zone: string): string {
     case "house-baba":
     case "house-sub":
     case "house-player":
+    case "row":
       return "Townhouse Row";
     case "water":
       return "The water";

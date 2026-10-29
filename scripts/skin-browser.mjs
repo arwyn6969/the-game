@@ -631,7 +631,8 @@ export async function runSkinChecks(browser, url, outputDirectory) {
           .getByLabel("Your line to Kevin", { exact: true })
           .fill("I am keeping this draft while I compare the interfaces.");
         const choices = page.locator(".mind-actions");
-        if (await choices.count()) await choices.locator("summary").click();
+        if ((await choices.count()) && (await choices.getAttribute("open")) === null)
+          await choices.locator("summary").click();
         await frames(page);
       });
       const baseline = await saved(page);

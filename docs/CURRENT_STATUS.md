@@ -1,5 +1,24 @@
 # Current project status
 
+## Work and navigation polish — candidate, 29 October 2026
+
+Owner: Codex polish chat, isolated checkout `town-work-polish/`, branch
+`codex/town-work-polish-20261029`. Explicit dependency/base: PR #61 head
+`cd44d165002ddd75b6c92e5ce0efb9ac4fecd568`. Its source review and exact-head
+Verify pass; it is ready for review but remains unmerged and undeployed.
+Root owns the conversation/navigation/styles and integration; scoped core work
+owns only quote text, offline work guidance and relevant regressions.
+
+This candidate exposes existing choices from resident overviews, focuses
+reviewed terms, retains disclosure state, explains available cafe funding and
+corrects fresh grocery-work guidance. It includes Townhouse Row labels and
+help-surface contrast. No financial rules, save schema, provider budget or
+production setting changes. [Implementation and next milestones](handoffs/town-work-polish-2026-10-29.md).
+Node 24 passes 1,111 script + 55 typed tests and the targeted 51 work/commerce
+checks; typecheck/lint/build pass. Final combined browser/interface checks and
+current-head Verify are next. GitHub source publication is authorized; merge
+and hosted publication remain separate gates. No Grok bot is being awakened.
+
 ## Player controls and project feedback — verified local candidate, 27 October 2026
 
 Owner: current agent-player assessment chat, isolated checkout

@@ -786,10 +786,11 @@ function quotedPlayerActions(town: Town, target: AgentId): QuotedAction[] {
       const hasTimetable =
         player.plan.beats.length === 24 &&
         player.plan.beats.every((beat, hour) => beat.hour === hour);
+      const cafeFunds = availableFunds(preview.staged, "till:cafe");
       add(
         "shift-start",
         "Accept cafe shift · 5",
-        "Accept one funded cafe work unit: 5 coins reserved before you start, for 180 eligible minutes at Hobbs, 16:00–19:00. Missed or suspended minutes, and earned unpaid wages, survive midnight. You may resume later. No advance or fractional wage. A further unit needs a new offer on a later game day.",
+        `Accept one funded cafe work unit: 5 coins reserved before you start, for 180 eligible minutes at Hobbs, 16:00–19:00. Missed or suspended minutes, and earned unpaid wages, survive midnight. You may resume later. No advance or fractional wage. A further unit needs a new offer on a later game day. The cafe has ${cafeFunds} ${cafeFunds === 1 ? "coin" : "coins"} available after existing reservations; each new shift needs 5. Work uses existing funds, and the till does not refill at midnight.`,
         undefined,
         !hasTimetable
           ? "Your saved timetable needs repair first."
@@ -805,8 +806,8 @@ function quotedPlayerActions(town: Town, target: AgentId): QuotedAction[] {
                   ? "You have another funded workplace agreement open."
                   : town.minute > 16 * 60
                     ? "Come back before 16:00 to begin the next work unit."
-                    : availableFunds(preview.staged, "till:cafe") < 5
-                      ? "The cafe cannot reserve the full wage of 5 now."
+                    : cafeFunds < 5
+                      ? `The cafe cannot reserve the full wage of 5 now. Only ${cafeFunds} ${cafeFunds === 1 ? "coin is" : "coins are"} available after existing reservations.`
                       : player.projects.filter((p) => p.status === "open").length >= 4
                         ? "Finish or drop an open project before taking work."
                         : undefined,
