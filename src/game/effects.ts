@@ -790,7 +790,7 @@ function quotedPlayerActions(town: Town, target: AgentId): QuotedAction[] {
       add(
         "shift-start",
         "Accept cafe shift · 5",
-        `Accept one funded cafe work unit: 5 coins reserved before you start, for 180 eligible minutes at Hobbs, 16:00–19:00. Missed or suspended minutes, and earned unpaid wages, survive midnight. You may resume later. No advance or fractional wage. A further unit needs a new offer on a later game day. The cafe has ${cafeFunds} ${cafeFunds === 1 ? "coin" : "coins"} available after existing reservations; each new shift needs 5. Work uses existing funds, and the till does not refill at midnight.`,
+        `The cafe has ${cafeFunds} ${cafeFunds === 1 ? "coin" : "coins"} available after existing reservations; each new shift needs 5. Accept one funded cafe work unit: 5 coins reserved before you start, for 180 eligible minutes at Hobbs, 16:00–19:00. Missed or suspended minutes, and earned unpaid wages, survive midnight. You may resume later. No advance or fractional wage. A further unit needs a new offer on a later game day. Work uses existing funds, and the till does not refill at midnight.`,
         undefined,
         !hasTimetable
           ? "Your saved timetable needs repair first."

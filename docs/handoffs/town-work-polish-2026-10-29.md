@@ -24,18 +24,31 @@ Existing resident identities, authored dialogue and AI/hosting contracts remain.
 
 ## Verification
 
-Node 24.19.0 passes 1,111 script tests and 55 typed tests. The four new guidance
+Node 24.19.0 passes 1,111 script tests, 55 typed tests and 437 town tests. The four new guidance
 regressions cover nonmutating quote previews, protected payroll, a real sale
 changing funding availability, serialization and accurate grocery guidance.
 The targeted 51-test set also covers existing wages/legacy claims and commerce.
 Typecheck, lint (one inherited unused-disable warning) and a credential-free
 build pass; DATABASE_URL is absent and production migration is skipped.
 
-Browser verification covers desktop 1280×800 and phone 390×844, including
-explicit review without town writes, focus, retained disclosure choice,
-movement, local conversation, pause, reload and import/export. Final browser
-and interface results are recorded when the candidate completes those gates.
-Raw synthetic towns, screenshots and reports remain ignored in artifacts/.
+The complete built-browser suite passes desktop 1280×800 and phone 390×844:
+movement, local conversation, pause, reload, import/export, competing tabs,
+legacy migration, identity recovery, library/readings and interruptions.
+Final-source review journeys separately pass nonmutating terms review,
+summary focus, disabled distant acceptance, retained collapse across ticks/tabs
+and reopening. A final visual check moved available funding to the first line;
+the focused core/desktop/phone cases pass again with that copy.
+
+The four-interface gate passes 27 desktop and 29 phone checks, including 320px
+and enlarged text. Automated accessibility passes 54 audited surfaces and 27
+essential checks with no WCAG/best-practice violations; 19 incomplete results
+remain for manual review. This does not establish physical-device usability or
+WCAG conformance. Town diagnostics complete. Raw synthetic towns, screenshots
+and reports remain ignored in artifacts/.
+
+[Draft PR #62](https://github.com/arwyn6969/the-game/pull/62) contains this
+implementation, stacked on #61. Current-head Verify remains required before
+integration. Neither PR is merged or newly deployed by this packet.
 
 ## Next milestones
 

@@ -14,10 +14,13 @@ reviewed terms, retains disclosure state, explains available cafe funding and
 corrects fresh grocery-work guidance. It includes Townhouse Row labels and
 help-surface contrast. No financial rules, save schema, provider budget or
 production setting changes. [Implementation and next milestones](handoffs/town-work-polish-2026-10-29.md).
-Node 24 passes 1,111 script + 55 typed tests and the targeted 51 work/commerce
-checks; typecheck/lint/build pass. Final combined browser/interface checks and
-current-head Verify are next. GitHub source publication is authorized; merge
-and hosted publication remain separate gates. No Grok bot is being awakened.
+Node 24 passes 1,111 script + 55 typed and 437 town tests; typecheck/lint/build
+pass and diagnostics complete. The full built-browser suite, final choice-review
+journeys and all-four-interface gate pass (27 desktop / 29 phone checks).
+Automated accessibility passes 54 surfaces with zero violations and 19 incomplete
+results retained for manual review. [Draft PR #62](https://github.com/arwyn6969/the-game/pull/62)
+is published against #61. Current-head Verify and integration after #61 remain
+next. Merge and hosted publication are separate gates. No Grok bot is awakened.
 
 ## Player controls and project feedback — verified local candidate, 27 October 2026
 
