@@ -1,5 +1,33 @@
 # Current project status
 
+## Resident framework F00 / A01.1 — local replay, 29 October 2026
+
+Owner: GPT-6.1 Sol, chat `01a18874-463c-7be1-80a3-ed7eefdace15`.
+Checkout `a01-replay/`, branch `codex/a01-replay`, from refreshed main
+`a26714e03192a17acaa963d7d2681e74a1ac425b`. Test/docs write boundary only;
+no dependency on #61/#62 and no takeover of the social or UI lanes.
+[Packet](implementation/a01-failure-replay.md) ·
+[Baseline and replay evidence](review/a01-failure-replay-2026-10-29/README.md).
+F00 is reconciled. A01.1 is locally verified at test/fixture revision
+`922dbcedf7151e9a6a6a351804a4d142b347b4cf`: ten synthetic cases, 1,101 script
++ 55 typed / 428 town tests, typecheck/lint, diagnostics and credential-free
+build pass. Lint retains one inherited warning. No new PR or CI was created.
+[Fresh handoff](handoffs/a01-failure-replay-sol-2026-10-29.md). A01.2 remains unassigned: final invalid completion at decision 16
+leaves a paused meeting that cannot resume and needs manual closure.
+Zero live inference calls/spend; Grok remains paused. No merge/deployment.
+
+Current remote #61 is open/ready at `cd44d16` with successful Verify
+[40506547367](https://github.com/arwyn6969/the-game/actions/runs/40506547367).
+Draft #62 remains stacked on #61 at `44745f4`, with successful Verify
+[40865099031](https://github.com/arwyn6969/the-game/actions/runs/40865099031).
+#59 remains a separate unmerged provider-choice draft; this replay uses main
+contracts. The public assets freshly match published runtime `01470e291065`;
+Worker `c4b89bfc-d9e4-48d1-ba1d-930280eaa8f5` is inherited from the
+27 October publication receipt, not freshly checked in the control plane.
+The later social receipt reports hosted acceptance failure, five retained
+spoken turns and manual exhausted closure. Older sections below retain their
+historical scope and do not supersede this current source/deployment comparison.
+
 ## Hosted meeting pass recovery — active, 27 October 2026
 
 Owner: this social assessment chat, checkout `social-experience-fix/`, branch
