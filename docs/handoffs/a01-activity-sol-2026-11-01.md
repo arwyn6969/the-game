@@ -15,11 +15,18 @@ A snapshot-only action preflight rejects missing/stale/unsafe evidence without
 reading credentials, contacting services or granting calls/authority.
 
 Local checks: 1,124 script +55 typed tests, 441 overlapping town tests,
-42 authority/adapter tests, sixteen SQL replay cases, the integrated 42-journey
-meeting matrix plus final strengthened two-activity rerun, built and mocked-AI
+42 authority/adapter tests, sixteen SQL replay cases, the final 42-journey
+meeting entry point including all strengthened assertions, built and mocked-AI
 browser gates, four interfaces, accessibility, diagnostics and both builds.
 One inherited lint warning and 19 incomplete accessibility results remain.
 [Evidence and exact scope](../review/a01-activity-2026-11-01/README.md).
+
+The source branch remains local. Automatic approval review rejected its push to
+`arwyn6969/the-game` because explicit destination-specific publication approval
+was not established. No remote branch, new PR or CI was created. Proposed PR
+text is [saved locally](../review/a01-activity-2026-11-01/draft-pr.txt); approve
+the branch push and draft creation before retrying. No alternative publication
+path was attempted.
 
 No merge/deployment, live inference, spend or production migration. Publication
 and provider/human acceptance are still separate. A fresh public asset read

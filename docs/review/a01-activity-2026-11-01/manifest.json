@@ -29,6 +29,8 @@
     "artifacts/a01-qualify-2026-11-01/complete-browser-final.log": "92af7efc7547d918bc361fe6aa11fe731f66be025b3df15f03ee155db4da1c39",
     "artifacts/a01-qualify-2026-11-01/complete-browser.log": "617f22adc3fc528084f53ee41cd03aa6c49b504ea01a8e9b745964e475684ec2",
     "artifacts/a01-qualify-2026-11-01/diagnostics.log": "e925099d1e633bbcf370dc200e8336d67be9f3c2bdafa8d1276087aee1c861e1",
+    "artifacts/a01-qualify-2026-11-01/final-meeting-browser/browser-results.json": "32a5998318b858fb3cb313833e58e3b4789fc8e2755a6eea122f2687926ab8c6",
+    "artifacts/a01-qualify-2026-11-01/final-meeting-browser.log": "32a5998318b858fb3cb313833e58e3b4789fc8e2755a6eea122f2687926ab8c6",
     "artifacts/a01-qualify-2026-11-01/final-tooling-lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "artifacts/a01-qualify-2026-11-01/format-final.log": "4832aebf95979663dfd17742ced0d15632339d032538490dac9f0ecfb95d880a",
     "artifacts/a01-qualify-2026-11-01/lint-final.log": "339027dadfd1550bc336ec4f8446f94bb2bfb723ac6135707413b7772373904e",

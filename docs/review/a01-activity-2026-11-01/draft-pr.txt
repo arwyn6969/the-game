@@ -1,0 +1,23 @@
+Repository: arwyn6969/the-game
+Head: codex/a01-qualify
+Base: codex/town-work-polish-20261029
+Draft: true
+Title: Close exhausted meeting failures and qualify complete automatic activity
+
+A failed final meeting decision left an exhausted paused meeting that could not resume. The engine now closes that state with a factual saved receipt, preserves unknown usage and rejects late results; valid final speech still commits once before normal closure. The interface retains that receipt through reload and shows validation feedback for a subsequent proposal.
+
+The qualification adds one fresh automatic activity through ordinary controls: one Start, fifteen legal synthetic decisions, six spoken turns and three speakers, followed by natural closure and an actual reload/save knowledge audit for all eight actors. A snapshot-only action preflight checks exact-candidate, auth, free-profile and independent allowance evidence without accessing services, reserving calls or granting permission.
+
+Explicit stack: #61 -> #62 -> this PR. This draft targets #62's branch. Integrate #61 and #62 first, refresh this candidate if main changes, then require current-head Verify before integration. The original A01.1/A01.2 evidence and source ancestry are preserved. No economic rules, provider/auth configuration or save schema changes.
+
+Local validation on Node 24.22.1:
+- 1,124 script tests +55 typed; 441 overlapping town tests; 42 isolated authority/adapter tests.
+- Sixteen retained-state SQL cases; integrated 42-journey meeting suite with final natural-stop and saved-reload assertions.
+- Built-game and mocked-AI browser gates; four interfaces (27 desktop/29 phone checks); accessibility (54 surfaces/27 essential checks, zero violations, 19 incomplete results retained).
+- Typecheck/lint (one inherited warning), diagnostics and credential-free Node/Cloudflare builds.
+- Independent review of integration, natural stopping, actual saved reload knowledge and fail-closed preflight.
+
+Evidence: docs/review/a01-activity-2026-11-01/README.md
+Hosted packet: docs/review/a01-activity-2026-11-01/hosted-trial.md
+
+All inference is synthetic and spend is zero. No merge, deployment, production migration or real-provider/human acceptance is claimed. Current live allowance remains unverified; the preflight defaults to not-ready. Public asset GET returned 403, so the latest successful public hash evidence remains 29 October. Grok stays paused; Astra's economy design is separate.

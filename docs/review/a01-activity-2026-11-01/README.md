@@ -42,11 +42,10 @@ has zero background concurrency.
   overlapping town tests pass. The isolated authority/adapter suite passes
   42 cases. Typecheck, lint, diagnostics, credential-free Node and Cloudflare
   builds pass. One inherited lint warning remains; no production migration runs.
-- The integrated 42-journey meeting run passes. Independent review then
-  strengthened the new complete-activity assertions; the final focused desktop
-  and phone rerun also passes, including natural global stop and actual saved
-  reload knowledge. The unchanged terminal/race matrix remains covered. Final
-  exact-head CI must run the standard full entry point with these assertions.
+- The final standard 42-journey meeting entry point passes with the reviewed
+  natural global-stop and actual saved-reload knowledge assertions included.
+  The unchanged terminal/race matrix remains covered. A final focused desktop/
+  phone activity run also passes. Remote exact-head CI remains a separate gate.
 - The sixteen SQL failure cases pass on the integrated runtime with retained
   prior rows/charges, balances, identities, audiences and replay equality.
 - Built desktop/phone journeys pass movement, conversation, pause, export/import,
@@ -73,6 +72,12 @@ The intended draft is stacked on #62's branch, with merge order #61 → #62 →
 A01 qualification. Qualify the final draft head's Verify result before any
 integration. This record contains local results; use the corresponding PR for
 current CI, and preserve the original heads if main advances.
+
+Automatic approval review rejected the branch push: explicit authorization to
+publish this local code/documentation to `arwyn6969/the-game` was not established.
+Nothing was pushed, and no new remote branch, PR or CI exists. The code remains
+committed and [the draft text is prepared](draft-pr.txt). Explicit source-upload
+approval is required before retrying; no indirect publication route was used.
 
 The current public baseline could not be freshly hashed: the read-only asset
 attempt returned HTTP 403. [Recorded limitation](public-baseline.json). The last

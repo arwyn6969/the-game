@@ -23,14 +23,19 @@ six-turn activity with one Start, fifteen decisions and three actual speakers.
 The natural controller stop and all-eight knowledge survive real reload/save.
 The action-only preflight fails closed and grants no capacity or authority.
 1,124 script +55 typed /441 overlapping town tests, 42 authority tests, sixteen
-SQL cases, 42 meeting journeys plus final strengthened desktop/phone activity
-rerun, built/mocked-AI browsers, four interfaces, accessibility and both builds
+SQL cases, the final 42-journey meeting entry point with reviewed stop/reload
+assertions, built/mocked-AI browsers, four interfaces, accessibility and both builds
 pass. One inherited lint warning and 19 incomplete accessibility results remain.
 [Review](review/a01-activity-2026-11-01/README.md) ·
 [Handoff](handoffs/a01-activity-sol-2026-11-01.md) ·
 [Hosted packet](review/a01-activity-2026-11-01/hosted-trial.md).
 Source delivery is intended as a draft stacked on #62, requiring its exact-head
-CI. Main is unchanged. A fresh asset GET returned 403; live auth, provider pricing
+CI. Automatic approval review rejected the branch push because destination-specific
+publication authorization was not established. Nothing was pushed; there is no
+new remote branch, PR or CI. The local source and proposed PR text are reviewable
+at `review/a01-activity-2026-11-01/draft-pr.txt`; explicit approval to push
+`codex/a01-qualify` to `arwyn6969/the-game` and create the draft is the next source
+gate. Main is unchanged. A fresh asset GET returned 403; live auth, provider pricing
 and current counters remain unverified. Next is reviewed source integration and
 the explicitly authorized, bounded hosted trial after fresh free headroom.
 

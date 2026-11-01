@@ -259,7 +259,10 @@
       "unpaused dispatch opportunity and global toolbar stop state",
       "actual post-reload Web Locks save barrier and all-eight knowledge re-audit",
       "saved-proposal barrier and legitimate fresh-town transaction absence"
-    ]
+    ],
+    "finalFullEntryPointVerified": true,
+    "audits": 46,
+    "violations": 0
   },
   "interfaces": {
     "checksByViewport": {
@@ -283,13 +286,17 @@
     "inheritedWarnings": 1
   },
   "sourceDelivery": {
-    "intendedBase": "codex/town-work-polish-20261029",
-    "intendedOrder": [
+    "status": "publication-approval-required",
+    "base": "codex/town-work-polish-20261029",
+    "order": [
       61,
       62,
       "A01 qualification"
     ],
-    "currentHeadCI": "required on the final draft head; use the PR check receipt"
+    "remoteBranchCreated": false,
+    "PRCreated": false,
+    "CIStarted": false,
+    "automaticReviewRejection": "Destination-specific authorization to publish local code/documentation to arwyn6969/the-game was not established; no push occurred."
   },
   "hosted": {
     "status": "not-run",
