@@ -1,0 +1,73 @@
+{
+  "checkedDate": "2026-11-01",
+  "sourceBase": "a26714e03192a17acaa963d7d2681e74a1ac425b",
+  "verification": "git fetch origin main succeeded; get_pr_info and fetch_commit_workflow_runs connected GitHub read-only calls",
+  "prs": [
+    {
+      "number": 61,
+      "url": "https://github.com/arwyn6969/the-game/pull/61",
+      "state": "open",
+      "merged": false,
+      "draft": false,
+      "base": "main",
+      "base_sha": "a26714e03192a17acaa963d7d2681e74a1ac425b",
+      "head": "codex/player-controls-feedback-20261027",
+      "head_sha": "cd44d165002ddd75b6c92e5ce0efb9ac4fecd568"
+    },
+    {
+      "number": 62,
+      "url": "https://github.com/arwyn6969/the-game/pull/62",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "codex/player-controls-feedback-20261027",
+      "base_sha": "cd44d165002ddd75b6c92e5ce0efb9ac4fecd568",
+      "head": "codex/town-work-polish-20261029",
+      "head_sha": "44745f42719b66230e6ee99d248c8bbe79c2359c"
+    },
+    {
+      "number": 59,
+      "url": "https://github.com/arwyn6969/the-game/pull/59",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "main",
+      "base_sha": "a40867e5ca977453a5f42df2aff2cb9fbf022f82",
+      "head": "codex/player-model-choice-20261026",
+      "head_sha": "022c6b2880aea7e8cdc263383851d1745a743080"
+    }
+  ],
+  "checks": [
+    {
+      "pr": 61,
+      "workflow_runs": [
+        {
+          "id": 40506547367,
+          "name": "Verify",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 187,
+          "jobs_url": "https://api.github.com/repos/arwyn6969/the-game/actions/runs/40506547367/jobs",
+          "logs_url": "https://api.github.com/repos/arwyn6969/the-game/actions/runs/40506547367/logs",
+          "workflow_id": 381387211
+        }
+      ]
+    },
+    {
+      "pr": 62,
+      "workflow_runs": [
+        {
+          "id": 40865099031,
+          "name": "Verify",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 189,
+          "jobs_url": "https://api.github.com/repos/arwyn6969/the-game/actions/runs/40865099031/jobs",
+          "logs_url": "https://api.github.com/repos/arwyn6969/the-game/actions/runs/40865099031/logs",
+          "workflow_id": 381387211
+        }
+      ]
+    }
+  ],
+  "scope": "No deployment verification or live provider calls; historical published runtime not requalified"
+}
