@@ -8,6 +8,73 @@ tea-table task, one-order/day limit and item-first next steps. The original
 remain evidence for their stated scope. No gameplay, wallet, save schema or
 shared project record was changed by this packet.
 
+**Human-worker clarification:** the order/cup contract below is concrete, but
+the human control flow and its relationship to Kevin's existing shift were not
+fully specified. Read the next section before treating this as a complete
+player-facing implementation brief. The per-order financial experiment does
+not establish a sales-funded version of the existing shift.
+
+## Human work: automatic routine, explicit commitment
+
+At the inspected source revision, Kevin's funded player shift reserves **5 coins
+for 180 eligible game minutes**, normally 16:00–19:00. The character must be in
+the café, with the active agreement and corresponding café plan. Attendance
+advances automatically; there is no coffee-production or repeated-click
+requirement. Leaving or suspending stops new eligible minutes, preserves earlier
+minutes and the wage reservation, and permits later resumption. The full wage
+is earned at completion; no fractional wage is implied. See
+`payroll-runtime.ts:158`, `funded-work.ts:1042` and `effects.ts:1020`.
+
+For the proposed coffee service, recommend **one explicit work command followed
+by automatic routine actions**, rather than requiring human input for every
+brew, movement and placement. This is a proposed addition; the current game
+does not implement automatic player coffee work.
+
+1. The player reviews the duration/scope, pay and stopping terms, then chooses
+   to work. Acceptance grants control only for the disclosed café routine.
+2. The character approaches the actual station, brews and places its named cup
+   using the same validated work and movement rules as another worker. No
+   repeated click, held key, timing test or model call is required per step.
+3. A visible work status shows the current order, progress, pay basis and any
+   waiting reason. The person can observe the café and use compatible panels or
+   nearby conversation; these do not prove extra work or make their character
+   simultaneously available elsewhere. Any existing game pause still pauses work.
+4. **Pause work** or manual movement immediately interrupts this routine and
+   returns control. Preserve the incomplete order, minutes and protected funds
+   under its agreement; do not silently abandon it or accept another job.
+   **Finish this order, then stop** prevents the next assignment. Emergency
+   stopping never requires finishing first. Closing the app preserves state;
+   no offline progress is promised by this local design.
+5. For the current per-order proposal, stop after that accepted order by default.
+   Repeated automatic service needs a separately disclosed bounded commitment
+   (for example, a funded shift or a chosen order count). Its limit, accepted
+   terms, cancellation and reload behavior must be saved; a routine-control
+   permission alone cannot accept unlimited new financial obligations.
+
+There is still a **pay-design decision before integration**. Existing Kevin
+shifts promise 5 coins for eligible attendance; the new model promises 2 for a
+completed order, from a 2-coin sale. With zero margin that model does not fund
+the old shift pool. Automatic controls can support either arrangement, but do
+not make them economically interchangeable. Do not replace an accepted shift,
+require extra serving to earn its existing wage, or pay both contracts for the
+same labor interval.
+
+Next compare a coherent **funded-shift service** against the tested per-order
+service. For the shift candidate, reserve its full wage before acceptance,
+honor it on quiet days, and explicitly model when sale proceeds become available
+for future payroll versus outstanding coffee/refund obligations. Define order
+assignment within the shift and shift-end behavior for an unfinished cup. Three
+2-coin sales gross 6, but their timing and liabilities determine whether a new
+5-coin shift can actually be offered. That arithmetic alone is not qualification.
+Retain the current per-order evidence as a comparison, not proof of this new case.
+
+Additional acceptance gates: one Start completes routine service without further
+input; manual interruption never fights the player's movement; game pause and
+reload preserve progress; stopping prevents another acceptance; no conflicting
+activity counts as work; no cup receives both shift and piecework pay. Test a
+quiet funded shift, a busy one and a shift ending during preparation before
+calling the whole human-worker experience implementation-ready.
+
 ## Product decision
 
 Start with **named counter pickup**: a customer buys coffee; the sale protects

@@ -2,6 +2,19 @@
 
 ## Current delivery: coffee serving and receiving
 
+**Latest clarification — human worker flow:** Arwyn asked whether a person must
+constantly serve during Kevin's shift. Current shifts already credit attendance
+automatically (5 coins / 180 eligible game minutes); they have no cup-serving
+requirement. The new per-order design had not fully specified human controls or
+its integration with that shift. The specification now proposes explicit work
+acceptance followed by automatic walking/brewing/placement, immediate manual
+interruption and bounded continuation. This is not implemented. **Resolve and
+test funded-shift versus per-order pay before integrating them**; the existing
+2-price/2-fee model leaves no revenue for the old shift pool. Preserve accepted
+shift terms and prohibit paying both agreements for the same work. This gate
+supersedes the earlier suggestion below that the whole human-worker slice was
+ready to implement from the order contract alone.
+
 Arwyn asked us to keep building the actual serving/receiving design. The current
 implementable proposal is now [A02 coffee service](../implementation/a02-coffee-service-astra-2026-11-01.md).
 It supersedes the original tea-table task and the earlier next-session targets
