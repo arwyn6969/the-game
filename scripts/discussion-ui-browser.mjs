@@ -3,6 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import axe from "axe-core";
 import { chromium } from "playwright";
+import { runTerminalMeetingJourneys } from "./discussion-terminal-browser.mjs";
 import {
   advanceDiscussionWindow,
   assertOfferedDecision,
@@ -517,6 +518,19 @@ try {
         meeting,
         availableDecision,
         respond,
+        draftField,
+        auditMeeting,
+        capture,
+      },
+      viewport,
+    );
+    await runTerminalMeetingJourneys(
+      {
+        createJourney,
+        openMeeting,
+        savedTown,
+        meeting,
+        availableDecision,
         draftField,
         auditMeeting,
         capture,

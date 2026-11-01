@@ -1,0 +1,31 @@
+{
+  "checkedAt": "2026-10-29T16:34:24.343830+00:00",
+  "method": "Read-only public GET and SHA-256 comparison with preserved 27 October publication receipt",
+  "source": "01470e2910657cbf9650adb0a2291ab5da89b056",
+  "assets": [
+    {
+      "path": "/thegame/assets/client-BrSeqjXl.js",
+      "sha256": "fa7b603dfdb9987c0d89b0e8460897485417cf62e360e2da2b4b98f4bfb17663",
+      "matches": true
+    },
+    {
+      "path": "/thegame/assets/index-BhLXmtgM.js",
+      "sha256": "d53642bdf9806ee666417aa3c45be4c7d45d25301ce8649a715425b12b27db90",
+      "matches": true
+    },
+    {
+      "path": "/thegame/assets/routes-CI-7KEet.js",
+      "sha256": "6e4b2605f42681bb1d70638b3040e636dc2c7ddd5a53c6e997bab66b2facab47",
+      "matches": true
+    },
+    {
+      "path": "/thegame/assets/styles-1d7yAuM6.css",
+      "sha256": "d59f16298ad2f04f485374656474a7e35ea19da24638689624ac49674898ba7c",
+      "matches": true
+    }
+  ],
+  "allFourMatch": true,
+  "workerVersion": "c4b89bfc-d9e4-48d1-ba1d-930280eaa8f5",
+  "workerVersionEvidence": "Inherited from 27 October release.json; no fresh control-plane check",
+  "liveInferenceCalls": 0
+}

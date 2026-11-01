@@ -585,6 +585,10 @@ export function TownApp() {
   const [discussionEnabled, setDiscussionEnabled] = useState(savedMeetingPreference);
   const [discussionDraft, setDiscussionDraft] = useState("");
   const [discussionNote, setDiscussionNote] = useState("");
+  const [discussionProposalError, setDiscussionProposalError] = useState<{
+    meetingId: string;
+    message: string;
+  } | null>(null);
   const discussionStartedRef = useRef<number | null>(null);
   const discussionRunRef = useRef<DiscussionRunState | null>(null);
   const [discussionAutoRunning, setDiscussionAutoRunning] = useState(false);
@@ -693,6 +697,7 @@ export function TownApp() {
     setDiscussionEnabled(savedMeetingPreference());
     setDiscussionDraft("");
     setDiscussionNote("");
+    setDiscussionProposalError(null);
     discussionStartedRef.current = null;
     setReplyFailure(null);
     setLastMind(null);
@@ -884,6 +889,12 @@ export function TownApp() {
       return;
     const result = createLibraryDiscussion(live, topic, facilitator);
     setDiscussionNote(result.message);
+    const previousMeeting = discussionView(live).meeting;
+    setDiscussionProposalError(
+      !result.ok && previousMeeting?.status === "closed"
+        ? { meetingId: previousMeeting.id, message: result.message }
+        : null,
+    );
     if (result.ok) persistTown(live);
     setTick((n) => n + 1);
   }
@@ -2825,8 +2836,17 @@ export function TownApp() {
     onStop: stopManuscript,
     onCommand: changeManuscript,
   };
+  const meetingView = discussionView(town);
+  // The saved terminal receipt stays authoritative after an error or reload;
+  // a transient request note must not invite resuming an exhausted meeting.
+  const meetingNote =
+    meetingView.meeting?.status === "closed"
+      ? discussionProposalError?.meetingId === meetingView.meeting.id
+        ? discussionProposalError.message
+        : meetingView.meeting.reason
+      : discussionNote;
   const meetingControls: DiscussionControls = {
-    view: discussionView(town),
+    view: meetingView,
     enabled: discussionEnabled,
     available: actionsAvailable && online && !localOnly && checked,
     busy: Boolean(thinking) || transportBusy || importing || discussionStarting,
@@ -2835,8 +2855,8 @@ export function TownApp() {
     replaying: replay !== null,
     note:
       transportBusy && !thinking
-        ? `${discussionNote} The previous AI request is still settling. No second request will start.`
-        : discussionNote,
+        ? `${meetingNote} The previous AI request is still settling. No second request will start.`
+        : meetingNote,
     draft: discussionDraft,
     onDraft: setDiscussionDraft,
     onEnable: (value) => {

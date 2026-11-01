@@ -1,0 +1,87 @@
+[
+  {
+    "id": "unavailable-action",
+    "content": "{\"task\":\"discussion\",\"decision\":{\"kind\":\"speak\",\"text\":\"Synthetic rejected line.\"}}",
+    "status": "paused",
+    "outcome": "ok",
+    "committed": false,
+    "required": "Reject a syntactically valid action absent from this actor's current offers; retain the actual history."
+  },
+  {
+    "id": "malformed-completion",
+    "content": "{\"task\":",
+    "status": "paused",
+    "outcome": "invalid",
+    "committed": false,
+    "required": "Pause without fabricated speech or an automatic retry."
+  },
+  {
+    "id": "empty-completion",
+    "content": "",
+    "status": "paused",
+    "outcome": "invalid",
+    "committed": false,
+    "required": "Pause without fabricated speech or an automatic retry."
+  },
+  {
+    "id": "repeated-pass",
+    "speaker": true,
+    "content": "{\"task\":\"discussion\",\"decision\":{\"kind\":\"pass\"}}",
+    "status": "active",
+    "outcome": "ok",
+    "committed": true,
+    "required": "One pass parks the speaker; unchanged polling, duplicate delivery and reload cannot spend another attempt."
+  },
+  {
+    "id": "provider-timeout",
+    "timeout": true,
+    "status": "paused",
+    "outcome": "timeout",
+    "committed": false,
+    "required": "Retain the transmitted attempt and pause without a second call."
+  },
+  {
+    "id": "budget-exhausted",
+    "budgetRows": 47,
+    "content": "{\"task\":\"discussion\",\"decision\":{\"kind\":\"listen\"}}",
+    "status": "paused",
+    "committed": false,
+    "required": "Do not dispatch or alter prior charges when the shared action allowance is exhausted."
+  },
+  {
+    "id": "provider-exhausted",
+    "poolRows": 48,
+    "content": "{\"task\":\"discussion\",\"decision\":{\"kind\":\"listen\"}}",
+    "status": "paused",
+    "committed": false,
+    "required": "Do not transmit past the provider cap; retain conservative budget accounting even with zero provider attempts."
+  },
+  {
+    "id": "cancel-late-completion",
+    "cancel": true,
+    "content": "{\"task\":\"discussion\",\"decision\":{\"kind\":\"listen\"}}",
+    "status": "paused",
+    "outcome": "ok",
+    "committed": false,
+    "required": "Cancellation revokes commit authority; a late valid response settles its SQL charge without restarting or changing the town."
+  },
+  {
+    "id": "final-empty-completion",
+    "priorDecisions": 15,
+    "content": "",
+    "status": "paused",
+    "outcome": "invalid",
+    "committed": false,
+    "gap": "Final failure leaves an exhausted paused meeting. Resume is denied; the player must close it manually. A01.2 must define coherent terminal failure.",
+    "required": "Preserve all sixteen decisions and actual history, expose exhaustion, and support honest terminal closure."
+  },
+  {
+    "id": "final-valid-control",
+    "priorDecisions": 15,
+    "content": "{\"task\":\"discussion\",\"decision\":{\"kind\":\"listen\"}}",
+    "status": "closed",
+    "outcome": "ok",
+    "committed": true,
+    "required": "The sixteenth valid result commits before the meeting closes; no seventeenth dispatch is possible."
+  }
+]
