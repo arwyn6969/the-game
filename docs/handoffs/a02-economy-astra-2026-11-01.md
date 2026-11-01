@@ -1,5 +1,14 @@
 # A02 economy handoff — Astra design lane, 1 November 2026
 
+**Latest product direction — read before the original verdict below:** Arwyn's
+central idea is an indirect payment economy: customers buy actual coffee items;
+sales fund the café's staff; more funded demand can support additional staff and
+service capacity. Preparing and serving coffee is the visible, verifiable work.
+Untokenised inventory and optional stamps support that loop. The original
+one-order prototype below proves a smaller financial unit; it does not yet
+specify the growing café. The final section of this handoff supersedes the
+previous item-first next-session priorities.
+
 **Verdict:** current accounting is conserved, but current demand does not fund
 repeatable work. Recommend one optional **2-coin preordered café preparation**
 with its entire 2-coin fee reserved for the worker. Keep existing 5-coin shifts,
@@ -494,3 +503,103 @@ export or a separate souvenir, explicitly distinguish those choices, and prevent
 double use/claim. Preserve all existing identities, wages and saves. Prepare
 the bounded specification and Sol handoff; do not add donation checkout,
 runtime credits, production changes or live minting in this design session.”
+
+## Latest clarification: coffee sales fund a working, growing café
+
+Arwyn clarified that the central idea is **indirect payment through purchasing
+coffee**. A customer pays for and receives a coffee, may keep it or drink it
+(consuming it), and the sale funds staff who prepare and serve more coffee.
+Additional demand and funded work can support more staff and greater service
+capacity. The visible queue, preparation and handoff make an interesting,
+playful analogy to proof of work. This is the product loop to design next.
+
+The earlier funding interpretation was too specifically about donating money
+or buying agent runtime. The subsequent correction overemphasized item custody
+and tokenisation. Both missed the intended centre: **purchasing an ordinary
+product is how customers pay for the workers and sustain the business**.
+“Not direct funding” does not mean removing payment or business income; it
+means buying coffee rather than directly topping up an agent's runtime account.
+
+The intended sequence is:
+
+1. Customer chooses and pays for a coffee under clear terms.
+2. That order provides revenue from which the café protects its promised wages.
+3. A consenting worker prepares and serves the named order, producing evidence
+   of actual work. Preparation and delivery retain their distinct conditions;
+   agree the paid unit without retroactively making accepted preparation unpaid.
+4. Customer receives an owned coffee item. Keeping it is allowed; drinking it
+   consumes that item once. The already-earned worker payment is unaffected by
+   whether the customer drinks it.
+5. More paid orders permit more fully funded work offers and, when useful,
+   additional simultaneous staff. More staff increase bounded service capacity,
+   allowing the café to fulfil more of the existing demand.
+6. Workers can spend their earnings on further goods/services, supporting
+   circulation. Neither customer demand nor worker spending is compulsory.
+
+The proof is the engine-validated order, preparation and handoff with retained
+payment receipts. It is not merely a stamp for standing in a queue. The visual
+and social comedy of agents running a café is part of the product hypothesis,
+not incidental decoration around the ledger. No blockchain consensus/mining
+mechanism is implied by the analogy.
+
+### What carries over and what must change
+
+- Preserve the existing evidence, conserved accounts, funded acceptance,
+  voluntary participation, earned wages, old debts and all eight identities.
+- The 2-coin price/fee remains a prototype parameter awaiting adoption. It is
+  not a requirement that forces the growing café to use those exact terms.
+- One outstanding order and one preparation/day were isolation limits for the
+  original analysis. They must not become permanent product limits that prevent
+  the described loop. Start small, but explicitly model demand, queued orders,
+  protected wages, worker availability and throughput before choosing limits.
+- Zero retained margin can support more per-order workers if every new order
+  fully funds its own labor. It does not cover extra ingredient, equipment,
+  hiring or idle-shift costs if those are introduced. Compare that simple
+  arrangement with a disclosed retained amount only where a real modeled cost
+  needs funding; do not assume a profit pool or new subsidy is necessary.
+- A staffing offer is conditional on money, consent, time and capacity. Creating
+  demand or funds by automatically buying coffee on behalf of absent customers
+  is not the intended loop. Reduced demand can leave fewer funded work offers.
+- Payment currency is still a separate decision: the current A02 evidence is
+  town-coin accounting; later ECX purchases would need their own explicit
+  settlement/payroll relationship. The clarification does not select a payment
+  rail or authorize real payments. It also does not limit the future concept to
+  town coins merely because the coffee is untokenised.
+- Inventory, optional collectible export and the QR campaign help present/use
+  the product. NFT issuance is not the source of its worker's wages and is not
+  required for an ordinary coffee sale. Preserve the existing claim research,
+  but do not let it displace the café-economy design again.
+
+### Replacement next-session target
+
+Amend the A02 specification around **coffee sales → funded staff → verifiable
+service → owned/consumed coffee → further demand and circulation**. Produce one
+small staffing/capacity model and implementation packet, using fake decisions
+and existing identities rather than adding a general job market.
+
+Compare one worker with two eligible workers under the same explicit customer
+demand. Show when a second funded work offer can open, how many orders each
+worker can fulfil, what happens to wait times, and all customer/café/worker
+balances and reservations. Include insufficient demand, a declined job,
+customer cancellation, interrupted preparation, duplicate handoff, retained
+versus consumed coffee and save/reload. Do not claim that adding workers itself
+creates paying customers or an infinite supply of money.
+
+Then define the smallest visible café journey that demonstrates those results:
+priced order, honest queue/availability, funded staff offer, preparation,
+handoff, inventory and consumption. Preserve the library and current 5-coin
+agreements. Exact hiring/retained-revenue rules, prices, capacity and time units
+are decisions to resolve in that bounded model, not production changes made by
+this handoff. Human testing should ask whether people understand that buying
+coffee pays staff and whether the visible activity is enjoyable.
+
+**Current resume prompt:** “Read the latest clarification in this handoff.
+Arwyn's core concept is indirect payment through coffee purchases: sales fund
+staff, staff prepare and serve owned coffee items, and additional funded demand
+can support more staff/capacity. Make this the centre of A02 + Proof of Coffee.
+Revise the fixed one-order prototype into a bounded, demand-funded café model;
+compare one and two workers, show the accounts, queue, work evidence and item
+consumption, and produce one implementation-ready amendment for Sol. Preserve
+existing wages, debts, identities and saves. Keep optional tokenisation and
+external payment integration separate. This session is design/synthetic work,
+not production gameplay, public funding, minting or deployment.”
