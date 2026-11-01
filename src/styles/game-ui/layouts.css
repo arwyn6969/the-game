@@ -105,6 +105,9 @@
 .game-appearance[data-ui-skin="original"] .transport {
   order: 2;
 }
+.game-appearance[data-ui-skin="original"] .town > :is(.hud, .status-strip, .world-controls, .foot) {
+  flex-shrink: 0;
+}
 
 .game-appearance[data-ui-skin]:not([data-ui-skin="original"]) {
   --ui-chrome: #302039;
@@ -126,9 +129,9 @@
 
   .town {
     display: grid;
-    grid-template-areas: "hud" "status" "residents" "updates" "world" "tools" "footer";
+    grid-template-areas: "hud" "status" "residents" "updates" "controls" "world" "tools" "footer";
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto minmax(18rem, 1fr) auto auto;
+    grid-template-rows: auto auto auto auto auto minmax(18rem, 1fr) auto auto;
     gap: 0;
     background: var(--ui-chrome);
     overflow-x: hidden;
@@ -277,6 +280,17 @@
     flex: none;
     margin-left: 0;
     font-size: 0.75rem;
+  }
+  .world-controls {
+    grid-area: controls;
+    min-width: 0;
+    margin: 0.25rem 0.75rem 0.1rem;
+  }
+  .world-controls p {
+    color: var(--ui-chrome-muted);
+  }
+  .world-controls .reading-invitation p {
+    color: var(--ui-ink);
   }
   .world-frame {
     grid-area: world;
@@ -463,9 +477,9 @@
   --ui-shadow: #22291f;
 
   .town {
-    grid-template-areas: "hud hud" "status status" "updates updates" "residents world" "tools tools" "footer footer";
+    grid-template-areas: "hud hud" "status status" "updates updates" "residents controls" "residents world" "tools tools" "footer footer";
     grid-template-columns: 10.5rem minmax(0, 1fr);
-    grid-template-rows: auto auto auto minmax(18rem, 1fr) auto auto;
+    grid-template-rows: auto auto auto auto minmax(18rem, 1fr) auto auto;
   }
   .social-toolbar {
     flex-direction: column;
@@ -540,9 +554,9 @@
   --ui-shadow: #0e202b;
 
   .town {
-    grid-template-areas: "hud hud" "status status" "residents residents" "updates updates" "tools world" "footer footer";
+    grid-template-areas: "hud hud" "status status" "residents residents" "updates updates" "tools controls" "tools world" "footer footer";
     grid-template-columns: 9rem minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto minmax(18rem, 1fr) auto;
+    grid-template-rows: auto auto auto auto auto minmax(18rem, 1fr) auto;
   }
   .town-tools {
     display: flex;
