@@ -1,13 +1,84 @@
 # A02 economy handoff — Astra design lane, 1 November 2026
 
-**Latest product direction — read before the original verdict below:** Arwyn's
-central idea is an indirect payment economy: customers buy actual coffee items;
-sales fund the café's staff; more funded demand can support additional staff and
-service capacity. Preparing and serving coffee is the visible, verifiable work.
-Untokenised inventory and optional stamps support that loop. The original
-one-order prototype below proves a smaller financial unit; it does not yet
-specify the growing café. The final section of this handoff supersedes the
-previous item-first next-session priorities.
+## Current delivery: coffee serving and receiving
+
+Arwyn asked us to keep building the actual serving/receiving design. The current
+implementable proposal is now [A02 coffee service](../implementation/a02-coffee-service-astra-2026-11-01.md).
+It supersedes the original tea-table task and the earlier next-session targets
+below. Its centre is **coffee purchases → funded staff → prepared cup → explicit
+collection → optional drinking**. No production implementation was made.
+
+Recommend **named counter pickup** first. Ownership starts when one ready cup
+is created for its buyer; the café holds it until the buyer collects. The
+2-coin prototype fee pays for actual brewing and placement, independently of
+collection or drinking. More paid demand can support a second consenting worker,
+but staff, brewer and pickup space each constrain capacity. This is per-order
+work, separate from existing 5-coin shifts; no extra cash or daily allowance.
+
+Research compares direct handoff, named pickup and table delivery. Existing
+coffee artwork is not a service implementation: manuscript custody, bread
+consumption and one-event tea commerce cannot simply be renamed as coffee.
+The new contract specifies exact actions, preserved liabilities, four-cup
+inventory entitlement, two pickup slots, six unresolved tickets, voluntary
+participation, no self-fulfilment, interruptions, saves/forks and acceptance.
+Uncollected cups persist; they can fill the shelf. A full recipient purse leaves
+a funded wage or refund pending, rather than destroying earned money.
+
+Evidence, rerun with Node 24.22.1:
+
+- [Staffing model](../implementation/a02-coffee-service-2026-11-01-evidence/service-model.md):
+  **18 scenarios, 5,820 invariant audits, 2,907 command attempts pass**. Same six
+  purchases, same brewer: one worker finishes at minute 180; two at 130.
+  Average order-to-ready wait 91.7 → 66.7 game minutes. Both pay exactly 12 from
+  12 of sales and conserve the 90-coin fixture plus legacy holds. When brewing
+  is the entire bottleneck, both finish at 120. Timings and customer choices
+  are illustrative; this is not engine or human-play evidence.
+- [Geometry probe](../implementation/a02-coffee-service-2026-11-01-evidence/geometry-probe.md):
+  **52 assertions pass** against actual source world/path modules. Candidate
+  brew stand `(5,18)`, placement `(6,18)`, customer `(7,19)` are reachable.
+  An occupied destination still requires a caller guard; path output alone
+  does not prove an available service position. No full movement simulation.
+- [Source audit](../implementation/a02-coffee-service-2026-11-01-evidence/source-audit.md)
+  and [interaction research](../implementation/a02-coffee-service-2026-11-01-evidence/interaction-research.md)
+  distinguish reusable primitives, missing contracts and primary-source
+  interaction precedents. Independent review corrected refund overflow,
+  narrow café authority, local-fork identity scope and fixture-only totals.
+- A separate conversational step-through was browser-checked at widths
+  736, 390 and 320, including purchase, acceptance, ready, absence, collection,
+  keeping and drinking. This is an explanatory visual, not THE GAME UI. No
+  JavaScript errors or horizontal overflow; hidden-control regression fixed.
+
+Baseline refreshed 1 November via the GitHub connector: main remains
+`a26714e03192a17acaa963d7d2681e74a1ac425b`; A01 [draft #63](https://github.com/arwyn6969/the-game/pull/63)
+is open at `46bbe821341448b9c68000572c093b9471b4a9af`, stacked on #62. Its
+description reports no economic or save-schema change. Direct `git fetch`
+failed DNS; the connector supplied the fresh main reference. No hosted state
+was qualified. Our branch remains `codex/a02-loop` in `a02-economy`, starting
+this extension at `5c21468df22b83ecf95efa934913e05f5702da41`; final chat names
+the delivery commit. Shared records, A01/runtime, dependencies and other
+checkouts are untouched. No external chat was contacted, inference run,
+transaction made or deployment performed.
+
+**Next session:** use the new coffee specification as the single implementation
+contract. First walk through it with people; then implement the bounded local
+encounter in an authorized owner lane, using its ten game acceptance groups.
+Check current main and Sol's ownership first. Test actual navigation, full-purse
+payables/refunds, raw-save recovery, v1/v2 restore/fork, legacy wages/debts and
+accessible normal controls; none is proven by the independent staffing model.
+Evaluate whether pickup feels personal and whether people want a second coffee
+without a collectible. Direct handoff is the next interaction comparison if
+needed; QR campaigns, gifting, Emblem/ECX settlement and stamps stay separate.
+
+**Current resume prompt:** “Read the Current delivery section and linked A02
+coffee service specification. The serving/receiving research, staffing model
+and static geometry probe are complete. Preserve the seven residents plus
+player, old money/obligations/saves and parallel ownership. Continue with the
+bounded named-pickup encounter and its acceptance cases in an authorized lane;
+do not restart the tea-table design or turn coffee purchases into runtime
+donations. Confirm through human walkthrough whether pickup conveys the social
+service. External payments/tokenisation are not part of this local slice.”
+
+## Historical original delivery and subsequent clarifications
 
 **Verdict:** current accounting is conserved, but current demand does not fund
 repeatable work. Recommend one optional **2-coin preordered café preparation**
@@ -570,7 +641,7 @@ mechanism is implied by the analogy.
   required for an ordinary coffee sale. Preserve the existing claim research,
   but do not let it displace the café-economy design again.
 
-### Replacement next-session target
+### Previous next-session target (fulfilled by the current delivery above)
 
 Amend the A02 specification around **coffee sales → funded staff → verifiable
 service → owned/consumed coffee → further demand and circulation**. Produce one
@@ -593,7 +664,7 @@ are decisions to resolve in that bounded model, not production changes made by
 this handoff. Human testing should ask whether people understand that buying
 coffee pays staff and whether the visible activity is enjoyable.
 
-**Current resume prompt:** “Read the latest clarification in this handoff.
+**Previous resume prompt:** “Read the latest clarification in this handoff.
 Arwyn's core concept is indirect payment through coffee purchases: sales fund
 staff, staff prepare and serve owned coffee items, and additional funded demand
 can support more staff/capacity. Make this the centre of A02 + Proof of Coffee.

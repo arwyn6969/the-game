@@ -6,10 +6,11 @@ Design specification · 1 November 2026 · **Proposed; not adopted or implemente
 original one-order experiment. The intended product is a café where purchases
 fund staff, and more funded demand can support more staff/service capacity.
 Its fixed daily limit is not a permanent product requirement. Read the
-[latest clarification and replacement next-session target](../handoffs/a02-economy-astra-2026-11-01.md#latest-clarification-coffee-sales-fund-a-working-growing-café)
-before implementation. The original evidence remains valid for its stated
-scope; staffing growth and owned coffee items are not yet implemented or
-qualified by it.
+[current coffee-service specification](a02-coffee-service-astra-2026-11-01.md)
+before implementation. That proposal replaces the tea-table interaction with
+named coffee pickup and includes staffing/capacity evidence. The original
+evidence here remains valid for its stated scope; neither document claims
+coffee gameplay has been implemented or human-tested.
 
 Owner: the A02 economy chat. Isolated checkout `a02-economy/`, branch
 `codex/a02-loop`, source base `a26714e03192a17acaa963d7d2681e74a1ac425b`.
