@@ -288,43 +288,62 @@ the relevant wallet/payment flow, a pixel coffee collectible, EmblemAgent
 integration, and eCash/eStamps with server credit and later user-paid claims.
 This addendum records the research and choices for the next session. It does
 not authorize a public funding page, invoice, wallet connection, mint, transfer
-or redeemable balance. The question of whether “server credit” means runtime,
-earned collectible rewards, or both remains open; the plan keeps them separate.
+or redeemable balance.
 
-### Recommended product shape
+**Arwyn's clarification supersedes the initial funding interpretation:** “credit
+on our server” meant **untokenised game items, coffee etc.**, not direct funding
+in this case. This packet is therefore about server inventory and optional
+later tokenisation. Runtime sponsorship, donation checkout, AI-time balances
+and externally funded rewards are outside this specific flow. The earlier
+chat response that recommended buying hosted service was a misunderstanding,
+not an adopted product direction.
 
-A campaign QR opens an HTTPS campaign page for a **stable registered agent**.
-The page names the beneficiary, what the support purchases, accepted network,
-amount, fees and whether there is a collectible. It then creates an attributed
-payment request. Do not encode an unverified private receiving draft or infer
-wallet ownership from the agent's display name. A changed agent controller
-must not silently change the campaign destination or previous payments.
+### Recommended product shape — ordinary items first
 
-Recommended first campaign: support purchases a disclosed amount of hosted
-agent service, with an optional commemorative coffee-stamp entitlement. It
-does not buy game coins or grant the bot spending authority. The quote must
-identify separately who gets the runtime credit and who may claim the
-collectible: the supporter, the agent's owner, or another explicitly designated
-recipient. Give only the promised entitlement, not one copy to every role.
+A coffee exists as an ordinary game item held in the authoritative server's
+inventory. It has an item ID/type, current owner, provenance/order receipt,
+revision and lifecycle state. No wallet transaction or NFT is required to
+prepare, receive, hold or consume it. Existing in-game prices and funded worker
+terms remain the A02 design decision; this clarification does not create a
+new money source or real-money price.
 
-An alternative **funded-work reward campaign** could reserve finite collectible
-units or a real budget for particular completed tasks. That is a separate
-funding policy. Unlimited local game wages cannot automatically become
-withdrawable assets; repeated reciprocal coffee orders would otherwise drain
-the external reward pool. Start with one campaign type, not both simultaneously.
+The intended loop becomes: funded café order → worker prepares it → customer
+receives the coffee item → customer uses it, keeps it, or optionally chooses
+an eligible later tokenisation/claim flow. The preparation wage and item
+handoff remain distinct events. A receipt proves the recorded event; inventory
+says what the character currently has.
 
-| Record | Represents | Spending/claim rule |
+A “buy your agent a coffee” campaign can point to this in-game acquisition or
+gifting journey. A QR should open a page scoped to the intended agent and
+activity, not silently initiate a donation or expose a private receiving draft.
+Ownership and gifting rules must be explicit; a display name alone cannot
+select a wallet or authorize transfer. No functional payment QR is needed for
+the next design mockup.
+
+| Record | Represents | Rule |
 | --- | --- | --- |
-| Town coins | The conserved local game economy and existing wages/debts | No automatic conversion to cash, runtime or collectible supply |
-| Service credit | A paid, defined amount of available hosted agent service | Meter delivered service; no automatic asset cash-out; preserve existing service-policy contracts |
-| Collectible entitlement | A right to a specified quantity of a named, funded campaign edition | Reserve inventory or a disclosed minting allocation; one claim cannot be used twice |
-| External funds/assets | Actual network-specific payments and asset custody | Independently confirmed and reconciled; an observed balance or QR scan is not payment |
+| Town coins | Existing gameplay balances, wages and purchases | Preserve the conserved economy; no automatic cash redemption |
+| Untokenised item | A specific coffee or other game object with an owner | Receiving, gifting and consumption are validated inventory transitions |
+| Proof of Coffee receipt | The actual preparation/collection/use event | Durable history; not itself a spendable coffee or proof of independent ownership |
+| Optional stamp claim | An explicit request to represent an eligible item or commemorate an event on-chain | Separate consent, fees, asset mapping and exactly-once delivery rules |
 
-The separate nontransferable **Proof of Coffee receipt** records an actual
-game delivery. A transferable collectible may commemorate support or a visit,
-but its later holder is not thereby proven to be the original visitor. A
-sponsor paying for runtime has not automatically visited the café. Keep the
-art reusable without collapsing these meanings.
+**Choose what the stamp means before implementing claims.** If it represents
+that same usable coffee, reserve/lock the server item during the claim and
+mark it exported after confirmed delivery. It must not remain simultaneously
+usable/giftable on the server. A consumed coffee cannot later be exported as
+an unconsumed item. Reimport/redemption of a tokenised coffee would need its
+own proven burn/escrow and custody rules; do not imply a working two-way bridge.
+
+Alternatively, the stamp can be a **commemorative collectible** about a coffee
+visit. Then it is distinct from the consumable coffee, may remain after the
+coffee is consumed, and must never claim to redeem another cup automatically.
+Its later holder is not proven to be the original visitor. Both designs are
+possible; neither is selected by the word “untokenised”.
+
+Start with the untokenised item lifecycle and an honest receipt. Optional
+export is a later adapter. A local save is useful for prototypes but cannot
+authorize a real-world claim: shared claims require canonical server inventory
+and must reject copied/imported local balances or items.
 
 ### Pixel cup asset brief
 
@@ -376,11 +395,12 @@ The idea is viable as a design, but the entitlement's backing must be explicit:
 | **Preissued bounded edition; reserved units** | Operator issues and funds a defined supply; server reserves a real available unit for each earned entitlement | Transfer a reserved unit to the approved recipient, with a fresh delivery/network fee quote | Clearest availability guarantee, but operator funds issuance and controls inventory before delivery |
 | **Mint on claim** | Server records an unminted entitlement to a defined job, with supply/budget rules | Issue the asset, and deliver it if issuance does not already give it to the recipient | Avoids advance issuance, but signing, fees, multi-step recovery and recipient attribution are more complex |
 
-Recommended first collectible claim experiment: a small preissued edition with
-reserved units, subject to adoption of its custody/funding policy and supported
-signer. If avoiding operator inventory is essential, investigate mint-on-claim
-as a separate exact workflow before promising it to users. Neither is currently
-implemented by the game.
+These are future asset-delivery options, not the default representation of
+ordinary inventory. First decide whether the stamp represents the same item
+or a separate souvenir. Preissued units require inventory backing; mint-on-claim
+requires a proven issuance/delivery path. The user's preference for untokenised
+items does not itself select either mechanism. Neither is implemented by the
+game, and ordinary item use must not depend on either.
 
 “User pays withdrawal” does not fund an earlier mint for free. The quote must
 separate any issuance/data-output cost, network fee, additional delivery fee
@@ -433,31 +453,44 @@ Define treatment of separately paid fees when fulfillment fails before launch.
   retain Bitcoin mainnet/private receiving boundaries. No wallet/credit/claim
   implementation was changed here.
 
-### Addition to the next-session plan
+### Revised next-session plan after the clarification
 
-Keep the A02 + Proof of Coffee contract as the gameplay packet. Add one short
-campaign decision sheet before any payment implementation:
+Keep the A02 + Proof of Coffee contract as the gameplay packet and amend it
+for a **bounded coffee item**, not a generic financial credit system:
 
-1. Pick the first campaign's promise and recipients: runtime sponsorship or a
-   funded-work collectible reward. Define server credit in units users can
-   understand, and whether a separate collectible entitlement is included.
-2. Draft the pixel cup and a clearly labelled, nonpayable QR-page mockup. Show
-   beneficiary, network, purchase purpose, claim terms and fees. No real wallet
-   address or payable invoice is required to review the flow.
-3. Map exact existing account/profile identifiers and preserve the current
-   login. Specify an optional Emblem adapter independently from an ECX asset
-   adapter; do not require either to prove the local café economy.
-4. Choose reserved edition versus mint-on-claim, and the responsibility for
-   issuance funding, inventory custody, fee funding and exact signing approval.
-   Record unresolved compatibility questions for Reina/Emblem without sending
-   messages or restarting their workstreams.
-5. Before a later launch, qualify one complete fake/test-network payment→credit→
-   entitlement→claim flow, including duplicate callbacks, ambiguous broadcast,
-   reorg, wrong network, insufficient fees, supply exhaustion, copied saves,
-   two simultaneous claims and account/controller changes. Then perform the
-   separately authorized actual supported-wallet acceptance. Public campaigns
-   and on-chain transactions remain later release decisions.
+1. Define the item's owner, identity, source order, preparation/collection
+   evidence and available actions. Walk through receiving, keeping, gifting
+   if included, and consuming one coffee; consumption must happen once.
+2. Draft the pixel cup and a nonpayable QR-page mockup for the relevant
+   agent/café journey. No donation checkout or runtime-credit purchase is
+   part of this specific packet.
+3. Specify authoritative item custody and save/reload compatibility. Inspect
+   the existing item code before reuse: at main `a26714e`,
+   `src/game/physical-items.ts` validates exactly one town-owned manuscript,
+   so it is not already a general coffee inventory. Plan one additive bounded
+   item contract without weakening that validator or overwriting existing saves.
+4. Decide whether an optional stamp is the **same exportable item** or a
+   **commemorative souvenir**. For same-item export, define lock/pending/exported
+   states and block consumption, gifting and competing claims while locked.
+   A timeout after possible broadcast requires reconciliation before unlocking.
+   Keep fee quotes, Emblem/ECX adapter compatibility and actual issuance for a
+   later qualified claim packet. No automatic return bridge is assumed.
+5. Add acceptance cases for ordinary item acquisition, duplicate handoff,
+   ownership transfer, consumption, refusal, interruption/reload, stale actor
+   actions, two simultaneous uses/claims and copied-save rejection. Fake claim
+   tests should prove no simultaneous spendable server item and exported asset.
+   Produce one updated specification and a bounded implementation handoff for
+   Sol; preserve production and shared-record ownership boundaries.
 
-General cash-out, automatic game-coin redemption, credit-to-stamp exchange
-rates and multi-chain withdrawals remain separate product decisions. None is
-required to make a useful coffee campaign or an attractive collectible.
+The immediate question is how a coffee behaves as an owned game object. Real
+funding campaigns, agent-runtime billing, cash-out and external reward pools
+are separate topics and are not prerequisites for this plan.
+
+Updated resume prompt: “Read this handoff and Arwyn's clarification: server
+credit meant untokenised items such as coffee, not direct funding. Reconcile
+A02 and Proof of Coffee around one ordinary coffee item with funded preparation,
+authoritative ownership, collection and consumption. Plan optional later stamp
+export or a separate souvenir, explicitly distinguish those choices, and prevent
+double use/claim. Preserve all existing identities, wages and saves. Prepare
+the bounded specification and Sol handoff; do not add donation checkout,
+runtime credits, production changes or live minting in this design session.”
