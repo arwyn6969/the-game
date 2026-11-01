@@ -286,17 +286,30 @@
     "inheritedWarnings": 1
   },
   "sourceDelivery": {
-    "status": "publication-approval-required",
+    "status": "draft-published",
+    "repository": "arwyn6969/the-game",
+    "branch": "codex/a01-qualify",
     "base": "codex/town-work-polish-20261029",
+    "PR": 63,
+    "url": "https://github.com/arwyn6969/the-game/pull/63",
+    "headAtCreation": "d84e9e08b292006d707921158b574b8076f9ff5f",
     "order": [
       61,
       62,
-      "A01 qualification"
+      63
     ],
-    "remoteBranchCreated": false,
-    "PRCreated": false,
-    "CIStarted": false,
-    "automaticReviewRejection": "Destination-specific authorization to publish local code/documentation to arwyn6969/the-game was not established; no push occurred."
+    "remoteBranchCreated": true,
+    "PRCreated": true,
+    "CIStarted": true,
+    "creationCI": {
+      "id": 41301568844,
+      "head": "d84e9e08b292006d707921158b574b8076f9ff5f",
+      "observedStatus": "in_progress",
+      "url": "https://github.com/arwyn6969/the-game/actions/runs/41301568844"
+    },
+    "latestHeadCI": "https://github.com/arwyn6969/the-game/pull/63/checks",
+    "publicationApproval": "User explicitly approved upload to this repository and draft creation on 1 November, superseding earlier automatic-review rejection. This record update creates a newer documentation head; qualify its own current-head CI.",
+    "mergeOrDeployOrLiveCallsAuthorized": false
   },
   "hosted": {
     "status": "not-run",

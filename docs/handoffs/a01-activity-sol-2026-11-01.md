@@ -5,7 +5,7 @@ Checkout `/Users/arwynhughes/Documents/ChatGPT/THE GAME/a01-replay`, branch
 `codex/a01-qualify`. Code `38d7442f31efed89ba6af25637a52f4537b3aa75`, from
 main `a26714e` with explicit #61 `cd44d16` → #62 `44745f4` and local A01.2
 `e115b57` (runtime `ab7d893`). Original branches and A01.1 evidence remain intact.
-The intended draft base is `codex/town-work-polish-20261029`; integrate #61 then
+The published draft base is `codex/town-work-polish-20261029`; integrate #61 then
 #62 first, refresh this candidate if necessary, and use exact-head Verify.
 
 Outcome: fresh desktop/phone meetings complete naturally in fifteen synthetic
@@ -21,12 +21,15 @@ browser gates, four interfaces, accessibility, diagnostics and both builds.
 One inherited lint warning and 19 incomplete accessibility results remain.
 [Evidence and exact scope](../review/a01-activity-2026-11-01/README.md).
 
-The source branch remains local. Automatic approval review rejected its push to
-`arwyn6969/the-game` because explicit destination-specific publication approval
-was not established. No remote branch, new PR or CI was created. Proposed PR
-text is [saved locally](../review/a01-activity-2026-11-01/draft-pr.txt); approve
-the branch push and draft creation before retrying. No alternative publication
-path was attempted.
+On 1 November, the user explicitly approved uploading the branch to
+`arwyn6969/the-game` and creating the prepared draft. The earlier automatic
+publication rejection is superseded. [Draft PR #63](https://github.com/arwyn6969/the-game/pull/63)
+is published, creation head `d84e9e08b292006d707921158b574b8076f9ff5f`, stacked
+on #62. Verify run [41301568844](https://github.com/arwyn6969/the-game/actions/runs/41301568844)
+started on that head. These publication records create a newer documentation
+revision; [current-head checks](https://github.com/arwyn6969/the-game/pull/63/checks)
+must qualify the latest PR head. Runtime code remains `38d7442`, and the existing
+local Cloudflare archive remains specifically tied to `d84e9e0`.
 
 No merge/deployment, live inference, spend or production migration. Publication
 and provider/human acceptance are still separate. A fresh public asset read
@@ -40,7 +43,7 @@ silently implement its economic proposals. Grok and historical automations stay
 paused. Local synthetic success does not close hosted/model-quality or enjoyment
 gates.
 
-Next: confirm the source draft and exact-head CI. When explicitly authorized,
+Next: confirm exact-head CI on #63. When explicitly authorized,
 integrate the recorded stack, publish the verified source while preserving
 configuration, collect current read-only allowance/auth/price evidence, and run
 one normal-controls hosted meeting of at most sixteen existing free calls at

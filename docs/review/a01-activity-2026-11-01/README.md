@@ -68,16 +68,16 @@ live model choices, conversation quality or enjoyment.
 
 ## Source and hosted gates
 
-The intended draft is stacked on #62's branch, with merge order #61 → #62 →
-A01 qualification. Qualify the final draft head's Verify result before any
-integration. This record contains local results; use the corresponding PR for
-current CI, and preserve the original heads if main advances.
-
-Automatic approval review rejected the branch push: explicit authorization to
-publish this local code/documentation to `arwyn6969/the-game` was not established.
-Nothing was pushed, and no new remote branch, PR or CI exists. The code remains
-committed and [the draft text is prepared](draft-pr.txt). Explicit source-upload
-approval is required before retrying; no indirect publication route was used.
+[Draft PR #63](https://github.com/arwyn6969/the-game/pull/63) is stacked on #62's
+branch, with merge order #61 → #62 → A01 qualification. The user explicitly
+approved source upload and draft creation on 1 November, superseding the earlier
+automatic publication rejection. Creation head is `d84e9e0`; Verify run
+[41301568844](https://github.com/arwyn6969/the-game/actions/runs/41301568844)
+started on it. These publication-record updates create a newer documentation
+head, so qualify [the latest PR head's Verify](https://github.com/arwyn6969/the-game/pull/63/checks)
+before any integration. The local source checks above remain tied to code
+`38d7442`; the clean local Cloudflare archive remains tied to `d84e9e0`.
+Source-publication approval does not authorize merge, deployment or live inference.
 
 The current public baseline could not be freshly hashed: the read-only asset
 attempt returned HTTP 403. [Recorded limitation](public-baseline.json). The last

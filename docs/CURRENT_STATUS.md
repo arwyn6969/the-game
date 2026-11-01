@@ -1,6 +1,6 @@
 # Current project status
 
-## A01.3 integrated activity qualification — locally verified, 1 November 2026
+## A01.3 integrated activity qualification — draft published, 1 November 2026
 
 Owner: Sol, chat `01a19673-df39-7451-bc65-17ca2eaf8459`. The user requested
 continuation after local A01.2. Reuse clean `a01-replay/` on new branch
@@ -29,13 +29,17 @@ pass. One inherited lint warning and 19 incomplete accessibility results remain.
 [Review](review/a01-activity-2026-11-01/README.md) ·
 [Handoff](handoffs/a01-activity-sol-2026-11-01.md) ·
 [Hosted packet](review/a01-activity-2026-11-01/hosted-trial.md).
-Source delivery is intended as a draft stacked on #62, requiring its exact-head
-CI. Automatic approval review rejected the branch push because destination-specific
-publication authorization was not established. Nothing was pushed; there is no
-new remote branch, PR or CI. The local source and proposed PR text are reviewable
-at `review/a01-activity-2026-11-01/draft-pr.txt`; explicit approval to push
-`codex/a01-qualify` to `arwyn6969/the-game` and create the draft is the next source
-gate. Main is unchanged. A fresh asset GET returned 403; live auth, provider pricing
+The user explicitly approved the branch upload to `arwyn6969/the-game` and draft
+creation on 1 November, superseding the earlier automatic-review rejection.
+[Draft PR #63](https://github.com/arwyn6969/the-game/pull/63) is published against
+#62's branch with creation head `d84e9e08b292006d707921158b574b8076f9ff5f`.
+[Verify 41301568844](https://github.com/arwyn6969/the-game/actions/runs/41301568844)
+started on that head. Publication-record updates create a newer documentation
+head; use [the PR's current checks](https://github.com/arwyn6969/the-game/pull/63/checks)
+to qualify that exact final revision before integration. The recorded runtime
+code and local source hashes remain `38d7442`; no local tests are relabelled as CI.
+Source upload/draft approval does not authorize merge, deployment or live calls.
+Main is unchanged. A fresh asset GET returned 403; live auth, provider pricing
 and current counters remain unverified. Next is reviewed source integration and
 the explicitly authorized, bounded hosted trial after fresh free headroom.
 
