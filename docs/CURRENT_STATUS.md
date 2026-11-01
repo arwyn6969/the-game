@@ -1,5 +1,51 @@
 # Current project status
 
+## A01.2 terminal failure — locally verified, 1 November 2026
+
+Owner: Sol, current chat `01a19673-df39-7451-bc65-17ca2eaf8459`, under the
+user's request to continue implementation in parallel with an Astra economy
+design session. The previous implementation chat is idle. Preserve its
+uncommitted work in `a01-replay/`, branch `codex/a01-terminal`, HEAD
+`967d2bba8843b563de16c831cba98f1277449aa1`, stacked locally on A01.1 from main
+`a26714e03192a17acaa963d7d2681e74a1ac425b`. An ignored inherited diff snapshot is
+at `artifacts/a01-terminal-2026-11-01/inherited-working.patch`.
+
+Write scope: existing A01.2 engine/controller changes, their synthetic/browser
+tests and packet/evidence/handoff/status records. Astra owns a separate A02
+analysis/specification checkout; no economy or funding rules change here.
+Fresh GitHub reads still show #61 open and #62 draft/stacked on #61, both based
+on unchanged main; neither is a dependency of A01.2. No merge or deployment is
+part of this packet. Public asset evidence remains dated 29 October, not a
+fresh runtime claim. Begin with zero live inference calls and spend; Grok stays
+paused. Code `ab7d893c5fc2deeee046f6320c745f11e38bedc9` closes exhausted
+failures/reloads honestly, preserves the terminal receipt, retains below-cap
+recovery and commits valid final speech before closure. New proposal errors
+remain visible. Sixteen SQL replay cases, forty intercepted meeting journeys,
+built desktop/phone play journeys, 1,105 script +55 typed tests, 432 overlapping
+town tests, typecheck/lint, diagnostics and credential-free build pass.
+One inherited lint warning and six incomplete accessibility results remain.
+[Review](review/a01-terminal-2026-11-01/README.md) ·
+[Handoff and resume prompt](handoffs/a01-terminal-sol-2026-11-01.md).
+No new PR/CI or hosted/human acceptance. Next is A01.3 exact-candidate
+qualification and a separately authorized bounded hosted run with fresh free
+headroom. Astra's A02 handover is prepared; its execution is not inferred here.
+
+## A01.2 terminal failure — building, 29 October 2026
+
+Owner: GPT-6.1 Sol, chat `01a18874-463c-7be1-80a3-ed7eefdace15`.
+Reuse isolated `a01-replay/` on `codex/a01-terminal`, explicit local dependency
+A01.1 head `967d2bba8843b563de16c831cba98f1277449aa1`; main `a26714e`.
+Scope: exhausted meeting interruption/reload and matching terminal feedback,
+synthetic regressions and actual intercepted desktop/phone journeys. No provider,
+quota, economy, save-schema, auth or hosting changes. The previous branch,
+fixtures and A01.1 receipts remain historical evidence.
+[Packet](implementation/a01-terminal.md) · [F00](review/a01-terminal-2026-10-29/baseline.json).
+Targeted core/replay checks pass. Full checks and browser evidence are in progress.
+#61/#62 remain open and green; this packet has no dependency on that UI stack.
+Four fresh public asset hashes still match `01470e291065`; Worker metadata is
+inherited from its publication receipt. Zero live calls/spend; no merge/deploy
+or production migration. Grok remains paused and no other chat is awakened.
+
 ## Resident framework F00 / A01.1 — local replay, 29 October 2026
 
 Owner: GPT-6.1 Sol, chat `01a18874-463c-7be1-80a3-ed7eefdace15`.
