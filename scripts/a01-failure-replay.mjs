@@ -20,6 +20,26 @@ import { auditDiscussionObservations } from "./library-meeting-audit.mjs";
 export const failureCases = JSON.parse(
   await readFile(new URL("./fixtures/a01-failure-cases.json", import.meta.url), "utf8"),
 );
+// Keep A01.1's historical inputs/expectations and committed receipts intact.
+// Current regression expectations are separate from that baseline evidence.
+export const terminalFailureCases = [
+  ...failureCases.map((spec) =>
+    spec.id === "final-empty-completion" ? { ...spec, status: "closed", gap: null } : spec,
+  ),
+  ...[
+    "unavailable-action",
+    "malformed-completion",
+    "provider-timeout",
+    "budget-exhausted",
+    "provider-exhausted",
+    "cancel-late-completion",
+  ].map((id) => ({
+    ...failureCases.find((spec) => spec.id === id),
+    id: `final-${id}`,
+    priorDecisions: 15,
+    status: "closed",
+  })),
+];
 const clone = (value) => structuredClone(value);
 const session = (town) => town.discussions.sessions.at(-1);
 const member = (town, id) => session(town).members.find((person) => person.id === id);
@@ -219,7 +239,7 @@ async function replayCase(core, spec) {
     assert.ok(automatic);
     let run = automatic.state;
     assert.ok(d.markDiscussionRequest(town, job));
-    if (spec.id === "unavailable-action") {
+    if (spec.id.endsWith("unavailable-action")) {
       assert.equal(job.agentId, "arwyn");
       assert.equal(
         d.discussionObservation(town, job.agentId).availableActions.some((a) => a.kind === "speak"),
@@ -332,7 +352,7 @@ async function replayCase(core, spec) {
     );
     assert.equal(
       session(town).usage.attemptsUnknown,
-      spec.cancel || spec.id === "budget-exhausted" ? 1 : 0,
+      spec.cancel || spec.id.endsWith("budget-exhausted") ? 1 : 0,
     );
     assert.equal(calls, spec.id.endsWith("exhausted") ? 0 : 1);
     if (spec.outcome) assert.equal(attempts[0].outcome, spec.outcome);
@@ -364,7 +384,7 @@ async function replayCase(core, spec) {
     }
     if (spec.priorDecisions) {
       assert.equal(d.nextDiscussionJob(loaded), null);
-      if (!spec.committed) {
+      if (!spec.committed && session(loaded).status !== "closed") {
         assert.equal(d.resumeDiscussion(loaded).ok, false);
         success(
           d.applyDiscussionCommand(loaded, "player", {
@@ -377,6 +397,10 @@ async function replayCase(core, spec) {
         assert.equal(session(loaded).status, "closed");
         assert.deepEqual(invariants(loaded, d), before);
         assert.deepEqual(save.parseTownFile(save.exportTown(loaded)), loaded);
+      } else if (!spec.committed) {
+        assert.equal(d.resumeDiscussion(loaded).ok, false);
+        assert.match(session(loaded).reason, /stopped at its sixteen-decision limit/);
+        assert.match(session(loaded).reason, /No replacement dialogue/);
       }
     }
     const after = await ledgerRows(db);
@@ -391,7 +415,7 @@ async function replayCase(core, spec) {
       (row) => !prior.budget.some((old) => old.id === row.id),
     );
     const addedPool = after.pool.filter((row) => !prior.pool.some((old) => old.id === row.id));
-    assert.equal(addedBudget.length, spec.id === "budget-exhausted" ? 0 : 1);
+    assert.equal(addedBudget.length, spec.id.endsWith("budget-exhausted") ? 0 : 1);
     assert.equal(addedPool.length, calls);
     assert.ok(
       after.budget.every(
@@ -402,6 +426,7 @@ async function replayCase(core, spec) {
     return {
       id: spec.id,
       status: spec.status,
+      reason: session(town).reason,
       committed: applied.ok,
       decisions: session(town).decisions,
       syntheticTransmissions: calls,
@@ -425,7 +450,7 @@ async function replayCase(core, spec) {
 }
 
 /** A seam-level replay, not a replacement browser controller or hosted trial. */
-export async function replayFailures() {
+export async function replayFailures({ cases: inputs = terminalFailureCases } = {}) {
   const server = await createServer({
     root: fileURLToPath(new URL("..", import.meta.url)),
     configFile: false,
@@ -445,9 +470,9 @@ export async function replayFailures() {
       ...(await server.ssrLoadModule("/src/game/town.ts")),
     };
     const cases = [];
-    for (const spec of failureCases) cases.push(await replayCase(core, spec));
+    for (const spec of inputs) cases.push(await replayCase(core, spec));
     return {
-      packet: "A01.1",
+      packet: "A01.2",
       liveInferenceCalls: 0,
       spend: 0,
       scope:
