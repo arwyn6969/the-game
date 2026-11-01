@@ -6,6 +6,9 @@ import {
   offeredKinds,
 } from "./discussion-auto-browser.mjs";
 
+const saved = (page) =>
+  page.evaluate(() => navigator.locks.request("the-game-town-save", () => undefined));
+
 /** One fresh normal-controls activity; synthetic choices do not qualify a model. */
 export async function runCompleteMeetingJourney(helpers, viewport) {
   const {
@@ -27,9 +30,11 @@ export async function runCompleteMeetingJourney(helpers, viewport) {
     .getByLabel("Propose one topic", { exact: true })
     .fill("SYNTHETIC complete library discussion");
   await page.getByRole("button", { name: "Propose library meeting", exact: true }).click();
-  await page.waitForFunction(() =>
-    JSON.parse(localStorage.getItem("the-game-town-v2")).town.discussions?.sessions.length === 1,
+  await page.waitForFunction(
+    () =>
+      JSON.parse(localStorage.getItem("the-game-town-v2")).town.discussions?.sessions.length === 1,
   );
+  await saved(page);
   const before = await savedTown(page);
   const protectedState = (town) => ({
     identities: town.identityRegistry,
@@ -104,11 +109,17 @@ export async function runCompleteMeetingJourney(helpers, viewport) {
     0,
   );
   assert.equal(
+    await page.getByRole("button", { name: "Stop library meeting", exact: true }).count(),
+    0,
+    "The global toolbar must also reflect that automatic mode ended naturally",
+  );
+  assert.equal(
     await page.getByRole("button", { name: "Start automatic meeting", exact: true }).count(),
     0,
   );
   assert.equal(await page.getByRole("button", { name: "Resume meeting", exact: true }).count(), 0);
   await page.getByRole("button", { name: "Pause", exact: true }).click();
+  await saved(page);
   const final = await savedTown(page);
   assert.deepEqual(protectedState(final), baseline);
   const checkKnowledge = async (town) => {
@@ -172,6 +183,7 @@ export async function runCompleteMeetingJourney(helpers, viewport) {
   // A normal save action records the actual loaded town, rather than merely
   // rereading the preserved original raw file and assuming loading kept it.
   await page.getByRole("button", { name: "Pause", exact: true }).click();
+  await saved(page);
   const reloaded = await savedTown(page);
   assert.deepEqual(reloaded.discussions.sessions.at(-1), completed);
   assert.deepEqual(protectedState(reloaded), baseline);
