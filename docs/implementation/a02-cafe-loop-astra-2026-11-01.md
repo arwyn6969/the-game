@@ -6,7 +6,7 @@ Design specification · 1 November 2026 · **Proposed; not adopted or implemente
 original one-order experiment. The intended product is a café where purchases
 fund staff, and more funded demand can support more staff/service capacity.
 Its fixed daily limit is not a permanent product requirement. Read the
-[current coffee-service specification](a02-coffee-service-astra-2026-11-01.md)
+[current audited café implementation plan](a02-cafe-readiness-astra-2026-11-01.md)
 before implementation. That proposal replaces the tea-table interaction with
 named coffee pickup and includes staffing/capacity evidence. The original
 evidence here remains valid for its stated scope; neither document claims

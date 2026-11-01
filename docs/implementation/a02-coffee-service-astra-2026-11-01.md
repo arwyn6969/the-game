@@ -2,7 +2,14 @@
 
 1 November 2026 · Proposed implementation contract · Design and synthetic evidence only
 
-This is the **current A02 implementation proposal**. It supersedes the earlier
+**Superseded by the [comprehensive audit and canonical funded-shift plan](a02-cafe-readiness-astra-2026-11-01.md).**
+This document preserves the earlier per-order proposal and human-control gap.
+Its 2-coin per-cup wage and no-refund-after-acceptance policy are not the selected
+implementation. The current plan keeps funded 5-coin shifts and separate
+refundable coffee payments until ready. Earlier synthetic evidence remains
+valid for its named scope.
+
+This was the A02 implementation proposal before the audit. It superseded the earlier
 tea-table task, one-order/day limit and item-first next steps. The original
 [seven-day reconciliation and cycle comparison](a02-cafe-loop-astra-2026-11-01.md)
 remain evidence for their stated scope. No gameplay, wallet, save schema or

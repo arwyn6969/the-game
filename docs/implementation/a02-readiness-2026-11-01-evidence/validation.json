@@ -1,0 +1,144 @@
+{
+  "date": "2026-11-01",
+  "scope": "Design/readiness audit only; uniquely named lane documentation and isolated synthetic experiments. No gameplay/runtime/schema edits or external publication.",
+  "decision": "Ready to build and test the bounded revised contract; not yet qualified for ordinary play, production, external payments or asset claims.",
+  "checkout": "/Users/arwynhughes/Documents/ChatGPT/THE GAME/a02-economy",
+  "branch": "codex/a02-loop",
+  "auditStartHead": "7105913868cd66372697ee2347b05b2350c3a3e6",
+  "sourceBase": "a26714e03192a17acaa963d7d2681e74a1ac425b",
+  "baseline": {
+    "readOnlyChecked": "2026-11-01",
+    "main": "a26714e03192a17acaa963d7d2681e74a1ac425b",
+    "draftPR": 63,
+    "draftPRHead": "46bbe821341448b9c68000572c093b9471b4a9af",
+    "stackedOnPR": 62,
+    "draftPRBaseHead": "44745f42719b66230e6ee99d248c8bbe79c2359c",
+    "noRuntimeDiffFromSourceBase": true
+  },
+  "runtime": {
+    "node": "v24.22.1",
+    "binary": "/Users/arwynhughes/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+    "dependencies": "Existing lockfile/dependencies; no package or configuration changes"
+  },
+  "checks": [
+    {
+      "name": "Existing engine focused regression suites",
+      "command": "node --test scripts/town-economy.test.mjs scripts/town-commerce.test.mjs scripts/town-identity.test.mjs scripts/town-quality-save.test.mjs scripts/town-quality-actions.test.mjs scripts/town-physical-items.test.mjs > docs/implementation/a02-readiness-2026-11-01-evidence/current-regressions.tap",
+      "status": "passed",
+      "tests": 114,
+      "failed": 0,
+      "durationMs": 2360.882875,
+      "evidence": "current-regressions.tap",
+      "limit": "Existing baseline tests, not tests of the unimplemented coffee feature. The output uses the Node default spec reporter despite the historical .tap filename."
+    },
+    {
+      "name": "Funded shift reference model",
+      "command": "node docs/implementation/a02-readiness-2026-11-01-evidence/shift-model.mjs",
+      "status": "passed",
+      "evidence": [
+        "shift-model.md",
+        "shift-model-results.json"
+      ],
+      "limit": "Independent synthetic model; declared purchases/consent, zero travel in capacity comparisons, permissive preorder and late-order recovery fixtures. Actual game authority, movement, browser storage and enjoyment remain untested.",
+      "exitCode": 0,
+      "scenarios": 22,
+      "invariantAudits": 39053,
+      "commandAttempts": 1213
+    },
+    {
+      "name": "Actual source payroll and detached-reference probes",
+      "command": "node docs/implementation/a02-readiness-2026-11-01-evidence/source-probes.mjs",
+      "status": "passed",
+      "evidence": "source-probes.json",
+      "shifts": 3,
+      "eligibleMinutes": 540,
+      "duplicateMinuteAttempts": 540,
+      "outsideWindowChecks": 6,
+      "openingTotal": 90,
+      "largestObservedExportBytes": 506916,
+      "limit": "Disposable synthetic towns using source functions, direct payroll and prescribed dates/positions; not normal UI or continuous full-town/30-day execution."
+    },
+    {
+      "name": "Targeted ESLint",
+      "command": "node node_modules/eslint/bin/eslint.js docs/implementation/a02-readiness-2026-11-01-evidence/shift-model.mjs docs/implementation/a02-readiness-2026-11-01-evidence/source-probes.mjs",
+      "status": "passed",
+      "exitCode": 0,
+      "warnings": 0
+    },
+    {
+      "name": "Relative document links, acceptance IDs and scope",
+      "status": "passed",
+      "relativeLinks": 54,
+      "missingLinks": 0,
+      "uniqueAcceptanceCases": 39,
+      "runtimeSourceAndProtectedRecordsUnchanged": true
+    },
+    {
+      "name": "Whitespace/diff integrity",
+      "command": "git diff --check; git diff --cached --check (separate invocations)",
+      "status": "passed",
+      "workingTree": true,
+      "staged": true
+    }
+  ],
+  "retainedCorrections": [
+    "Initial source probe changed the day without actual midnight, leaving paidToday set; it could not accept the next shift. Corrected harness to execute stepMinute at 23:59. This was a harness failure, not a game defect.",
+    "Model full-purse fixtures conserve 1084, unfunded-bootstrap fixture conserves 73, ordinary fixtures conserve 90; no hidden in-game coin issuance.",
+    "The raw cooperative four-day schedule exceeds initial NPC discretion at its first Sub purchase. Separate bounded-budget seven-day scenario pays a real quiet Sub bootstrap shift and respects initial 2 plus settled wages.",
+    "The seven-day hoarding scenario funds all seven shifts while buyer spending power exhausts. No/low-demand scenarios establish stopped future offers; do not conflate these outcomes.",
+    "The largest observed source export includes after-reload size 506916, not just day-end 506865. No linear longevity extrapolation is qualified."
+  ],
+  "independentReviews": [
+    {
+      "file": "product-audit.md",
+      "disposition": "Canonical plan resolves automatic-player control, stop/AI/+Hour behavior, exact final attendance interval, save failure, geometry/queue and accessibility requirements."
+    },
+    {
+      "file": "integrity-audit.md",
+      "disposition": "Canonical plan resolves separate refund/payroll holds, legacy priority, state replacement, identity-before-replay, missing-extension validation, conditional closure/drain and storage bounds."
+    }
+  ],
+  "finalReviewResolutions": [
+    "Finish-current suspension occurs after the final eligible payroll interval; no new order assignment occurs meanwhile.",
+    "NPC clears the counter after buying and collecting; ready-only pickup queue cannot be blocked by an older unready ticket.",
+    "Refundable preorders do not finance new wages; ready releases the existing hold without a new transfer.",
+    "Every new persisted control/economic record consumes a measured byte budget; local Stop remains usable without a successful record write.",
+    "Pilot closure idempotently refunds unready orders without funded service; ready cups and all wage claims survive. Complete draining is conditional on consent and purse capacity; suspended claims stay held.",
+    "Old 2-per-cup plan marked superseded; new canonical brief alone defines selected implementation."
+  ],
+  "implementationAcceptance": {
+    "count": 39,
+    "status": "Required future integration cases, not executed coffee tests",
+    "pilotLimits": {
+      "gameDays": 7,
+      "newOrders": 50,
+      "newShifts": 14,
+      "concurrentServiceWorkers": 2,
+      "proposedNewAdmissionStopBytes": 3145728,
+      "sourceImportExportLimitBytes": 8388608
+    },
+    "humanDiagnostic": "3–5 participants; control/comprehension and enjoyment assessed separately"
+  },
+  "notRunOrNotEstablished": [
+    "No implemented coffee runtime/UI exists in this delivery; integrated 39-case matrix remains future work.",
+    "No new whole-repository build/typecheck/full-suite or browser qualification was performed for this docs/analysis-only audit. Run required integration checks when code is implemented; builds must omit production database credentials.",
+    "No actual browser storage endurance, 30-day integrated coffee stress or human diagnostic.",
+    "No independent proof of spontaneous demand, retention, profitability including unmodeled costs, or indefinite operation under refusal/hoarding.",
+    "No live inference, wallets, campaigns, tokenisation, external messages, deployments, remote pushes or merges."
+  ],
+  "sourceOwnership": "Only a02-economy lane docs/evidence changed. Sol retains a01-replay and shared status/framework records; runtime/UI owner changes require the separate integration pass.",
+  "artifactSha256": {
+    "docs/handoffs/a02-economy-astra-2026-11-01.md": "7ac4125be170e09604df7eaa97671cf32bb1159103a4c427f12662e648985a44",
+    "docs/implementation/a02-cafe-loop-astra-2026-11-01.md": "d75df3fd550e59a08451ae6121386ab6fba24117510d96601c381539f513d41f",
+    "docs/implementation/a02-cafe-readiness-astra-2026-11-01.md": "5ef6a50b1aa5a9a4b43b45c31f4ec127a53bdd61e2c8cf482b38439cc22a3c03",
+    "docs/implementation/a02-coffee-service-astra-2026-11-01.md": "ddbdc272abefaa4ca1aa5c19c421764b63a3ca1ab117ad39cd67a413ed9454b0",
+    "docs/implementation/a02-readiness-2026-11-01-evidence/current-regressions.tap": "7e52433a760ee2b92cdb01ad2de0aed95ddf36a7180bc308e3d29fb93d004381",
+    "docs/implementation/a02-readiness-2026-11-01-evidence/integrity-audit.md": "84865977483a10ba68280e3240332fc5e0c3b5e32bea872046816f65384a357f",
+    "docs/implementation/a02-readiness-2026-11-01-evidence/product-audit.md": "2ad3524b2a573b9403bc6235b76afeb98390be6739d3504b817579ae9c889fdc",
+    "docs/implementation/a02-readiness-2026-11-01-evidence/shift-model-results.json": "31477865893fe2aa28a81729844a4959f00b8c1a68fdeefef880dad3e1b58cf8",
+    "docs/implementation/a02-readiness-2026-11-01-evidence/shift-model.md": "1045dd329a73483da5d775a05d4d81cbd3a48c16479b74103681210b2746ce7d",
+    "docs/implementation/a02-readiness-2026-11-01-evidence/shift-model.mjs": "0cb98b1057941e2feb66647bca97f0c318da6572b9406732192629bb4ac167e9",
+    "docs/implementation/a02-readiness-2026-11-01-evidence/source-probes.json": "7c4346a496c411b76cc343395ff6118bb5df58f14713010e69b6019af92db49f",
+    "docs/implementation/a02-readiness-2026-11-01-evidence/source-probes.mjs": "cb3be2d2fd6d1127769362cf1da2a8e56746a73036213c90fecdcb31d893b715"
+  }
+}

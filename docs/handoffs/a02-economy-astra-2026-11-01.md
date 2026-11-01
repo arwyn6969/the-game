@@ -1,95 +1,122 @@
 # A02 economy handoff — Astra design lane, 1 November 2026
 
-## Current delivery: coffee serving and receiving
+## Current delivery: comprehensive readiness audit
 
-**Latest clarification — human worker flow:** Arwyn asked whether a person must
-constantly serve during Kevin's shift. Current shifts already credit attendance
-automatically (5 coins / 180 eligible game minutes); they have no cup-serving
-requirement. The new per-order design had not fully specified human controls or
-its integration with that shift. The specification now proposes explicit work
-acceptance followed by automatic walking/brewing/placement, immediate manual
-interruption and bounded continuation. This is not implemented. **Resolve and
-test funded-shift versus per-order pay before integrating them**; the existing
-2-price/2-fee model leaves no revenue for the old shift pool. Preserve accepted
-shift terms and prohibit paying both agreements for the same work. This gate
-supersedes the earlier suggestion below that the whole human-worker slice was
-ready to implement from the order contract alone.
+**Use the [audited café implementation plan](../implementation/a02-cafe-readiness-astra-2026-11-01.md) as the single current brief.**
+The user's latest request was a comprehensive audit before implementation.
+Independent product/control and financial/integrity reviews found material
+omissions in the earlier proposal. The revised contract resolves them as
+explicit decisions and integrated acceptance tests. Earlier evidence below
+remains historical; the old 2-coin per-cup wage is not the selected plan.
 
-Arwyn asked us to keep building the actual serving/receiving design. The current
-implementable proposal is now [A02 coffee service](../implementation/a02-coffee-service-astra-2026-11-01.md).
-It supersedes the original tea-table task and the earlier next-session targets
-below. Its centre is **coffee purchases → funded staff → prepared cup → explicit
-collection → optional drinking**. No production implementation was made.
+**Recommendation:** proceed with a bounded local implementation and test it.
+The design is not yet qualified for ordinary play, production or external
+payments. This audit made no runtime/schema changes and did not run live AI,
+wallet operations, deployments or other chats. Sol retains A01/runtime and
+shared status/framework ownership; the UI lane must coordinate its changes.
 
-Recommend **named counter pickup** first. Ownership starts when one ready cup
-is created for its buyer; the café holds it until the buyer collects. The
-2-coin prototype fee pays for actual brewing and placement, independently of
-collection or drinking. More paid demand can support a second consenting worker,
-but staff, brewer and pickup space each constrain capacity. This is per-order
-work, separate from existing 5-coin shifts; no extra cash or daily allowance.
+### Selected loop and human experience
 
-Research compares direct handoff, named pickup and table delivery. Existing
-coffee artwork is not a service implementation: manuscript custody, bread
-consumption and one-event tea commerce cannot simply be renamed as coffee.
-The new contract specifies exact actions, preserved liabilities, four-cup
-inventory entitlement, two pickup slots, six unresolved tickets, voluntary
-participation, no self-fulfilment, interruptions, saves/forks and acceptance.
-Uncollected cups persist; they can fill the shelf. A full recipient purse leaves
-a funded wage or refund pending, rather than destroying earned money.
+- Keep Kevin's existing **5 coins / 180 eligible game minutes**, fully funded
+  before acceptance. Quiet periods still count under the agreed attendance
+  rules; no extra per-cup payment and no retroactive new conditions.
+- Coffee costs a proposed **2 town coins**. Hold its full price separately
+  until the cup is ready. Ready releases that receipt as business money for
+  later obligations/payroll; it does not create another transfer. A buyer may
+  receive a full refund before ready, including partial work. Staff wages and
+  accrued attendance remain independent.
+- One explicit Start permits automatic legal walking, brewing and counter
+  placement. Immediate manual/Pause override suspends the shift and releases
+  its task assignment; retained work can pass to another funded consenting
+  worker. Finish-current must credit the final attendance interval before
+  suspending. No forced overtime or automatic new-shift acceptance.
+- Named pickup transfers the actual buyer-owned cup into inventory; keeping
+  and drinking are separate. Uncollected cups retain ownership and occupy the
+  two pickup slots. No forced expiry/disposal; full counter is an intentional
+  pilot stop with truthful UI, not permission to erase cups or wages.
+- Preserve finite money, existing debts/library commitments and all eight
+  identities. Human purchases and authored NPC choices remain voluntary. Extra
+  staff require real funding and usable demand/capacity; faster service is not
+  evidence of more sales. QR, Emblem/ECX and stamps remain later integrations.
 
-Evidence, rerun with Node 24.22.1:
+### New evidence
 
-- [Staffing model](../implementation/a02-coffee-service-2026-11-01-evidence/service-model.md):
-  **18 scenarios, 5,820 invariant audits, 2,907 command attempts pass**. Same six
-  purchases, same brewer: one worker finishes at minute 180; two at 130.
-  Average order-to-ready wait 91.7 → 66.7 game minutes. Both pay exactly 12 from
-  12 of sales and conserve the 90-coin fixture plus legacy holds. When brewing
-  is the entire bottleneck, both finish at 120. Timings and customer choices
-  are illustrative; this is not engine or human-play evidence.
-- [Geometry probe](../implementation/a02-coffee-service-2026-11-01-evidence/geometry-probe.md):
-  **52 assertions pass** against actual source world/path modules. Candidate
-  brew stand `(5,18)`, placement `(6,18)`, customer `(7,19)` are reachable.
-  An occupied destination still requires a caller guard; path output alone
-  does not prove an available service position. No full movement simulation.
-- [Source audit](../implementation/a02-coffee-service-2026-11-01-evidence/source-audit.md)
-  and [interaction research](../implementation/a02-coffee-service-2026-11-01-evidence/interaction-research.md)
-  distinguish reusable primitives, missing contracts and primary-source
-  interaction precedents. Independent review corrected refund overflow,
-  narrow café authority, local-fork identity scope and fixture-only totals.
-- A separate conversational step-through was browser-checked at widths
-  736, 390 and 320, including purchase, acceptance, ready, absence, collection,
-  keeping and drinking. This is an explanatory visual, not THE GAME UI. No
-  JavaScript errors or horizontal overflow; hidden-control regression fixed.
+[Evidence directory](../implementation/a02-readiness-2026-11-01-evidence/):
 
-Baseline refreshed 1 November via the GitHub connector: main remains
-`a26714e03192a17acaa963d7d2681e74a1ac425b`; A01 [draft #63](https://github.com/arwyn6969/the-game/pull/63)
-is open at `46bbe821341448b9c68000572c093b9471b4a9af`, stacked on #62. Its
-description reports no economic or save-schema change. Direct `git fetch`
-failed DNS; the connector supplied the fresh main reference. No hosted state
-was qualified. Our branch remains `codex/a02-loop` in `a02-economy`, starting
-this extension at `5c21468df22b83ecf95efa934913e05f5702da41`; final chat names
-the delivery commit. Shared records, A01/runtime, dependencies and other
-checkouts are untouched. No external chat was contacted, inference run,
-transaction made or deployment performed.
+- `shift-model.mjs` / report / JSON: **22 scenarios**, including seven-day
+  traces, conditional 28-day circulation, full recipient purses, partial refunds,
+  reassignment and 12 seeded mixed schedules with exact JSON-reload equivalence.
+  Same 6 purchases/one brewer: one worker finishes at 180 / pays 5 / café 29; two finish at 130 /
+  pay 10 / café 24. These are hypothetical game timings without physical travel.
+- `current-regressions.tap`: **114 existing engine tests pass** across economy,
+  commerce, identity, save, player actions and physical items. These do not
+  claim coverage of unimplemented coffee behavior.
+- `source-probes.mjs/json`: three actual source shifts, 540 eligible minutes and
+  540 duplicate attempts; no serving required; money/identities/save-load remain
+  correct. Generic additive projections become detached after finance commits.
+  Source saves grew 69,049→209,565→358,329→506,865 bytes at the measured checkpoints;
+  these are synthetic direct-payroll observations, not a 30-day browser result.
+- `product-audit.md` and `integrity-audit.md`: independent reviewed findings
+  and required tests. Final review corrected finish-current/payroll ordering,
+  counter clearing after buying, ready-only pickup ordering, fork replay scope,
+  missing-state validation and unbounded control-receipt growth.
+- `validation.json`: exact baselines, commands, scopes, checks and retained
+  harness correction. The first source-probe draft changed day without running
+  midnight; corrected to exercise actual midnight, not a game defect.
 
-**Next session:** use the new coffee specification as the single implementation
-contract. First walk through it with people; then implement the bounded local
-encounter in an authorized owner lane, using its ten game acceptance groups.
-Check current main and Sol's ownership first. Test actual navigation, full-purse
-payables/refunds, raw-save recovery, v1/v2 restore/fork, legacy wages/debts and
-accessible normal controls; none is proven by the independent staffing model.
-Evaluate whether pickup feels personal and whether people want a second coffee
-without a collectible. Direct handoff is the next interaction comparison if
-needed; QR campaigns, gifting, Emblem/ECX settlement and stamps stay separate.
+All ordinary money fixtures start at 90. The deliberately unfunded café fixture
+starts at 73, and full-purse fixtures at 1,084; each conserves its own explicit opening.
+No fixture transfer is a proposed money source or hidden production subsidy.
+The hoarding week still funds seven shifts while customer spending runs out;
+no/low-demand tests demonstrate stopped future offers. Do not overstate those
+separate results or claim voluntary demand/enjoyment from scripts.
 
-**Current resume prompt:** “Read the Current delivery section and linked A02
-coffee service specification. The serving/receiving research, staffing model
-and static geometry probe are complete. Preserve the seven residents plus
-player, old money/obligations/saves and parallel ownership. Continue with the
-bounded named-pickup encounter and its acceptance cases in an authorized lane;
-do not restart the tea-table design or turn coffee purchases into runtime
-donations. Confirm through human walkthrough whether pickup conveys the social
-service. External payments/tokenisation are not part of this local slice.”
+### What must pass during implementation
+
+The canonical plan includes 39 integrated acceptance rows, exact source modules,
+state/money/clock/control rules, a four-step implementation sequence and human
+acceptance. Important gates include actual player movement (currently separate
+from NPC ticks), 1×/4×/+Hour equivalence, foreground dialogue pauses, final-minute
+work/payroll, stale references, input revocation, concurrency, v1/v2 restore/fork,
+full-purse claims, save failures/two tabs and knowledge visibility.
+
+Limit the initial pilot to seven game days, 50 new orders / 14 new shifts and two
+active service workers. New admissions stop at a proposed 3 MiB town size, with
+measured headroom reserved for a finite uninterrupted drain of existing
+obligations below the 8 MiB export limit. This is not an unlimited-control-history
+or browser-quota guarantee. Byte-budget checks must include control receipts;
+local Stop remains usable without another persisted record. Seven/30-day actual
+integration stress and a three-to-five-person diagnostic remain required.
+At pilot closure, unready orders without usable funded service receive an
+idempotent full refund; ready cups and wages remain protected. Full-purse and
+indefinitely paused claims may remain held: draining them is conditional on
+recipient capacity and voluntary participation, never forced spending/work.
+
+The right sign-off is **ready to build/test this bounded contract**, not
+“every possible issue has been excluded” or “ready to deploy.” A quiet café,
+hoarded money or retained cups can correctly leave no new work. Human play must
+establish whether the social encounter is understandable and worth repeating.
+
+### Baseline and next session
+
+Checkout `/Users/arwynhughes/Documents/ChatGPT/THE GAME/a02-economy`, branch
+`codex/a02-loop`; audit began at `7105913`. Fresh read-only GitHub checks on
+1 November still show main `a26714e03192a17acaa963d7d2681e74a1ac425b` and open
+A01 draft #63 at `46bbe821341448b9c68000572c093b9471b4a9af`, stacked on #62.
+The final chat names the local delivery commit. No remote publication is made.
+Original seven-day and three-cycle evidence remains linked in historical
+sections below; earlier coffee contracts are explicitly marked superseded.
+
+**Current resume prompt:** “Read the canonical A02 café readiness plan and its
+validation/evidence. The selected design is upfront funded 5-coin shifts plus
+2-coin coffee payments held until ready, with automatic routine service and
+explicit pickup. Preserve prior wages/debts, identities/saves and owner lanes.
+Start the bounded local implementation in an authorized owner checkout using
+its domain/money/clock interfaces and 39 acceptance rows; do not reintroduce
+2-per-cup wages or spend refundable preorders on payroll. Complete source/UI,
+storage/recovery and human gates before calling it playable-ready. No live
+inference, external payments/tokenisation or deployment follows from this
+handoff.”
 
 ## Historical original delivery and subsequent clarifications
 

@@ -1,0 +1,62 @@
+{
+  "status": "passed",
+  "node": "v24.22.1",
+  "sourceBase": "a26714e03192a17acaa963d7d2681e74a1ac425b",
+  "attendance": {
+    "shifts": 3,
+    "eligibleMinutes": 540,
+    "duplicateMinuteAttempts": 540,
+    "outsideWindowChecks": 6,
+    "allWithoutCoffee": true,
+    "openingTotal": 90,
+    "samples": [
+      {
+        "day": 1,
+        "startBytes": 69049,
+        "endBytes": 209565,
+        "afterReloadBytes": 209531,
+        "receipts": 250,
+        "transactions": 1,
+        "player": 9,
+        "cafe": 17,
+        "agreementId": "cafe:player:1:10",
+        "eligibleMinutes": 180
+      },
+      {
+        "day": 2,
+        "startBytes": 217614,
+        "endBytes": 358329,
+        "afterReloadBytes": 358367,
+        "receipts": 493,
+        "transactions": 2,
+        "player": 14,
+        "cafe": 12,
+        "agreementId": "cafe:player:2:18",
+        "eligibleMinutes": 180
+      },
+      {
+        "day": 3,
+        "startBytes": 365996,
+        "endBytes": 506865,
+        "afterReloadBytes": 506916,
+        "receipts": 733,
+        "transactions": 4,
+        "player": 19,
+        "cafe": 2,
+        "agreementId": "cafe:player:3:26",
+        "eligibleMinutes": 180
+      }
+    ]
+  },
+  "projection": {
+    "genericAdditiveProjectionReplaced": true,
+    "agentObjectRetained": true,
+    "staleReferenceMutationDetached": true
+  },
+  "save": {
+    "importExportLimitBytes": 8388608,
+    "observedLargestBytes": 506916,
+    "longTermExtrapolationQualified": false
+  },
+  "scope": "Actual existing engine APIs in disposable towns with synthetic date/player positioning and direct payroll ticks; not ordinary UI, continuous town scheduling, coffee integration, storage endurance or human play. No network or credentials."
+}
