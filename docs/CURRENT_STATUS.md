@@ -1,5 +1,39 @@
 # Current project status
 
+## A01.3 integrated activity qualification — locally verified, 1 November 2026
+
+Owner: Sol, chat `01a19673-df39-7451-bc65-17ca2eaf8459`. The user requested
+continuation after local A01.2. Reuse clean `a01-replay/` on new branch
+`codex/a01-qualify`, from freshly confirmed main `a26714e`. Explicit qualification
+inputs: #61 `cd44d16`, #62 `44745f4`, and A01.2 `e115b57` (runtime `ab7d893`).
+Local integration `7c3558e` preserves all ancestry. Only the status preambles
+conflicted; both are retained below and TownApp merged cleanly.
+
+Scope: one fresh complete automatic activity through normal browser controls,
+combined-candidate regression/browser/interface checks, a fail-closed action-only
+acceptance preflight, and reviewable source/hosted-test handoff. No new economic,
+provider, auth, save-schema or production changes. Astra's active A02 design
+session owns `a02-economy/`, branch `codex/a02-loop`; do not edit that lane.
+Original #61/#62 and A01.2 heads remain preserved. Planned source stack is
+#61 → #62 → A01 qualification; no merge or deployment is authorized by this
+local packet. Begin with zero live inference/spend, keep Grok paused, and treat
+29 October public assets and 27 October allowance counters as historical.
+Code `38d7442f31efed89ba6af25637a52f4537b3aa75` completes a fresh synthetic
+six-turn activity with one Start, fifteen decisions and three actual speakers.
+The natural controller stop and all-eight knowledge survive real reload/save.
+The action-only preflight fails closed and grants no capacity or authority.
+1,124 script +55 typed /441 overlapping town tests, 42 authority tests, sixteen
+SQL cases, 42 meeting journeys plus final strengthened desktop/phone activity
+rerun, built/mocked-AI browsers, four interfaces, accessibility and both builds
+pass. One inherited lint warning and 19 incomplete accessibility results remain.
+[Review](review/a01-activity-2026-11-01/README.md) ·
+[Handoff](handoffs/a01-activity-sol-2026-11-01.md) ·
+[Hosted packet](review/a01-activity-2026-11-01/hosted-trial.md).
+Source delivery is intended as a draft stacked on #62, requiring its exact-head
+CI. Main is unchanged. A fresh asset GET returned 403; live auth, provider pricing
+and current counters remain unverified. Next is reviewed source integration and
+the explicitly authorized, bounded hosted trial after fresh free headroom.
+
 ## A01.2 terminal failure — locally verified, 1 November 2026
 
 Owner: Sol, current chat `01a19673-df39-7451-bc65-17ca2eaf8459`, under the

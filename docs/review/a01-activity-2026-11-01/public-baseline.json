@@ -1,0 +1,10 @@
+{
+  "date": "2026-11-01",
+  "freshPublicAssetVerification": false,
+  "attempt": "read-only public GET",
+  "result": "HTTP 403 Forbidden",
+  "inheritedEvidence": "docs/review/a01-failure-replay-2026-10-29/public-assets.json",
+  "lastVerified": "2026-10-29",
+  "lastVerifiedRuntime": "01470e291065",
+  "liveInferenceCalls": 0
+}
