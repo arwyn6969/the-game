@@ -170,3 +170,113 @@ reconcile90 coins; conditional2-coin customer-funded café preparation is
 specified with stress evidence and acceptance cases. Policy adoption and A02
 implementation/human value testing remain open. No runtime, shared schema,
 merge, deployment or live inference changed.”
+
+## Next session: combine the café contract with Proof of Coffee
+
+Added after Arwyn asked whether to bring the parallel ideas together and to
+make a plan for the next session. This is a proposed integration plan, not
+adoption of the price or permission to change gameplay now.
+
+Read the chat **Research Proof of Coffee economy**
+(`01a196ad-9d79-74d1-a2e3-a1ca28008ade`) and its
+[research note](../../../planning/resident-development/PROOF_OF_COFFEE_RESEARCH_2026-11-01.md)
+alongside the A02 specification linked above. Both were inspected read-only.
+The research note was written while A02 was in progress; its statement that
+the economic comparison is still underway is historical. A02's design is now
+complete but its proposed policies remain unadopted. No separate visual chart
+was found; the inspected material is the chat and its saved research note.
+
+**Recommendation: combine the activity and receipt contract; stage the wider
+shared-world work separately.** A02 answers who wants the result, who pays,
+what earns a fee and why circulation can stop. Proof of Coffee adds a clear
+customer journey and a durable record of actual receipt. Two independent café
+payment systems would duplicate authority and create contradictory receipts.
+Conversely, making A02 depend on visitor admission, multiplayer and a live bot
+interface would postpone the small repeatable activity unnecessarily.
+
+### Scope of the next session
+
+Produce one reconciled, implementation-ready amendment to the existing A02
+specification, one customer/worker walkthrough and a single acceptance matrix.
+Use this checkout for the design work. Keep the existing specification and
+evidence as the baseline; do not rerun a broad economy study or overwrite the
+other research chat's note. Runtime implementation remains a bounded Sol task
+after the service and policy choices are adopted.
+
+1. **Refresh source and ownership.** Read START_HERE and Sol's current handoff;
+   verify the implementation baseline and avoid assuming A01/#61/#62 have
+   merged. Preserve `a01-replay/` and Sol's shared-record ownership.
+2. **Choose one deliverable.** Decide whether the first customer buys a prepared
+   table with a drink, as A02 specifies, or a collected cup, as the visitor
+   proposal suggests. Recommended default: keep the funded preparation unit,
+   let the customer collect the prepared drink at the same café point, and keep
+   the table/public activity as optional use. This proposed amendment must
+   specify its completion evidence and collection lifetime; do not silently
+   rename tea as coffee or expand the worker's paid scope to delivery.
+3. **Join the contracts.** One order ID links the quote, prepayment, hold,
+   worker agreement, preparation evidence, wage, customer collection receipt
+   and optional use. Preparation earns the agreed fee; receipt proves only
+   collection; sitting/consumption needs its own evidence. Keep current
+   cancellation protections and settle exactly once. Customer collection
+   avoids adding a hidden unpaid delivery task. A ready-but-uncollected order
+   retains the worker's wage and never earns a customer completion stamp.
+4. **Keep the local prototype bounded.** Existing player/residents, one
+   outstanding financial order and at most one preparation/day. A second
+   customer sees unavailable capacity and is not charged. An informational
+   ticket may show state, but a multi-customer queue is deferred. Decide
+   separately whether an uncollected ready drink occupies physical capacity;
+   releasing the financial slot must not silently erase an earlier drink.
+5. **Specify the handoff and test it on paper/with existing synthetic tools.**
+   Walk through normal collection, customer refusal, departure before/after
+   worker acceptance and preparation, two simultaneous requests, interruption,
+   reload/lost-response retry, full wage/refund purse, stale/forged collection,
+   expiry, no demand and hoarding. Preserve money, identities and prior claims.
+   End with exact changes to the A02 acceptance matrix and one bounded Sol
+   implementation prompt, rather than two competing specifications.
+
+The opening choices are **service scope** and whether to adopt the proposed
+**2-coin price / 2-coin worker fee / zero retained margin**. A Proof of Coffee
+receipt does not answer either question and adds no new source of coins.
+The material-supply abstraction must stay explicit. If those choices remain
+open, record them precisely and finish the reconciled contract without partial
+runtime changes.
+
+### Shared definitions and later boundary
+
+| Record | Exact meaning | Financial effect |
+| --- | --- | --- |
+| Order/ticket | Named customer requested the specified service under accepted terms | Only its disclosed prepayment/hold |
+| Preparation receipt | Bound worker completed the agreed preparation | Earns the funded fee once, even if customer subsequently leaves |
+| Collection receipt / Proof of Coffee | The authorized customer actually received this order | Informational; no customer coin reward or additional worker payment |
+| Use/follow-up record | Actual consumption, seating or public activity occurred, or the collection/use window expired | No implied purchase, affection, verification of truth or new wage |
+
+Use world/character/order/action IDs and a rules version from the outset.
+A local prototype receipt is evidence under the local engine's rules; it is
+not a tamper-resistant shared-server proof or proof of an independent person.
+Preserve the authority boundary for a later adapter without building that
+adapter merely to show the local café interaction.
+
+After the local activity is useful and dependable, the shared-server packet
+can add authoritative time, a real queue, two clients/restart recovery,
+operator-level limits, revocable bot control and explicitly admitted visitors.
+Its separate acceptance includes human reclaim, stale delegated commands,
+related bots, and copied local saves that must not mint shared funds. Visitor
+starting funds need their own explicit conserved source/admission policy.
+Neither fresh visitor purses nor customer reward stamps may quietly become
+the cure for exhausted business funding. Blockchain integration, POA linkage
+and real-asset rewards have no requirement in this minimum plan.
+
+The human question remains: **does the customer want this café encounter
+without being paid to visit?** Test whether people value the service and choose
+another visit; a receipt alone proves neither usefulness nor enjoyment. If
+coffee turns into a compulsory chore or an unnecessary gate to work, retain
+the useful receipt machinery and change or drop that encounter.
+
+Resume prompt: “Read the A02 handoff's Next session section, its specification
+and the Proof of Coffee research note. Reconcile them into one bounded local
+café order/collection contract and acceptance matrix. Preserve preparation
+wages, optional participation and the existing eight identities. Resolve the
+service scope and price policy explicitly. Prepare one implementation handoff
+for Sol; keep live queues, visitors, bot credentials and shared-server work in
+a later packet. Do not change production or shared planning records in this
+design session.”
