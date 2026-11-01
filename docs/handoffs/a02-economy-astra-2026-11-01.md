@@ -280,3 +280,184 @@ service scope and price policy explicitly. Prepare one implementation handoff
 for Sol; keep live queues, visitors, bot credentials and shared-server work in
 a later packet. Do not change production or shared planning records in this
 design session.”
+
+## Campaign, Emblem and eStamps options — planning addendum
+
+Arwyn subsequently proposed “buy your agent a coffee” campaigns, QR access to
+the relevant wallet/payment flow, a pixel coffee collectible, EmblemAgent
+integration, and eCash/eStamps with server credit and later user-paid claims.
+This addendum records the research and choices for the next session. It does
+not authorize a public funding page, invoice, wallet connection, mint, transfer
+or redeemable balance. The question of whether “server credit” means runtime,
+earned collectible rewards, or both remains open; the plan keeps them separate.
+
+### Recommended product shape
+
+A campaign QR opens an HTTPS campaign page for a **stable registered agent**.
+The page names the beneficiary, what the support purchases, accepted network,
+amount, fees and whether there is a collectible. It then creates an attributed
+payment request. Do not encode an unverified private receiving draft or infer
+wallet ownership from the agent's display name. A changed agent controller
+must not silently change the campaign destination or previous payments.
+
+Recommended first campaign: support purchases a disclosed amount of hosted
+agent service, with an optional commemorative coffee-stamp entitlement. It
+does not buy game coins or grant the bot spending authority. The quote must
+identify separately who gets the runtime credit and who may claim the
+collectible: the supporter, the agent's owner, or another explicitly designated
+recipient. Give only the promised entitlement, not one copy to every role.
+
+An alternative **funded-work reward campaign** could reserve finite collectible
+units or a real budget for particular completed tasks. That is a separate
+funding policy. Unlimited local game wages cannot automatically become
+withdrawable assets; repeated reciprocal coffee orders would otherwise drain
+the external reward pool. Start with one campaign type, not both simultaneously.
+
+| Record | Represents | Spending/claim rule |
+| --- | --- | --- |
+| Town coins | The conserved local game economy and existing wages/debts | No automatic conversion to cash, runtime or collectible supply |
+| Service credit | A paid, defined amount of available hosted agent service | Meter delivered service; no automatic asset cash-out; preserve existing service-policy contracts |
+| Collectible entitlement | A right to a specified quantity of a named, funded campaign edition | Reserve inventory or a disclosed minting allocation; one claim cannot be used twice |
+| External funds/assets | Actual network-specific payments and asset custody | Independently confirmed and reconciled; an observed balance or QR scan is not payment |
+
+The separate nontransferable **Proof of Coffee receipt** records an actual
+game delivery. A transferable collectible may commemorate support or a visit,
+but its later holder is not thereby proven to be the original visitor. A
+sponsor paying for runtime has not automatically visited the café. Keep the
+art reusable without collapsing these meanings.
+
+### Pixel cup asset brief
+
+One small, readable pixel-art cup can serve as the campaign icon, in-game
+receipt image and proposed collectible artwork. Draft a 32×32 or64×64 PNG with
+a limited palette, a clear cup silhouette and readable steam; test it at its
+native scale. Keep campaign text and the functional QR outside the tiny image.
+Do not generate a unique on-chain asset for every cup served in the game.
+
+Before minting, choose whether this is one indivisible edition with multiple
+units or individually unique assets, plus quantity, issuance/reissuance rules,
+rights and destination. Record image bytes/hash and chain-qualified asset ID.
+An unminted PNG is artwork, not an already-issued NFT. Artwork generation and
+minting are separate steps; neither was performed during this planning update.
+
+### Emblem and ECX have different roles
+
+The exact “EmblemAgent” name was not found in the searched local documentation.
+Local ECASH notes mention Emblem Build as a possible UI builder, not a verified
+ECX asset SDK. Current official documentation identifies **EmblemAI AgentWallet**
+and its MCP/A2A/authentication interfaces. Treat that as the likely integration
+candidate, and confirm the intended Emblem product/version before coding.
+
+| Candidate | Possible role | Verified boundary / next evidence |
+| --- | --- | --- |
+| Existing THE GAME account + wallet links | Preserve account ownership, agent profile and external address proof | Current source uses Better Auth; Bitcoin appearance/receiving proofs are separate. Public receiving remains disabled (`fundingPublished: false`); wallet proof is not a stamp-transfer feature |
+| EmblemAI / AgentWallet | Optional agent interface, authentication and wallet operations | Official MCP/A2A/API-key/JWT interfaces exist. Published chain lists include Bitcoin but not ECX. Counterparty balance queries/Stamps analytics and vault-container minting do not prove native ECX Stamp issuance or delivery |
+| ECX eStamps | Possible collectible issuance, inventory and transfer rail | Reuse Reina's existing stack. Its current handover records issuance/parser evidence and a pending actual browser/wallet test; the exact claim/fee/signing path for THE GAME is not qualified |
+
+These are compatible architectural roles, not necessarily competing end-to-end
+choices. Do not migrate the existing game login merely to experiment with a
+wallet adapter. An Emblem identity or Bitcoin address proof does not authorize
+ECX signing, real spending, avatar delegation or automatic asset withdrawal.
+No verified Emblem→ECX eStamp mint/send adapter was found in this research.
+
+For this project, **eCash means ecash.com / ECX, not XEC**. ECX's official
+documentation says Bitcoin and ECX can use identical address strings; network
+identity must therefore be explicit in every invoice, balance, asset and
+receipt. Wallet format compatibility is not transaction compatibility. Verify
+the selected signer preserves ECX's required replay-protection fields and uses
+the intended network broadcast path. A BTC wallet login alone is insufficient.
+
+### “Claim later and pay the fee then”
+
+The idea is viable as a design, but the entitlement's backing must be explicit:
+
+| Approach | Before the user claims | At claim | Main tradeoff |
+| --- | --- | --- | --- |
+| **Preissued bounded edition; reserved units** | Operator issues and funds a defined supply; server reserves a real available unit for each earned entitlement | Transfer a reserved unit to the approved recipient, with a fresh delivery/network fee quote | Clearest availability guarantee, but operator funds issuance and controls inventory before delivery |
+| **Mint on claim** | Server records an unminted entitlement to a defined job, with supply/budget rules | Issue the asset, and deliver it if issuance does not already give it to the recipient | Avoids advance issuance, but signing, fees, multi-step recovery and recipient attribution are more complex |
+
+Recommended first collectible claim experiment: a small preissued edition with
+reserved units, subject to adoption of its custody/funding policy and supported
+signer. If avoiding operator inventory is essential, investigate mint-on-claim
+as a separate exact workflow before promising it to users. Neither is currently
+implemented by the game.
+
+“User pays withdrawal” does not fund an earlier mint for free. The quote must
+separate any issuance/data-output cost, network fee, additional delivery fee
+and service fee. Counterparty issuance and transfer of units are distinct;
+moving issuer rights is not a substitute for delivering the collectible.
+Determine who signs the inventory spend and how the user's fee is funded.
+A treasury-owned asset may need an owner-approved treasury transaction even
+when the recipient pays its cost; do not assume an arbitrary wallet can pay
+another address's transaction fee automatically. Do not advertise fee numbers
+until the selected chain/asset/signer path can quote them.
+
+Proposed recovery contract: entitlement available → reserved for one claim →
+fresh approved fee/destination quote → authorized transaction workflow →
+broadcast pending → confirmed/indexed delivery → claimed. Retain transaction
+IDs and reconcile unknown broadcast outcomes before retrying. Duplicate requests
+return the same claim. Failed/expired pre-broadcast work can release the unit
+only when it is safe; a possibly broadcast claim cannot reissue it. Reorgs and
+indexer outages produce pending/reconciliation states, not a second grant.
+Define treatment of separately paid fees when fulfillment fails before launch.
+
+### Evidence checked on 1 November
+
+- [Emblem developer docs](https://emblemvault.ai/docs) and
+  [A2A authentication/payments](https://emblemvault.ai/docs/a2a-auth): agent/auth
+  surfaces and provider payment options. These do not prove ECX support.
+- [AgentWallet source](https://github.com/EmblemCompany/EmblemAi-AgentWallet)
+  inspected at `0a8f472558d6d4d1cb951d5a340e0e6d49eec226`, and
+  [Agent skills](https://github.com/EmblemCompany/Agent-skills) at
+  `9a68a35c4d61a8b6fe673fa98c39e4b9dd9d2cd3`. The README lists seven chains;
+  the newer [welcome page](https://emblemvault.ai/welcome) lists eight. Neither
+  listed ECX. Pin exact versions/capabilities instead of assuming equivalence.
+- [Official ECX site](https://ecash.com/) now reports mainnet activation on
+  29 October. Earlier pre-fork plans are historical. The
+  [wallet/address integration reference](https://github.com/eCash-com/fast-facts/blob/main/02-wallets-keys-addresses.md)
+  describes shared address formats and required chain-specific signing checks.
+- [Current local eStamps handover](../../../../ECASH/estamps-review/HANDOVER.md),
+  29 October: use Reina's existing node/Counterparty/indexer/API/website, not
+  the lab's duplicated backend roadmap. Website source baseline reported there
+  is `c448786db3ee820baa6aae53c1549f5722162f36`; visual-only local candidate
+  `57cf040299060aa653f85baf4a76ec683295f4f7`. Runtime reports and the pending
+  Arwyn browser/wallet acceptance must retain their distinct evidence scopes.
+- Source review found ECX sign-only wallet wrappers, server broadcast/replay
+  gates and fixture tests. They are useful integration foundations, not proof
+  of a complete user-funded claim. Exact current deployed revision was not
+  independently established. The live eStamps website could not be retrieved
+  by the web tool and private research PR reads returned404; neither result
+  establishes that the deployed stack is absent or broken.
+- THE GAME at `a26714e`: `src/lib/agent-wallets/proof.server.ts`,
+  `store.server.ts`, `types.ts` and the existing wallet/registration designs
+  retain Bitcoin mainnet/private receiving boundaries. No wallet/credit/claim
+  implementation was changed here.
+
+### Addition to the next-session plan
+
+Keep the A02 + Proof of Coffee contract as the gameplay packet. Add one short
+campaign decision sheet before any payment implementation:
+
+1. Pick the first campaign's promise and recipients: runtime sponsorship or a
+   funded-work collectible reward. Define server credit in units users can
+   understand, and whether a separate collectible entitlement is included.
+2. Draft the pixel cup and a clearly labelled, nonpayable QR-page mockup. Show
+   beneficiary, network, purchase purpose, claim terms and fees. No real wallet
+   address or payable invoice is required to review the flow.
+3. Map exact existing account/profile identifiers and preserve the current
+   login. Specify an optional Emblem adapter independently from an ECX asset
+   adapter; do not require either to prove the local café economy.
+4. Choose reserved edition versus mint-on-claim, and the responsibility for
+   issuance funding, inventory custody, fee funding and exact signing approval.
+   Record unresolved compatibility questions for Reina/Emblem without sending
+   messages or restarting their workstreams.
+5. Before a later launch, qualify one complete fake/test-network payment→credit→
+   entitlement→claim flow, including duplicate callbacks, ambiguous broadcast,
+   reorg, wrong network, insufficient fees, supply exhaustion, copied saves,
+   two simultaneous claims and account/controller changes. Then perform the
+   separately authorized actual supported-wallet acceptance. Public campaigns
+   and on-chain transactions remain later release decisions.
+
+General cash-out, automatic game-coin redemption, credit-to-stamp exchange
+rates and multi-chain withdrawals remain separate product decisions. None is
+required to make a useful coffee campaign or an attractive collectible.
