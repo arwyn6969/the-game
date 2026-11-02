@@ -21,6 +21,7 @@ const TOOL_LABELS = [
   "Agent wallets",
   "Stamp identity",
   "Help & privacy",
+  "Café",
 ];
 const CLOCK_LABELS = ["Pause", "1×", "4×", "Hour"];
 // Same bounded browser-only transport approach as quality-ai-browser.mjs.
@@ -819,10 +820,13 @@ export async function runSkinChecks(browser, url, outputDirectory) {
       });
       await page.getByRole("button", { name: "Close conversation", exact: true }).click();
       for (const skin of SKINS) {
-        await check(`${skin.label}: all seven toolbar controls remain reachable`, async () => {
-          await chooseSkin(page, skin);
-          return reachableTools(page, viewport.name === "phone");
-        });
+        await check(
+          `${skin.label}: all ${TOOL_LABELS.length} toolbar controls remain reachable`,
+          async () => {
+            await chooseSkin(page, skin);
+            return reachableTools(page, viewport.name === "phone");
+          },
+        );
         await check(`${skin.label}: real Library, Journal and travel panels`, async () => {
           await chooseSkin(page, skin);
           await tools(page).getByRole("button", { name: "Library project", exact: true }).click();

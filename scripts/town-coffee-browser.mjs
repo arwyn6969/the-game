@@ -429,8 +429,12 @@ try {
     await waitStored(page, (town) => town.coffee?.enabled);
     await closePanel(page);
     await page.getByRole("button", { name: "View Kevin's character card", exact: true }).click();
-    await page.getByRole("tab", { name: "Together", exact: true }).click();
-    await page.locator("summary").filter({ hasText: "Choices with Kevin" }).click();
+    await page.getByRole("button", { name: "Review choices with Kevin", exact: true }).click();
+    assert.equal(
+      await page.locator("details").filter({ hasText: "Choices with Kevin" }).getAttribute("open"),
+      "",
+      "Review choices opens the current terms instead of toggling them closed",
+    );
     await page.getByRole("button", { name: "Accept cafe shift · 5", exact: true }).click();
     await waitStored(page, (town) =>
       town.economy.work.agreements.some(

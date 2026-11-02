@@ -1,0 +1,71 @@
+{
+  "date": "2026-11-02",
+  "node": "24.22.1",
+  "sourceTree": "58599a4458e03ef4999ed19e51e93c667198ec03",
+  "scriptTests": 1177,
+  "typedTests": 55,
+  "authorityTests": 42,
+  "typecheck": "pass",
+  "lint": "zero errors; one inherited unused-disable warning",
+  "nodeBuild": "pass; migration skipped",
+  "diagnostics": "pass; observations only",
+  "browserReports": {
+    "generalBrowser": {
+      "path": "artifacts/quality-browser/results.json",
+      "sha256": "95f1dbf26d897c8100d82a47ec39fa3976075533e379703da5fa1a4b43a82a95",
+      "failures": [],
+      "journeys": 2
+    },
+    "meetings": {
+      "path": "artifacts/discussion-ui/browser-results.json",
+      "sha256": "22b9cb0ac6e683253391dbcb9190de02e0cae36e66bd101e5f126c882749a4f2",
+      "failures": [],
+      "journeys": 42
+    },
+    "cafe": {
+      "path": "artifacts/a02-cafe/browser/run-77342-1793626498343/results.json",
+      "sha256": "19d82f99d454394f5e53556f1328712ea1845fd8563c216a336428f30a141e58",
+      "failures": [],
+      "journeys": 2
+    },
+    "personalModels": {
+      "path": "artifacts/personal-model-browser/results.json",
+      "sha256": "46199abafe42562f34354e4696d18f512ad601f18c88a54d7672971cde01af15",
+      "failures": [],
+      "journeys": 2
+    },
+    "mockedHostedAI": {
+      "path": "artifacts/quality-ai-browser/results.json",
+      "sha256": "bf862c341db4d3f0bc822a243b1e46d1498924c375b3a7745da357362d9d4c4c",
+      "failures": [],
+      "journeys": 2
+    },
+    "accessibility": {
+      "path": "artifacts/accessibility-browser/results.json",
+      "sha256": "0de284db58487ad5032f807bc58d627288cc80ec40d20beda73a837383a85433",
+      "failures": [],
+      "journeys": 5,
+      "summary": {
+        "auditedSurfaces": 54,
+        "wcagViolations": 0,
+        "bestPracticeViolations": 0,
+        "incompleteRuleResults": 19,
+        "essentialChecks": 27,
+        "failedChecks": 0,
+        "failures": 0,
+        "externalBrowserNetworkRequests": 0
+      }
+    },
+    "interfaces": {
+      "path": "artifacts/ui-skins-integrated/report.json",
+      "sha256": "d8dcbed0fb6dc8a90562ea466594e6a3cc4454434c2bdc4a5fad888881cc6023",
+      "failures": [],
+      "journeys": 2
+    }
+  },
+  "liveInferenceCalls": 0,
+  "deployment": "not performed",
+  "cloudflareBuild": "pass; no migration or deployment",
+  "qualificationPhase": "local validation before PR publication",
+  "githubCI": "Required on the published PR head before main integration; see the consolidation PR checks."
+}

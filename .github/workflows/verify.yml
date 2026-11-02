@@ -29,6 +29,8 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: node scripts/quality-browser.mjs
+      - name: Built café customer, worker and recovery journeys
+        run: node scripts/town-coffee-browser.mjs
       - name: Read-only stamp appearance browser checks
         run: |
           npm run test:browser:stamps
@@ -89,6 +91,7 @@ jobs:
           name: game-browser-quality
           path: |
             artifacts/quality-browser
+            artifacts/a02-cafe/browser
             artifacts/quality-ai-browser
             artifacts/personal-model-browser
             artifacts/discussion-ui

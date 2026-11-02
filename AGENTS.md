@@ -5,7 +5,7 @@ THE GAME is a persistent, open-ended pixel town with seven residents and the pla
 ## Start and scope
 
 - Use Node 24 and the committed npm lockfile. Setup: `npm ci`. Development: `npm run dev` (the Grok preview contract is port 8080).
-- Read `docs/CURRENT_STATUS.md` for the current baseline and active work, `docs/BRANCHES.md` for branch lifecycle, and `docs/COLLABORATION.md` for coordination. `docs/CONSOLIDATION.md` and `docs/BASELINE.md` are historical receipts. Read the relevant files, rather than every document on every edit.
+- Read `docs/CURRENT_STATUS.md` for the current baseline and active work, `docs/BRANCHES.md` for branch lifecycle, and `docs/COLLABORATION.md` for coordination. `docs/CONSOLIDATION.md` records the current integrated inputs; `docs/BASELINE.md` is a historical receipt. Read the relevant files, rather than every document on every edit.
 - Keep work in your own checkout and feature branch. Preserve user changes. Do not reset or force-push someone else's work.
 - Start each bounded task from current `origin/main`; record its owner, branch/PR, base/head and next acceptance evidence in `docs/CURRENT_STATUS.md`. Update that record when ownership, integration or deployment changes. Use stacked branches only for an explicit dependency; retire completed refs after preservation and dependency checks. Do not introduce a permanent `develop` branch.
 - Implement and test the assigned milestone; make routine, reversible decisions without repeated approval requests. Leave a reviewable diff and an honest account of what ran.
