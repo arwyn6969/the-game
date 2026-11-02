@@ -1,0 +1,44 @@
+{
+  "source": "c183e32d3dc4de923490471da2d30a66caf788a7",
+  "at": "2026-11-02T14:46:43.325Z",
+  "driverNote": "Initial mobile attempt used mouse click on touch movement control and timed out. Rechecked with touch input matching the existing browser test.",
+  "passed": true,
+  "checks": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "status": 200,
+      "errors": [],
+      "checksPassed": [
+        "entry",
+        "movement",
+        "pause",
+        "Help build c183e32",
+        "cafe control",
+        "download",
+        "reload",
+        "no horizontal overflow"
+      ]
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "errors": [],
+      "checksPassed": [
+        "entry",
+        "movement",
+        "pause",
+        "Help build c183e32",
+        "cafe control",
+        "download",
+        "reload",
+        "no horizontal overflow"
+      ]
+    }
+  ]
+}

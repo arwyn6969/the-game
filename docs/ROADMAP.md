@@ -4,7 +4,7 @@ Updated 2 November 2026. [Current status](CURRENT_STATUS.md) owns source and dep
 
 ## Now: a dependable week in town
 
-The controls/work/meeting stack is merged; this source integrates the café and personal-model controls. Require passing combined-source CI before merging, then follow the three bounded acceptance packets:
+The consolidated controls, work, meeting, café and personal-model source passed CI, merged in #67 and was deployed as `c183e32` on 2 November. Follow the three bounded acceptance packets:
 
 | Order | Outcome                            | Evidence                                                                                                                                                                  |
 | ----- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
