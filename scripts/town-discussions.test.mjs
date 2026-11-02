@@ -403,6 +403,195 @@ test("a paused meeting still allows own Stop listening and Leave without resumin
   assert.deepEqual(d.validateDiscussions(town), []);
 });
 
+function retainedFailures(town, count) {
+  for (let index = 0; index < count; index++) {
+    const job = d.nextDiscussionJob(town);
+    assert.ok(d.markDiscussionRequest(town, job));
+    d.recordDiscussionUsage(town, job, {
+      success: false,
+      attempts: 1,
+      totalTokens: 42,
+      elapsedMs: 0,
+    });
+    d.pauseDiscussion(town, "Synthetic earlier failure.");
+    if (index < 15) ok(d.resumeDiscussion(town));
+  }
+}
+
+function savedGathered() {
+  const town = gathered();
+  ok(command(town, "northern", "speak", { text: "Synthetic prior terminal-test statement." }));
+  return save.parseTownFile(save.exportTown(town));
+}
+
+test("final interruption closes once, retains accounting and rejects late valid speech", () => {
+  const town = savedGathered();
+  for (const id of ["arwyn", "sub"]) ok(command(town, id, "listen"));
+  retainedFailures(town, 15);
+  const before = structuredClone(town);
+  const job = d.nextDiscussionJob(town);
+  assert.equal(job.agentId, "northern");
+  assert.ok(
+    d
+      .discussionObservation(town, job.agentId)
+      .availableActions.some((action) => action.kind === "speak"),
+  );
+  assert.ok(d.markDiscussionRequest(town, job));
+  const usage = structuredClone(meeting(town).usage);
+  d.pauseDiscussion(town, "Synthetic cancellation.");
+  assert.equal(meeting(town).status, "closed");
+  assert.match(meeting(town).reason, /stopped at its sixteen-decision limit/);
+  assert.deepEqual(meeting(town).usage, usage, "Unknown attempts remain unknown, not refunded");
+  const after = structuredClone(town);
+  d.pauseDiscussion(town, "Duplicate cancellation.");
+  assert.equal(
+    d.applyDiscussionResult(town, {
+      ...job,
+      mind: "grok",
+      decision: { kind: "speak", text: "Synthetic cancelled final speech." },
+    }).ok,
+    false,
+  );
+  assert.deepEqual(town, after);
+  const withoutDiscussion = ({ discussions: _discussions, ...rest }) => rest;
+  assert.deepEqual(withoutDiscussion(town), withoutDiscussion(before));
+  assert.deepEqual(meeting(town).utterances, meeting(before).utterances);
+  d.recordDiscussionUsage(town, job, {
+    success: false,
+    attempts: 1,
+    totalTokens: 42,
+    elapsedMs: 0,
+  });
+  assert.equal(meeting(town).usage.requests, 16);
+  assert.equal(meeting(town).usage.providerAttempts, 16);
+  assert.equal(meeting(town).usage.failures, 16);
+  assert.deepEqual(save.parseTownFile(save.exportTown(town)), town);
+});
+
+test("a legal sixteenth speech commits to its actual audience once before terminal closure", () => {
+  const town = savedGathered();
+  for (const id of ["arwyn", "sub"]) ok(command(town, id, "listen"));
+  retainedFailures(town, 15);
+  const before = structuredClone(town);
+  const job = d.nextDiscussionJob(town);
+  assert.equal(job.agentId, "northern");
+  assert.ok(
+    d
+      .discussionObservation(town, job.agentId)
+      .availableActions.some((action) => action.kind === "speak"),
+  );
+  assert.ok(d.markDiscussionRequest(town, job));
+  const result = {
+    ...job,
+    mind: "grok",
+    decision: { kind: "speak", text: "Synthetic final permitted statement." },
+  };
+  ok(d.applyDiscussionResult(town, result));
+  d.recordDiscussionUsage(town, job, {
+    success: true,
+    attempts: 1,
+    totalTokens: 42,
+    elapsedMs: 0,
+  });
+  assert.equal(meeting(town).status, "closed");
+  assert.match(meeting(town).reason, /meeting is complete/);
+  assert.equal(meeting(town).decisions, 16);
+  assert.equal(meeting(town).usage.requests, 16);
+  assert.equal(meeting(town).usage.providerAttempts, 16);
+  assert.equal(meeting(town).usage.failures, 15);
+  assert.equal(meeting(town).usage.attemptsUnknown, 0);
+  assert.deepEqual(meeting(town).utterances.slice(0, -1), meeting(before).utterances);
+  const spoken = meeting(town).utterances.at(-1);
+  assert.equal(spoken.text, result.decision.text);
+  assert.deepEqual([...spoken.recipientIds].sort(), ["arwyn", "sub"]);
+  for (const agent of town.agents) {
+    assert.equal(agent.money, person(before, agent.id).money);
+    assert.equal(
+      agent.memories.filter((entry) => entry.text.includes(result.decision.text)).length,
+      Number(["northern", "arwyn", "sub"].includes(agent.id)),
+    );
+    for (const memory of person(before, agent.id).memories)
+      assert.deepEqual(
+        agent.memories.find((entry) => entry.id === memory.id),
+        memory,
+      );
+  }
+  assert.deepEqual(town.identityRegistry, before.identityRegistry);
+  assert.deepEqual(town.economy, before.economy);
+  assert.deepEqual(town.favors, before.favors);
+  const after = structuredClone(town);
+  assert.equal(d.applyDiscussionResult(town, result).ok, false);
+  d.recordDiscussionUsage(town, job, { success: true, attempts: 1, totalTokens: 42, elapsedMs: 0 });
+  assert.deepEqual(town, after);
+  assert.equal(d.nextDiscussionJob(town), null);
+  // Fresh speech memories acquire these explicit false defaults on first load.
+  // Compare every field against that documented normalization, then prove a
+  // second load is exact rather than normalizing both sides of the assertion.
+  for (const agent of after.agents)
+    for (const memory of agent.memories) {
+      memory.protected ??= false;
+      memory.seed ??= false;
+    }
+  const restored = save.parseTownFile(save.exportTown(town));
+  assert.deepEqual(restored, after);
+  assert.deepEqual(save.parseTownFile(save.exportTown(restored)), restored);
+});
+
+test("reload closes old exhausted pauses and unknown final requests without fabricating outcomes", () => {
+  for (const pending of [false, true]) {
+    const town = savedGathered();
+    retainedFailures(town, 15);
+    const job = d.nextDiscussionJob(town);
+    assert.ok(d.markDiscussionRequest(town, job));
+    if (!pending) {
+      // Historical valid pre-fix exhausted pause, prepared without the new helper.
+      meeting(town).status = "paused";
+      meeting(town).pending = null;
+      meeting(town).epoch++;
+    }
+    const before = structuredClone(town);
+    const restored = save.parseTownFile(save.exportTown(town));
+    assert.ok(restored);
+    assert.equal(meeting(restored).status, "closed");
+    assert.equal(meeting(restored).pending, null);
+    assert.equal(meeting(restored).epoch, meeting(before).epoch + 1);
+    assert.deepEqual(meeting(restored).usage, meeting(before).usage);
+    assert.deepEqual(restored.agents, before.agents);
+    assert.deepEqual(restored.identityRegistry, before.identityRegistry);
+    assert.deepEqual(restored.economy, before.economy);
+    assert.deepEqual(meeting(restored).utterances, meeting(before).utterances);
+    assert.equal(d.nextDiscussionJob(restored), null);
+    assert.equal(d.resumeDiscussion(restored).ok, false);
+    assert.deepEqual(
+      save.parseTownFile(save.exportTown(restored)),
+      restored,
+      "Terminal recovery is idempotent on subsequent reloads",
+    );
+  }
+});
+
+test("the valid final result still commits before closure while below-cap interruptions pause", () => {
+  const town = gathered();
+  retainedFailures(town, 15);
+  const job = d.nextDiscussionJob(town);
+  assert.ok(d.markDiscussionRequest(town, job));
+  assert.equal(
+    meeting(town).status,
+    "active",
+    "Marking alone must not cancel a valid final result",
+  );
+  ok(d.applyDiscussionResult(town, { ...job, mind: "grok", decision: { kind: "pass" } }));
+  assert.equal(meeting(town).status, "closed");
+  assert.match(meeting(town).reason, /meeting is complete/);
+  const stopped = gathered();
+  const first = d.nextDiscussionJob(stopped);
+  assert.ok(d.markDiscussionRequest(stopped, first));
+  d.pauseDiscussion(stopped, "Below-cap failure.");
+  assert.equal(meeting(stopped).status, "paused");
+  ok(d.resumeDiscussion(stopped));
+  assert.equal(meeting(stopped).decisions, 1);
+});
+
 test("invalid or oversized discussion payload preserves the exact raw recovery file", () => {
   const town = gathered();
   ok(command(town, "northern", "speak", { text: "A real recorded statement." }));

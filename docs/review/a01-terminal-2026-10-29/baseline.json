@@ -1,0 +1,62 @@
+{
+  "observedAt": "2026-10-29T17:13:55.150219+00:00",
+  "packet": "F00 / A01.2",
+  "main": "a26714e03192a17acaa963d7d2681e74a1ac425b",
+  "sourceBase": "967d2bba8843b563de16c831cba98f1277449aa1",
+  "branch": "codex/a01-terminal",
+  "checkout": "/Users/arwynhughes/Documents/ChatGPT/THE GAME/a01-replay",
+  "owner": "GPT-6.1 Sol / 01a18874-463c-7be1-80a3-ed7eefdace15",
+  "reuse": "Clean isolated a01-replay checkout reused on a new branch; historical codex/a01-replay remains at 967d2bb",
+  "dependency": "Explicit local A01.1 replay dependency; no new PR/CI; no dependency on #61/#62/#59",
+  "ownership": "Framework sequence 5 reports A01.2 unassigned. Relevant social/UI worktrees remain clean; only this meeting lifecycle and matching feedback path is scoped. Grok/other agents not woken or messaged.",
+  "prs": [
+    {
+      "number": 61,
+      "head": "cd44d165002ddd75b6c92e5ce0efb9ac4fecd568",
+      "state": "open/ready",
+      "base": "main",
+      "verify": "https://github.com/arwyn6969/the-game/actions/runs/40506547367",
+      "conclusion": "success"
+    },
+    {
+      "number": 62,
+      "head": "44745f42719b66230e6ee99d248c8bbe79c2359c",
+      "state": "open/draft",
+      "base": "codex/player-controls-feedback-20261027",
+      "verify": "https://github.com/arwyn6969/the-game/actions/runs/40865099031",
+      "conclusion": "success"
+    }
+  ],
+  "deployment": {
+    "publicSource": "01470e2910657cbf9650adb0a2291ab5da89b056",
+    "freshPageReferencesMatch": true,
+    "freshAssets": [
+      {
+        "path": "/thegame/assets/client-BrSeqjXl.js",
+        "sha256": "fa7b603dfdb9987c0d89b0e8460897485417cf62e360e2da2b4b98f4bfb17663",
+        "matches": true
+      },
+      {
+        "path": "/thegame/assets/index-BhLXmtgM.js",
+        "sha256": "d53642bdf9806ee666417aa3c45be4c7d45d25301ce8649a715425b12b27db90",
+        "matches": true
+      },
+      {
+        "path": "/thegame/assets/routes-CI-7KEet.js",
+        "sha256": "6e4b2605f42681bb1d70638b3040e636dc2c7ddd5a53c6e997bab66b2facab47",
+        "matches": true
+      },
+      {
+        "path": "/thegame/assets/styles-1d7yAuM6.css",
+        "sha256": "d59f16298ad2f04f485374656474a7e35ea19da24638689624ac49674898ba7c",
+        "matches": true
+      }
+    ],
+    "worker": "c4b89bfc-d9e4-48d1-ba1d-930280eaa8f5",
+    "workerEvidence": "Inherited 27 October receipt; no new control-plane check"
+  },
+  "liveInferenceCalls": 0,
+  "spend": 0,
+  "providerHeadroom": "Unverified; no live trial authorized by this packet",
+  "baselineReplay": "before.json replays original failure at the retained A01.1 implementation before changes"
+}

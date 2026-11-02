@@ -1,5 +1,122 @@
 # Current project status
 
+## A01.3 integrated activity qualification — draft published, 1 November 2026
+
+Owner: Sol, chat `01a19673-df39-7451-bc65-17ca2eaf8459`. The user requested
+continuation after local A01.2. Reuse clean `a01-replay/` on new branch
+`codex/a01-qualify`, from freshly confirmed main `a26714e`. Explicit qualification
+inputs: #61 `cd44d16`, #62 `44745f4`, and A01.2 `e115b57` (runtime `ab7d893`).
+Local integration `7c3558e` preserves all ancestry. Only the status preambles
+conflicted; both are retained below and TownApp merged cleanly.
+
+Scope: one fresh complete automatic activity through normal browser controls,
+combined-candidate regression/browser/interface checks, a fail-closed action-only
+acceptance preflight, and reviewable source/hosted-test handoff. No new economic,
+provider, auth, save-schema or production changes. Astra's active A02 design
+session owns `a02-economy/`, branch `codex/a02-loop`; do not edit that lane.
+Original #61/#62 and A01.2 heads remain preserved. Planned source stack is
+#61 → #62 → A01 qualification; no merge or deployment is authorized by this
+local packet. Begin with zero live inference/spend, keep Grok paused, and treat
+29 October public assets and 27 October allowance counters as historical.
+Code `38d7442f31efed89ba6af25637a52f4537b3aa75` completes a fresh synthetic
+six-turn activity with one Start, fifteen decisions and three actual speakers.
+The natural controller stop and all-eight knowledge survive real reload/save.
+The action-only preflight fails closed and grants no capacity or authority.
+1,124 script +55 typed /441 overlapping town tests, 42 authority tests, sixteen
+SQL cases, the final 42-journey meeting entry point with reviewed stop/reload
+assertions, built/mocked-AI browsers, four interfaces, accessibility and both builds
+pass. One inherited lint warning and 19 incomplete accessibility results remain.
+[Review](review/a01-activity-2026-11-01/README.md) ·
+[Handoff](handoffs/a01-activity-sol-2026-11-01.md) ·
+[Hosted packet](review/a01-activity-2026-11-01/hosted-trial.md).
+The user explicitly approved the branch upload to `arwyn6969/the-game` and draft
+creation on 1 November, superseding the earlier automatic-review rejection.
+[Draft PR #63](https://github.com/arwyn6969/the-game/pull/63) is published against
+#62's branch with creation head `d84e9e08b292006d707921158b574b8076f9ff5f`.
+[Verify 41301568844](https://github.com/arwyn6969/the-game/actions/runs/41301568844)
+started on that head. Publication-record updates create a newer documentation
+head; use [the PR's current checks](https://github.com/arwyn6969/the-game/pull/63/checks)
+to qualify that exact final revision before integration. The recorded runtime
+code and local source hashes remain `38d7442`; no local tests are relabelled as CI.
+Source upload/draft approval does not authorize merge, deployment or live calls.
+Main is unchanged. A fresh asset GET returned 403; live auth, provider pricing
+and current counters remain unverified. Next is reviewed source integration and
+the explicitly authorized, bounded hosted trial after fresh free headroom.
+
+## A01.2 terminal failure — locally verified, 1 November 2026
+
+Owner: Sol, current chat `01a19673-df39-7451-bc65-17ca2eaf8459`, under the
+user's request to continue implementation in parallel with an Astra economy
+design session. The previous implementation chat is idle. Preserve its
+uncommitted work in `a01-replay/`, branch `codex/a01-terminal`, HEAD
+`967d2bba8843b563de16c831cba98f1277449aa1`, stacked locally on A01.1 from main
+`a26714e03192a17acaa963d7d2681e74a1ac425b`. An ignored inherited diff snapshot is
+at `artifacts/a01-terminal-2026-11-01/inherited-working.patch`.
+
+Write scope: existing A01.2 engine/controller changes, their synthetic/browser
+tests and packet/evidence/handoff/status records. Astra owns a separate A02
+analysis/specification checkout; no economy or funding rules change here.
+Fresh GitHub reads still show #61 open and #62 draft/stacked on #61, both based
+on unchanged main; neither is a dependency of A01.2. No merge or deployment is
+part of this packet. Public asset evidence remains dated 29 October, not a
+fresh runtime claim. Begin with zero live inference calls and spend; Grok stays
+paused. Code `ab7d893c5fc2deeee046f6320c745f11e38bedc9` closes exhausted
+failures/reloads honestly, preserves the terminal receipt, retains below-cap
+recovery and commits valid final speech before closure. New proposal errors
+remain visible. Sixteen SQL replay cases, forty intercepted meeting journeys,
+built desktop/phone play journeys, 1,105 script +55 typed tests, 432 overlapping
+town tests, typecheck/lint, diagnostics and credential-free build pass.
+One inherited lint warning and six incomplete accessibility results remain.
+[Review](review/a01-terminal-2026-11-01/README.md) ·
+[Handoff and resume prompt](handoffs/a01-terminal-sol-2026-11-01.md).
+No new PR/CI or hosted/human acceptance. Next is A01.3 exact-candidate
+qualification and a separately authorized bounded hosted run with fresh free
+headroom. Astra's A02 handover is prepared; its execution is not inferred here.
+
+## A01.2 terminal failure — building, 29 October 2026
+
+Owner: GPT-6.1 Sol, chat `01a18874-463c-7be1-80a3-ed7eefdace15`.
+Reuse isolated `a01-replay/` on `codex/a01-terminal`, explicit local dependency
+A01.1 head `967d2bba8843b563de16c831cba98f1277449aa1`; main `a26714e`.
+Scope: exhausted meeting interruption/reload and matching terminal feedback,
+synthetic regressions and actual intercepted desktop/phone journeys. No provider,
+quota, economy, save-schema, auth or hosting changes. The previous branch,
+fixtures and A01.1 receipts remain historical evidence.
+[Packet](implementation/a01-terminal.md) · [F00](review/a01-terminal-2026-10-29/baseline.json).
+Targeted core/replay checks pass. Full checks and browser evidence are in progress.
+#61/#62 remain open and green; this packet has no dependency on that UI stack.
+Four fresh public asset hashes still match `01470e291065`; Worker metadata is
+inherited from its publication receipt. Zero live calls/spend; no merge/deploy
+or production migration. Grok remains paused and no other chat is awakened.
+
+## Resident framework F00 / A01.1 — local replay, 29 October 2026
+
+Owner: GPT-6.1 Sol, chat `01a18874-463c-7be1-80a3-ed7eefdace15`.
+Checkout `a01-replay/`, branch `codex/a01-replay`, from refreshed main
+`a26714e03192a17acaa963d7d2681e74a1ac425b`. Test/docs write boundary only;
+no dependency on #61/#62 and no takeover of the social or UI lanes.
+[Packet](implementation/a01-failure-replay.md) ·
+[Baseline and replay evidence](review/a01-failure-replay-2026-10-29/README.md).
+F00 is reconciled. A01.1 is locally verified at test/fixture revision
+`922dbcedf7151e9a6a6a351804a4d142b347b4cf`: ten synthetic cases, 1,101 script
++ 55 typed / 428 town tests, typecheck/lint, diagnostics and credential-free
+build pass. Lint retains one inherited warning. No new PR or CI was created.
+[Fresh handoff](handoffs/a01-failure-replay-sol-2026-10-29.md). A01.2 remains unassigned: final invalid completion at decision 16
+leaves a paused meeting that cannot resume and needs manual closure.
+Zero live inference calls/spend; Grok remains paused. No merge/deployment.
+
+Current remote #61 is open/ready at `cd44d16` with successful Verify
+[40506547367](https://github.com/arwyn6969/the-game/actions/runs/40506547367).
+Draft #62 remains stacked on #61 at `44745f4`, with successful Verify
+[40865099031](https://github.com/arwyn6969/the-game/actions/runs/40865099031).
+#59 remains a separate unmerged provider-choice draft; this replay uses main
+contracts. The public assets freshly match published runtime `01470e291065`;
+Worker `c4b89bfc-d9e4-48d1-ba1d-930280eaa8f5` is inherited from the
+27 October publication receipt, not freshly checked in the control plane.
+The later social receipt reports hosted acceptance failure, five retained
+spoken turns and manual exhausted closure. Older sections below retain their
+historical scope and do not supersede this current source/deployment comparison.
+
 ## Work and navigation polish — candidate, 29 October 2026
 
 Owner: Codex polish chat, isolated checkout `town-work-polish/`, branch

@@ -3,6 +3,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import axe from "axe-core";
 import { chromium } from "playwright";
+import { runTerminalMeetingJourneys } from "./discussion-terminal-browser.mjs";
+import { runCompleteMeetingJourney } from "./discussion-complete-browser.mjs";
 import {
   advanceDiscussionWindow,
   assertOfferedDecision,
@@ -19,11 +21,13 @@ const target = new URL(process.env.DISCUSSION_QA_URL || "http://127.0.0.1:8134/"
 assert.equal(target.protocol, "http:");
 assert.ok(["127.0.0.1", "localhost"].includes(target.hostname));
 const out = resolve(process.env.DISCUSSION_QA_OUT || "artifacts/discussion-ui");
+const activityOnly = process.env.DISCUSSION_QA_ACTIVITY_ONLY === "1";
 await mkdir(out, { recursive: true });
 const report = {
   target: target.href,
   syntheticTransport: true,
   liveCalls: 0,
+  activityOnly,
   journeys: [],
   failures: [],
 };
@@ -221,11 +225,30 @@ async function createJourney(viewport, kind, options = {}) {
   return { result, context, page };
 }
 
+const completeActivity = (viewport) =>
+  runCompleteMeetingJourney(
+    {
+      createJourney,
+      openMeeting,
+      savedTown,
+      meeting,
+      availableDecision,
+      respond,
+      auditMeeting,
+      capture,
+    },
+    viewport,
+  );
+
 try {
   for (const viewport of [
     { name: "desktop", width: 1280, height: 800 },
     { name: "phone", width: 390, height: 844 },
   ]) {
+    if (activityOnly) {
+      await completeActivity(viewport);
+      continue;
+    }
     const { result, context, page } = await createJourney(viewport, "manual");
     await openMeeting(page);
     await page.getByLabel("Enable library meetings (experimental)", { exact: true }).check();
@@ -517,6 +540,20 @@ try {
         meeting,
         availableDecision,
         respond,
+        draftField,
+        auditMeeting,
+        capture,
+      },
+      viewport,
+    );
+    await completeActivity(viewport);
+    await runTerminalMeetingJourneys(
+      {
+        createJourney,
+        openMeeting,
+        savedTown,
+        meeting,
+        availableDecision,
         draftField,
         auditMeeting,
         capture,

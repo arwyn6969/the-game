@@ -1,0 +1,9 @@
+{
+  "status": "not-ready",
+  "reasons": [
+    "sanitized-snapshot-file-required"
+  ],
+  "liveHeadroomVerified": false,
+  "permissionGranted": false,
+  "reservedCalls": 0
+}

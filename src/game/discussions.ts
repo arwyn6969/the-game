@@ -19,6 +19,8 @@ import { walkable, zoneAt } from "./world";
 
 export const DISCUSSION_LIMITS = { turns: 6, decisions: 16, closed: 8, text: 400 } as const;
 export const DISCUSSION_VENUE = { x: 43, y: 21 };
+const EXHAUSTED_DISCUSSION_REASON =
+  "The meeting stopped at its sixteen-decision limit. No replacement dialogue was added; its actual discussion is preserved.";
 const CAST: NpcId[] = ["northern", "arwyn", "sub"];
 const SEATS: Partial<Record<AgentId, { x: number; y: number }>> = {
   northern: { x: 42, y: 21 },
@@ -514,6 +516,12 @@ export function advanceDiscussions(town: Town, reserved: Reserved = {}): void {
 export function pauseDiscussion(town: Town, reason = "The meeting is paused."): void {
   const meeting = active(town);
   if (!meeting || meeting.status === "closed") return;
+  // Marking the final request consumes its decision before inference settles.
+  // Interrupting it revokes commit authority, but cannot offer another attempt.
+  if (meeting.decisions >= DISCUSSION_LIMITS.decisions) {
+    close(meeting, EXHAUSTED_DISCUSSION_REASON);
+    return;
+  }
   meeting.status = "paused";
   meeting.reason = reason.slice(0, 240);
   meeting.epoch++;
@@ -820,7 +828,11 @@ export function discussionView(
 
 export function recoverDiscussions(town: Town): void {
   for (const meeting of town.discussions?.sessions ?? [])
-    if (meeting.pending) {
+    if (meeting.status !== "closed" && meeting.decisions >= DISCUSSION_LIMITS.decisions) {
+      // Includes old exhausted pauses and unknown final requests after reload.
+      // Keep their usage/charges unknown; recovery never invents an outcome.
+      close(meeting, EXHAUSTED_DISCUSSION_REASON);
+    } else if (meeting.pending) {
       meeting.pending = null;
       meeting.status = "paused";
       meeting.epoch++;

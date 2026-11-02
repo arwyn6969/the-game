@@ -1,0 +1,39 @@
+{
+  "sourceRevision": "ab7d893c5fc2deeee046f6320c745f11e38bedc9",
+  "sourceFiles": {
+    "scripts/a01-failure-replay.mjs": "f25db5a52e4b515121e2a50c86af56d7ea252757f74282bcf005dd50a5c2ae92",
+    "scripts/a01-failure-replay.test.mjs": "20e8fb55f9ec6866030f6c6ae6cafb81fb6f30207100be7c105137e95b76de03",
+    "scripts/discussion-auto-browser.mjs": "8e460eb80ebf3a79bbc50b6c8b63b8dad988dd4f0fd75322e8f5be3c29af965a",
+    "scripts/discussion-terminal-browser.mjs": "44e3d1bc6528f9b52f04e32edffa62b1d62003caccaf95036cc2ffa2865f2657",
+    "scripts/discussion-ui-browser.mjs": "edf7726a77b4e24622850df987fedf989db24d02cda09dc3bc2301a2f7498644",
+    "scripts/town-discussions.test.mjs": "b595dbe34cb443742a64efa9b0332168d4805489dcb4764efb46a73c7202c124",
+    "src/components/town/TownApp.tsx": "5fec18af5675f2ef47ae6be6fc8d05cfda8dbc6eefe6f95c8956553ced278282",
+    "src/game/discussions.ts": "c6f06ba016d6ecbc26352f2d21005cae03827878b281363a771d793c0d289311"
+  },
+  "artifactFiles": {
+    "artifacts/a01-terminal-2026-11-01/browser/browser-results.json": "cb409890f26279a894dc955d9e39ba8a00dbd676c5629081903b07a591373dfb",
+    "artifacts/a01-terminal-2026-11-01/browser.log": "cb409890f26279a894dc955d9e39ba8a00dbd676c5629081903b07a591373dfb",
+    "artifacts/a01-terminal-2026-11-01/build.log": "98016110a5ba38e88d4553f81b8d90a7e72494f58fa699c7a0ef9edb503a5c7c",
+    "artifacts/a01-terminal-2026-11-01/core.log": "9a7688e19dc9c61a052b1e9712f289023e73d43bc936c62dc226d566380cb4d3",
+    "artifacts/a01-terminal-2026-11-01/diagnostics.log": "e925099d1e633bbcf370dc200e8336d67be9f3c2bdafa8d1276087aee1c861e1",
+    "artifacts/a01-terminal-2026-11-01/format-final.log": "adb5c34abf479498977d35658eb06a3fb3d132eaf57846738b3f85e8ded3c0f5",
+    "artifacts/a01-terminal-2026-11-01/format.log": "79af7b361b9d03af3411cdfc9698d0e30eb2c726d44d0cb77303ddcd12cb7417",
+    "artifacts/a01-terminal-2026-11-01/lint-final.log": "339027dadfd1550bc336ec4f8446f94bb2bfb723ac6135707413b7772373904e",
+    "artifacts/a01-terminal-2026-11-01/lint.log": "339027dadfd1550bc336ec4f8446f94bb2bfb723ac6135707413b7772373904e",
+    "artifacts/a01-terminal-2026-11-01/local-checks.json": "9ce866b21e47cb85c0987147b206fdd0364a5c09a49bd21b9341c6fad53e6d77",
+    "artifacts/a01-terminal-2026-11-01/quality-browser/desktop-synthetic.json": "8b78cfd1a0a598f154c9e652d9290d4f12dfd53a44626e5e0a9b2f33a137f19a",
+    "artifacts/a01-terminal-2026-11-01/quality-browser/phone-synthetic.json": "4740af3e8a6436fd30f8522095bfb92359ceeb586604539f70e54a34892aa422",
+    "artifacts/a01-terminal-2026-11-01/quality-browser/readings/desktop-synthetic-checkpoint.json": "14c8fa201c7b4bb2a8e73e5f37dcc59c3b101743f4c4f0ea03b6b57d8e3a1176",
+    "artifacts/a01-terminal-2026-11-01/quality-browser/readings/phone-synthetic-checkpoint.json": "f5a70c1b3c98ca5d0d84c373d4092387856625f6e194c5b0dbe4f9c8e7750689",
+    "artifacts/a01-terminal-2026-11-01/quality-browser/readings/results.json": "c52c6f72b6ea6c3504ed3905b7bdb5661e64f4f492cfe52654360299cd42dce8",
+    "artifacts/a01-terminal-2026-11-01/quality-browser/results.json": "1a83ce4678cf60bf30a7f3b1979088d1939649e0a1b01b8afedd2e777392006b",
+    "artifacts/a01-terminal-2026-11-01/quality-browser/ui-edges/report.json": "41bf0375ec589990c640b4f368b4743e6fef0ae5443746dde3cdb85ffaafdc39",
+    "artifacts/a01-terminal-2026-11-01/quality-browser/ui-interruptions/report.json": "90310a3c4b5bb0643a807f060bbc8512d16476777868d9f84fddb6342266250b",
+    "artifacts/a01-terminal-2026-11-01/quality-browser.log": "13294421d20a4187650cbd192218c616a30ada372495b8f11600eda1cfe3074c",
+    "artifacts/a01-terminal-2026-11-01/replay.log": "70208695ee83870fd8dde44c8464a5253a3c79afda70f61daf9df02d51fe5215",
+    "artifacts/a01-terminal-2026-11-01/targeted.log": "e2c54b88140e97440234be33e19dfd18051a9f627713067dd0e766a1eb1f6609",
+    "artifacts/a01-terminal-2026-11-01/test.log": "908dea39967d088bb2d71ddaf7ae627e7f14d77ffbaae83b09cc3316a48aae17",
+    "artifacts/a01-terminal-2026-11-01/town.log": "af50998cae37335e1320df337f4b6c57aef0e3f01c8b728d917e4cc0e0718548",
+    "artifacts/a01-terminal-2026-11-01/typecheck.log": "8fa1cf5506304e8abac55868e7f1a136c9b1dde57a3981a382da4c21ea129a6f"
+  }
+}

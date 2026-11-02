@@ -311,6 +311,11 @@ export async function runAutomaticMeetingJourneys(helpers, viewport) {
     await propose(page, "SYNTHETIC automatic library discussion");
     await auditMeeting(page, result, "automatic Arwyn proposal");
     await page.getByRole("button", { name: "Pause meeting decisions", exact: true }).click();
+    await page.waitForFunction(
+      () =>
+        JSON.parse(localStorage.getItem("the-game-town-v2")).town.discussions.sessions.at(-1)
+          .status === "paused",
+    );
     assert.equal((await meeting(page)).status, "paused");
     assert.equal(await page.evaluate(() => window.__discussionMock.calls.length), 0);
     const armedFrom = await page.evaluate(() => window.__discussionMock.allInvocations.length);

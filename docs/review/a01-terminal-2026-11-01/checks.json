@@ -1,0 +1,635 @@
+{
+  "packet": "A01.2",
+  "date": "2026-11-01",
+  "stage": "locally verified",
+  "sourceRevision": "ab7d893c5fc2deeee046f6320c745f11e38bedc9",
+  "dependencyRevision": "967d2bba8843b563de16c831cba98f1277449aa1",
+  "mainRevision": "a26714e03192a17acaa963d7d2681e74a1ac425b",
+  "node": "v24.22.1",
+  "liveInferenceCalls": 0,
+  "spend": 0,
+  "checks": [
+    {
+      "name": "typecheck",
+      "exitCode": 0,
+      "log": "artifacts/a01-terminal-2026-11-01/typecheck.log"
+    },
+    {
+      "name": "lint",
+      "exitCode": 0,
+      "log": "artifacts/a01-terminal-2026-11-01/lint.log"
+    },
+    {
+      "name": "test",
+      "exitCode": 0,
+      "log": "artifacts/a01-terminal-2026-11-01/test.log"
+    },
+    {
+      "name": "town",
+      "exitCode": 0,
+      "log": "artifacts/a01-terminal-2026-11-01/town.log"
+    },
+    {
+      "name": "diagnostics",
+      "exitCode": 0,
+      "log": "artifacts/a01-terminal-2026-11-01/diagnostics.log"
+    },
+    {
+      "name": "build",
+      "exitCode": 0,
+      "log": "artifacts/a01-terminal-2026-11-01/build.log"
+    }
+  ],
+  "finalLint": {
+    "exitCode": 0,
+    "inheritedWarnings": 1
+  },
+  "tests": {
+    "scriptTests": 1105,
+    "typedTests": 55,
+    "townTests": 432,
+    "townTestsIncludedInScriptSuite": true
+  },
+  "meetingBrowser": {
+    "journeys": 40,
+    "failures": [],
+    "audits": 44,
+    "violations": 0,
+    "incompleteResults": 6,
+    "journeySummary": [
+      {
+        "kind": "manual",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "Normal proposal creates no authored NPC dialogue and does not make the player listen",
+          "Hidden tabs dispatch no meeting decision and visibility restoration never auto-starts one",
+          "Mocked NPC decisions use the actual protocol/executor; nearby inattentive player and Baba do not hear",
+          "Late listening grants no earlier words; stopping while a reply is pending excludes the eventual line without invalidating its speaker",
+          "Player can take a fair turn; accepted speech clears only its draft; failed inference invents no reply and paused meetings still allow stopping listening",
+          "Cancellation never permits a second underlying request before settlement; a late legal request-turn cannot change the queue, resident or draft (automatic journeys separately reject late speech)",
+          "Reload preserves committed history, restores an in-flight request as paused/unknown and never automatically resends it",
+          "Unavailable background action capability creates no substitute dialogue or provider call"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "automatic durable Start interrupted by global Pause",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "A real held save lock delays Start; global Pause cancels its authorization before release, consumes no request or accounting and cannot restart on visibility/time alone",
+          "Only a fresh explicit Start can authorize the first actual request"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "automatic durable Start interrupted by hidden then visible",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "A real held save lock delays Start; hidden then visible cancels its authorization before release, consumes no request or accounting and cannot restart on visibility/time alone",
+          "Only a fresh explicit Start can authorize the first actual request"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "automatic lifecycle",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "A real normal town tick with stale plans dispatches no background AI while the automatic meeting is armed or pacing",
+          "Paused Start resumes once; manual stepping is excluded, and pacing wait consumes no request or accounting",
+          "One Start drives actual offered synthetic invitation/attention/speech choices; only actual NPC listeners receive the line and its reconsideration cue",
+          "Heard-word cues are consumed once; explicit Stop rejects a late legal speech result, retains the draft and never restarts on time alone",
+          "Hidden tabs stop the run and reject its late legal result; visibility restoration does not resume generation",
+          "Reload preserves the committed transcript but never restores automatic authorization or resends a pending request"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "automatic failure and quota",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "Synthetic transport failure and quota refusal each stop automatic mode without retry, fallback dialogue or draft loss"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal empty",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal manual-empty",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal draft-retention",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "A new explicit proposal retains the unsent draft and old closed receipt without restarting AI",
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal malformed",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal unavailable-action",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal provider-failure",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal quota-denied",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal client-timeout",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal cancel-late",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal reload-in-flight",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal legacy-exhausted",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal valid-final",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal valid-final-speech",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal cancel-final-speech",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal below-cap",
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "assertions": [
+          "Below-cap empty result pauses, keeps the draft, and resumes only explicitly without resetting the count"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "manual",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "Normal proposal creates no authored NPC dialogue and does not make the player listen",
+          "Hidden tabs dispatch no meeting decision and visibility restoration never auto-starts one",
+          "Mocked NPC decisions use the actual protocol/executor; nearby inattentive player and Baba do not hear",
+          "Late listening grants no earlier words; stopping while a reply is pending excludes the eventual line without invalidating its speaker",
+          "Player can take a fair turn; accepted speech clears only its draft; failed inference invents no reply and paused meetings still allow stopping listening",
+          "Cancellation never permits a second underlying request before settlement; a late legal request-turn cannot change the queue, resident or draft (automatic journeys separately reject late speech)",
+          "Reload preserves committed history, restores an in-flight request as paused/unknown and never automatically resends it",
+          "Unavailable background action capability creates no substitute dialogue or provider call"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "automatic durable Start interrupted by global Pause",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "A real held save lock delays Start; global Pause cancels its authorization before release, consumes no request or accounting and cannot restart on visibility/time alone",
+          "Only a fresh explicit Start can authorize the first actual request"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "automatic durable Start interrupted by hidden then visible",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "A real held save lock delays Start; hidden then visible cancels its authorization before release, consumes no request or accounting and cannot restart on visibility/time alone",
+          "Only a fresh explicit Start can authorize the first actual request"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "automatic lifecycle",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "A real normal town tick with stale plans dispatches no background AI while the automatic meeting is armed or pacing",
+          "Paused Start resumes once; manual stepping is excluded, and pacing wait consumes no request or accounting",
+          "One Start drives actual offered synthetic invitation/attention/speech choices; only actual NPC listeners receive the line and its reconsideration cue",
+          "Heard-word cues are consumed once; explicit Stop rejects a late legal speech result, retains the draft and never restarts on time alone",
+          "Hidden tabs stop the run and reject its late legal result; visibility restoration does not resume generation",
+          "Reload preserves the committed transcript but never restores automatic authorization or resends a pending request"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "automatic failure and quota",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "Synthetic transport failure and quota refusal each stop automatic mode without retry, fallback dialogue or draft loss"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal empty",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal manual-empty",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal draft-retention",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "A new explicit proposal retains the unsent draft and old closed receipt without restarting AI",
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal malformed",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal unavailable-action",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal provider-failure",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal quota-denied",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal client-timeout",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal cancel-late",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal reload-in-flight",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal legacy-exhausted",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal valid-final",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal valid-final-speech",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal cancel-final-speech",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "Final result/interruption stops honestly, retains history/accounts/knowledge and unknown charges, exposes no resume, rejects further requests and survives reload"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      },
+      {
+        "kind": "terminal below-cap",
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "assertions": [
+          "Below-cap empty result pauses, keeps the draft, and resumes only explicitly without resetting the count"
+        ],
+        "pageErrors": [],
+        "unexpectedServerRequests": []
+      }
+    ]
+  },
+  "builtBrowser": {
+    "journeys": 2,
+    "failures": [],
+    "scope": "keyboard/touch movement, local conversation, pause, reload, export/import, competing tabs, v1 migration, identity restore/fork and library/readings"
+  },
+  "build": {
+    "databaseUrlPresent": false,
+    "productionMigrations": "skipped"
+  },
+  "independentReview": {
+    "findingsResolved": [
+      "final legal speech and late cancelled speech",
+      "new proposal errors remain visible after closure"
+    ],
+    "remainingFindings": []
+  },
+  "delivery": {
+    "newPR": false,
+    "newCI": false,
+    "merged": false,
+    "deployed": false,
+    "hostedAndHumanAcceptance": "not established"
+  }
+}
