@@ -17,7 +17,9 @@ The user authorized live publication on 2 November. The release owner was this c
 ## Next work, in order
 
 Active follow-up: this chat owns Safari AI connection recovery on
-`codex/ai-connection-recovery`, based on current `origin/main` `6c72f28`.
+`codex/ai-connection-recovery`, based on current `origin/main` `6c72f28`;
+[draft PR #69](https://github.com/arwyn6969/the-game/pull/69), implementation
+`085989c`, is ready for review with CI pending.
 Safari reported offline failures for sign-in and availability requests; reloading
 restored AI ready with the existing town. A failed connection note can outlive
 the availability warning and lose its retry button. The bounded fix keeps the
