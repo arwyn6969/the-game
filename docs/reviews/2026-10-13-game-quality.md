@@ -111,7 +111,7 @@ The economy also adds cafe/grocery funds without a recorded source and imposes d
 
 **Improve.** Reconcile the separate account foundation with the current version-2, eight-actor town. Route all money changes through one authority, preserve valid imported balances, reserve accepted wages and record earned unpaid obligations. Remove unexplained top-ups and destructive caps as part of complete activation with matching terms and UI. Avoid a partial second ledger.
 
-Evidence: [attendance and wages](../../src/game/sim.ts#L108), [midnight rules](../../src/game/sim.ts#L270), [shift offer](../../src/game/effects.ts#L561), [foundation status](../CONSOLIDATION.md#saves-and-the-unfinished-economy).
+Evidence: [attendance and wages](../../src/game/sim.ts#L108), [midnight rules](../../src/game/sim.ts#L270), [shift offer](../../src/game/effects.ts#L561), [historical foundation status](../CONSOLIDATION_HISTORY_2026-11-02.md#saves-and-the-unfinished-economy).
 
 ## Food and items
 

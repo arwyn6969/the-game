@@ -4,12 +4,12 @@ Updated 2 November 2026. This file is the single current source/deployment and a
 
 ## Source and deployment
 
-| Layer                   | State                                                                                                                                         |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Main                    | Controls #61, work guidance #62 and meeting reliability #63 merged on 2 November; stack checkpoint `2df36a9`                                  |
-| Consolidated source     | This revision combines that stack, the opt-in café at `2255384`, and personal-model source #59 with deliberate UI/cancellation reconciliation |
-| Production              | Last recorded runtime `01470e291065`, Worker `c4b89bfc-d9e4-48d1-ba1d-930280eaa8f5`, at https://www.arwyn.party/thegame/                      |
-| Production verification | Four public assets matched on 29 October. 2 November GETs returned 403; no new asset-hash or control-plane confirmation is claimed            |
+| Layer                    | State                                                                                                                                         |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Merged reliability stack | Controls #61, work guidance #62 and meeting reliability #63 merged on 2 November; stack checkpoint `2df36a9`                                  |
+| Consolidated source      | This revision combines that stack, the opt-in café at `2255384`, and personal-model source #59 with deliberate UI/cancellation reconciliation |
+| Production               | Last recorded runtime `01470e291065`, Worker `c4b89bfc-d9e4-48d1-ba1d-930280eaa8f5`, at https://www.arwyn.party/thegame/                      |
+| Production verification  | Four public assets matched on 29 October. 2 November GETs returned 403; no new asset-hash or control-plane confirmation is claimed            |
 
 Consolidation is a source milestone. No deployment, live inference, paid call, database migration, wallet transaction or production configuration change is part of this pass. Grok and historical testing automations remain paused.
 
