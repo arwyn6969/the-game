@@ -1,0 +1,139 @@
+{
+  "date": "2026-11-02",
+  "node": "v24.22.1",
+  "checkout": "/Users/arwynhughes/Documents/ChatGPT/THE GAME/a02-economy",
+  "branch": "codex/a02-loop",
+  "implementationStart": "259ac8ac510b12356a723723f3f2afaf0dd1d0be",
+  "runtimeSourceBase": "a26714e03192a17acaa963d7d2681e74a1ac425b",
+  "ownership": "Only isolated A02 source, tests and uniquely named docs. No a01-replay, shared status/framework/Page, auth, hosting, dependencies, external chats, push, PR, merge or deployment.",
+  "checks": [
+    {
+      "command": "npm test",
+      "result": "pass",
+      "scriptTests": 1141,
+      "typedTests": 55,
+      "failures": 0,
+      "log": "full-tests.log",
+      "environment": "Approved localhost process permission for existing listener tests"
+    },
+    {
+      "command": "node --test scripts/town-coffee-domain.test.mjs scripts/town-coffee-runtime.test.mjs scripts/town-coffee-integration.test.mjs",
+      "result": "pass",
+      "tests": 41,
+      "breakdown": {
+        "domain": 19,
+        "runtime": 17,
+        "integration": 5
+      },
+      "log": "coffee-tests.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "pass",
+      "log": "typecheck.log"
+    },
+    {
+      "command": "npm run lint",
+      "result": "pass with inherited warning",
+      "errors": 0,
+      "warnings": 1,
+      "warning": "src/lib/auth/use-current-user.ts:59 unused eslint-disable",
+      "log": "lint.log"
+    },
+    {
+      "command": "DATABASE_URL= XAI_API_KEY= npm run build",
+      "result": "pass",
+      "databaseMigration": "Skipped: DATABASE_URL not set",
+      "log": "build.log"
+    },
+    {
+      "command": "node scripts/diagnose-town.mjs",
+      "result": "exit 0; observations only",
+      "log": "diagnose.log"
+    },
+    {
+      "command": "GAME_COFFEE_QA_URL=http://127.0.0.1:8199/ node scripts/town-coffee-browser.mjs",
+      "result": "pass",
+      "report": "browser-results.json",
+      "originalReport": "artifacts/a02-cafe/browser/run-71415-1793621782950/results.json",
+      "groups": 16,
+      "viewports": [
+        "1280x800",
+        "390x844"
+      ],
+      "targetedAxeScans": 4,
+      "axeViolations": 0,
+      "axeIncomplete": 0,
+      "browserErrors": 0,
+      "liveInferenceCalls": 0
+    },
+    {
+      "command": "git diff --check; local documentation link check; source/evidence hash verification",
+      "result": "pass"
+    }
+  ],
+  "verificationSequence": "Full suite includes final runtime/domain source and earned-payable headroom test. After that run the only source change was CoffeePanel useId/aria-describedby for disabled explanations; typecheck, full lint, credential-free build, all 41 coffee tests and both built-browser journeys were rerun after that accessibility-only change.",
+  "storageEvidence": {
+    "maxOrdinaryAttendanceBytes": 987,
+    "finalEarningSettlementBytes": 4608,
+    "syntheticBeforeBytes": 3220628,
+    "exportAfterBytes": 3397709,
+    "actualIntervals": 168,
+    "readyCups": 1,
+    "fullExistingWageSettled": true,
+    "scope": "Conditional single finite continuation; not browser quota or unlimited history"
+  },
+  "limitations": [
+    "See acceptance-coverage.md for all 39 requirements; no blanket pass claim",
+    "Browser imported source-created 15:59 towns with synthetic starting poses; subsequent ordinary UI controls",
+    "Browser worker ends at 61 eligible minutes, not full 180-minute wage journey",
+    "30-day actual core run is sparsely active, not maximum-throughput stress",
+    "AI-pending Stop, delayed authenticated AI callbacks and complete interleaving matrix remain open",
+    "Physical devices, actual screen-reader assessment, human comprehension/enjoyment and mixed-week play remain open",
+    "Sol stack integration, hosted release, live inference and wallet/NFT/QR settlement not performed"
+  ],
+  "sourceSha256": {
+    "scripts/town-coffee-browser.mjs": "4a7f60fec5d3a6cc078b5b67cfcf560b6b02826e0ee2aa2bc71d5ab37f2dfd9b",
+    "scripts/town-coffee-domain.test.mjs": "a968896d2c4403258573e086a0936f8b3613c23cfc9578617633a5b4e79865fc",
+    "scripts/town-coffee-integration.test.mjs": "3e5c1d4ee4e1a5d6272c220ec63dc892b1d4d8b07fc58801361d7dbbf9b68fe9",
+    "scripts/town-coffee-runtime.test.mjs": "629e5dd6a7f9e45bb1c39d227dedabbd9491ff344960fd86fc63aeadc122f64e",
+    "src/components/town/CoffeePanel.tsx": "9f57147231dd2a0c8bdccee068f07bc63ec86f0e45110b1ea10fcba2e79afc15",
+    "src/components/town/PlayerTools.tsx": "3a1b2b1ec30f1dea9500a8ef5c0edcf9c8411f4e04c7fdfac73351588eb517a2",
+    "src/components/town/TownApp.tsx": "5217aac130f0a36a60b5fb14a0240b4c567a75887820cdbacc4264fd57b367ee",
+    "src/game/coffee-residents.ts": "55efb7c635df9ab170f6bbc19ecfebdf025371ca620015dce1c3f1a454886f27",
+    "src/game/coffee-runtime.ts": "765e08028322b0c50b300ba1d9195410dc81f4d4dd144671414bac2fd680b9ca",
+    "src/game/coffee-types.ts": "bde3d4422ac994291411e60e99fa8c45051821c125a7ae1adb52f90fb2ce9d5a",
+    "src/game/coffee-validation.ts": "456a1e70881a47d4fcd9787abd614f977bd898b98a27e23f5bb926a651e94b74",
+    "src/game/coffee.ts": "64434c60b6d21ea0ed20dd2171e67a6731e03dd4b66b14cd98cbb3cd745737b3",
+    "src/game/economy.ts": "273548b5806e911d8fe1757ca5b57406d4b27fa82a4e0da31d166c1a2e353f75",
+    "src/game/funded-work.ts": "36855cf537d5f49c4ce890ba2cd70a9bf2941a6d74064298f36cd1f86772c4c7",
+    "src/game/identity.ts": "adba8cf24f818c8fe71dfb54cc0d9f9bf27589d0247552e3aa32a54652b76afa",
+    "src/game/navigation.ts": "ffd1ba9161c473227d608245bc1a2c96e92ff87f2fb929fdd634ff8955174b65",
+    "src/game/render.ts": "24cd3623970bebd60321711c660d527bdb4c9f81e2995dbb194a5323468529bf",
+    "src/game/save.ts": "f8b8d76d22a4fb064e0a5956a47f24c86c4c332b260c2b5e1c4948f886179067",
+    "src/game/sim.ts": "ff36a3c26061c82d663880143540fcf2ae30e18b10c598aaee66c4895bfdaef0",
+    "src/game/types.ts": "615d92736f5013ec67bf699b3b6c755b1cc0e0ffb4382c31d7dd72b555c6c4e1"
+  },
+  "evidenceSha256": {
+    "browser-results.json": "d48e6ec28086338ba6827d31899c1ebd3482d1afdc9fafa275e87316de943a8a",
+    "build.log": "719550d42be7e3ce7911d995e7363097523e649b3a06c21d99c113dcb6c37219",
+    "coffee-tests.log": "50c031f3e4b6bb48c1ead30a59542d23260810dd149d9e2418f36495bda2c676",
+    "desktop-coffee-ticket.png": "93d6f66d47b6a6b5a64862b1928e74fd30ad4aa90c7749e8cb55899a5a88df23",
+    "diagnose.log": "fea52e6abad596694ab6a02c5bc375b4f94e092cb782c7e38fcfeb8d1db307a9",
+    "full-tests.log": "e1a3288813d90d5e60d8ae882eb58515fc11dde2aaab45c4c1b1a4410bf85e0b",
+    "lint.log": "5427b2208361ac2846ff3ffb91a32df09efac4c5abdc52686cfea008a9fd33e8",
+    "phone-working-shift.png": "acc2bcb2ab3e7886dcc6f81345bf348fb7a64668eaa4e603a2aab63757a9374c",
+    "retained-failure-excerpts.txt": "75d7a020c971dba49cdceb62c5091dafe4934a4691798f76dd25874fc39fa808",
+    "typecheck.log": "dac125c794db702133345f3a0d33f3193f975fddc564ca4f1498b0d4132ed500"
+  },
+  "logPresentation": "Tracked log copies remove ANSI color and trailing whitespace only; original raw logs remain under artifacts/a02-cafe. Assertions and failures are preserved.",
+  "originalLogSha256": {
+    "build.log": "69f79e10ff8f37a5f1e485d57a56773270c7af279abdb2e7ea7ce724899ef17e",
+    "coffee-tests.log": "50c031f3e4b6bb48c1ead30a59542d23260810dd149d9e2418f36495bda2c676",
+    "diagnose.log": "fea52e6abad596694ab6a02c5bc375b4f94e092cb782c7e38fcfeb8d1db307a9",
+    "full-tests.log": "e1a3288813d90d5e60d8ae882eb58515fc11dde2aaab45c4c1b1a4410bf85e0b",
+    "lint.log": "619251f806751f557d75887e338618d4663d6ed1fd4db98a56a1890003fb234c",
+    "retained-failure-excerpts.txt": "f625bb913006f38e1fbf631dca7756180b8c08f1f370a3b24ca9b98601f2249b",
+    "typecheck.log": "8fa1cf5506304e8abac55868e7f1a136c9b1dde57a3981a382da4c21ea129a6f"
+  }
+}

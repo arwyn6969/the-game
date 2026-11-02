@@ -103,9 +103,16 @@ export function moveResidents(
   town: Town,
   hourStart: boolean,
   appointments?: Partial<Record<AgentId, Tile>>,
+  service?: { playerGoal?: Tile; stationary?: ReadonlySet<AgentId> },
 ) {
   const residents = NPC_IDS.flatMap((id) => town.agents.find((a) => a.id === id) ?? []);
-  const budget = new Map(residents.map((a) => [a.id, STEP]));
+  // The player joins this one bounded pass only under an explicit service grant.
+  // Ordinary player control remains outside simulation and is never inferred.
+  if (service?.playerGoal) {
+    const player = town.agents.find((agent) => agent.id === "player");
+    if (player) residents.push(player);
+  }
+  const budget = new Map(residents.map((a) => [a.id, service?.stationary?.has(a.id) ? 0 : STEP]));
   const yielded = new Set<AgentId>();
   const moved = new Set<AgentId>();
   const now = (town.day - 1) * 1440 + town.minute;
@@ -146,7 +153,10 @@ export function moveResidents(
       agent.tile = nearestWalkable(agent.tile.x, agent.tile.y);
       agent.path = [];
     }
-    const goal = appointments?.[agent.id] ?? goalFor(agent, beatAt(agent, town.minute));
+    const goal =
+      agent.id === "player"
+        ? service!.playerGoal!
+        : (appointments?.[agent.id] ?? goalFor(agent, beatAt(agent, town.minute)));
     if (same(agent.tile, goal)) {
       agent.path = [];
       continue;

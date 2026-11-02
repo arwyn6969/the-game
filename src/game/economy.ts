@@ -1,6 +1,7 @@
 import { AGENT_IDS, type AgentId } from "./types";
 import type { FundedTown as Town } from "./economy-types";
 import { validateFundedWork } from "./funded-work";
+import { validateCoffee } from "./coffee-validation";
 import type {
   AccountId,
   EconomyCommand,
@@ -251,7 +252,7 @@ export function accountSummary(town: Town, id: AccountId) {
 
 /** Reconstructs every account as well as the total, so old-runtime transfers cannot hide. */
 export function auditEconomy(town: Town): string[] {
-  if (!Object.hasOwn(town, "economy")) return [];
+  if (!Object.hasOwn(town, "economy")) return validateCoffee(town);
   const value: unknown = town.economy;
   if (
     !object(value) ||
@@ -270,7 +271,7 @@ export function auditEconomy(town: Town): string[] {
     ];
   }
   const economy = value as unknown as EconomyState;
-  const issues: string[] = [];
+  const issues: string[] = validateCoffee(town);
   const now = timeOf(town);
   if (!gameTime(now)) issues.push("Funded accounts require a valid game date.");
   const nowStamp = gameTime(now) ? timestamp(now) : Infinity;
@@ -1071,6 +1072,41 @@ function assertSourceAuthority(
 ): void {
   if (context.command.authority === "simulation" || account === `agent:${context.command.actor}`)
     return;
+  // A coffee purchase authorizes only its own full refund reservation. It
+  // does not grant the buyer general access to the café till or payroll.
+  if (account === "till:cafe" && agreementId && amount === 2) {
+    const order = town.coffee?.orders.find((entry) => entry.id === agreementId);
+    const terms = context.command.terms;
+    const targetId =
+      terms !== null && typeof terms === "object" && !Array.isArray(terms) ? terms.targetId : null;
+    if (order?.buyer === context.command.actor && order.price === amount) {
+      const sale = context.economy.transactions.find((entry) => entry.id === order.saleId);
+      if (
+        action === "reserve" &&
+        context.command.kind === "coffee.buy" &&
+        order.phase === "queued" &&
+        sale?.commandId === context.command.id &&
+        sale.from === `agent:${order.buyer}` &&
+        sale.to === "till:cafe" &&
+        sale.amount === amount &&
+        sale.agreementId === order.id
+      )
+        return;
+      if (
+        action === "transfer" &&
+        context.command.kind === "coffee.cancel" &&
+        targetId === order.id &&
+        order.phase === "refund-pending" &&
+        payment?.to === `agent:${order.buyer}` &&
+        payment.holdId === order.holdId &&
+        sale?.from === `agent:${order.buyer}` &&
+        sale.to === "till:cafe" &&
+        sale.amount === amount &&
+        sale.agreementId === order.id
+      )
+        return;
+    }
+  }
   const work = requireEconomy(town).work;
   if (agreementId && work) {
     const agreement = work.agreements.find((entry) => entry.id === agreementId);

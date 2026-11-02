@@ -1386,6 +1386,32 @@ function validateWorkRecords(town: Town, economy: EconomyState): string[] {
   ] as const)
     if (!Array.isArray(work[key])) errors.push(`Funded work ${key} must be an array.`);
   if (errors.length) return errors;
+  // A valid 120-character accepted agreement must still be able to earn.
+  // Settlement records add their fixed prefix to that original ID; allow
+  // only those exact derived IDs, without widening IDs chosen by callers.
+  const parents = new Set(
+    [...work.agreements, ...work.legacyClaims]
+      .filter((record) => record && validId(record.id))
+      .map((record) => record.id),
+  );
+  const derivedIds = new Set([
+    ...work.payables
+      .filter(
+        (record) =>
+          record &&
+          parents.has(record.agreementId) &&
+          record.id === `payable:${record.agreementId}`,
+      )
+      .map((record) => record.id),
+    ...work.receipts
+      .filter(
+        (record) =>
+          record &&
+          parents.has(record.agreementId) &&
+          record.id === `receipt:${record.agreementId}`,
+      )
+      .map((record) => record.id),
+  ]);
   const ids = new Set<string>();
   for (const record of [
     ...work.offers,
@@ -1398,7 +1424,7 @@ function validateWorkRecords(town: Town, economy: EconomyState): string[] {
     ...work.approvals,
     ...work.projects,
   ]) {
-    if (!record || !validId(record.id) || ids.has(record.id))
+    if (!record || (!validId(record.id) && !derivedIds.has(record.id)) || ids.has(record.id))
       errors.push("Funded work has an invalid or duplicate record ID.");
     else ids.add(record.id);
   }

@@ -2,6 +2,12 @@
 
 1 November 2026 · Canonical recommendation after the comprehensive design audit
 
+**Implementation update, 2 November:** this contract is now implemented in the
+isolated A02 checkout. Read the [implementation review](../review/a02-cafe-2026-11-02/README.md)
+for actual coverage and remaining acceptance gates. Statements below about
+unbuilt source describe the original audit date; they are not current test
+results or a claim of production readiness.
+
 ## Verdict and scope
 
 **Proceed with a bounded local implementation of this revised design. Do not

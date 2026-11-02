@@ -1,0 +1,368 @@
+
+> build
+> node scripts/with-app-env.mjs vite build && npm run db:migrate
+
+[nitro:vercel] ℹ Using nodejs24.x runtime.
+[nitro:vercel] ℹ Using web entry format.
+vite v8.3.2 building client environment for production...
+transforming...
+✓ 2021 modules transformed.
+rendering chunks...
+computing gzip size...
+.vercel/output/static/assets/styles-BIsUZ_gX.css  115.15 kB │ gzip:  17.77 kB
+.vercel/output/static/assets/client-DhBjNJAP.js     0.06 kB │ gzip:   0.08 kB
+.vercel/output/static/assets/index-BqcBCbKY.js    432.23 kB │ gzip: 135.64 kB
+.vercel/output/static/assets/routes-D_9V-xe9.js   659.43 kB │ gzip: 206.33 kB
+
+[plugin builtin:vite-reporter]
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[INEFFECTIVE_DYNAMIC_IMPORT] src/lib/auth/client.ts is dynamically imported by src/lib/agent-wallets.functions.ts, src/lib/auth/middleware.ts but also statically imported by src/components/town/AgentWalletsPanel.tsx, src/components/town/TownApp.tsx, src/lib/auth/session-recovery.ts, src/lib/auth/use-current-user.ts, dynamic import will not move module into another chunk.
+
+✓ built in 374ms
+vite v8.3.2 building ssr environment for production...
+transforming...
+✓ 426 modules transformed.
+rendering chunks...
+computing gzip size...
+node_modules/.nitro/vite/services/ssr/assets/styles-BIsUZ_gX.css                     115.15 kB │ gzip:  17.77 kB
+node_modules/.nitro/vite/services/ssr/assets/kysely-adapter-Cj_QZw5p.js                0.05 kB │ gzip:   0.07 kB
+node_modules/.nitro/vite/services/ssr/assets/observation-store.server-BlMUr0DM.js      0.11 kB │ gzip:   0.10 kB
+node_modules/.nitro/vite/services/ssr/assets/start-5Z2QO8AU.js                         0.14 kB │ gzip:   0.13 kB
+node_modules/.nitro/vite/services/ssr/assets/empty-plugin-adapters-D9UWiqvJ.js         0.22 kB │ gzip:   0.16 kB
+node_modules/.nitro/vite/services/ssr/assets/rolldown-runtime-D7D4PA-g.js              0.36 kB │ gzip:   0.25 kB
+node_modules/.nitro/vite/services/ssr/assets/app-path-BafGSwIY.js                      0.36 kB │ gzip:   0.26 kB
+node_modules/.nitro/vite/services/ssr/assets/createServerRpc-CcvdN_gc.js               0.38 kB │ gzip:   0.26 kB
+node_modules/.nitro/vite/services/ssr/assets/types-DB3dnzpP.js                         0.41 kB │ gzip:   0.23 kB
+node_modules/.nitro/vite/services/ssr/assets/owner-reference-DswvX_Ua.js               0.41 kB │ gzip:   0.29 kB
+node_modules/.nitro/vite/services/ssr/assets/_tanstack-start-manifest_v-BGwhptWM.js    0.58 kB │ gzip:   0.33 kB
+node_modules/.nitro/vite/services/ssr/assets/gate-session-marker-xmFBQyXo.js           0.96 kB │ gzip:   0.59 kB
+node_modules/.nitro/vite/services/ssr/assets/cloudflare-image.server-B8kUm95i.js       1.61 kB │ gzip:   0.81 kB
+node_modules/.nitro/vite/services/ssr/assets/postgres.server-BAwJnmmC.js               1.82 kB │ gzip:   0.83 kB
+node_modules/.nitro/vite/services/ssr/assets/isolation.server-Br3xxuhL.js              2.03 kB │ gzip:   1.06 kB
+node_modules/.nitro/vite/services/ssr/assets/validation-OT2bIlWn.js                    2.30 kB │ gzip:   0.85 kB
+node_modules/.nitro/vite/services/ssr/assets/validation-Le81a-L4.js                    2.47 kB │ gzip:   0.76 kB
+node_modules/.nitro/vite/services/ssr/assets/mind.functions-B-qeklRD.js                3.43 kB │ gzip:   1.19 kB
+node_modules/.nitro/vite/services/ssr/assets/verify.server-CBZm2djT.js                 3.61 kB │ gzip:   1.61 kB
+node_modules/.nitro/vite/services/ssr/assets/http.server-DGwXEPbI.js                   4.04 kB │ gzip:   1.45 kB
+node_modules/.nitro/vite/services/ssr/assets/discussion-actions-DTzwiu0n.js            5.32 kB │ gzip:   1.73 kB
+node_modules/.nitro/vite/services/ssr/assets/config-B1P4gqUj.js                        6.50 kB │ gzip:   2.54 kB
+node_modules/.nitro/vite/services/ssr/assets/stamps.functions-BEZEBooF.js              6.59 kB │ gzip:   1.35 kB
+node_modules/.nitro/vite/services/ssr/assets/middleware-CR9WqtQo.js                    6.66 kB │ gzip:   2.98 kB
+node_modules/.nitro/vite/services/ssr/assets/agent-wallets.functions-Dne834Ux.js       8.48 kB │ gzip:   1.53 kB
+node_modules/.nitro/vite/services/ssr/assets/server.server-B1FoCGmD.js                 9.48 kB │ gzip:   2.82 kB
+node_modules/.nitro/vite/services/ssr/assets/service.server-D8SxCslk.js               10.23 kB │ gzip:   3.26 kB
+node_modules/.nitro/vite/services/ssr/assets/http.server-CAPGb3go.js                  12.48 kB │ gzip:   3.59 kB
+node_modules/.nitro/vite/services/ssr/assets/stampchain.server-Okc4wrbT.js            13.00 kB │ gzip:   4.69 kB
+node_modules/.nitro/vite/services/ssr/assets/server-DxSQJLw7.js                       14.18 kB │ gzip:   4.62 kB
+node_modules/.nitro/vite/services/ssr/assets/router-BWN8ge_y.js                       15.02 kB │ gzip:   5.14 kB
+node_modules/.nitro/vite/services/ssr/assets/providers-GdaZZ_s-.js                    16.04 kB │ gzip:   5.03 kB
+node_modules/.nitro/vite/services/ssr/assets/observation-service.server-C05I1j5y.js   22.55 kB │ gzip:   6.61 kB
+node_modules/.nitro/vite/services/ssr/assets/db-XkGw5ds4.js                           34.96 kB │ gzip:   8.58 kB
+node_modules/.nitro/vite/services/ssr/assets/client-COXTwtdm.js                       38.23 kB │ gzip:  11.74 kB
+node_modules/.nitro/vite/services/ssr/assets/service.server-C6rzUpiM.js               39.42 kB │ gzip:   9.55 kB
+node_modules/.nitro/vite/services/ssr/index.js                                        81.24 kB │ gzip:  21.06 kB
+node_modules/.nitro/vite/services/ssr/assets/server-BLj2boYH.js                      345.41 kB │ gzip:  80.79 kB
+node_modules/.nitro/vite/services/ssr/assets/routes-CIMOHlbg.js                      979.92 kB │ gzip: 245.91 kB
+
+✓ built in 245ms
+
+[nitro] ◐ Building [Nitro] (preset: vercel, compatibility: 2026-11-02)
+[nitro] ✔ Generated public .vercel/output/static
+vite v8.3.2 building nitro environment for production...
+`output.codeSplitting.groups[0].name` is a function. Set `output.codeSplitting.groups[0].debugName` so the bundler timing report can identify this group.
+transforming...
+✓ 2615 modules transformed.
+ℹ Tracing dependencies:
+- sharp (0.35.5)
+- semver (7.8.5)
+- @img/sharp-wasm32 (0.35.5)
+- @img/colour (1.1.0)
+- @img/sharp-darwin-arm64 (0.35.5)
+- detect-libc (2.1.2)
+- @img/sharp-libvips-darwin-arm64 (1.3.4)
+- @emnapi/runtime (1.11.3)
+✔ Traced 8 dependencies (83 files) in 255ms.
+ℹ Ensure your production environment matches the builder OS and architecture (darwin-arm64) to avoid native module issues.
+rendering chunks...
+computing gzip size...
+.vercel/output/functions/__server.func/_ssr/observation-store.server-BlMUr0DM.mjs        0.11 kB │ gzip:   0.10 kB
+.vercel/output/functions/__server.func/_ssr/start-5Z2QO8AU.mjs                           0.14 kB │ gzip:   0.13 kB
+.vercel/output/functions/__server.func/_ssr/kysely-adapter-Cj_QZw5p.mjs                  0.15 kB │ gzip:   0.12 kB
+.vercel/output/functions/__server.func/_ssr/empty-plugin-adapters-D9UWiqvJ.mjs           0.23 kB │ gzip:   0.16 kB
+.vercel/output/functions/__server.func/_libs/zod.mjs                                     0.37 kB │ gzip:   0.22 kB
+.vercel/output/functions/__server.func/_ssr/createServerRpc-CcvdN_gc.mjs                 0.38 kB │ gzip:   0.26 kB
+.vercel/output/functions/__server.func/_ssr/app-path-BafGSwIY.mjs                        0.40 kB │ gzip:   0.30 kB
+.vercel/output/functions/__server.func/_ssr/rolldown-runtime-D7D4PA-g.mjs                0.41 kB │ gzip:   0.29 kB
+.vercel/output/functions/__server.func/_ssr/types-DB3dnzpP.mjs                           0.45 kB │ gzip:   0.26 kB
+.vercel/output/functions/__server.func/_ssr/owner-reference-DswvX_Ua.mjs                 0.49 kB │ gzip:   0.34 kB
+.vercel/output/functions/__server.func/_tanstack-start-manifest_v-BGwhptWM.mjs           0.64 kB │ gzip:   0.37 kB
+.vercel/output/functions/__server.func/_chunks/ssr-renderer.mjs                          0.96 kB │ gzip:   0.49 kB
+.vercel/output/functions/__server.func/_ssr/gate-session-marker-xmFBQyXo.mjs             1.00 kB │ gzip:   0.62 kB
+.vercel/output/functions/__server.func/_libs/defu.mjs                                    1.41 kB │ gzip:   0.58 kB
+.vercel/output/functions/__server.func/_ssr/cloudflare-image.server-B8kUm95i.mjs         1.65 kB │ gzip:   0.84 kB
+.vercel/output/functions/__server.func/_runtime.mjs                                      1.92 kB │ gzip:   0.87 kB
+.vercel/output/functions/__server.func/_ssr/isolation.server-Br3xxuhL.mjs                2.07 kB │ gzip:   1.08 kB
+.vercel/output/functions/__server.func/_ssr/postgres.server-BAwJnmmC.mjs                 2.08 kB │ gzip:   0.91 kB
+.vercel/output/functions/__server.func/_ssr/validation-OT2bIlWn.mjs                      2.37 kB │ gzip:   0.92 kB
+.vercel/output/functions/__server.func/_ssr/validation-Le81a-L4.mjs                      2.55 kB │ gzip:   0.83 kB
+.vercel/output/functions/__server.func/_libs/base-x.mjs                                  3.39 kB │ gzip:   1.22 kB
+.vercel/output/functions/__server.func/_ssr/mind.functions-B-qeklRD.mjs                  3.47 kB │ gzip:   1.21 kB
+.vercel/output/functions/__server.func/_ssr/verify.server-CBZm2djT.mjs                   3.65 kB │ gzip:   1.63 kB
+.vercel/output/functions/__server.func/_libs/better-auth__utils.mjs                      3.80 kB │ gzip:   1.31 kB
+.vercel/output/functions/__server.func/_ssr/http.server-DGwXEPbI.mjs                     4.12 kB │ gzip:   1.47 kB
+.vercel/output/functions/__server.func/_libs/bech32.mjs                                  4.44 kB │ gzip:   1.58 kB
+.vercel/output/functions/__server.func/_ssr/discussion-actions-DTzwiu0n.mjs              5.28 kB │ gzip:   1.75 kB
+.vercel/output/functions/__server.func/_libs/nanostores.mjs                              6.11 kB │ gzip:   1.98 kB
+.vercel/output/functions/__server.func/_ssr/config-B1P4gqUj.mjs                          6.43 kB │ gzip:   2.54 kB
+.vercel/output/functions/__server.func/_ssr/middleware-CR9WqtQo.mjs                      6.65 kB │ gzip:   2.99 kB
+.vercel/output/functions/__server.func/_ssr/stamps.functions-BEZEBooF.mjs                6.75 kB │ gzip:   1.38 kB
+.vercel/output/functions/__server.func/_ssr/agent-wallets.functions-Dne834Ux.mjs         8.52 kB │ gzip:   1.55 kB
+.vercel/output/functions/__server.func/_libs/lucide-react.mjs                            9.07 kB │ gzip:   2.41 kB
+.vercel/output/functions/__server.func/_ssr/server.server-B1FoCGmD.mjs                   9.35 kB │ gzip:   2.82 kB
+.vercel/output/functions/__server.func/_ssr/service.server-D8SxCslk.mjs                 10.48 kB │ gzip:   3.34 kB
+.vercel/output/functions/__server.func/_ssr/http.server-CAPGb3go.mjs                    12.49 kB │ gzip:   3.61 kB
+.vercel/output/functions/__server.func/_libs/tanstack__history.mjs                      12.50 kB │ gzip:   3.70 kB
+.vercel/output/functions/__server.func/_ssr/stampchain.server-Okc4wrbT.mjs              13.14 kB │ gzip:   4.76 kB
+.vercel/output/functions/__server.func/_ssr/server-DxSQJLw7.mjs                         14.08 kB │ gzip:   4.63 kB
+.vercel/output/functions/__server.func/_libs/better-auth__memory-adapter.mjs            14.71 kB │ gzip:   4.12 kB
+.vercel/output/functions/__server.func/_ssr/router-BWN8ge_y.mjs                         15.31 kB │ gzip:   5.23 kB
+.vercel/output/functions/__server.func/_ssr/providers-GdaZZ_s-.mjs                      15.71 kB │ gzip:   5.01 kB
+.vercel/output/functions/__server.func/_libs/@better-auth/telemetry+[...].mjs           17.53 kB │ gzip:   4.91 kB
+.vercel/output/functions/__server.func/_libs/h3-v2+rou3.mjs                             19.44 kB │ gzip:   5.66 kB
+.vercel/output/functions/__server.func/_ssr/observation-service.server-C05I1j5y.mjs     22.45 kB │ gzip:   6.64 kB
+.vercel/output/functions/__server.func/_libs/h3+rou3+srvx.mjs                           22.57 kB │ gzip:   6.12 kB
+.vercel/output/functions/__server.func/_libs/@tanstack/router-core+[...].mjs            29.60 kB │ gzip:   7.98 kB
+.vercel/output/functions/__server.func/index.mjs                                        31.78 kB │ gzip:  10.04 kB
+.vercel/output/functions/__server.func/_ssr/db-XkGw5ds4.mjs                             34.72 kB │ gzip:   8.62 kB
+.vercel/output/functions/__server.func/_ssr/client-COXTwtdm.mjs                         37.36 kB │ gzip:  11.73 kB
+.vercel/output/functions/__server.func/_libs/jose.mjs                                   38.63 kB │ gzip:   8.59 kB
+.vercel/output/functions/__server.func/_ssr/service.server-C6rzUpiM.mjs                 39.17 kB │ gzip:   9.54 kB
+.vercel/output/functions/__server.func/_libs/noble__ciphers.mjs                         47.40 kB │ gzip:  14.67 kB
+.vercel/output/functions/__server.func/_libs/opentelemetry__api.mjs                     64.40 kB │ gzip:  12.31 kB
+.vercel/output/functions/__server.func/_ssr/ssr.mjs                                     79.45 kB │ gzip:  21.01 kB
+.vercel/output/functions/__server.func/_libs/bip174+[...].mjs                           79.91 kB │ gzip:  12.02 kB
+.vercel/output/functions/__server.func/_libs/noble__hashes.mjs                          86.24 kB │ gzip:  24.45 kB
+.vercel/output/functions/__server.func/_libs/pg.mjs                                    150.17 kB │ gzip:  34.88 kB
+.vercel/output/functions/__server.func/_libs/@bitcoinerlab/secp256k1+[...].mjs         155.98 kB │ gzip:  44.52 kB
+.vercel/output/functions/__server.func/_libs/noble__curves+noble__hashes.mjs           191.99 kB │ gzip:  55.41 kB
+.vercel/output/functions/__server.func/_ssr/server-BLj2boYH.mjs                        339.92 kB │ gzip:  80.22 kB
+.vercel/output/functions/__server.func/_libs/@better-auth/kysely-adapter+[...].mjs     473.03 kB │ gzip:  78.52 kB
+.vercel/output/functions/__server.func/_libs/bip322-js+[...].mjs                       536.91 kB │ gzip:  87.98 kB
+.vercel/output/functions/__server.func/_libs/electric-sql__pglite.mjs                  751.95 kB │ gzip: 153.28 kB
+.vercel/output/functions/__server.func/_libs/@better-auth/core+[...].mjs               809.81 kB │ gzip: 160.01 kB
+.vercel/output/functions/__server.func/_libs/@tanstack/react-router+[...].mjs          817.25 kB │ gzip: 172.16 kB
+.vercel/output/functions/__server.func/_ssr/routes-CIMOHlbg.mjs                      1,007.65 kB │ gzip: 246.30 kB
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/index.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/index.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/utils.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/utils.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/RouterProvider.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/RouterProvider.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/CatchBoundary.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/CatchBoundary.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/ClientOnly.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/ClientOnly.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/HeadContent.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/HeadContent.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/useRouter.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/useRouter.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/useRouterState.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/useRouterState.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/useLocation.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/useLocation.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/useMatch.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/useMatch.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/Match.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/Match.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/useNavigate.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/useNavigate.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/Asset.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/Asset.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/useBlocker.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/useBlocker.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/Matches.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/Matches.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/link.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/link.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/nonRouteComponentContext.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/nonRouteComponentContext.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/routerContext.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/routerContext.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/matchContext.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/matchContext.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "use client" in "node_modules/@tanstack/react-router/dist/esm/Transitioner.js" may not be preserved when bundling.
+   ╭─[ node_modules/@tanstack/react-router/dist/esm/Transitioner.js:1:1 ]
+   │
+ 1 │ "use client";
+   │ ──────┬──────
+   │       ╰──────── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+✓ built in 516ms
+ℹ Generated .vercel/output/nitro.json
+
+[nitro] ✔ You can preview this build using npx vite preview
+[nitro] ✔ You can deploy this build using npx nitro deploy --prebuilt
+
+> db:migrate
+> node scripts/migrate.mjs
+
+[migrate] DATABASE_URL not set — skipping (the PGLite fallback migrates itself).

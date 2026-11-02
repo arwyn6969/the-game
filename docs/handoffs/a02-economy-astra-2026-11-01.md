@@ -1,5 +1,10 @@
 # A02 economy handoff — Astra design lane, 1 November 2026
 
+**2 November follow-up:** the audited design has now been implemented locally
+after Arwyn's go-ahead. Use the [implementation handoff](a02-cafe-implementation-astra-2026-11-02.md)
+for current source, evidence and open gates. The design-stage record below is
+preserved as historical evidence.
+
 ## Current delivery: comprehensive readiness audit
 
 **Use the [audited café implementation plan](../implementation/a02-cafe-readiness-astra-2026-11-01.md) as the single current brief.**

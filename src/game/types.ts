@@ -238,6 +238,8 @@ export type Town = {
   guide: number;
   /** Validated funded-work extension; absent older towns gain an opening snapshot. */
   economy?: import("./economy-types").EconomyState;
+  /** Optional, explicitly enabled local café pilot; money remains in the existing ledger. */
+  coffee?: import("./coffee-types").CoffeeState;
   /** Optional bounded presentation history; older version-2 saves remain valid. */
   social?: SocialEvent[];
   /** Optional one-manuscript physical interaction prototype. */

@@ -1,0 +1,10 @@
+
+> lint
+> eslint .
+
+
+/Users/arwynhughes/Documents/ChatGPT/THE GAME/a02-economy/src/lib/auth/use-current-user.ts
+  59:3  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/rules-of-hooks')
+
+✖ 1 problem (0 errors, 1 warning)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
