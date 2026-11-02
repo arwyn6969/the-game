@@ -16,6 +16,17 @@ The user authorized live publication on 2 November. The release owner was this c
 
 ## Next work, in order
 
+Active follow-up: this chat owns Safari AI connection recovery on
+`codex/ai-connection-recovery`, based on current `origin/main` `6c72f28`.
+Safari reported offline failures for sign-in and availability requests; reloading
+restored AI ready with the existing town. A failed connection note can outlive
+the availability warning and lose its retry button. The bounded fix keeps the
+connection check available while the note is visible. Typecheck, lint (one
+existing warning), town tests, full tests and build pass; town diagnostics
+complete. Desktop/phone synthetic recovery retains the draft and town, with no
+model request/replay from checking. [Evidence](review/ai-connection-recovery-2026-11-02/README.md).
+No production deployment is authorized by this diagnostic follow-up.
+
 1. [#64 — consolidated release and useful hosted meeting](https://github.com/arwyn6969/the-game/issues/64): publication complete; next, fresh auth/allowance evidence, one bounded hosted trial, then physical-device/accessibility and five-player return-visit acceptance.
 2. [#65 — café pilot acceptance](https://github.com/arwyn6969/the-game/issues/65): mixed seven-day play, pending-AI Stop, accounting/control interleavings and the three-to-five-person diagnostic.
 3. [#66 — personal-model compatibility](https://github.com/arwyn6969/the-game/issues/66): actual user-selected endpoint/local-server compatibility, browser permissions, privacy and cancellation.
