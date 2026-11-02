@@ -1,6 +1,8 @@
 # Playtest fixes — 2 November 2026
 
 Owner: this chat. Branch: `codex/playtest-fixes`, based on `6c72f28`.
+Implementation: `311e2ad`, [draft PR #70](https://github.com/arwyn6969/the-game/pull/70).
+Local validation passes; Verify is pending.
 Scope: the eight findings from the in-app browser playtest. No deployment,
 provider/budget change, live inference, migration or player-save replacement.
 

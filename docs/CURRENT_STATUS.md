@@ -17,7 +17,9 @@ The user authorized live publication on 2 November. The release owner was this c
 ## Next work, in order
 
 Active implementation: this chat owns the eight reproduced playtest findings on
-`codex/playtest-fixes`, based on current `origin/main` `6c72f28`. Scope: manuscript
+`codex/playtest-fixes`, based on current `origin/main` `6c72f28`; implementation
+`311e2ad`, [draft PR #70](https://github.com/arwyn6969/the-game/pull/70), with CI
+pending. Scope: manuscript
 recipient persistence, truthful speech attribution, a visible Stop control,
 scoped activity notices, inventory copy, sidebar labels, replay clock guards and
 explanations for partial Hour skips. Preserve saves, knowledge boundaries and
