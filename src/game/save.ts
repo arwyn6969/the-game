@@ -11,6 +11,8 @@ import type { FundedTown } from "./economy-types";
 import { cleanSocial } from "./social";
 import { legacyTownIdentity, validateTownIdentity } from "./identity";
 import { validatePhysicalItems } from "./physical-items";
+import { validateCoffee } from "./coffee-validation";
+import { recoverCoffeeControl } from "./coffee-runtime";
 import { validateDiscussions, recoverDiscussions } from "./discussions";
 
 export const TOWN_STORAGE_KEY = "the-game-town-v2";
@@ -231,6 +233,9 @@ export function validateTown(value: unknown): value is Town {
   const town = value as Town;
   const version = (value as { version?: unknown }).version;
   if (version !== 1 && version !== 2) return false;
+  // Check both the extension and orphan coffee ledger effects before normalization.
+  if ((Object.hasOwn(value, "coffee") && version !== 2) || validateCoffee(town).length)
+    return false;
   if (Object.hasOwn(value, "discussions") && (version !== 2 || validateDiscussions(town).length))
     return false;
   // Validate optional physical custody before any legacy normalization can hide
@@ -520,6 +525,12 @@ function economyProblem(town: Town): string | null {
 }
 
 function serialize(town: Town, omitReplay = false): string {
+  const coffeeErrors = validateCoffee(town);
+  if (coffeeErrors.length) throw new Error(coffeeErrors.join(" "));
+  if (town.coffee) {
+    const accountErrors = auditEconomy(town);
+    if (accountErrors.length) throw new Error(accountErrors.join(" "));
+  }
   const discussionErrors = validateDiscussions(town);
   if (discussionErrors.length) throw new Error(discussionErrors.join(" "));
   const physicalErrors = validatePhysicalItems(town);
@@ -797,6 +808,9 @@ export function parseTownFile(text: string): Town | null {
     const town = data && typeof data === "object" && "town" in data ? data.town : data;
     if (!validateTown(town)) return null;
     recoverDiscussions(town);
+    // A saved service grant preserves its obligation, never unattended control.
+    // Recovery is idempotent: an already-paused snapshot gets no new receipt.
+    if (!recoverCoffeeControl(town, "Town loaded. Resume café service explicitly.").ok) return null;
     return town;
   } catch {
     return null;
@@ -820,6 +834,12 @@ function townFileProblem(text: string): string | null {
   try {
     const data = JSON.parse(text);
     const town = data && typeof data === "object" && "town" in data ? data.town : data;
+    if (town && typeof town === "object") {
+      if (Object.hasOwn(town, "coffee") && town.version !== 2)
+        return "Coffee records require a version-2 town; preserve the original file for recovery.";
+      const errors = validateCoffee(town);
+      if (errors.length) return `The coffee records need recovery: ${errors.join(" ")}`;
+    }
     if (town && typeof town === "object" && Object.hasOwn(town, "discussions")) {
       if (town.version !== 2)
         return "Discussion records require a version-2 town; preserve the original file for recovery.";

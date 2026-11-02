@@ -1,0 +1,176 @@
+{
+  "date": "2026-11-02",
+  "target": "http://127.0.0.1:8199/",
+  "node": "v24.22.1",
+  "builtPreview": true,
+  "liveInferenceCalls": 0,
+  "authChanged": false,
+  "fixtureScope": "Source-created 15:59 towns with synthetic actor positions, imported normally. All subsequent coffee choices/movement/time advancement use ordinary UI controls. Existing window helpers are read-only.",
+  "syntheticFaults": [
+    "held browser save lock",
+    "storage quota failure",
+    "visibilitychange event"
+  ],
+  "limitations": [
+    "Headless emulated desktop/phone, not physical devices or human enjoyment",
+    "AI-pending Stop is not qualified: authentication/transport remains untouched; pending-save Stop is exercised"
+  ],
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "checks": [
+        "Normal new town enables café without purchase, hire or coin issuance",
+        "Purchase holds full refund; actual funded NPC work creates one owned ready cup while customer leaves",
+        "Return by actual route, collect exact cup, inventory Drink once, and keyboard focus retained",
+        "Kevin shift accepted normally; one Start serves Sub through collection without repeated cup clicks or per-cup pay",
+        "Genuine manual keyboard/touch input suspends routine and attendance before displacement, retaining full wage hold",
+        "Immediate Stop works while browser save lock is held; paused work survives actual reload without automatic control",
+        "Synthetic browser hide event suspends work and clock; returning requires explicit Resume",
+        "Quota failure retains complete exportable live state; explicit retry saves it once and does not resume automation"
+      ],
+      "errors": [],
+      "consoleErrors": [],
+      "externalRequestsBlocked": [
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://fonts.googleapis.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com"
+      ],
+      "serverFunctionsBlocked": [],
+      "screenshots": [
+        "/Users/arwynhughes/Documents/ChatGPT/THE GAME/a02-economy/artifacts/a02-cafe/browser/run-71415-1793621782950/desktop-ready-counter.png",
+        "/Users/arwynhughes/Documents/ChatGPT/THE GAME/a02-economy/artifacts/a02-cafe/browser/run-71415-1793621782950/desktop-coffee-ticket.png",
+        "/Users/arwynhughes/Documents/ChatGPT/THE GAME/a02-economy/artifacts/a02-cafe/browser/run-71415-1793621782950/desktop-working-shift.png",
+        "/Users/arwynhughes/Documents/ChatGPT/THE GAME/a02-economy/artifacts/a02-cafe/browser/run-71415-1793621782950/desktop-recovered-paused.png"
+      ],
+      "customerMovement": {
+        "before": {
+          "x": 7,
+          "y": 19
+        },
+        "after": {
+          "x": 7,
+          "y": 18
+        },
+        "input": "keyboard"
+      },
+      "accessibility": [
+        {
+          "name": "collected coffee panel",
+          "violations": [],
+          "incomplete": [],
+          "passes": 14
+        },
+        {
+          "name": "working controls",
+          "violations": [],
+          "incomplete": [],
+          "passes": 14
+        }
+      ],
+      "workerManualOverride": {
+        "before": {
+          "x": 6,
+          "y": 18
+        },
+        "after": {
+          "x": 6,
+          "y": 17
+        },
+        "input": "keyboard"
+      },
+      "final": {
+        "day": 1,
+        "minute": 1021,
+        "total": 90,
+        "playerMinutes": 61,
+        "coffeeOrders": 2
+      }
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "checks": [
+        "Normal new town enables café without purchase, hire or coin issuance",
+        "Purchase holds full refund; actual funded NPC work creates one owned ready cup while customer leaves",
+        "Return by actual route, collect exact cup, inventory Drink once, and keyboard focus retained",
+        "Kevin shift accepted normally; one Start serves Sub through collection without repeated cup clicks or per-cup pay",
+        "Genuine manual keyboard/touch input suspends routine and attendance before displacement, retaining full wage hold",
+        "Immediate Stop works while browser save lock is held; paused work survives actual reload without automatic control",
+        "Synthetic browser hide event suspends work and clock; returning requires explicit Resume",
+        "Quota failure retains complete exportable live state; explicit retry saves it once and does not resume automation"
+      ],
+      "errors": [],
+      "consoleErrors": [],
+      "externalRequestsBlocked": [
+        "https://fonts.googleapis.com",
+        "https://grok.com",
+        "https://fonts.googleapis.com",
+        "https://fonts.googleapis.com",
+        "https://fonts.googleapis.com",
+        "https://grok.com"
+      ],
+      "serverFunctionsBlocked": [],
+      "screenshots": [
+        "/Users/arwynhughes/Documents/ChatGPT/THE GAME/a02-economy/artifacts/a02-cafe/browser/run-71415-1793621782950/phone-ready-counter.png",
+        "/Users/arwynhughes/Documents/ChatGPT/THE GAME/a02-economy/artifacts/a02-cafe/browser/run-71415-1793621782950/phone-coffee-ticket.png",
+        "/Users/arwynhughes/Documents/ChatGPT/THE GAME/a02-economy/artifacts/a02-cafe/browser/run-71415-1793621782950/phone-working-shift.png",
+        "/Users/arwynhughes/Documents/ChatGPT/THE GAME/a02-economy/artifacts/a02-cafe/browser/run-71415-1793621782950/phone-recovered-paused.png"
+      ],
+      "customerMovement": {
+        "before": {
+          "x": 7,
+          "y": 19
+        },
+        "after": {
+          "x": 7,
+          "y": 18
+        },
+        "input": "touch"
+      },
+      "accessibility": [
+        {
+          "name": "collected coffee panel",
+          "violations": [],
+          "incomplete": [],
+          "passes": 14
+        },
+        {
+          "name": "working controls",
+          "violations": [],
+          "incomplete": [],
+          "passes": 14
+        }
+      ],
+      "workerManualOverride": {
+        "before": {
+          "x": 6,
+          "y": 18
+        },
+        "after": {
+          "x": 6,
+          "y": 17
+        },
+        "input": "touch"
+      },
+      "final": {
+        "day": 1,
+        "minute": 1021,
+        "total": 90,
+        "playerMinutes": 61,
+        "coffeeOrders": 2
+      }
+    }
+  ],
+  "failures": [],
+  "passed": true
+}

@@ -665,6 +665,24 @@ export function paint(ctx: CanvasRenderingContext2D, opts: PaintOpts) {
     if (layer.prop) {
       const prop = layer.prop;
       ctx.drawImage(propArt(prop), prop.x * TILE - 16, prop.y * TILE - 64);
+      if (!opts.replay && prop.kind === "counter" && prop.x === 6 && prop.y === 19) {
+        // Only actual ready items appear on the pickup shelf. Decorative café
+        // cups elsewhere do not represent orders or prove collection.
+        for (const order of town.coffee?.orders ?? []) {
+          if (order.phase !== "ready" || order.pickupSlot === null) continue;
+          const cup = town.coffee?.cups.find(
+            (item) => item.orderId === order.id && item.custody === "counter",
+          );
+          if (!cup) continue;
+          const x = prop.x * TILE + 5 + order.pickupSlot * 14;
+          const y = prop.y * TILE - 6;
+          rect(ctx, "#392a36", x - 2, y + 7, 12, 2);
+          rect(ctx, "#f1dcc3", x, y, 7, 8);
+          rect(ctx, "#6b413c", x + 1, y, 5, 2);
+          rect(ctx, "#f1dcc3", x + 7, y + 2, 3, 4);
+          rect(ctx, "#c8ff6a", x + 2, y + 4, 3, 2);
+        }
+      }
       if (prop.kind === "board" && (town.notices ?? []).length) {
         rect(ctx, "#f7e6c9", prop.x * TILE + 10, prop.y * TILE - 6, 10, 14);
         rect(ctx, "#bf818b", prop.x * TILE + 12, prop.y * TILE - 3, 6, 2);

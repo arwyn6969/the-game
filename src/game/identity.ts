@@ -1,6 +1,8 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex } from "@noble/hashes/utils.js";
 import { AGENT_IDS } from "./types";
+import { recoverCoffeeControl } from "./coffee-runtime";
+import { validateCoffee } from "./coffee-validation";
 import type {
   Agent,
   AgentId,
@@ -278,6 +280,10 @@ export function townRecordRef(
 export function forkTown(town: Town): Town {
   const source = requireRegistry(town);
   const copy = structuredClone(town);
+  const coffeeErrors = validateCoffee(copy);
+  if (coffeeErrors.length) throw new Error(coffeeErrors.join(" "));
+  const stopped = recoverCoffeeControl(copy, "New local town. Resume café service explicitly.");
+  if (!stopped.ok) throw new Error(stopped.message);
   const fork = createTownIdentity(copy.agents.map((agent) => agent.id));
   fork.rootWorldId = source.rootWorldId;
   fork.parentWorldId = source.worldId;
