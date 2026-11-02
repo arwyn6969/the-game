@@ -1,0 +1,26 @@
+{
+  "page": "https://chatgpt.com/space/page_fc96fe02e3308191b9e5df9e3bbade81",
+  "throughSequence": 5,
+  "readbackVerified": true,
+  "updatedBlocks": [
+    {
+      "id": "92be9163-a40c-4bbf-b481-24d18a6015ea",
+      "hash": "a858c3b564f8a13432a21ddfd77df183a83543ac28728d922092b2c982598e63"
+    },
+    {
+      "id": "dddacaac-09fb-4b71-87f4-6084fe23948a",
+      "hash": "f13225e48f852a83de89e11cb904b220f77a98e77bf0f096099064aa474c77b4"
+    },
+    {
+      "id": "37c6975b-aa48-4ec3-986e-6c072d54b3c8",
+      "hash": "b882d880ba5738228134a9321e2e3e3e3bbf2a167d020b3496cefd324ae08589"
+    },
+    {
+      "id": "24f0e71e-530b-4452-ab75-0ca57493b18c",
+      "hash": "a128cd65020690d38d1edfb0f7a7b1aa84cf61c1614b319d58d98bd174859b3c"
+    }
+  ],
+  "localFallback": "/Users/arwynhughes/Documents/ChatGPT/THE GAME/planning/resident-development/PLANNING_FRAMEWORK.md",
+  "freshResume": "/Users/arwynhughes/Documents/ChatGPT/THE GAME/planning/resident-development/GPT61_SOL_RESUME_A01_2.txt",
+  "ratingsAndMapUnchanged": true
+}

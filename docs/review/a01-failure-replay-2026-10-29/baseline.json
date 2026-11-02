@@ -1,0 +1,95 @@
+{
+  "packet": "F00",
+  "observedAt": "2026-10-29T16:35:37.609293+00:00",
+  "owner": "GPT-6.1 Sol / 01a18874-463c-7be1-80a3-ed7eefdace15",
+  "repository": "arwyn6969/the-game",
+  "remote": "https://github.com/arwyn6969/the-game.git",
+  "main": "a26714e03192a17acaa963d7d2681e74a1ac425b",
+  "productBehindMain": 97,
+  "checkouts": [
+    {
+      "checkout": "product",
+      "branch": "main",
+      "head": "7ddda79a91784228586a6536ec9abd565175f79f",
+      "trackedAndUntrackedChanges": []
+    },
+    {
+      "checkout": "social-experience-fix",
+      "branch": "codex/meeting-action-contract-20261027",
+      "head": "71af461ad83d83d4a854c9221904a7d82410fe19",
+      "trackedAndUntrackedChanges": []
+    },
+    {
+      "checkout": "player-controls-feedback",
+      "branch": "codex/player-controls-feedback-20261027",
+      "head": "cd44d165002ddd75b6c92e5ce0efb9ac4fecd568",
+      "trackedAndUntrackedChanges": []
+    },
+    {
+      "checkout": "town-work-polish",
+      "branch": "codex/town-work-polish-20261029",
+      "head": "44745f42719b66230e6ee99d248c8bbe79c2359c",
+      "trackedAndUntrackedChanges": []
+    },
+    {
+      "checkout": "player-model-choice",
+      "branch": "codex/player-model-choice-20261026",
+      "head": "022c6b2880aea7e8cdc263383851d1745a743080",
+      "trackedAndUntrackedChanges": []
+    },
+    {
+      "checkout": "a01-replay",
+      "branch": "codex/a01-replay",
+      "head": "a26714e03192a17acaa963d7d2681e74a1ac425b",
+      "trackedAndUntrackedChanges": [
+        "?? docs/implementation/a01-failure-replay.md",
+        "?? docs/review/a01-failure-replay-2026-10-29/",
+        "?? scripts/a01-failure-replay.mjs",
+        "?? scripts/a01-failure-replay.test.mjs",
+        "?? scripts/fixtures/a01-failure-cases.json"
+      ]
+    }
+  ],
+  "prs": [
+    {
+      "number": 61,
+      "state": "open",
+      "draft": false,
+      "base": "main",
+      "head": "cd44d165002ddd75b6c92e5ce0efb9ac4fecd568",
+      "verify": "success",
+      "run": "https://github.com/arwyn6969/the-game/actions/runs/40506547367"
+    },
+    {
+      "number": 62,
+      "state": "open",
+      "draft": true,
+      "base": "codex/player-controls-feedback-20261027",
+      "head": "44745f42719b66230e6ee99d248c8bbe79c2359c",
+      "verify": "success",
+      "run": "https://github.com/arwyn6969/the-game/actions/runs/40865099031"
+    },
+    {
+      "number": 59,
+      "state": "open",
+      "draft": true,
+      "head": "022c6b2880aea7e8cdc263383851d1745a743080",
+      "scope": "Separate personal/local model candidate; not a dependency"
+    }
+  ],
+  "packetDependencies": [],
+  "selectedPacket": "A01.1",
+  "selectedBranch": "codex/a01-replay",
+  "selectedBase": "a26714e03192a17acaa963d7d2681e74a1ac425b",
+  "ownership": "New test/docs lane only; no other named A01.1 owner found. Existing social/UI/provider work is preserved. No chat was messaged or awakened.",
+  "deploymentEvidence": "public-assets.json; current public hashes match the prior published source; Worker ID is inherited evidence",
+  "constraints": {
+    "liveInferenceCalls": 0,
+    "spend": 0,
+    "grok": "paused",
+    "merge": false,
+    "deploy": false,
+    "productionMigrations": false
+  },
+  "nextAcceptance": "Complete synthetic replay and required local checks; leave A01.2 runtime repair queued."
+}

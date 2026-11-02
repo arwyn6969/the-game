@@ -1,0 +1,76 @@
+{
+  "packet": "A01.1",
+  "checkedAt": "2026-10-29T16:39:54.731380+00:00",
+  "implementationRevision": "922dbcedf7151e9a6a6a351804a4d142b347b4cf",
+  "base": "a26714e03192a17acaa963d7d2681e74a1ac425b",
+  "node": "v24.19.0",
+  "environment": "env -i with Node 24 PATH, HOME and TMPDIR only; no provider or database credentials; no .env files in new worktree",
+  "checks": [
+    {
+      "command": "node scripts/a01-failure-replay.mjs --report docs/review/a01-failure-replay-2026-10-29/replay.json",
+      "exit": 0,
+      "cases": 10
+    },
+    {
+      "command": "npm run typecheck",
+      "exit": 0
+    },
+    {
+      "command": "npm run lint",
+      "exit": 0,
+      "warnings": 1,
+      "warning": "Inherited unused-disable in src/lib/auth/use-current-user.ts"
+    },
+    {
+      "command": "npm run test:town",
+      "exit": 0,
+      "passed": 428
+    },
+    {
+      "command": "npm test (final localhost-permitted run)",
+      "exit": 0,
+      "scriptPassed": 1101,
+      "typedPassed": 55,
+      "failed": 0
+    },
+    {
+      "command": "npm run diagnose:town",
+      "exit": 0,
+      "meaning": "Observations only, not a release verdict"
+    },
+    {
+      "command": "npm run build",
+      "exit": 0,
+      "migration": "DATABASE_URL not set; skipped"
+    },
+    {
+      "command": "scoped ESLint and Prettier for new replay scripts",
+      "exit": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit": 0
+    }
+  ],
+  "initialSandboxRun": {
+    "scriptPassed": 1098,
+    "scriptFailed": 3,
+    "cause": "EPERM binding 127.0.0.1 in two Vite preview tests and the port collision test",
+    "resolution": "Rerun with local bindings permitted, no credentials; all passed"
+  },
+  "reportSha256": "6e98c6b186e7097263c786eaed1987dd6a512b56e6340b0b6e93410e47fc6237",
+  "delivery": {
+    "stage": "Locally verified",
+    "pr": null,
+    "ci": null,
+    "merge": null,
+    "deployment": null,
+    "browserAcceptance": "Not run; test/docs-only packet",
+    "hostedAcceptance": "Not run; prior hosted failure remains open",
+    "humanAcceptance": "Not run"
+  },
+  "liveInferenceCalls": 0,
+  "spend": 0,
+  "productionMigrations": 0,
+  "remainingIssue": "Final failure at decision 16 remains paused; explicit resume is denied, manual Close preserves the record. A01.2 is the next unassigned runtime packet."
+}

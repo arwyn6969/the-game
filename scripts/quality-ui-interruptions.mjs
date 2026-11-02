@@ -75,6 +75,54 @@ export async function runUiInterruptionChecks(browser, url, outputDirectory) {
       assert.equal(await page.locator(".player-tools").count(), 0);
       result.residentReplacesTool = true;
 
+      const beforeReview = await page.evaluate(() => localStorage.getItem("the-game-town-v2"));
+      const reviewChoices = page.getByRole("button", {
+        name: "Review choices with Kevin",
+        exact: true,
+      });
+      await reviewChoices.waitFor();
+      await page.getByRole("heading", { name: "Work and other choices", exact: true }).waitFor();
+      await reviewChoices.click();
+      const choices = page.locator(".mind-actions");
+      const summary = choices.locator("summary");
+      await focused(summary);
+      assert.equal(await choices.getAttribute("open"), "");
+      await choices.getByText(/cafe has 17 coins available after existing reservations/).waitFor();
+      assert.equal(
+        await choices
+          .getByRole("button", { name: "Accept cafe shift · 5", exact: true })
+          .isDisabled(),
+        true,
+        "A distant resident's terms may be reviewed but cannot be accepted",
+      );
+      assert.equal(
+        await page.evaluate(() => localStorage.getItem("the-game-town-v2")),
+        beforeReview,
+        "Reviewing terms must not accept work, activate payroll or write the town",
+      );
+      await page.screenshot({ path: join(out, `${viewport.name}-work-terms.png`) });
+      await summary.click();
+      assert.equal(await choices.getAttribute("open"), null);
+      const beforeHour = await page.evaluate(
+        () => JSON.parse(localStorage.getItem("the-game-town-v2")).town.minute,
+      );
+      await page.getByRole("button", { name: "Hour", exact: true }).click();
+      await page.waitForFunction(
+        (minute) => JSON.parse(localStorage.getItem("the-game-town-v2")).town.minute !== minute,
+        beforeHour,
+      );
+      assert.equal(await choices.getAttribute("open"), null);
+      await page.getByRole("tab", { name: "Overview", exact: true }).click();
+      await page.getByRole("tab", { name: "Together", exact: true }).click();
+      assert.equal(await choices.getAttribute("open"), null, "Tab changes keep a chosen collapse");
+      await page.getByRole("tab", { name: "Overview", exact: true }).click();
+      await reviewChoices.click();
+      await focused(summary);
+      assert.equal(await choices.getAttribute("open"), "");
+      result.explicitChoiceReview = true;
+      result.retainedChoiceDisclosure = true;
+      await page.getByRole("tab", { name: "Overview", exact: true }).click();
+
       const beforeTabs = await position();
       const overview = page.getByRole("tab", { name: "Overview", exact: true });
       await overview.focus();

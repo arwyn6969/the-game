@@ -1,0 +1,321 @@
+{
+  "packet": "A01.3",
+  "date": "2026-11-01",
+  "codeRevision": "38d7442f31efed89ba6af25637a52f4537b3aa75",
+  "integrationRevision": "7c3558e",
+  "main": "a26714e03192a17acaa963d7d2681e74a1ac425b",
+  "inputs": {
+    "PR61": "cd44d165002ddd75b6c92e5ce0efb9ac4fecd568",
+    "PR62": "44745f42719b66230e6ee99d248c8bbe79c2359c",
+    "A01.2": "e115b57",
+    "A01.2-runtime": "ab7d893"
+  },
+  "node": "v24.22.1",
+  "liveInferenceCalls": 0,
+  "spend": 0,
+  "checks": [
+    {
+      "name": "typecheck",
+      "exitCode": 0,
+      "log": "artifacts/a01-qualify-2026-11-01/typecheck.log"
+    },
+    {
+      "name": "lint",
+      "exitCode": 0,
+      "log": "artifacts/a01-qualify-2026-11-01/lint.log"
+    },
+    {
+      "name": "test",
+      "exitCode": 0,
+      "log": "artifacts/a01-qualify-2026-11-01/test.log"
+    },
+    {
+      "name": "town",
+      "exitCode": 0,
+      "log": "artifacts/a01-qualify-2026-11-01/town.log"
+    },
+    {
+      "name": "authority",
+      "exitCode": 0,
+      "log": "artifacts/a01-qualify-2026-11-01/authority.log"
+    },
+    {
+      "name": "diagnostics",
+      "exitCode": 0,
+      "log": "artifacts/a01-qualify-2026-11-01/diagnostics.log"
+    },
+    {
+      "name": "build",
+      "exitCode": 0,
+      "log": "artifacts/a01-qualify-2026-11-01/build.log"
+    }
+  ],
+  "browserChecks": [
+    {
+      "name": "quality-browser",
+      "exitCode": 0,
+      "log": "artifacts/a01-qualify-2026-11-01/quality-browser.log"
+    },
+    {
+      "name": "quality-ai-browser",
+      "exitCode": 0,
+      "log": "artifacts/a01-qualify-2026-11-01/quality-ai-browser.log"
+    },
+    {
+      "name": "skins",
+      "exitCode": 0,
+      "log": "artifacts/a01-qualify-2026-11-01/skins.log"
+    },
+    {
+      "name": "accessibility",
+      "exitCode": 0,
+      "log": "artifacts/a01-qualify-2026-11-01/accessibility.log"
+    },
+    {
+      "name": "build-cloudflare",
+      "exitCode": 0,
+      "log": "artifacts/a01-qualify-2026-11-01/build-cloudflare.log"
+    }
+  ],
+  "tests": {
+    "script": 1124,
+    "typed": 55,
+    "townOverlapping": 441,
+    "isolatedAuthority": 42,
+    "newPreflightIncludedInScriptSuite": 8
+  },
+  "meeting": {
+    "fullJourneys": 42,
+    "fullFailures": [],
+    "finalStrengthenedJourneys": 2,
+    "finalStrengthenedFailures": [],
+    "completeActivities": [
+      {
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "result": {
+          "decisions": 15,
+          "spokenTurns": 6,
+          "speakers": [
+            "arwyn",
+            "northern",
+            "sub"
+          ],
+          "allEightAudiencesAudited": true
+        },
+        "choices": [
+          {
+            "actor": "arwyn",
+            "kind": "read-invitation"
+          },
+          {
+            "actor": "arwyn",
+            "kind": "accept"
+          },
+          {
+            "actor": "arwyn",
+            "kind": "participate"
+          },
+          {
+            "actor": "northern",
+            "kind": "read-invitation"
+          },
+          {
+            "actor": "northern",
+            "kind": "accept"
+          },
+          {
+            "actor": "northern",
+            "kind": "participate"
+          },
+          {
+            "actor": "sub",
+            "kind": "read-invitation"
+          },
+          {
+            "actor": "sub",
+            "kind": "accept"
+          },
+          {
+            "actor": "sub",
+            "kind": "participate"
+          },
+          {
+            "actor": "arwyn",
+            "kind": "speak"
+          },
+          {
+            "actor": "northern",
+            "kind": "speak"
+          },
+          {
+            "actor": "sub",
+            "kind": "speak"
+          },
+          {
+            "actor": "arwyn",
+            "kind": "speak"
+          },
+          {
+            "actor": "northern",
+            "kind": "speak"
+          },
+          {
+            "actor": "sub",
+            "kind": "speak"
+          }
+        ],
+        "assertions": [
+          "One Start drives a fresh legal six-turn activity to natural closure, with exact audiences, retained accounts, pacing and no additional meeting dispatch after closure or reload"
+        ]
+      },
+      {
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "result": {
+          "decisions": 15,
+          "spokenTurns": 6,
+          "speakers": [
+            "arwyn",
+            "northern",
+            "sub"
+          ],
+          "allEightAudiencesAudited": true
+        },
+        "choices": [
+          {
+            "actor": "arwyn",
+            "kind": "read-invitation"
+          },
+          {
+            "actor": "arwyn",
+            "kind": "accept"
+          },
+          {
+            "actor": "arwyn",
+            "kind": "participate"
+          },
+          {
+            "actor": "northern",
+            "kind": "read-invitation"
+          },
+          {
+            "actor": "northern",
+            "kind": "accept"
+          },
+          {
+            "actor": "northern",
+            "kind": "participate"
+          },
+          {
+            "actor": "sub",
+            "kind": "read-invitation"
+          },
+          {
+            "actor": "sub",
+            "kind": "accept"
+          },
+          {
+            "actor": "sub",
+            "kind": "participate"
+          },
+          {
+            "actor": "arwyn",
+            "kind": "speak"
+          },
+          {
+            "actor": "northern",
+            "kind": "speak"
+          },
+          {
+            "actor": "sub",
+            "kind": "speak"
+          },
+          {
+            "actor": "arwyn",
+            "kind": "speak"
+          },
+          {
+            "actor": "northern",
+            "kind": "speak"
+          },
+          {
+            "actor": "sub",
+            "kind": "speak"
+          }
+        ],
+        "assertions": [
+          "One Start drives a fresh legal six-turn activity to natural closure, with exact audiences, retained accounts, pacing and no additional meeting dispatch after closure or reload"
+        ]
+      }
+    ],
+    "reviewCorrections": [
+      "unpaused dispatch opportunity and global toolbar stop state",
+      "actual post-reload Web Locks save barrier and all-eight knowledge re-audit",
+      "saved-proposal barrier and legitimate fresh-town transaction absence"
+    ],
+    "finalFullEntryPointVerified": true,
+    "audits": 46,
+    "violations": 0
+  },
+  "interfaces": {
+    "checksByViewport": {
+      "desktop": 27,
+      "phone": 29
+    },
+    "failures": []
+  },
+  "accessibility": {
+    "auditedSurfaces": 54,
+    "wcagViolations": 0,
+    "bestPracticeViolations": 0,
+    "incompleteRuleResults": 19,
+    "essentialChecks": 27,
+    "failedChecks": 0,
+    "failures": 0,
+    "externalBrowserNetworkRequests": 0
+  },
+  "lint": {
+    "finalTooling": 0,
+    "inheritedWarnings": 1
+  },
+  "sourceDelivery": {
+    "status": "draft-published",
+    "repository": "arwyn6969/the-game",
+    "branch": "codex/a01-qualify",
+    "base": "codex/town-work-polish-20261029",
+    "PR": 63,
+    "url": "https://github.com/arwyn6969/the-game/pull/63",
+    "headAtCreation": "d84e9e08b292006d707921158b574b8076f9ff5f",
+    "order": [
+      61,
+      62,
+      63
+    ],
+    "remoteBranchCreated": true,
+    "PRCreated": true,
+    "CIStarted": true,
+    "creationCI": {
+      "id": 41301568844,
+      "head": "d84e9e08b292006d707921158b574b8076f9ff5f",
+      "observedStatus": "in_progress",
+      "url": "https://github.com/arwyn6969/the-game/actions/runs/41301568844"
+    },
+    "latestHeadCI": "https://github.com/arwyn6969/the-game/pull/63/checks",
+    "publicationApproval": "User explicitly approved upload to this repository and draft creation on 1 November, superseding earlier automatic-review rejection. This record update creates a newer documentation head; qualify its own current-head CI.",
+    "mergeOrDeployOrLiveCallsAuthorized": false
+  },
+  "hosted": {
+    "status": "not-run",
+    "preflight": "not-ready without fresh independent evidence",
+    "freshPublicAssetAttempt": "HTTP403; last successful evidence 29 October",
+    "mergeOrDeployment": false,
+    "humanAcceptance": false
+  }
+}
