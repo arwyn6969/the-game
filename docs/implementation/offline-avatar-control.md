@@ -8,7 +8,7 @@ The proposed first release has one tested model, explicit goals and limits, imme
 
 ## Foundations and missing work
 
-The [roadmap](../ROADMAP.md#shared-server-world-and-ai-avatar-continuity) assigns this work to the future shared server world. The separate [stamp tooling packet 6](https://github.com/arwyn6969/the-game/blob/ea2164318e72b88edd0e26b2ad7e3b9329c87477/docs/implementation/stamp-identity-tooling.md#open-decisions-and-later-gates) already requires one active authority per character. This plan adds control of an absent player's avatar and payment for that service.
+The [roadmap](../ROADMAP.md#next-one-persistent-shared-slice) assigns this work to the future shared server world. The separate [stamp tooling packet 6](https://github.com/arwyn6969/the-game/blob/ea2164318e72b88edd0e26b2ad7e3b9329c87477/docs/implementation/stamp-identity-tooling.md#open-decisions-and-later-gates) already requires one active authority per character. This plan adds control of an absent player's avatar and payment for that service.
 
 The foundations below span main and the newer gameplay/identity/wallet candidates. NPC routines and operator model routing exist on main; permanent IDs, private owner registrations and shared cost reservations are candidate work and must be integrated and verified before reuse. Merging this plan does not merge those implementations.
 

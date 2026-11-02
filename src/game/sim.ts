@@ -14,6 +14,13 @@ import { physicalMovementGoals, advancePhysicalIntents } from "./physical-items"
 import { meetingMovementGoals, advanceDiscussions } from "./discussions";
 import { formatClock, mentionsSeed } from "./text";
 import { canConverse, placeTitle, walkable, zoneAt } from "./world";
+import {
+  beforeCoffeePayroll,
+  afterCoffeePayroll,
+  coffeeMovementGoals,
+  refreshCoffeeStatus,
+} from "./coffee-runtime";
+import { advanceCoffeeResidents, coffeeResidentGoals } from "./coffee-residents";
 
 const MEET = 4;
 const GAP = 20 * 60;
@@ -181,7 +188,13 @@ export function stepMinute(town: Town, online: boolean): ThinkJob | null {
   if (!Array.isArray(town.agents) || town.agents.length === 0) return null;
   if (!Number.isFinite(town.day) || town.day < 1) town.day = 1;
   if (!Number.isFinite(town.minute)) town.minute = 0;
+  const coffeeInterval = beforeCoffeePayroll(town);
+  if (!coffeeInterval.ok) {
+    town.paused = true;
+    return null;
+  }
   advanceFundedPayroll(town);
+  if (!afterCoffeePayroll(town)) return null;
   town.minute += 1;
   if (town.minute >= 1440) {
     town.minute = 0;
@@ -226,7 +239,19 @@ export function stepMinute(town: Town, online: boolean): ThinkJob | null {
   const libraryReserved = libraryMovementGoals(town);
   const physicalReserved = { ...physicalMovementGoals(town, libraryReserved), ...libraryReserved };
   const reserved = { ...meetingMovementGoals(town, physicalReserved), ...physicalReserved };
-  moveResidents(town, hourStart, reserved);
+  const coffeeGoals = coffeeMovementGoals(town, reserved);
+  const coffeeCustomers = coffeeResidentGoals(town, { ...coffeeGoals, ...reserved });
+  moveResidents(
+    town,
+    hourStart,
+    { ...coffeeCustomers, ...coffeeGoals, ...reserved },
+    {
+      playerGoal: coffeeGoals.player,
+      stationary: coffeeInterval.worked,
+    },
+  );
+  advanceCoffeeResidents(town);
+  refreshCoffeeStatus(town);
   advanceLibraryProject(town);
   advancePhysicalIntents(town, libraryReserved);
   advanceDiscussions(town, physicalReserved);

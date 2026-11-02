@@ -1,0 +1,85 @@
+=== full-tests.log (original SHA-256 a02dafbe20c16851cfd7963e14d7f60db8b4d0235542d2076c7a001e4c8118b2) ===
+ℹ tests 1134
+ℹ suites 6
+ℹ pass 1131
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 35514.305
+
+✖ failing tests:
+
+test at scripts/grok-pwa-plugin.test.mjs:557:3
+✖ Vite preview keeps PWA links and installation inside / (89.803458ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2368:21)
+      at listenInCluster (node:net:2499:12)
+      at node:net:2728:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at scripts/grok-pwa-plugin.test.mjs:557:3
+✖ Vite preview keeps PWA links and installation inside /thegame/ (2.594583ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2368:21)
+      at listenInCluster (node:net:2499:12)
+      at node:net:2728:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+test at scripts/playtest.test.mjs:223:1
+✖ port collision fails without closing or signalling its existing owner (6.573625ms)
+  Error: listen EPERM: operation not permitted 127.0.0.1
+      at Server.setupListenHandle [as _listen2] (node:net:2368:21)
+      at listenInCluster (node:net:2499:12)
+      at node:net:2728:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EPERM',
+    errno: -1,
+    syscall: 'listen',
+    address: '127.0.0.1'
+  }
+
+
+=== full-tests-final.log (original SHA-256 2a755a4bce5a2276c7748f460f3d4d3b1b26ccc9a9dacad4536640f0a3d58c20) ===
+ℹ tests 1139
+ℹ suites 6
+ℹ pass 1138
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 37252.928125
+
+✖ failing tests:
+
+test at scripts/town-coffee-domain.test.mjs:532:1
+✖ maximum legal work IDs stay within the conservative attendance drain receipt allowance (1298.824291ms)
+  AssertionError [ERR_ASSERTION]: Funded work has an invalid or duplicate record ID. Funded work has an invalid or duplicate record ID.
+
+  false !== true
+
+      at assertOk (file:///Users/arwynhughes/Documents/ChatGPT/THE%20GAME/a02-economy/scripts/town-coffee-domain.test.mjs:54:10)
+      at TestContext.<anonymous> (file:///Users/arwynhughes/Documents/ChatGPT/THE%20GAME/a02-economy/scripts/town-coffee-domain.test.mjs:577:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

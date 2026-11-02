@@ -1,0 +1,138 @@
+{
+  "date": "2026-11-01",
+  "sourceBase": "a26714e03192a17acaa963d7d2681e74a1ac425b",
+  "laneStart": "5c21468df22b83ecf95efa934913e05f5702da41",
+  "branch": "codex/a02-loop",
+  "remoteRead": {
+    "main": "{\"ref\":\"refs/heads/main\",\"node_id\":\"REF_kwDOU_pPtq9yZWZzL2hlYWRzL21haW4\",\"url\":\"https://api.github.com/repos/arwyn6969/the-game/git/refs/heads/main\",\"object\":{\"sha\":\"a26714e03192a17acaa963d7d2681e74a1ac425b\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/arwyn6969/the-game/git/commits/a26714e03192a17acaa963d7d2681e74a1ac425b\"}}",
+    "pr63": {
+      "url": "https://github.com/arwyn6969/the-game/pull/63",
+      "number": 63,
+      "state": "open",
+      "merged": false,
+      "mergeable": true,
+      "draft": true,
+      "body": "A failed final meeting decision left an exhausted paused meeting that could not resume. The engine now closes that state with a factual saved receipt, preserves unknown usage and rejects late results; valid final speech still commits once before normal closure. The interface retains that receipt through reload and shows validation feedback for a subsequent proposal.\n\nThe qualification adds one fresh automatic activity through ordinary controls: one Start, fifteen legal synthetic decisions, six spoken turns and three speakers, followed by natural closure and an actual reload/save knowledge audit for all eight actors. A snapshot-only action preflight checks exact-candidate, auth, free-profile and independent allowance evidence without accessing services, reserving calls or granting permission.\n\nExplicit stack: #61 -> #62 -> this PR. This draft targets #62's branch. Integrate #61 and #62 first, refresh this candidate if main changes, then require current-head Verify before integration. The original A01.1/A01.2 evidence and source ancestry are preserved. No economic rules, provider/auth configuration or save schema changes.\n\nLocal validation on Node 24.22.1:\n\n- 1,124 script tests +55 typed; 441 overlapping town tests; 42 isolated authority/adapter tests.\n- Sixteen retained-state SQL cases; integrated 42-journey meeting suite with final natural-stop and saved-reload assertions.\n- Built-game and mocked-AI browser gates; four interfaces (27 desktop/29 phone checks); accessibility (54 surfaces/27 essential checks, zero violations, 19 incomplete results retained).\n- Typecheck/lint (one inherited warning), diagnostics and credential-free Node/Cloudflare builds.\n- Independent review of integration, natural stopping, actual saved reload knowledge and fail-closed preflight.\n\nCurrent-head [Verify](https://github.com/arwyn6969/the-game/actions/runs/41301704259) passed every step at `46bbe821341448b9c68000572c093b9471b4a9af`, including the complete meeting, interface/accessibility, authenticated private-wallet and Cloudflare build gates.\n\nEvidence: docs/review/a01-activity-2026-11-01/README.md\nHosted packet: docs/review/a01-activity-2026-11-01/hosted-trial.md\n\nAll inference is synthetic and spend is zero. No merge, deployment, production migration or real-provider/human acceptance is claimed. Current live allowance remains unverified; the preflight defaults to not-ready. Public asset GET returned 403, so the latest successful public hash evidence remains 29 October. Grok stays paused; Astra's economy design is separate.\n",
+      "title": "Close exhausted meeting failures and qualify complete automatic activity",
+      "base": "codex/town-work-polish-20261029",
+      "base_sha": "44745f42719b66230e6ee99d248c8bbe79c2359c",
+      "head": "codex/a01-qualify",
+      "head_sha": "46bbe821341448b9c68000572c093b9471b4a9af",
+      "head_repo_id": 1408913334,
+      "head_repo_full_name": "arwyn6969/the-game",
+      "merge_commit_sha": "a532b819d2d7d1a850d45b7ae1e602643f1cf776",
+      "user": {
+        "login": "arwyn6969",
+        "name": "arwyn6969",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/63277321?v=4",
+        "id": 63277321
+      },
+      "requested_reviewers": null,
+      "requested_team_reviewers": null,
+      "diff": null,
+      "comments": null,
+      "created_at": "2026-11-01T11:21:56Z",
+      "updated_at": "2026-11-01T11:41:32Z",
+      "closed_at": null,
+      "merged_at": null,
+      "commits": 12,
+      "changed_files": 44,
+      "additions": 5541,
+      "deletions": 4,
+      "display_url": "https://github.com/arwyn6969/the-game/pull/63",
+      "display_title": "Close exhausted meeting failures and qualify complete automatic activity"
+    }
+  },
+  "checks": {
+    "model": {
+      "chunk_id": "6308e5",
+      "wall_time_seconds": 0.759765416,
+      "exit_code": 0,
+      "original_token_count": 230,
+      "output": "{\n  \"tests\": 18,\n  \"audits\": 5820,\n  \"commands\": 2907,\n  \"cases\": [\n    {\n      \"name\": \"One worker, one brewer\",\n      \"paidAt\": [\n        30,\n        60,\n        90,\n        120,\n        150,\n        180\n      ],\n      \"meanWait\": 91.66666666666667\n    },\n    {\n      \"name\": \"Two workers, same one brewer\",\n      \"paidAt\": [\n        30,\n        50,\n        70,\n        90,\n        110,\n        130\n      ],\n      \"meanWait\": 66.66666666666667\n    },\n    {\n      \"name\": \"Machine-bound one worker\",\n      \"paidAt\": [\n        20,\n        40,\n        60,\n        80,\n        100,\n        120\n      ],\n      \"meanWait\": 56.666666666666664\n    },\n    {\n      \"name\": \"Machine-bound two workers\",\n      \"paidAt\": [\n        20,\n        40,\n        60,\n        80,\n        100,\n        120\n      ],\n      \"meanWait\": 56.666666666666664\n    }\n  ],\n  \"outputs\": [\n    \"service-model-results.json\",\n    \"service-model.md\"\n  ]\n}\n"
+    },
+    "geometry": {
+      "chunk_id": "9a3630",
+      "wall_time_seconds": 0.30964825,
+      "exit_code": 0,
+      "original_token_count": 150,
+      "output": "{\"status\":\"passed\",\"checkCount\":52,\"routes\":[{\"name\":\"door-to-brewStand-other-stations-occupied\",\"steps\":16},{\"name\":\"door-to-placementStand-other-stations-occupied\",\"steps\":13},{\"name\":\"door-to-customerStand-other-stations-occupied\",\"steps\":11},{\"name\":\"outside-door-to-customer\",\"steps\":12},{\"name\":\"brew-to-placement\",\"steps\":1},{\"name\":\"placement-to-brew\",\"steps\":1},{\"name\":\"approach-to-brew-clear\",\"steps\":2},{\"name\":\"approach-to-brew-placement-occupied\",\"steps\":4},{\"name\":\"occupied-brew-then-vacated\",\"steps\":2}],\"detourExtraSteps\":2,\"outputs\":[\"geometry-probe.json\",\"geometry-probe.md\"]}\n"
+    },
+    "targetedEslint": {
+      "status": "passed",
+      "files": [
+        "service-model.mjs",
+        "geometry-probe.mjs"
+      ],
+      "initialFinding": "Removed no-op report.replaceAll with unnecessary backtick escape; rerun passed."
+    },
+    "documentLinks": {
+      "status": "passed",
+      "localLinksChecked": 22
+    },
+    "visual": {
+      "errors": [],
+      "sizes": [
+        {
+          "width": 704,
+          "scroll": 704,
+          "root": {
+            "x": 0,
+            "y": 0,
+            "width": 704,
+            "height": 328,
+            "top": 0,
+            "right": 704,
+            "bottom": 328,
+            "left": 0
+          }
+        },
+        {
+          "width": 358,
+          "scroll": 358,
+          "root": {
+            "x": 0,
+            "y": 0,
+            "width": 358,
+            "height": 450,
+            "top": 0,
+            "right": 358,
+            "bottom": 450,
+            "left": 0
+          }
+        },
+        {
+          "width": 288,
+          "scroll": 288,
+          "root": {
+            "x": 0,
+            "y": 0,
+            "width": 288,
+            "height": 522,
+            "top": 0,
+            "right": 288,
+            "bottom": 522,
+            "left": 0
+          }
+        }
+      ],
+      "steps": "purchase, accept, ready, absence, collect, keep, drink pass",
+      "network": "HTTP requests blocked",
+      "scope": "local explanatory visual only, not game UI"
+    }
+  },
+  "scope": "Local design, synthetic model, static actual-source path probe. No production gameplay or shared records changed; no game UI, live provider or human acceptance claimed.",
+  "review": {
+    "resolved": [
+      "refund-pending on full buyer purse",
+      "exact coffee source-authority guards",
+      "local record IDs with current-world action references",
+      "conserve each imported towns opening total",
+      "exclude buyer from eligible workers",
+      "earned payable survives collection/consumption",
+      "refund recipient fixed; cancellation/abandonment/closure/retry causes distinct"
+    ],
+    "scope": "Independent source review; production acceptance cases remain unexecuted."
+  }
+}

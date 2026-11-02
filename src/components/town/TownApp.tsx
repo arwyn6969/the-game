@@ -76,6 +76,27 @@ import { NPC_IDS } from "@/game/types";
 import { applyLibraryAction, libraryActions, libraryView } from "@/game/community";
 import { findPath } from "@/game/path";
 import { PlayerTools, type ToolPage } from "./PlayerTools";
+import type { CoffeeChoice, CoffeeControls } from "./CoffeePanel";
+import {
+  applyCoffeeAction,
+  coffeeActionReason,
+  coffeeView,
+  makeCoffeeCommand,
+} from "@/game/coffee";
+import {
+  COFFEE_CUSTOMER_STAND,
+  type CoffeeActionKind,
+  type CoffeeCommand,
+} from "@/game/coffee-types";
+import {
+  coffeeWorkView,
+  hasActivePlayerCoffeeRoutine,
+  startCoffeeRoutine,
+  pauseCoffeeRoutine,
+  suspendCoffeeAutomation,
+  suspendPlayerCoffeeRoutine,
+} from "@/game/coffee-runtime";
+import { coffeeStaffRequestReason, requestCoffeeStaff } from "@/game/coffee-residents";
 import { StampIdentityPanel } from "./StampIdentityPanel";
 import { AgentWalletsPanel } from "./AgentWalletsPanel";
 import { getStampIdentity } from "@/lib/stamps.functions";
@@ -96,6 +117,14 @@ import {
 } from "@/game/effects";
 import { agentById } from "@/game/memory";
 import { thinkTown } from "@/lib/mind.functions";
+import {
+  readPersonalModelSettings,
+  savePersonalModelSettings,
+  validatePersonalModelSettings,
+  requestPersonalModel,
+  personalModelTimeoutMs,
+  type PersonalModelSettings,
+} from "@/lib/personal-model";
 import { useMindAvailability } from "./use-mind-availability";
 import { GROK_PROVIDERS, signIn } from "@/lib/auth/client";
 import { checkGameSession } from "@/lib/auth/session-recovery";
@@ -342,6 +371,11 @@ export function TownApp() {
   const stepInputRef = useRef<string | null>(null);
   const movementSaveRef = useRef<number | undefined>(undefined);
   const movementDirtyRef = useRef(false);
+  const coffeeSavePendingRef = useRef(0);
+  const coffeeSaveBlockedRef = useRef(false);
+  const coffeeSaveFailureRef = useRef(0);
+  const coffeeActionSerialRef = useRef(0);
+  const coffeeContextGenerationRef = useRef(0);
   const startOverRef = useRef(false);
   const toolOpenerRef = useRef<HTMLElement | null>(null);
   const boardOpenerRef = useRef<HTMLElement | null>(null);
@@ -350,6 +384,7 @@ export function TownApp() {
   const importTextRef = useRef<string | null>(null);
   const importKeepRef = useRef<HTMLButtonElement>(null);
   const hourLock = useRef(false);
+  const [hourAdvancing, setHourAdvancing] = useState(false);
   const mounted = useRef(true);
   const runMindRef = useRef<(live: Town, job: ThinkJob) => Promise<void>>(async () => {});
   const dispatchPhysicalRef = useRef<(live: Town) => void>(() => {});
@@ -437,6 +472,10 @@ export function TownApp() {
   }, [phase, stampWorldId, stampCharacterId, tools, acceptStampAppearance]);
   const [browserBackups, setBrowserBackups] = useState<{ key: string; raw: string }[]>([]);
   const [localOnly, setLocalOnly] = useState(localOnlyRef.current);
+  const [personalModelSettings, setPersonalModelSettings] = useState(readPersonalModelSettings);
+  const personalModelRef = useRef(personalModelSettings);
+  const personalRequestAbortRef = useRef<AbortController | null>(null);
+  const [modelSettingsNote, setModelSettingsNote] = useState("");
   const [preferenceNote, setPreferenceNote] = useState("");
   const [inspectorEnabled, setInspectorEnabled] = useState(false);
   const [watchTown, setWatchTown] = useState(false);
@@ -465,7 +504,7 @@ export function TownApp() {
     actionsAvailable,
     actionsAvailableRef,
     check: checkAI,
-  } = useMindAvailability(localOnly, replyFailure !== null);
+  } = useMindAvailability(localOnly, replyFailure !== null, personalModelSettings);
   const [importText, setImportText] = useState<string | null>(null);
   const [importMode, setImportMode] = useState<"restore" | "fork">("restore");
   importTextRef.current = importText;
@@ -499,6 +538,16 @@ export function TownApp() {
       townRef.current === currentTown &&
       requestSerial.current === currentRequest;
     try {
+      if (personalModelRef.current.mode !== "hosted") {
+        const ready = await checkAI();
+        if (!isCurrent()) return;
+        setConnectionNote(
+          ready
+            ? "Your AI source settings are complete. This check makes no model request; send your line to test a reply."
+            : "Open Help & privacy to check your AI source and re-enter your key after reload. Your line is kept.",
+        );
+        return;
+      }
       const signedIn = await checkGameSession();
       if (!isCurrent()) return;
       if (!signedIn) {
@@ -542,7 +591,7 @@ export function TownApp() {
     setSigningIn(true);
     try {
       saveSignInDrafts(live.identityRegistry.worldId, drafts, sessionStorage);
-      const saved = await persistTownSave(live);
+      const saved = await persistTown(live);
       if (!saved.ok) throw new Error("save");
       if (!mounted.current || townRef.current !== live) throw new Error("town changed");
       await signIn(provider.providerId, {
@@ -578,6 +627,8 @@ export function TownApp() {
   const [inspect, setInspect] = useState(false);
   const [sendNote, setSendNote] = useState("");
   const [physicalNote, setPhysicalNote] = useState("");
+  const [coffeeNote, setCoffeeNote] = useState("");
+  const [coffeeSaving, setCoffeeSaving] = useState(false);
   const [physicalRead, setPhysicalRead] = useState<PhysicalActionResult["content"] | null>(null);
   const [physicalSelected, setPhysicalSelected] = useState<string | null>(null);
   const physicalSelectedRef = useRef<string | null>(null);
@@ -605,10 +656,61 @@ export function TownApp() {
   const panelRef = useRef<AgentId | null>(null);
   const boardRef = useRef(false);
 
-  function persistTown(live: Town) {
-    void persistTownSave(live).then((result) => {
+  const persistTown = useCallback((live: Town): Promise<SaveResult> => {
+    const coffeeSave = Boolean(live.coffee);
+    const failureGeneration = coffeeSaveFailureRef.current;
+    let intendedCoffeeSnapshot: string | null = null;
+    if (coffeeSave) {
+      try {
+        intendedCoffeeSnapshot = exportTown(live);
+      } catch {
+        // The normal save path reports serialization failure and retains the town.
+      }
+      coffeeSavePendingRef.current += 1;
+      setCoffeeSaving(true);
+    }
+    return persistTownSave(live).then((result) => {
       if (mounted.current && townRef.current === live) {
         setSaveStatus(result);
+        if (coffeeSave && !result.ok) {
+          coffeeActionSerialRef.current += 1;
+          coffeeSaveFailureRef.current += 1;
+          coffeeSaveBlockedRef.current = true;
+          suspendCoffeeAutomation(
+            live,
+            "Coffee service paused because the town could not be saved.",
+          );
+          speedRef.current = 0;
+          live.paused = true;
+          routeRef.current = null;
+          keysRef.current.clear();
+          stepInputRef.current = null;
+          setSpeed(0);
+          setCoffeeNote(
+            "Coffee service paused: these changes are not saved. Your full current town is kept here. Resolve the save problem and save again before resuming.",
+          );
+        } else if (
+          coffeeSave &&
+          result.ok &&
+          failureGeneration === coffeeSaveFailureRef.current &&
+          intendedCoffeeSnapshot !== null
+        ) {
+          try {
+            // An older successful write must not clear a newer unsaved-state failure.
+            if (intendedCoffeeSnapshot === exportTown(live)) {
+              const recovering = coffeeSaveBlockedRef.current;
+              coffeeSaveBlockedRef.current = false;
+              if (recovering)
+                setCoffeeNote("Town saved. Resume café service explicitly when ready.");
+            } else if (coffeeSaveBlockedRef.current) {
+              setCoffeeNote(
+                "The save completed, but your town changed during it. Save the current town again before resuming café service.",
+              );
+            }
+          } catch {
+            // Keep any recovery block; never assert that a changed/invalid town was saved.
+          }
+        }
         if (!result.ok && discussionRunRef.current?.status === "running") {
           const reason =
             "Automatic meeting stopped because the town could not be saved. Resolve the save before starting again.";
@@ -624,8 +726,120 @@ export function TownApp() {
           routeRef.current = null;
           setSpeed(0);
         }
+        if (coffeeSave) {
+          coffeeSavePendingRef.current = Math.max(0, coffeeSavePendingRef.current - 1);
+          setCoffeeSaving(coffeeSavePendingRef.current > 0);
+        }
       }
+      return result;
     });
+  }, []);
+
+  const interruptCoffeeForMovement = useCallback(() => {
+    const live = townRef.current;
+    if (!live || !hasActivePlayerCoffeeRoutine(live)) return;
+    coffeeActionSerialRef.current += 1;
+    coffeeContextGenerationRef.current += 1;
+    const result = suspendPlayerCoffeeRoutine(
+      live,
+      "You took manual control. Resume the shift explicitly.",
+    );
+    setCoffeeNote(result.message);
+    void persistTown(live);
+    setTick((n) => n + 1);
+  }, [persistTown]);
+
+  const stopCoffeeForContext = useCallback(
+    (reason: string) => {
+      const live = townRef.current;
+      if (live?.coffee) coffeeContextGenerationRef.current += 1;
+      if (!live?.coffee?.routines.some((routine) => routine.status === "active")) return;
+      coffeeActionSerialRef.current += 1;
+      const hadPlayerControl = hasActivePlayerCoffeeRoutine(live);
+      const result = suspendCoffeeAutomation(live, reason);
+      if (hadPlayerControl) {
+        speedRef.current = 0;
+        live.paused = true;
+        setSpeed(0);
+      }
+      setCoffeeNote(result.message);
+      void persistTown(live);
+      setTick((n) => n + 1);
+    },
+    [persistTown],
+  );
+
+  function pausePlayerCoffeeNow() {
+    const live = townRef.current;
+    if (!live) return;
+    const result = suspendPlayerCoffeeRoutine(
+      live,
+      "You paused the café shift. Resume explicitly when ready.",
+    );
+    coffeeActionSerialRef.current += 1;
+    coffeeContextGenerationRef.current += 1;
+    setCoffeeNote(result.message);
+    void persistTown(live);
+    setTick((n) => n + 1);
+  }
+
+  async function chooseCoffee(expectedTown: Town, command: CoffeeCommand) {
+    if (
+      townRef.current !== expectedTown ||
+      replayRef.current ||
+      importTextRef.current !== null ||
+      coffeeSavePendingRef.current > 0 ||
+      coffeeSaveBlockedRef.current
+    )
+      return;
+    const serial = ++coffeeActionSerialRef.current;
+    const result =
+      command.kind === "start" || command.kind === "resume"
+        ? startCoffeeRoutine(expectedTown, command, command.targetId ?? "")
+        : command.kind === "finish-current"
+          ? pauseCoffeeRoutine(expectedTown, command, command.targetId ?? "", true)
+          : command.kind === "staff-request"
+            ? requestCoffeeStaff(expectedTown, command)
+            : applyCoffeeAction(expectedTown, command);
+    if (!result.ok) {
+      setCoffeeNote("reason" in result ? result.reason : result.message);
+      setTick((n) => n + 1);
+      return;
+    }
+    if (command.kind === "start" || command.kind === "resume") {
+      keysRef.current.clear();
+      routeRef.current = null;
+      stepInputRef.current = null;
+      watchingRef.current = null;
+      setWatching(null);
+    }
+    const feedback: Partial<Record<CoffeeActionKind, string>> = {
+      enable: "Café trial started. You have not bought coffee or accepted a shift.",
+      buy: "Coffee ordered. Your 2 coins stay reserved until the cup is ready.",
+      cancel: "Your refund is recorded. If your purse is full, the 2 coins remain reserved.",
+      collect: "You collected your coffee. Keep it or drink it from Inventory.",
+      drink: "You drank your coffee. Its receipt remains in your history.",
+      start: "Automatic serving started for this shift. Use 1× or 4× to advance town time.",
+      resume: "Automatic serving resumed. You can pause or move yourself at any time.",
+      "finish-current":
+        "No new coffee will be assigned. Service pauses after this cup or at the shift boundary.",
+      "staff-request":
+        "Kevin’s staffing decision is recorded. Check current service availability before ordering.",
+    };
+    const successMessage =
+      command.kind === "staff-request" && "message" in result
+        ? result.message
+        : (feedback[command.kind] ?? "Café choice recorded.");
+    setCoffeeNote(`${successMessage} Saving…`);
+    setTick((n) => n + 1);
+    const saved = await persistTown(expectedTown);
+    if (
+      saved.ok &&
+      townRef.current === expectedTown &&
+      serial === coffeeActionSerialRef.current &&
+      !coffeeSaveBlockedRef.current
+    )
+      setCoffeeNote(successMessage);
   }
 
   function requestMind(kind: ThinkJob["kind"], user: string) {
@@ -634,12 +848,20 @@ export function TownApp() {
     transportBusyRef.current = true;
     lastMindRequestStartedAtRef.current = performance.now();
     setTransportBusy(true);
+    const controller = new AbortController();
+    const personal = personalModelRef.current;
+    if (personal.mode !== "hosted") personalRequestAbortRef.current = controller;
     const settled = () => {
+      if (personalRequestAbortRef.current === controller) personalRequestAbortRef.current = null;
       transportBusyRef.current = false;
       if (mounted.current) setTransportBusy(false);
     };
     try {
-      return thinkTown({ data: { kind, user } }).then(
+      const result =
+        personal.mode === "hosted"
+          ? thinkTown({ data: { kind, user } })
+          : requestPersonalModel({ kind, user }, personal, { signal: controller.signal });
+      return result.then(
         (result) => {
           settled();
           return result;
@@ -653,6 +875,12 @@ export function TownApp() {
       settled();
       return Promise.reject(error);
     }
+  }
+
+  function mindClientTimeout(kind: ThinkJob["kind"]) {
+    const settings = personalModelRef.current;
+    if (settings.mode !== "hosted") return personalModelTimeoutMs(settings, kind) + 5_000;
+    return kind === "act" ? ACTION_CLIENT_TIMEOUT_MS : 15_000;
   }
 
   async function acceptImportedTown(next: Town, intent: "replace" | "load" = "replace") {
@@ -682,6 +910,12 @@ export function TownApp() {
     setThinking("");
     setTools(null);
     townRef.current = next;
+    coffeeSavePendingRef.current = 0;
+    coffeeSaveBlockedRef.current = false;
+    coffeeSaveFailureRef.current += 1;
+    coffeeActionSerialRef.current += 1;
+    setCoffeeSaving(false);
+    setCoffeeNote("");
     keysRef.current.clear();
     speedRef.current = next.paused ? 0 : 1;
     setSpeed(speedRef.current);
@@ -987,7 +1221,7 @@ export function TownApp() {
       requestDiscussionFacilitation(live);
       const expected = discussionRunSnapshot(live).meeting;
       if (!expected) return;
-      const saved = await persistTownSave(live);
+      const saved = await persistTown(live);
       if (
         !mounted.current ||
         townRef.current !== live ||
@@ -1194,6 +1428,7 @@ export function TownApp() {
 
   function cancelAIRequest() {
     const wasPlayerRequest = activeJobRef.current?.job.kind === "player";
+    personalRequestAbortRef.current?.abort();
     requestSerial.current += 1;
     activeJobRef.current = null;
     pendingRef.current = false;
@@ -1203,6 +1438,31 @@ export function TownApp() {
       wasPlayerRequest
         ? "AI request cancelled. Your line is still here; no local reply was substituted."
         : "",
+    );
+  }
+
+  function setPersonalModelPreference(value: PersonalModelSettings) {
+    if (transportBusyRef.current) return;
+    const next = validatePersonalModelSettings(value);
+    stopAutomaticDiscussion("AI source changed. Start meeting decisions explicitly when ready.");
+    const live = townRef.current;
+    if (live?.physicalItems?.session?.enabled) {
+      pausePhysicalSession(live, "AI source changed. Resume the resident trial explicitly.");
+      persistTown(live);
+    }
+    cancelAIRequest();
+    onlineRef.current = false;
+    actionsAvailableRef.current = false;
+    personalModelRef.current = next;
+    setPersonalModelSettings(next);
+    setReplyFailure(null);
+    setLastMind(null);
+    setConnectionNote("");
+    setConnectionDismissed(false);
+    setModelSettingsNote(
+      savePersonalModelSettings(next)
+        ? "AI source saved. Keys stay in this tab only. No model request was made."
+        : "AI source applies in this tab, but the browser could not save the settings. Keys stay in this tab only.",
     );
   }
 
@@ -1237,6 +1497,7 @@ export function TownApp() {
     watchingRef.current = null;
     const live = townRef.current;
     if (!live || replayRef.current) return;
+    interruptCoffeeForMovement();
     routeRef.current = { title, target: { ...target }, arrivalRadius };
     keysRef.current.clear();
     setFarNote(`Walking to ${title}. Use a direction or Escape to stop.`);
@@ -1253,6 +1514,7 @@ export function TownApp() {
 
   function stepDirection(code: string) {
     if (replayRef.current !== null || importTextRef.current !== null) return;
+    interruptCoffeeForMovement();
     stepInputRef.current = code;
   }
 
@@ -1273,6 +1535,8 @@ export function TownApp() {
   useEffect(() => {
     if (!importing) return;
     const live = townRef.current;
+    if (live?.coffee)
+      stopCoffeeForContext("Café service paused while reviewing an import. Resume explicitly.");
     if (live && discussionView(live).meeting)
       pauseMeetingRef.current("Meeting paused while reviewing an import.");
     if (live?.physicalItems?.session?.enabled) {
@@ -1292,7 +1556,7 @@ export function TownApp() {
         else if (canvas?.isConnected) canvas.focus();
       });
     };
-  }, [importing]);
+  }, [importing, stopCoffeeForContext, persistTown]);
 
   useEffect(() => {
     replayRef.current = replay;
@@ -1300,6 +1564,10 @@ export function TownApp() {
     stepInputRef.current = null;
     if (replay) {
       const live = townRef.current;
+      if (live?.coffee)
+        stopCoffeeForContext(
+          "Café service paused for replay. Return to now and resume explicitly.",
+        );
       if (live && discussionView(live).meeting)
         pauseMeetingRef.current("Meeting paused for replay. Return to now and resume explicitly.");
       if (live?.physicalItems?.session?.enabled) {
@@ -1321,7 +1589,7 @@ export function TownApp() {
       setPinned(null);
       setBoard(false);
     }
-  }, [replay]);
+  }, [replay, stopCoffeeForContext, persistTown]);
 
   useEffect(() => {
     const hidden = () => {
@@ -1345,6 +1613,7 @@ export function TownApp() {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      personalRequestAbortRef.current?.abort();
       discussionStartSerialRef.current += 1;
       discussionRunRef.current = stopDiscussionRun(
         discussionRunRef.current,
@@ -1460,7 +1729,7 @@ export function TownApp() {
       try {
         const prompt = buildPrompt(live, job);
         const res = await new Promise<Awaited<ReturnType<typeof thinkTown>>>((resolve, reject) => {
-          timed = window.setTimeout(() => reject(new Error("timeout")), ACTION_CLIENT_TIMEOUT_MS);
+          timed = window.setTimeout(() => reject(new Error("timeout")), mindClientTimeout("act"));
           if (!fresh()) throw new Error("The meeting changed before dispatch");
           if (automaticSnapshot) {
             const marked = markDiscussionRunStarted(
@@ -1603,7 +1872,7 @@ export function TownApp() {
       try {
         const prompt = buildPrompt(live, job);
         const res = await new Promise<Awaited<ReturnType<typeof thinkTown>>>((resolve, reject) => {
-          timed = window.setTimeout(() => reject(new Error("timeout")), ACTION_CLIENT_TIMEOUT_MS);
+          timed = window.setTimeout(() => reject(new Error("timeout")), mindClientTimeout("act"));
           requestMind(job.kind, prompt).then(resolve, reject);
         });
         response = res;
@@ -1703,7 +1972,7 @@ export function TownApp() {
         y: playerBeforeRequest.y,
       };
       const res = await new Promise<Awaited<ReturnType<typeof thinkTown>>>((resolve, reject) => {
-        timed = window.setTimeout(() => reject(new Error("timeout")), 15_000);
+        timed = window.setTimeout(() => reject(new Error("timeout")), mindClientTimeout(job.kind));
         requestMind(job.kind, prompt).then(resolve, reject);
       });
       if (!fresh()) return;
@@ -1827,6 +2096,7 @@ export function TownApp() {
       }
       if (!GAME_KEYS.has(event.code)) return;
       event.preventDefault();
+      interruptCoffeeForMovement();
       // A quick tap can begin and end between animation frames. Queue its first
       // step as well as tracking held keys, so browser and keyboard taps land.
       if (!event.repeat && !keysRef.current.has(event.code)) stepInputRef.current = event.code;
@@ -1849,7 +2119,7 @@ export function TownApp() {
       window.removeEventListener("blur", clear);
       document.removeEventListener("visibilitychange", clear);
     };
-  }, []);
+  }, [interruptCoffeeForMovement, persistTown]);
 
   useEffect(() => {
     if (phase !== "play") return;
@@ -1889,6 +2159,8 @@ export function TownApp() {
       if (!live || replayRef.current !== null || importTextRef.current !== null) return;
       let { x, y } = axis(keysRef.current);
       const stepCode = stepInputRef.current;
+      if (x || y || stepCode || routeRef.current) interruptCoffeeForMovement();
+      if (hasActivePlayerCoffeeRoutine(live)) return;
       if (!x && !y && (routeRef.current || stepCode) && moveCool > 0) return;
       if (stepCode && moveCool <= 0) {
         ({ x, y } = axis(new Set([stepCode])));
@@ -2018,6 +2290,8 @@ export function TownApp() {
             importTextRef.current === null &&
             speedRef.current > 0 &&
             !hourLock.current &&
+            coffeeSavePendingRef.current === 0 &&
+            !coffeeSaveBlockedRef.current &&
             !foregroundPendingRef.current
           ) {
             clock += dt * 1000;
@@ -2032,14 +2306,17 @@ export function TownApp() {
                 document.visibilityState === "visible" &&
                 discussionRunRef.current?.status !== "running";
               let job: ThinkJob | null = null;
+              const coffeeRevision = live.coffee?.revision;
               try {
                 job = stepMinute(live, minds);
               } catch {
                 break;
               }
-              if (live.minute % 60 === 0) persistTown(live);
+              if (live.coffee?.revision !== coffeeRevision || live.minute % 60 === 0)
+                void persistTown(live);
               advanced = true;
               if (takeJob(job)) break;
+              if (coffeeSavePendingRef.current > 0) break;
             }
             if (advanced) setTick((n) => n + 1);
           }
@@ -2111,6 +2388,7 @@ export function TownApp() {
     raf = requestAnimationFrame(loop);
 
     const onLeave = () => {
+      stopCoffeeForContext("Café service paused when leaving the page. Resume explicitly.");
       if (discussionStartingRef.current || discussionRunRef.current?.status === "running")
         pauseMeetingRef.current(
           "Automatic meeting stopped when leaving this page. Start again explicitly.",
@@ -2118,7 +2396,10 @@ export function TownApp() {
       if (townRef.current) persistTown(townRef.current);
     };
     const onHide = () => {
-      if (document.visibilityState === "hidden" && townRef.current) persistTown(townRef.current);
+      if (document.visibilityState === "hidden" && townRef.current) {
+        stopCoffeeForContext("Café service paused while the page is hidden. Resume explicitly.");
+        void persistTown(townRef.current);
+      }
     };
     window.addEventListener("pagehide", onLeave);
     document.addEventListener("visibilitychange", onHide);
@@ -2180,7 +2461,7 @@ export function TownApp() {
       delete window.__controlsTest;
       delete window.__game;
     };
-  }, [phase, onlineRef]);
+  }, [phase, onlineRef, interruptCoffeeForMovement, stopCoffeeForContext, persistTown]);
 
   async function enter(event: React.FormEvent) {
     event.preventDefault();
@@ -2205,6 +2486,13 @@ export function TownApp() {
     }
     startOverRef.current = false;
     townRef.current = town;
+    coffeeSavePendingRef.current = 0;
+    coffeeSaveBlockedRef.current = false;
+    coffeeSaveFailureRef.current += 1;
+    coffeeActionSerialRef.current += 1;
+    coffeeContextGenerationRef.current += 1;
+    setCoffeeSaving(false);
+    setCoffeeNote("");
     setSaveStatus(result);
     speedRef.current = 0;
     setSpeed(0);
@@ -2214,6 +2502,10 @@ export function TownApp() {
   }
 
   function setRate(next: 0 | 1 | 4) {
+    if (next !== 0 && coffeeSaveBlockedRef.current) {
+      setCoffeeNote("Save the current town successfully before advancing café service again.");
+      return;
+    }
     if (
       next === 0 &&
       (discussionStartingRef.current || discussionRunRef.current?.status === "running")
@@ -2227,12 +2519,21 @@ export function TownApp() {
     persistTown(live);
   }
 
-  function nextHour() {
+  async function nextHour() {
     const live = townRef.current;
-    if (!live || foregroundPendingRef.current || hourLock.current) return;
+    if (
+      !live ||
+      foregroundPendingRef.current ||
+      hourLock.current ||
+      coffeeSavePendingRef.current > 0 ||
+      coffeeSaveBlockedRef.current
+    )
+      return;
     if (discussionStartingRef.current || discussionRunRef.current?.status === "running")
       pauseMeeting("Automatic meeting stopped before advancing an hour. Start again explicitly.");
     hourLock.current = true;
+    setHourAdvancing(true);
+    const coffeeContextGeneration = coffeeContextGenerationRef.current;
     replayRef.current = null;
     setReplay(null);
     try {
@@ -2240,15 +2541,39 @@ export function TownApp() {
         onlineRef.current && !localOnlyRef.current && document.visibilityState === "visible";
       let job: ThinkJob | null = null;
       for (let i = 0; i < 60; i++) {
+        if (
+          townRef.current !== live ||
+          coffeeSaveBlockedRef.current ||
+          coffeeContextGeneration !== coffeeContextGenerationRef.current
+        )
+          break;
+        const coffeeRevision = live.coffee?.revision;
         try {
           job = stepMinute(live, minds);
         } catch {
           break;
         }
+        if (live.coffee?.revision !== coffeeRevision) {
+          const saved = await persistTown(live);
+          if (
+            !saved.ok ||
+            townRef.current !== live ||
+            replayRef.current ||
+            importTextRef.current !== null
+          )
+            break;
+        }
         if (job) break;
       }
+      if (
+        coffeeSaveBlockedRef.current ||
+        townRef.current !== live ||
+        coffeeContextGeneration !== coffeeContextGenerationRef.current
+      )
+        return;
       try {
-        persistTown(live);
+        const saved = await persistTown(live);
+        if (townRef.current !== live || (live.coffee && !saved.ok)) return;
       } catch {
         /* keep the hour */
       }
@@ -2265,6 +2590,7 @@ export function TownApp() {
       }
     } finally {
       hourLock.current = false;
+      setHourAdvancing(false);
       setTick((n) => n + 1);
     }
   }
@@ -2658,8 +2984,9 @@ export function TownApp() {
               Use local dialogue only
             </label>
             <p className="gate-privacy-note">
-              With AI enabled, your words and relevant town context are sent to the configured AI
-              service. Local mode sends no AI requests.
+              With AI enabled, your words and relevant town context are sent to your selected AI
+              source. Authored local dialogue sends no AI requests. Choose your own API key or local
+              model under Help &amp; privacy after entering.
             </p>
             {preferenceNote && <p role="status">{preferenceNote}</p>}
             <button className="btn" data-on="true" type="submit" disabled={!name.trim()}>
@@ -2708,6 +3035,186 @@ export function TownApp() {
   const town = townRef.current;
   void tick;
   const player = agentById(town, "player");
+  const coffees = coffeeView(town, "player");
+  const coffeeWork = coffeeWorkView(town, "player");
+  const coffeeControlActive = hasActivePlayerCoffeeRoutine(town);
+  const coffeePayable = town.economy?.work?.payables.find(
+    (payable) => payable.agreementId === coffeeWork.agreementId && payable.worker === "player",
+  );
+  const coffeeAgreement = town.economy?.work?.agreements.find(
+    (agreement) => agreement.id === coffeeWork.agreementId,
+  );
+  const coffeeWageHold = town.economy?.holds.find((hold) => hold.id === coffeeAgreement?.holdId);
+  const coffeeWageStatus =
+    coffeePayable?.status === "settled"
+      ? `${coffeePayable.amount} coins paid`
+      : coffeePayable?.status === "earned"
+        ? `${coffeePayable.amount} coins earned; payment pending, with the full wage protected`
+        : coffeeWageHold?.remaining
+          ? `${coffeeWageHold.remaining} coins reserved for completing this shift`
+          : "See Journal for this shift’s wage record";
+  const coffeeUnavailable =
+    replay !== null
+      ? "Return to now to make a café choice."
+      : importing
+        ? "Finish reviewing the import first."
+        : coffeeSaveBlockedRef.current
+          ? "Save the current town successfully before making another café choice."
+          : coffeeSaving
+            ? "Saving your town…"
+            : null;
+  function coffeeChoice(
+    kind: CoffeeActionKind,
+    label: string,
+    targetId?: string,
+    reason?: string | null,
+    acceptLaterPickup = false,
+  ): CoffeeChoice {
+    const command = makeCoffeeCommand(town, "player", kind, { targetId, acceptLaterPickup });
+    return {
+      id: `${kind}:${targetId ?? "new"}:${acceptLaterPickup}`,
+      label,
+      disabledReason: coffeeUnavailable ?? reason ?? null,
+      run: () => void chooseCoffee(town, command),
+    };
+  }
+  const laterCoffeeReason = coffeeActionReason(town, "player", "buy", undefined, true);
+  const workChoices: CoffeeChoice[] = [];
+  if (coffeeControlActive) {
+    workChoices.push({ id: "pause", label: "Pause shift now", run: pausePlayerCoffeeNow });
+    workChoices.push(
+      coffeeChoice(
+        "finish-current",
+        "Finish this coffee, then pause",
+        coffeeWork.agreementId ?? undefined,
+      ),
+    );
+  } else if (coffeeWork.agreementId && coffeeWork.status !== "ended") {
+    workChoices.push(
+      coffeeChoice(
+        coffeeWork.status === "paused" ? "resume" : "start",
+        coffeeWork.status === "paused" ? "Resume serving" : "Start serving",
+        coffeeWork.agreementId,
+        coffeeWork.startReason,
+      ),
+    );
+  }
+  const coffeeControls: CoffeeControls = {
+    enabled: coffees.enabled,
+    status: coffees.status,
+    note: coffeeNote,
+    enable: town.coffee
+      ? null
+      : coffeeChoice(
+          "enable",
+          "Start café trial",
+          undefined,
+          coffeeActionReason(town, "player", "enable"),
+        ),
+    buy: coffees.enabled
+      ? coffeeChoice("buy", "Buy coffee — 2 coins", undefined, coffees.buyReason)
+      : null,
+    laterBuy:
+      coffees.enabled && coffees.buyReason && !laterCoffeeReason
+        ? coffeeChoice(
+            "buy",
+            "Order for later pickup — 2 coins",
+            undefined,
+            laterCoffeeReason,
+            true,
+          )
+        : null,
+    staff: coffees.enabled
+      ? coffeeChoice(
+          "staff-request",
+          "Ask Kevin for staffed service",
+          undefined,
+          coffeeStaffRequestReason(town),
+        )
+      : null,
+    staffNotice: coffees.enabled ? coffeeWorkView(town, "northern").drainNotice : null,
+    work:
+      town.coffee && coffeeWork.agreementId
+        ? {
+            phase:
+              coffeeWork.status === "ready"
+                ? "Ready to start serving"
+                : coffeeWork.phase.replace(/ · \d+\/\d+$/, ""),
+            progress: `${coffeeWork.eligibleMinutes}/${coffeeWork.requiredMinutes} eligible minutes · ${coffeeWageStatus}. ${coffeeWork.phase}. ${coffeeWork.reason}`,
+            active: coffeeControlActive,
+            notice: coffeeWork.drainNotice,
+            actions: workChoices,
+          }
+        : null,
+    orders: coffees.orders
+      .slice(-8)
+      .reverse()
+      .map((order) => {
+        const actions: CoffeeChoice[] = [];
+        if (["queued", "brewing", "placing", "refund-pending"].includes(order.phase))
+          actions.push(
+            coffeeChoice(
+              "cancel",
+              order.phase === "refund-pending"
+                ? "Claim reserved refund — 2 coins"
+                : "Cancel for a full refund — 2 coins",
+              order.id,
+              coffeeActionReason(town, "player", "cancel", order.id),
+            ),
+          );
+        if (order.phase === "ready")
+          actions.push(
+            coffeeChoice(
+              "collect",
+              "Collect my coffee",
+              order.id,
+              coffeeActionReason(town, "player", "collect", order.id),
+            ),
+          );
+        const descriptions = {
+          queued: "Paid and waiting. Your full price remains refundable.",
+          brewing: "Your coffee is brewing. The full price remains refundable.",
+          placing:
+            "Your coffee is being placed on the counter. It is still refundable until ready.",
+          ready: "Ready at the café counter. This cup belongs to you; collect it there.",
+          collected: "Collected. Keep the cup or drink it from your inventory.",
+          consumed: "You drank this cup. It cannot be used again.",
+          "refund-pending":
+            "Your full refund is reserved. Make room in your purse when you choose, then claim it.",
+          refunded: "Your 2 coins were refunded. There is no usable cup for this ticket.",
+        };
+        return {
+          id: order.id,
+          title: `Coffee ticket ${order.id.split(":").at(-1)}`,
+          description: descriptions[order.phase],
+          actions,
+        };
+      }),
+    cups: coffees.cups
+      .filter((cup) => cup.custody === "inventory")
+      .map((cup) => {
+        const order = coffees.orders.find((entry) => entry.id === cup.orderId);
+        const makers = [
+          ...new Set(order?.contributions.map((entry) => agentById(town, entry.worker).name) ?? []),
+        ];
+        return {
+          id: cup.id,
+          title: `Your coffee · ticket ${cup.orderId.split(":").at(-1)}`,
+          description: makers.length
+            ? `Prepared by ${makers.join(" and ")}. Carried by you.`
+            : "Collected from Hobbs café. Carried by you.",
+          drink: coffeeChoice(
+            "drink",
+            `Drink coffee ${cup.orderId.split(":").at(-1)}`,
+            cup.id,
+            coffeeActionReason(town, "player", "drink", cup.id),
+          ),
+        };
+      }),
+    onCounter: () => walkTo("the coffee pickup counter", COFFEE_CUSTOMER_STAND, 0),
+    onKevin: () => walkTo("Kevin", agentById(town, "kevin").tile, 1),
+    travelDisabled: replay !== null || importing,
+  };
   const library = libraryView(town);
   const reading = library.story.gathering;
   const readingPending = reading !== null && library.story.scene.length === 0;
@@ -2758,7 +3265,9 @@ export function TownApp() {
   const aiWarning = replyFailure
     ? `${mindFailureMessage(replyFailure)} No local reply was substituted. Your line is kept; send it again to retry.`
     : checked && !online
-      ? "AI is unavailable. Messages stay unsent; no local replies will be substituted."
+      ? personalModelSettings.mode !== "hosted"
+        ? "Your AI source needs attention. Open Help & privacy to check the endpoint and model, and re-enter your API key after reload. Your line stays unsent."
+        : "AI is unavailable. Messages stay unsent; no local replies will be substituted."
       : "";
 
   const connectionWarning =
@@ -2995,7 +3504,8 @@ export function TownApp() {
               type="button"
               title="Advance up to one hour"
               onClick={nextHour}
-              disabled={thinking === "player"}
+              disabled={thinking === "player" || hourAdvancing}
+              aria-busy={hourAdvancing}
             >
               <SkipForward className="inline size-4" aria-hidden /> Hour
             </button>
@@ -3085,6 +3595,21 @@ export function TownApp() {
                 "The manuscript trial is ready."}
           </span>
         )}
+        {coffeeControls.work && !replay && (
+          <>
+            <span className="status-message" role="status" aria-live="polite">
+              Café: {coffeeControls.work.phase}
+            </span>
+            <span>
+              · {coffeeWork.eligibleMinutes}/{coffeeWork.requiredMinutes} shift minutes
+            </span>
+            {coffeeControlActive && (
+              <button className="btn" type="button" onClick={pausePlayerCoffeeNow}>
+                Pause café shift now
+              </button>
+            )}
+          </>
+        )}
         <div className="status-controls">
           <span>
             <kbd>WASD / ↑↓←→</kbd> move
@@ -3095,6 +3620,14 @@ export function TownApp() {
         </div>
       </div>
       <nav className="town-tools" aria-label="Your town tools">
+        <button
+          className="btn"
+          type="button"
+          data-on={tools === "cafe"}
+          onClick={() => openTools("cafe")}
+        >
+          Café
+        </button>
         <button
           className="btn"
           type="button"
@@ -3253,6 +3786,20 @@ export function TownApp() {
       </div>
 
       <div className="town-updates">
+        {coffeeSaveBlockedRef.current && (
+          <p className="warn" role="alert">
+            Café service is paused until this current town is safely saved. Keep a downloaded copy
+            if the problem continues.{" "}
+            <button
+              className="btn"
+              type="button"
+              disabled={coffeeSaving}
+              onClick={() => void persistTown(town)}
+            >
+              Retry saving this town
+            </button>
+          </p>
+        )}
         {saveStatus && !saveStatus.ok && (
           <p className="warn" role="alert">
             {saveStatus.reason === "conflict"
@@ -3464,6 +4011,7 @@ export function TownApp() {
             code="ArrowUp"
             keys={keysRef}
             onStep={stepDirection}
+            onManual={interruptCoffeeForMovement}
             disabled={replay !== null || importing}
             className="u"
             label="North"
@@ -3474,6 +4022,7 @@ export function TownApp() {
             code="ArrowLeft"
             keys={keysRef}
             onStep={stepDirection}
+            onManual={interruptCoffeeForMovement}
             disabled={replay !== null || importing}
             className="l"
             label="West"
@@ -3484,6 +4033,7 @@ export function TownApp() {
             code="ArrowRight"
             keys={keysRef}
             onStep={stepDirection}
+            onManual={interruptCoffeeForMovement}
             disabled={replay !== null || importing}
             className="r"
             label="East"
@@ -3494,6 +4044,7 @@ export function TownApp() {
             code="ArrowDown"
             keys={keysRef}
             onStep={stepDirection}
+            onManual={interruptCoffeeForMovement}
             disabled={replay !== null || importing}
             className="d"
             label="South"
@@ -3563,7 +4114,12 @@ export function TownApp() {
             page={tools}
             town={town}
             manuscriptControls={manuscriptControls}
+            coffeeControls={coffeeControls}
             localOnly={localOnly}
+            personalModelSettings={personalModelSettings}
+            onPersonalModelSettings={setPersonalModelPreference}
+            modelSettingsNote={modelSettingsNote}
+            modelSettingsBusy={transportBusy}
             preferenceNote={preferenceNote}
             inspectorEnabled={inspectorEnabled}
             inventoryActions={playerActions(town, "player")}
@@ -3927,6 +4483,7 @@ function Pad({
   label,
   children,
   onStep,
+  onManual,
   disabled,
 }: {
   code: string;
@@ -3935,6 +4492,7 @@ function Pad({
   label: string;
   children: string;
   onStep: (code: string) => void;
+  onManual: () => void;
   disabled: boolean;
 }) {
   return (
@@ -3948,6 +4506,7 @@ function Pad({
       }}
       onPointerDown={(event) => {
         event.preventDefault();
+        onManual();
         event.currentTarget.setPointerCapture(event.pointerId);
         keys.current?.add(code);
       }}

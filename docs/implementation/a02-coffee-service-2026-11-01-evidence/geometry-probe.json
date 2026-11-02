@@ -1,0 +1,578 @@
+{
+  "status": "passed",
+  "evidenceKind": "isolated geometry probe using actual world.ts and path.ts",
+  "sourceHashes": {
+    "src/game/world.ts": "d801575aa1f1b4d7b286a1124310047314a98e625dc8675ff266ab466616ae6f",
+    "src/game/path.ts": "92d4ed9d37773cb323133096671bc1678ce167034966e4e721f84d1b7048bac7"
+  },
+  "config": {
+    "brewerFixture": {
+      "x": 5,
+      "y": 19
+    },
+    "brewStand": {
+      "x": 5,
+      "y": 18
+    },
+    "shelfFixture": {
+      "x": 6,
+      "y": 19
+    },
+    "shelfLogicalSlots": 2,
+    "placementStand": {
+      "x": 6,
+      "y": 18
+    },
+    "customerStand": {
+      "x": 7,
+      "y": 19
+    },
+    "cafeDoor": {
+      "x": 17,
+      "y": 20
+    },
+    "outsideDoor": {
+      "x": 18,
+      "y": 20
+    }
+  },
+  "checkCount": 52,
+  "checks": [
+    "brewStand is exact walkable cafe floor",
+    "brewStand is not normalized to another tile",
+    "placementStand is exact walkable cafe floor",
+    "placementStand is not normalized to another tile",
+    "customerStand is exact walkable cafe floor",
+    "customerStand is not normalized to another tile",
+    "brewerFixture is blocked cafe counter furniture",
+    "shelfFixture is blocked cafe counter furniture",
+    "brew stand reaches brewer by one cardinal step",
+    "placement stand reaches shelf by one cardinal step",
+    "customer stand reaches shelf by one cardinal step",
+    "brew and placement stands are adjacent",
+    "door-to-brewStand-other-stations-occupied: exact endpoints are walkable",
+    "door-to-brewStand-other-stations-occupied: destination is unoccupied",
+    "door-to-brewStand-other-stations-occupied: route ends at exact destination",
+    "door-to-brewStand-other-stations-occupied: every step is cardinal, walkable and unoccupied",
+    "door-to-placementStand-other-stations-occupied: exact endpoints are walkable",
+    "door-to-placementStand-other-stations-occupied: destination is unoccupied",
+    "door-to-placementStand-other-stations-occupied: route ends at exact destination",
+    "door-to-placementStand-other-stations-occupied: every step is cardinal, walkable and unoccupied",
+    "door-to-customerStand-other-stations-occupied: exact endpoints are walkable",
+    "door-to-customerStand-other-stations-occupied: destination is unoccupied",
+    "door-to-customerStand-other-stations-occupied: route ends at exact destination",
+    "door-to-customerStand-other-stations-occupied: every step is cardinal, walkable and unoccupied",
+    "outside-door-to-customer: exact endpoints are walkable",
+    "outside-door-to-customer: destination is unoccupied",
+    "outside-door-to-customer: route ends at exact destination",
+    "outside-door-to-customer: every step is cardinal, walkable and unoccupied",
+    "brew-to-placement: exact endpoints are walkable",
+    "brew-to-placement: destination is unoccupied",
+    "brew-to-placement: route ends at exact destination",
+    "brew-to-placement: every step is cardinal, walkable and unoccupied",
+    "placement-to-brew: exact endpoints are walkable",
+    "placement-to-brew: destination is unoccupied",
+    "placement-to-brew: route ends at exact destination",
+    "placement-to-brew: every step is cardinal, walkable and unoccupied",
+    "approach-to-brew-clear: exact endpoints are walkable",
+    "approach-to-brew-clear: destination is unoccupied",
+    "approach-to-brew-clear: route ends at exact destination",
+    "approach-to-brew-clear: every step is cardinal, walkable and unoccupied",
+    "approach-to-brew-placement-occupied: exact endpoints are walkable",
+    "approach-to-brew-placement-occupied: destination is unoccupied",
+    "approach-to-brew-placement-occupied: route ends at exact destination",
+    "approach-to-brew-placement-occupied: every step is cardinal, walkable and unoccupied",
+    "occupied intermediate stand requires a longer real route",
+    "raw findPath permits its occupied goal; caller must gate it",
+    "proposed occupied-goal gate waits without movement",
+    "occupied-brew-then-vacated: exact endpoints are walkable",
+    "occupied-brew-then-vacated: destination is unoccupied",
+    "occupied-brew-then-vacated: route ends at exact destination",
+    "occupied-brew-then-vacated: every step is cardinal, walkable and unoccupied",
+    "blocked shelf target would be normalized; exact fixture reach must be checked separately"
+  ],
+  "routes": [
+    {
+      "name": "door-to-brewStand-other-stations-occupied",
+      "start": {
+        "x": 17,
+        "y": 20
+      },
+      "target": {
+        "x": 5,
+        "y": 18
+      },
+      "occupied": [
+        {
+          "x": 6,
+          "y": 18
+        },
+        {
+          "x": 7,
+          "y": 19
+        }
+      ],
+      "steps": 16,
+      "path": [
+        {
+          "x": 16,
+          "y": 20
+        },
+        {
+          "x": 15,
+          "y": 20
+        },
+        {
+          "x": 14,
+          "y": 20
+        },
+        {
+          "x": 14,
+          "y": 19
+        },
+        {
+          "x": 13,
+          "y": 19
+        },
+        {
+          "x": 12,
+          "y": 19
+        },
+        {
+          "x": 11,
+          "y": 19
+        },
+        {
+          "x": 10,
+          "y": 19
+        },
+        {
+          "x": 9,
+          "y": 19
+        },
+        {
+          "x": 8,
+          "y": 19
+        },
+        {
+          "x": 8,
+          "y": 18
+        },
+        {
+          "x": 7,
+          "y": 18
+        },
+        {
+          "x": 7,
+          "y": 17
+        },
+        {
+          "x": 6,
+          "y": 17
+        },
+        {
+          "x": 5,
+          "y": 17
+        },
+        {
+          "x": 5,
+          "y": 18
+        }
+      ]
+    },
+    {
+      "name": "door-to-placementStand-other-stations-occupied",
+      "start": {
+        "x": 17,
+        "y": 20
+      },
+      "target": {
+        "x": 6,
+        "y": 18
+      },
+      "occupied": [
+        {
+          "x": 5,
+          "y": 18
+        },
+        {
+          "x": 7,
+          "y": 19
+        }
+      ],
+      "steps": 13,
+      "path": [
+        {
+          "x": 16,
+          "y": 20
+        },
+        {
+          "x": 15,
+          "y": 20
+        },
+        {
+          "x": 14,
+          "y": 20
+        },
+        {
+          "x": 14,
+          "y": 19
+        },
+        {
+          "x": 13,
+          "y": 19
+        },
+        {
+          "x": 12,
+          "y": 19
+        },
+        {
+          "x": 11,
+          "y": 19
+        },
+        {
+          "x": 10,
+          "y": 19
+        },
+        {
+          "x": 9,
+          "y": 19
+        },
+        {
+          "x": 8,
+          "y": 19
+        },
+        {
+          "x": 8,
+          "y": 18
+        },
+        {
+          "x": 7,
+          "y": 18
+        },
+        {
+          "x": 6,
+          "y": 18
+        }
+      ]
+    },
+    {
+      "name": "door-to-customerStand-other-stations-occupied",
+      "start": {
+        "x": 17,
+        "y": 20
+      },
+      "target": {
+        "x": 7,
+        "y": 19
+      },
+      "occupied": [
+        {
+          "x": 5,
+          "y": 18
+        },
+        {
+          "x": 6,
+          "y": 18
+        }
+      ],
+      "steps": 11,
+      "path": [
+        {
+          "x": 16,
+          "y": 20
+        },
+        {
+          "x": 15,
+          "y": 20
+        },
+        {
+          "x": 14,
+          "y": 20
+        },
+        {
+          "x": 14,
+          "y": 19
+        },
+        {
+          "x": 13,
+          "y": 19
+        },
+        {
+          "x": 12,
+          "y": 19
+        },
+        {
+          "x": 11,
+          "y": 19
+        },
+        {
+          "x": 10,
+          "y": 19
+        },
+        {
+          "x": 9,
+          "y": 19
+        },
+        {
+          "x": 8,
+          "y": 19
+        },
+        {
+          "x": 7,
+          "y": 19
+        }
+      ]
+    },
+    {
+      "name": "outside-door-to-customer",
+      "start": {
+        "x": 18,
+        "y": 20
+      },
+      "target": {
+        "x": 7,
+        "y": 19
+      },
+      "occupied": [
+        {
+          "x": 5,
+          "y": 18
+        },
+        {
+          "x": 6,
+          "y": 18
+        }
+      ],
+      "steps": 12,
+      "path": [
+        {
+          "x": 17,
+          "y": 20
+        },
+        {
+          "x": 16,
+          "y": 20
+        },
+        {
+          "x": 15,
+          "y": 20
+        },
+        {
+          "x": 15,
+          "y": 19
+        },
+        {
+          "x": 14,
+          "y": 19
+        },
+        {
+          "x": 13,
+          "y": 19
+        },
+        {
+          "x": 12,
+          "y": 19
+        },
+        {
+          "x": 11,
+          "y": 19
+        },
+        {
+          "x": 10,
+          "y": 19
+        },
+        {
+          "x": 9,
+          "y": 19
+        },
+        {
+          "x": 8,
+          "y": 19
+        },
+        {
+          "x": 7,
+          "y": 19
+        }
+      ]
+    },
+    {
+      "name": "brew-to-placement",
+      "start": {
+        "x": 5,
+        "y": 18
+      },
+      "target": {
+        "x": 6,
+        "y": 18
+      },
+      "occupied": [
+        {
+          "x": 7,
+          "y": 19
+        }
+      ],
+      "steps": 1,
+      "path": [
+        {
+          "x": 6,
+          "y": 18
+        }
+      ]
+    },
+    {
+      "name": "placement-to-brew",
+      "start": {
+        "x": 6,
+        "y": 18
+      },
+      "target": {
+        "x": 5,
+        "y": 18
+      },
+      "occupied": [
+        {
+          "x": 7,
+          "y": 19
+        }
+      ],
+      "steps": 1,
+      "path": [
+        {
+          "x": 5,
+          "y": 18
+        }
+      ]
+    },
+    {
+      "name": "approach-to-brew-clear",
+      "start": {
+        "x": 7,
+        "y": 18
+      },
+      "target": {
+        "x": 5,
+        "y": 18
+      },
+      "occupied": [
+        {
+          "x": 7,
+          "y": 19
+        }
+      ],
+      "steps": 2,
+      "path": [
+        {
+          "x": 6,
+          "y": 18
+        },
+        {
+          "x": 5,
+          "y": 18
+        }
+      ]
+    },
+    {
+      "name": "approach-to-brew-placement-occupied",
+      "start": {
+        "x": 7,
+        "y": 18
+      },
+      "target": {
+        "x": 5,
+        "y": 18
+      },
+      "occupied": [
+        {
+          "x": 6,
+          "y": 18
+        },
+        {
+          "x": 7,
+          "y": 19
+        }
+      ],
+      "steps": 4,
+      "path": [
+        {
+          "x": 7,
+          "y": 17
+        },
+        {
+          "x": 6,
+          "y": 17
+        },
+        {
+          "x": 5,
+          "y": 17
+        },
+        {
+          "x": 5,
+          "y": 18
+        }
+      ]
+    },
+    {
+      "name": "occupied-brew-then-vacated",
+      "start": {
+        "x": 7,
+        "y": 18
+      },
+      "target": {
+        "x": 5,
+        "y": 18
+      },
+      "occupied": [],
+      "steps": 2,
+      "path": [
+        {
+          "x": 6,
+          "y": 18
+        },
+        {
+          "x": 5,
+          "y": 18
+        }
+      ]
+    }
+  ],
+  "occupancyEdge": {
+    "rawFindPathReachesOccupiedGoal": true,
+    "rawOccupiedGoalRoute": [
+      {
+        "x": 6,
+        "y": 18
+      },
+      {
+        "x": 5,
+        "y": 18
+      }
+    ],
+    "proposedGuard": {
+      "status": "waiting-for-station",
+      "actorPosition": {
+        "x": 7,
+        "y": 18
+      },
+      "path": []
+    },
+    "resumedRoute": [
+      {
+        "x": 6,
+        "y": 18
+      },
+      {
+        "x": 5,
+        "y": 18
+      }
+    ],
+    "detourExtraSteps": 2
+  },
+  "limitations": [
+    "No complete simulation or real entity occupancy run was tested; occupied tiles are explicit synthetic blocked sets.",
+    "No production coffee movement, queue, staffing, custody, serving, reservation or UI behavior exists or was implemented by this probe.",
+    "findPath allows an occupied goal and normalizes blocked furniture; callers need exact floor targets plus current occupancy checks.",
+    "One brew stand supports one simultaneous brewer. Two logical shelf slots are a proposed capacity setting, not two walkable tiles or measured throughput.",
+    "Path lengths are grid steps, not measured simulation duration. Collision arbitration and commitments need later integration tests."
+  ]
+}

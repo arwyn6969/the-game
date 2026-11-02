@@ -14,7 +14,7 @@
 <body>
   <a href="./">← Return to THE GAME</a>
   <h1>Your town and your data</h1>
-  <p class="date">Privacy information · Updated 21 October 2026</p>
+  <p class="date">Privacy information · Updated 27 October 2026</p>
   <p>THE GAME is operated by Arwyn Hughes. For privacy questions or a request concerning your server account data, contact <a href="mailto:mrarwyn@gmail.com">mrarwyn@gmail.com</a>.</p>
   <h2>Your saved town</h2>
   <p>The town, its history and your dialogue preferences are saved in this browser. There is no automatic account-based town synchronization. Download town creates a portable backup that includes conversation history and private resident notes; keep it somewhere private. Clearing this site's browser data removes local saves, so export anything you want to keep first.</p>
@@ -24,6 +24,9 @@
   <p>When AI is enabled, your message, relevant memories, recent dialogue and resident profiles are sent to the configured AI service to generate a reply. The Cloudflare deployment uses OpenRouter's free Nemotron route. OpenRouter and its model provider process these requests under their own policies. Avoid entering sensitive personal information into dialogue. The game records usage counters to enforce shared limits.</p>
   <p>Choose <strong>Use local dialogue only</strong> on arrival or under <strong>Help &amp; privacy</strong> to send no AI requests, including residents' background conversations. Local replies remain available when AI is unavailable or a quota is reached.</p>
   <p>Read <a href="https://openrouter.ai/privacy">OpenRouter's privacy policy</a>. Google sign-in is separate from the game's AI provider.</p>
+  <h2>Your own AI source</h2>
+  <p>Under Help &amp; privacy, AI source lets you choose your own API key or an OpenAI-compatible model server on this device, such as Ollama or LM Studio. Messages and relevant resident context, including background AI while town time runs, go directly from this browser to the endpoint you select. Personal requests do not use the game's hosted allowance or server-side usage accounting. Your provider's billing, limits and privacy policy apply. A failed personal request does not switch to hosted AI.</p>
+  <p>The game keeps your API key only in this tab's memory, sends it only to your selected endpoint, and excludes it from browser storage and town backups. Re-enter the key after reload. Your selected source, endpoint and model name are saved separately in this browser. The local server must allow this game's origin; a browser may also require local-network permission. Choose a downloaded local model if you want inference on your device; a local server can itself be configured to forward requests to a cloud provider.</p>
   <h2>Optional wallet and stamp tools</h2>
   <p>Wallet actions require you to choose them explicitly. A verified address, signed proof and selected stamp information may be stored for your identity or private resident profiles. Public blockchain services are queried for relevant holdings, and Cloudflare processes public stamp artwork into display images. THE GAME does not receive wallet private keys. Funding, spending and trading are not enabled by these tools.</p>
   <h2>Hosting and service records</h2>

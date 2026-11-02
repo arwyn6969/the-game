@@ -1,0 +1,51 @@
+✔ ordinary coffee pays into café cash but cannot spend its separate refund reservation (27.025334ms)
+✔ one actual ready transition releases receipt without new transfer; collect and drink each once (75.282916ms)
+✔ partial preparation refunds all two coins and preserves accrued wage and all prior holds (32.234792ms)
+✔ ready wins an old cancellation and stale/conflicting/wrong-world/model actions are unchanged (65.0005ms)
+✔ absent/full staff, self-service, debt and pending ticket prevent unsafe checkout (23.578375ms)
+✔ full refund purse retains liability and retries only after real capacity changes (17.33675ms)
+✔ actual save/import preserves cups and rejects missing or edited coffee ledger projection (67.349667ms)
+✔ world identity is checked before replay while fork keeps historical local coffee records (14.082292ms)
+✔ closed pilot refunds unready orders but keeps ready cups, wages and privacy (91.6905ms)
+✔ NPC discretionary allowance is existing money plus settled wages, never a daily reset (59.089542ms)
+✔ fresh paused town can explicitly enable with staged payroll initialization; rejected enable is unchanged (8.271333ms)
+✔ two uncollected cups block new orders without destroying cups or existing wage holds (124.658208ms)
+✔ four collected cups reserve inventory capacity; drinking one frees exactly one space (354.449041ms)
+✔ late purchase requires disclosed later pickup and the seventh-day boundary admits no new order (22.257541ms)
+✔ forged old contribution or deleted order is rejected even when cash totals are unchanged (40.523958ms)
+✔ counter proximity and occupancy are validated for purchase and exact-owner pickup (61.529166ms)
+✔ forged extra price, recipient or hold terms and absent identity reject before any mutation (10.390042ms)
+✔ maximum legal work IDs stay within the conservative attendance drain receipt allowance (597.131083ms)
+ℹ Longest legal IDs: ordinary attendance max 987 bytes; final earned/payable delta 4608 bytes. This measures source records, not browser quota or arbitrary future schema growth.
+✔ one bounded resume above the admission threshold finishes existing coffee and wages below the export ceiling (7335.673708ms)
+ℹ Synthetic retained-history drain: 3220628 bytes before final resume; 3397709 bytes after 168 actual core intervals, one ready cup and the settled existing wage. Conditional finite path; no browser-quota or unlimited-toggle guarantee.
+✔ fresh-town opt-in uses existing money and does not buy coffee or enroll staff (19.269416ms)
+✔ ordinary staffing request, real navigation, ready cup, pickup and use preserve all accounts (289.1145ms)
+✔ reload and fork revoke human control while preserving partial attendance and its wage hold (119.951ms)
+✔ malformed or missing coffee data retains complete raw import bytes (15.220208ms)
+✔ thirty actual offline days preserve the opt-in town and close new admission after seven (15626.6905ms)
+✔ one explicit staffed-service request prepares a human's actual cup and protects future wages (1695.819708ms)
+✔ a human starts once; Sub chooses, pays, collects and clears the counter without automatic drinking (594.23225ms)
+✔ immediate player override revokes assignment and attendance, preserving a partial brew and full wage (629.145834ms)
+✔ finish-current keeps the final coffee interval's payroll, then stops without overtime or partial wage (388.694292ms)
+✔ repeated pre-payroll calls do not double work or grant travel after that interval's work (26.011459ms)
+✔ recovery pauses active grants and preserves work; replaying Stop adds no receipts (444.311208ms)
+✔ stale and foreign worker control cannot take over a shift or append empty records (15.138834ms)
+✔ new staffing respects existing commitments and willingness without rewriting plans (8.57775ms)
+✔ a stationary human blocks pickup without being pushed or giving a buyer a phantom cup (115.027ms)
+✔ the last valid service interval can finish a cup and earn the 180th wage minute exactly once (1600.803583ms)
+✔ late coffee retains partial resources at window end and remains fully refundable after the wage pays (1635.823375ms)
+✔ explicit player service uses at most three adjacent legal steps and cannot move while brewing (381.575708ms)
+✔ a saved interval between coffee work and payroll recovers its one attendance minute before pausing (32.320542ms)
+✔ Northern's real earned wage can fund a later voluntary coffee after his initial spending was exhausted (8858.635417ms)
+✔ save-capacity continuation is bounded and disclosed, while Stop preserves the wage even after its grant is used (138.041917ms)
+✔ service closure refunds an unready buyer whose only remaining funded worker would be themselves (1694.047792ms)
+✔ storage continuation reserves settlement space for already-earned imported wage obligations (1635.959208ms)
+ℹ tests 41
+ℹ suites 0
+ℹ pass 41
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 20243.654416

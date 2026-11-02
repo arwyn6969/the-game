@@ -16,14 +16,18 @@ import type { FundedTown } from "@/game/economy-types";
 import { placeTitle, placeTitleOf, zoneAt } from "@/game/world";
 import { ManuscriptTools, type ManuscriptControls } from "./ManuscriptTools";
 import { heldItem } from "@/game/physical-items";
+import { CoffeePanel, type CoffeeControls } from "./CoffeePanel";
+import { ModelSettings } from "./ModelSettings";
+import type { PersonalModelSettings } from "@/lib/personal-model";
 
-export type ToolPage = "help" | "journal" | "inventory" | "map" | "library";
+export type ToolPage = "help" | "journal" | "inventory" | "map" | "library" | "cafe";
 const TITLES: Record<ToolPage, string> = {
   help: "Help & privacy",
   journal: "Your journal",
   inventory: "What you carry",
   map: "Go somewhere",
   library: "Library project",
+  cafe: "Hobbs café",
 };
 
 export function PlayerTools({
@@ -31,6 +35,10 @@ export function PlayerTools({
   town,
   localOnly,
   preferenceNote,
+  personalModelSettings,
+  onPersonalModelSettings,
+  modelSettingsNote,
+  modelSettingsBusy,
   inspectorEnabled,
   inventoryActions,
   busy,
@@ -48,11 +56,16 @@ export function PlayerTools({
   onGoReading,
   replaying,
   manuscriptControls,
+  coffeeControls,
 }: {
   page: ToolPage;
   town: Town;
   localOnly: boolean;
   preferenceNote: string;
+  personalModelSettings: PersonalModelSettings;
+  onPersonalModelSettings: (settings: PersonalModelSettings) => void;
+  modelSettingsNote: string;
+  modelSettingsBusy: boolean;
   inspectorEnabled: boolean;
   inventoryActions: PlayerAction[];
   busy: boolean;
@@ -70,6 +83,7 @@ export function PlayerTools({
   onGoReading: () => void;
   replaying: boolean;
   manuscriptControls: ManuscriptControls;
+  coffeeControls: CoffeeControls;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
@@ -158,6 +172,7 @@ export function PlayerTools({
             />
           </>
         )}
+        {page === "cafe" && <CoffeePanel controls={coffeeControls} />}
         {page === "help" && (
           <>
             <section>
@@ -219,12 +234,17 @@ export function PlayerTools({
               </p>
               <p>
                 With AI enabled, your message, relevant memories, recent dialogue and resident
-                profiles are sent to the game’s configured AI service to generate a reply. Replies
-                can be mistaken. Recorded events and explicit choices determine what actually
-                happened.
+                profiles are sent to your selected AI source to generate a reply. Replies can be
+                mistaken. Recorded events and explicit choices determine what actually happened.
               </p>
               {preferenceNote && <p role="status">{preferenceNote}</p>}
             </section>
+            <ModelSettings
+              settings={personalModelSettings}
+              onApply={onPersonalModelSettings}
+              note={modelSettingsNote}
+              busy={modelSettingsBusy}
+            />
             <section>
               <h3>Your saved town</h3>
               <p>
@@ -430,14 +450,18 @@ export function PlayerTools({
                   ? "Baba’s loaf"
                   : manuscript
                     ? manuscript.title
-                    : "Your bag is empty"}
+                    : coffeeControls.cups.length
+                      ? "Your coffee"
+                      : "Your bag is empty"}
               </h3>
               <p>
                 {carried.length
                   ? `You carry ${carried.length} ${carried.length === 1 ? "loaf" : "loaves"}. Choose how to use it below.`
                   : manuscript
                     ? `You carry the shared manuscript: ${manuscript.title}.`
-                    : "Accepted items appear here. You can get a loaf from Baba at the grocery."}
+                    : coffeeControls.cups.length
+                      ? `You carry ${coffeeControls.cups.length} ${coffeeControls.cups.length === 1 ? "cup" : "cups"} of coffee.`
+                      : "Accepted items appear here. You can get a loaf from Baba at the grocery."}
               </p>
               <p className="text-muted">
                 Eating or sharing uses one whole loaf. Any unpaid tab stays open; Journal keeps the
@@ -455,6 +479,7 @@ export function PlayerTools({
               </section>
             )}
             <ManuscriptTools town={town} controls={manuscriptControls} />
+            <CoffeePanel controls={coffeeControls} inventoryOnly />
           </>
         )}
         {page === "map" && (

@@ -1,0 +1,74 @@
+{
+  "date": "2026-11-02",
+  "repository": "arwyn6969/the-game",
+  "remoteBranchesBeforeConsolidation": [
+    {
+      "branch": "codex/a01-qualify",
+      "sha": "46bbe821341448b9c68000572c093b9471b4a9af",
+      "recoveryTag": "archive/2026-11-02/a01-qualify"
+    },
+    {
+      "branch": "codex/library-auto-meeting-receipt-20261025",
+      "sha": "05489564262df517d3dbe1fe653c3b44d7609890",
+      "recoveryTag": "archive/2026-11-02/library-auto-meeting-receipt-20261025"
+    },
+    {
+      "branch": "codex/library-live-meeting-20261023",
+      "sha": "77fcf1ce2d5aa96ec2cbedbeda9c860bd15fefaa",
+      "recoveryTag": "archive/2026-11-02/library-live-meeting-20261023"
+    },
+    {
+      "branch": "codex/library-resume-evidence-20261024",
+      "sha": "234f9a8221f6690e6285ba242c6cdcb786e863bd",
+      "recoveryTag": "archive/2026-11-02/library-resume-evidence-20261024"
+    },
+    {
+      "branch": "codex/manuscript-release-receipt-20261024",
+      "sha": "87405dac727082d13be6c4f5f651d5ef6c9b1416",
+      "recoveryTag": "archive/2026-11-02/manuscript-release-receipt-20261024"
+    },
+    {
+      "branch": "codex/meeting-pass-recovery-receipt-20261027",
+      "sha": "f7cfdfd601a6526ceba563b6c89fad0d16c3ad15",
+      "recoveryTag": "archive/2026-11-02/meeting-pass-recovery-receipt-20261027"
+    },
+    {
+      "branch": "codex/mobile-coins-release-receipt-20261026",
+      "sha": "016346b0e8d0fd7d0b90d8946ea4421d5a507200",
+      "recoveryTag": "archive/2026-11-02/mobile-coins-release-receipt-20261026"
+    },
+    {
+      "branch": "codex/mobile-session-release-receipt-20261026",
+      "sha": "2beb9aa8bdbfb52100438daaf5f47d429792f577",
+      "recoveryTag": "archive/2026-11-02/mobile-session-release-receipt-20261026"
+    },
+    {
+      "branch": "codex/northern-community-evening-20261022",
+      "sha": "192fb87189aacd32e2392cbe19d2231c7559a1bb",
+      "recoveryTag": "archive/2026-11-02/northern-community-evening-20261022"
+    },
+    {
+      "branch": "codex/player-controls-feedback-20261027",
+      "sha": "cd44d165002ddd75b6c92e5ce0efb9ac4fecd568",
+      "recoveryTag": "archive/2026-11-02/player-controls-feedback-20261027"
+    },
+    {
+      "branch": "codex/player-model-choice-20261026",
+      "sha": "022c6b2880aea7e8cdc263383851d1745a743080",
+      "recoveryTag": "archive/2026-11-02/player-model-choice-20261026"
+    },
+    {
+      "branch": "codex/social-acceptance-followup-20261026",
+      "sha": "e2938f3d9991a119b2be128f37eeec06df50557f",
+      "recoveryTag": "archive/2026-11-02/social-acceptance-followup-20261026"
+    },
+    {
+      "branch": "codex/town-work-polish-20261029",
+      "sha": "44745f42719b66230e6ee99d248c8bbe79c2359c",
+      "recoveryTag": "archive/2026-11-02/town-work-polish-20261029"
+    }
+  ],
+  "localCafeSource": "22553849710547776f106a989337dd8969864ab2",
+  "localRecoveryBundle": "review/consolidation-2026-11-02/source-before.bundle",
+  "privateFiles": "No ignored or private files included; existing checkouts retained."
+}
