@@ -1,0 +1,575 @@
+{
+  "url": "http://127.0.0.1:8197/",
+  "node": "v24.22.2",
+  "builtPreview": true,
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "movement": {
+        "before": {
+          "x": 26,
+          "y": 22
+        },
+        "after": {
+          "x": 27,
+          "y": 22
+        },
+        "input": "keyboard"
+      },
+      "offlineConversation": true,
+      "reload": true,
+      "competingTabs": true,
+      "v1Migration": true,
+      "identities": {
+        "stableLegacyRestore": true,
+        "explicitFork": true,
+        "forkReload": true,
+        "corruptImportRejected": true
+      }
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "movement": {
+        "before": {
+          "x": 26,
+          "y": 22
+        },
+        "after": {
+          "x": 27,
+          "y": 22
+        },
+        "input": "touch"
+      },
+      "offlineConversation": true,
+      "reload": true,
+      "competingTabs": true,
+      "v1Migration": true,
+      "identities": {
+        "stableLegacyRestore": true,
+        "explicitFork": true,
+        "forkReload": true,
+        "corruptImportRejected": true
+      }
+    }
+  ],
+  "failures": [],
+  "library": [
+    {
+      "viewport": "desktop",
+      "result": "success",
+      "feesPaid": 6,
+      "custody": 2,
+      "totalCoins": 90,
+      "ordinaryControls": true,
+      "portableRoundTrip": true,
+      "reload": true,
+      "errors": []
+    },
+    {
+      "viewport": "phone",
+      "result": "failure",
+      "feesPaid": 6,
+      "custody": 2,
+      "totalCoins": 90,
+      "ordinaryControls": true,
+      "portableRoundTrip": true,
+      "reload": true,
+      "errors": []
+    }
+  ],
+  "playerControls": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "blockedProviderRequests": [],
+      "cleanLocalFeedback": true,
+      "canvasClickFocus": true,
+      "quickLetter": {
+        "before": {
+          "x": 26,
+          "y": 22
+        },
+        "after": {
+          "x": 27,
+          "y": 22
+        },
+        "input": "d"
+      },
+      "quickArrow": {
+        "before": {
+          "x": 27,
+          "y": 22
+        },
+        "after": {
+          "x": 26,
+          "y": 22
+        },
+        "input": "ArrowLeft"
+      },
+      "afterReplay": {
+        "before": {
+          "x": 26,
+          "y": 22
+        },
+        "after": {
+          "x": 27,
+          "y": 22
+        },
+        "input": "d"
+      },
+      "focusAndReplay": true,
+      "layouts": [
+        {
+          "skin": "plaza-cream",
+          "width": 1256,
+          "left": 12,
+          "right": 1268,
+          "bottom": 262.53125,
+          "worldTop": 267.3125,
+          "horizontalOverflow": false,
+          "viewportWidth": 1280
+        },
+        {
+          "skin": "hobbs-hearth",
+          "width": 1088,
+          "left": 180,
+          "right": 1268,
+          "bottom": 197.5625,
+          "worldTop": 202.34375,
+          "horizontalOverflow": false,
+          "viewportWidth": 1280
+        },
+        {
+          "skin": "library-ink",
+          "width": 1112,
+          "left": 156,
+          "right": 1268,
+          "bottom": 262.53125,
+          "worldTop": 264.125,
+          "horizontalOverflow": false,
+          "viewportWidth": 1280
+        },
+        {
+          "skin": "original",
+          "width": 1232,
+          "left": 24,
+          "right": 1256,
+          "bottom": 332.109375,
+          "worldTop": 348.109375,
+          "horizontalOverflow": false,
+          "viewportWidth": 1280
+        }
+      ],
+      "captionDoesNotCoverLibrary": true
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "blockedProviderRequests": [],
+      "cleanLocalFeedback": true,
+      "canvasClickFocus": true,
+      "quickLetter": {
+        "before": {
+          "x": 26,
+          "y": 22
+        },
+        "after": {
+          "x": 27,
+          "y": 22
+        },
+        "input": "d"
+      },
+      "quickArrow": {
+        "before": {
+          "x": 27,
+          "y": 22
+        },
+        "after": {
+          "x": 26,
+          "y": 22
+        },
+        "input": "ArrowLeft"
+      },
+      "afterReplay": {
+        "before": {
+          "x": 26,
+          "y": 22
+        },
+        "after": {
+          "x": 27,
+          "y": 22
+        },
+        "input": "d"
+      },
+      "focusAndReplay": true,
+      "layouts": [
+        {
+          "skin": "plaza-cream",
+          "width": 366,
+          "left": 12,
+          "right": 378,
+          "bottom": 431.5625,
+          "worldTop": 437.15625,
+          "horizontalOverflow": false,
+          "viewportWidth": 390
+        },
+        {
+          "skin": "hobbs-hearth",
+          "width": 366,
+          "left": 12,
+          "right": 378,
+          "bottom": 431.5625,
+          "worldTop": 437.15625,
+          "horizontalOverflow": false,
+          "viewportWidth": 390
+        },
+        {
+          "skin": "library-ink",
+          "width": 366,
+          "left": 12,
+          "right": 378,
+          "bottom": 431.5625,
+          "worldTop": 437.15625,
+          "horizontalOverflow": false,
+          "viewportWidth": 390
+        },
+        {
+          "skin": "original",
+          "width": 366,
+          "left": 12,
+          "right": 378,
+          "bottom": 440.296875,
+          "worldTop": 450.6875,
+          "horizontalOverflow": false,
+          "viewportWidth": 390
+        }
+      ],
+      "captionDoesNotCoverLibrary": true
+    }
+  ],
+  "playerLibraryFeedback": [
+    {
+      "viewport": "desktop",
+      "localOnly": true,
+      "acceptance": true,
+      "arrivalWithPanelOpen": true,
+      "paid": 6,
+      "remaining": 2,
+      "draftReview": true,
+      "reload": true
+    },
+    {
+      "viewport": "phone",
+      "localOnly": true,
+      "acceptance": true,
+      "arrivalWithPanelOpen": true,
+      "paid": 6,
+      "remaining": 2,
+      "draftReview": true,
+      "reload": true
+    }
+  ],
+  "readings": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "blockedProviderRequests": [],
+      "readings": [
+        {
+          "venue": "park",
+          "guests": 2,
+          "participation": "listen",
+          "optionalPurchase": "bread",
+          "paid": 2,
+          "totalCoins": 90,
+          "portableImportReload": true,
+          "scene": "The first page\nNorthern rests his page on the park bench. ‘I thought I needed a proper room before I could begin.’\nNorthern reads: ‘There was a town where nobody asked what you had finished. They asked what you had begun.’ His hands stop shaking halfway through.\nSub: ‘Two listeners count. A first page does not need a grand opening.’\nThey pass round Baba's bread tray. Your coins have become something shared."
+        },
+        {
+          "venue": "library",
+          "guests": 3,
+          "participation": "read",
+          "optionalPurchase": "tea",
+          "paid": 2,
+          "totalCoins": 90,
+          "portableImportReload": true,
+          "scene": "The first page\nArwyn opens the library's reading nook using the corroborated room record. Three neighbours pull their chairs together.\nReading desktop: ‘I only moved here recently. Today I am glad I did.’\nNorthern reads: ‘There was a town where nobody asked what you had finished. They asked what you had begun.’ His hands stop shaking halfway through.\nArwyn: ‘The room mattered. So did keeping the uncertainty in the record until we could check it.’\nThey pass round Kevin's tea tray. Your coins have become something shared."
+        }
+      ],
+      "observedMappingsSubmittedWithoutTranscription": true
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "blockedProviderRequests": [],
+      "readings": [
+        {
+          "venue": "park",
+          "guests": 2,
+          "participation": "listen",
+          "optionalPurchase": "bread",
+          "paid": 2,
+          "totalCoins": 90,
+          "portableImportReload": true,
+          "scene": "The first page\nNorthern rests his page on the park bench. ‘I thought I needed a proper room before I could begin.’\nNorthern reads: ‘There was a town where nobody asked what you had finished. They asked what you had begun.’ His hands stop shaking halfway through.\nSub: ‘Two listeners count. A first page does not need a grand opening.’\nThey pass round Baba's bread tray. Your coins have become something shared."
+        },
+        {
+          "venue": "library",
+          "guests": 3,
+          "participation": "read",
+          "optionalPurchase": "tea",
+          "paid": 2,
+          "totalCoins": 90,
+          "portableImportReload": true,
+          "scene": "The first page\nArwyn opens the library's reading nook using the corroborated room record. Three neighbours pull their chairs together.\nReading phone: ‘I only moved here recently. Today I am glad I did.’\nNorthern reads: ‘There was a town where nobody asked what you had finished. They asked what you had begun.’ His hands stop shaking halfway through.\nArwyn: ‘The room mattered. So did keeping the uncertainty in the record until we could check it.’\nThey pass round Kevin's tea tray. Your coins have become something shared."
+        }
+      ],
+      "observedMappingsSubmittedWithoutTranscription": true
+    }
+  ],
+  "uiEdges": {
+    "url": "http://127.0.0.1:8197/",
+    "node": "v24.22.2",
+    "journeys": [
+      {
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "errors": [],
+        "blockedProviderRequests": [],
+        "escapeFocus": true,
+        "replayMovement": true,
+        "routeCancellation": true,
+        "importModesKeyboard": true,
+        "importDialog": true,
+        "oldClosedProject": true,
+        "captionDismissal": true,
+        "captionImportEscapePriority": true,
+        "captionHistoryAndReload": true
+      },
+      {
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "errors": [],
+        "blockedProviderRequests": [],
+        "escapeFocus": true,
+        "replayMovement": true,
+        "routeCancellation": true,
+        "importModesKeyboard": true,
+        "importDialog": true,
+        "oldClosedProject": true,
+        "captionDismissal": true,
+        "captionImportEscapePriority": true,
+        "captionHistoryAndReload": true
+      }
+    ],
+    "failures": []
+  },
+  "uiInterruptions": {
+    "url": "http://127.0.0.1:8197/",
+    "node": "v24.22.2",
+    "journeys": [
+      {
+        "viewport": {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800
+        },
+        "errors": [],
+        "blockedProviderRequests": [],
+        "residentReplacesTool": true,
+        "explicitChoiceReview": true,
+        "retainedChoiceDisclosure": true,
+        "keyboardTabs": true,
+        "boardNavigation": {
+          "board": {
+            "x": 384.796875,
+            "y": 220.34375,
+            "width": 672,
+            "height": 409.5
+          },
+          "navigation": {
+            "x": 0,
+            "y": 657.4375,
+            "width": 1280,
+            "height": 92.375
+          },
+          "targets": [
+            {
+              "name": "Café",
+              "center": {
+                "x": 98.6171875,
+                "y": 681.625
+              },
+              "reachable": true
+            },
+            {
+              "name": "Journal",
+              "center": {
+                "x": 279.0703125,
+                "y": 681.625
+              },
+              "reachable": true
+            },
+            {
+              "name": "Inventory",
+              "center": {
+                "x": 459.53125,
+                "y": 681.625
+              },
+              "reachable": true
+            },
+            {
+              "name": "Go somewhere",
+              "center": {
+                "x": 639.9921875,
+                "y": 681.625
+              },
+              "reachable": true
+            },
+            {
+              "name": "Library project",
+              "center": {
+                "x": 820.453125,
+                "y": 681.625
+              },
+              "reachable": true
+            },
+            {
+              "name": "Agent wallets",
+              "center": {
+                "x": 1000.9140625,
+                "y": 681.625
+              },
+              "reachable": true
+            },
+            {
+              "name": "Stamp identity",
+              "center": {
+                "x": 1181.375,
+                "y": 681.625
+              },
+              "reachable": true
+            },
+            {
+              "name": "Help & privacy",
+              "center": {
+                "x": 98.6171875,
+                "y": 725.625
+              },
+              "reachable": true
+            }
+          ]
+        },
+        "exclusivePanels": true,
+        "boardFocus": true,
+        "moneyUnchangedByPanels": true
+      },
+      {
+        "viewport": {
+          "name": "phone",
+          "width": 390,
+          "height": 844
+        },
+        "errors": [],
+        "blockedProviderRequests": [],
+        "residentReplacesTool": true,
+        "explicitChoiceReview": true,
+        "retainedChoiceDisclosure": true,
+        "keyboardTabs": true,
+        "boardNavigation": {
+          "board": {
+            "x": 8,
+            "y": 326,
+            "width": 374,
+            "height": 510
+          },
+          "navigation": {
+            "x": 0,
+            "y": 202.28125,
+            "width": 390,
+            "height": 52.375
+          },
+          "targets": [
+            {
+              "name": "Café",
+              "center": {
+                "x": 9.6484375,
+                "y": 228.46875
+              },
+              "reachable": true
+            },
+            {
+              "name": "Journal",
+              "center": {
+                "x": 79.4296875,
+                "y": 228.46875
+              },
+              "reachable": true
+            },
+            {
+              "name": "Inventory",
+              "center": {
+                "x": 175.4921875,
+                "y": 228.46875
+              },
+              "reachable": true
+            },
+            {
+              "name": "Go somewhere",
+              "center": {
+                "x": 265.21875,
+                "y": 228.46875
+              },
+              "reachable": true
+            },
+            {
+              "name": "Library project",
+              "center": {
+                "x": 347.9609375,
+                "y": 228.46875
+              },
+              "reachable": true
+            }
+          ]
+        },
+        "exclusivePanels": true,
+        "boardFocus": true,
+        "moneyUnchangedByPanels": true,
+        "touchCancellation": true
+      }
+    ],
+    "failures": []
+  }
+}

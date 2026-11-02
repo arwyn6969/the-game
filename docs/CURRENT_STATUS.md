@@ -16,6 +16,18 @@ The user authorized live publication on 2 November. The release owner was this c
 
 ## Next work, in order
 
+Active implementation: this chat owns the eight reproduced playtest findings on
+`codex/playtest-fixes`, based on current `origin/main` `6c72f28`. Scope: manuscript
+recipient persistence, truthful speech attribution, a visible Stop control,
+scoped activity notices, inventory copy, sidebar labels, replay clock guards and
+explanations for partial Hour skips. Preserve saves, knowledge boundaries and
+existing AI/accounting contracts. The focused and existing manuscript browser
+suites pass at desktop and phone sizes; typecheck, lint (one existing warning),
+484 town tests, full tests and build pass.
+[Handoff and evidence](handoffs/playtest-fixes-2026-11-02.md). The separate
+connection recovery PR #69 remains independent; no production deployment is
+included here.
+
 1. [#64 — consolidated release and useful hosted meeting](https://github.com/arwyn6969/the-game/issues/64): publication complete; next, fresh auth/allowance evidence, one bounded hosted trial, then physical-device/accessibility and five-player return-visit acceptance.
 2. [#65 — café pilot acceptance](https://github.com/arwyn6969/the-game/issues/65): mixed seven-day play, pending-AI Stop, accounting/control interleavings and the three-to-five-person diagnostic.
 3. [#66 — personal-model compatibility](https://github.com/arwyn6969/the-game/issues/66): actual user-selected endpoint/local-server compatibility, browser permissions, privacy and cancellation.

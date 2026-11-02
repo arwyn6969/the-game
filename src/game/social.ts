@@ -260,7 +260,9 @@ function legacyConversations(town: Town): SocialEvent[] {
         recorded.has(memory.id.replace(/^archive-chat-/, ""))
       )
         continue;
-      const participants = [agent.id, memory.with].sort() as AgentId[];
+      // Unaddressed speech is remembered by its speaker, without inventing a
+      // second participant or delivering the words to a nearby resident.
+      const participants = [...new Set([agent.id, memory.with])].sort() as AgentId[];
       const key = conversationKey(
         participants,
         memory.day,
