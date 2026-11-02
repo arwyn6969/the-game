@@ -753,18 +753,38 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
       text,
     );
   const asksProject =
-    /\b(?:library (?:project|index|check|result)|index|catalogue|catalog|my (?:contribution|check)|what changed since yesterday|what happened (?:with|at|to) (?:the )?library)\b/i.test(
+    /\b(?:library (?:project|index|check|result|work|tasks?|jobs?|payment)|(?:source|reference) check|index|catalogue|catalog|my (?:contribution|check)|what changed since yesterday|what happened (?:with|at|to) (?:the )?library)\b/i.test(
       text,
     );
+  const offersNorthernHelp =
+    id === "northern" &&
+    /\b(?:(?:can|could|may) i help(?: you)?|how can i help|anything i can do|(?:do|would) you (?:need|want|like) (?:some |any )?help)\b/i.test(
+      text,
+    );
+  const asksNorthernWork =
+    id === "northern" &&
+    !/\b(?:cafe|hobbs|grocery|shifts?|your (?:job|role))\b/i.test(text) &&
+    (offersNorthernHelp ||
+      /\b(?:(?:paid|some|any|find|need|want|offer) work|work (?:for you|here)|jobs?|tasks?|earn(?:ing)? (?:coins|money))\b/i.test(
+        text,
+      ));
   if (!topic && !everyday && asksReading)
     reply =
       residentReadingReply(town, id) ??
       "I have not learned what happened with the reading. The library project board has its invitation and recorded outcome.";
-  else if (!topic && !everyday && asksProject)
-    reply =
-      residentLibraryReply(town, id) ??
-      "I have not learned what happened with the library project. The public project board has its recorded progress and terms.";
-  else if (
+  else if (!topic && (asksProject || asksNorthernWork)) {
+    const known = residentLibraryReply(town, id);
+    const guidance =
+      id === "northern"
+        ? "Open Library project to read the source and reference check terms, completion rules and current progress. Asking me does not accept work or pay a fee."
+        : "The Library project panel has its recorded progress and current terms; asking me does not accept work or pay a fee.";
+    reply = known
+      ? `${known} ${guidance}`
+      : id === "northern"
+        ? `The library project can help me find a place for my first reading. ${guidance}`
+        : `I have not learned what happened with the library project. ${guidance}`;
+    if (offersNorthernHelp) reply = `Thanks for offering to help. ${reply}`;
+  } else if (
     !topic &&
     /^(?:hello|hi|hey|good morning|good afternoon|good evening)[!.\s]*$/i.test(text.trim())
   ) {

@@ -1,3 +1,4 @@
+import { useState, type PropsWithChildren } from "react";
 import type { Town } from "@/game/types";
 import { libraryActions, libraryView } from "@/game/community";
 import { formatClock } from "@/game/text";
@@ -12,6 +13,24 @@ const GROUPS = [
   { id: "lookup", title: "Test the index" },
   { id: "manage", title: "Project decisions" },
 ];
+
+// Retain the player's expansion choice while the town clock updates the panel.
+function LibraryDisclosure({
+  initiallyOpen = false,
+  className,
+  children,
+}: PropsWithChildren<{ initiallyOpen?: boolean; className: string }>) {
+  const [open, setOpen] = useState(initiallyOpen);
+  return (
+    <details
+      className={className}
+      open={open}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
+      {children}
+    </details>
+  );
+}
 
 export function ReadingStatus({ status }: { status: string }) {
   const labels: Record<string, string> = {
@@ -117,7 +136,15 @@ export function LibraryProject({
         )}
         {readingActions.length > 0 && (
           <div className="library-story-choices">
-            <h4>{view.story.gathering ? "Your invitation" : "Choose how the reading happens"}</h4>
+            <h4>
+              {view.story.gathering ? "Your invitation" : "Optional next activity: a reading"}
+            </h4>
+            {!view.story.gathering && (
+              <p>
+                Your library result is saved. You can plan a reading now or leave these choices for
+                later; your completed work and payment stay recorded.
+              </p>
+            )}
             <ActionCards
               actions={readingActions.map(({ action }) => action)}
               busy={busy}
@@ -153,7 +180,9 @@ export function LibraryProject({
           <p>{view.nextStep}</p>
           {view.stage !== "offer" && (
             <p className="text-muted">
-              {view.atLibrary ? "You are at the library." : "Use Go to → Library to walk here."}
+              {view.atLibrary
+                ? "You are at the library. Use the inspection buttons below; you do not need to stand beside a drawn table."
+                : "Use Go to → Library, then wait until you reach it. Inspection buttons become available when you arrive; town time can stay paused."}
             </p>
           )}
         </section>
@@ -166,6 +195,9 @@ export function LibraryProject({
       {view.playerTask && (
         <section className="library-player-task" aria-labelledby="library-your-check">
           <h3 id="library-your-check">Your check · {view.playerTask.label}</h3>
+          {!view.playerTask.completed && view.stage !== "closed" && (
+            <p>Accepted and funded · your agreed fee is 2 coins.</p>
+          )}
           <p className="library-fee">
             {view.playerTask.paid
               ? `${view.playerTask.fee} coins paid to you · check completed`
@@ -220,10 +252,12 @@ export function LibraryProject({
             );
             const remainingActions = otherActions.filter((item) => !requiredActions.includes(item));
             return (
-              <details
+              <LibraryDisclosure
                 className="library-choice-group"
-                key={group.id}
-                open={group.id === currentGroup || (view.lookupCompleted && group.id === "lookup")}
+                key={`${group.id}:${group.id === currentGroup || (view.lookupCompleted && group.id === "lookup")}`}
+                initiallyOpen={
+                  group.id === currentGroup || (view.lookupCompleted && group.id === "lookup")
+                }
               >
                 <summary>
                   {group.id === "lookup" && view.lookupCompleted ? "Use the index" : group.title}{" "}
@@ -246,9 +280,9 @@ export function LibraryProject({
                         </li>
                       ))}
                     </ul>
-                    <details
+                    <LibraryDisclosure
                       className="library-draft-review"
-                      open={view.entries.some((entry) => !entry.box)}
+                      initiallyOpen={view.entries.some((entry) => !entry.box)}
                     >
                       <summary>Review or change locations</summary>
                       <p className="text-muted">
@@ -294,7 +328,7 @@ export function LibraryProject({
                           </label>
                         );
                       })}
-                    </details>
+                    </LibraryDisclosure>
                     {!view.atLibrary && (
                       <p className="tool-action-reason">
                         Walk to the library to change or submit your draft.
@@ -326,7 +360,7 @@ export function LibraryProject({
                   busy={busy}
                   onAction={onAction}
                 />
-              </details>
+              </LibraryDisclosure>
             );
           })}
         </section>
@@ -334,12 +368,20 @@ export function LibraryProject({
       <section>
         <h3>Project progress · {view.status}</h3>
         <p>{view.progress}</p>
+        <p className="library-fee" role="status" aria-label="Project budget summary">
+          {view.funded} coins funded · {view.spent} paid · {view.custody} remaining
+          {view.refunded > 0 ? ` · ${view.refunded} returned to funders` : ""}
+        </p>
+        <p>
+          {view.reserved} coins are reserved within the remaining balance; {view.available} are
+          unreserved. {view.funded === 0 && "The proposed 8-coin budget is funded when you accept."}
+        </p>
         <details className="library-funding">
-          <summary>Project money & ownership · {view.budget}-coin budget</summary>
+          <summary>Payment receipts & ownership · {view.budget}-coin budget</summary>
           <dl className="library-accounts">
             <div>
               <dt>Total funding</dt>
-              <dd>{view.budget} coins</dd>
+              <dd>{view.funded} coins</dd>
             </div>
             <div>
               <dt>Held by the project</dt>
@@ -354,6 +396,15 @@ export function LibraryProject({
               <dd>{view.spent} coins</dd>
             </div>
           </dl>
+          {view.payments.length > 0 && (
+            <ul className="tool-events" aria-label="Project payment receipts">
+              {view.payments.map((payment) => (
+                <li key={payment.id}>
+                  {payment.worker} · {payment.amount} coins paid · {payment.task}
+                </li>
+              ))}
+            </ul>
+          )}
           <p>
             Set-aside money is part of the money held by the project. It has not been paid yet. Read
             each offer before choosing.
@@ -429,6 +480,12 @@ export function LibraryProject({
       <section>
         <h3>Lookup result</h3>
         <p>{view.outcome}</p>
+        {view.lookupCompleted && (
+          <p>
+            Northern tested the community room access entry. The other entries retain their recorded
+            evidence status; a successful search does not confirm an unknown historical date.
+          </p>
+        )}
         {view.waitPreview && <p>{view.waitPreview.warning}</p>}
         <ul>
           {view.finds.map((find) => (

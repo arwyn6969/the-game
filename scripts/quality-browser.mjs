@@ -342,6 +342,18 @@ try {
   }
   const { runLibraryChecks } = await import("./library-browser.mjs");
   report.library = await runLibraryChecks(browser, target.href, join(out, "library"));
+  const { runPlayerControlChecks } = await import("./player-controls-browser.mjs");
+  report.playerControls = await runPlayerControlChecks(
+    browser,
+    target.href,
+    join(out, "player-controls"),
+  );
+  const { runPlayerLibraryFeedbackChecks } = await import("./player-library-feedback-browser.mjs");
+  report.playerLibraryFeedback = await runPlayerLibraryFeedbackChecks(
+    browser,
+    target.href,
+    join(out, "player-library-feedback"),
+  );
   const { runReadingEveningChecks } = await import("./reading-evening-browser.mjs");
   report.readings = await runReadingEveningChecks(browser, target.href, join(out, "readings"));
   const { runUiEdgeChecks } = await import("./quality-ui-edges.mjs");

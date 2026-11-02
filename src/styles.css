@@ -368,6 +368,19 @@ kbd {
   line-height: 1.7;
 }
 
+.world-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.75rem;
+  margin: 0.5rem 1.5rem 0;
+}
+.world-controls p {
+  flex: 1 1 18rem;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
 .world-frame {
   position: relative;
   flex: 1;
@@ -1378,10 +1391,8 @@ textarea.field {
   color: var(--color-muted);
 }
 .reading-invitation {
-  position: absolute;
-  top: 2.25rem;
-  left: 0.6rem;
-  max-width: min(24rem, calc(100% - 1.2rem));
+  flex: 1 1 100%;
+  min-width: 0;
   padding: 0.6rem 0.8rem;
   border: 1px solid var(--color-purple);
   background: #1b102df0;
@@ -1391,6 +1402,9 @@ textarea.field {
 }
 .reading-invitation p {
   margin: 0.25rem 0;
+}
+.world-controls .reading-invitation p {
+  color: inherit;
 }
 .reading-invitation .btn {
   margin-top: 0.35rem;
@@ -1447,10 +1461,10 @@ textarea.field {
   border: 0;
   background: none;
 }
-.library-board {
-  position: absolute;
-  right: 0.75rem;
-  bottom: 0.75rem;
+@media (max-width: 680px) {
+  .world-controls {
+    margin-inline: 0.75rem;
+  }
 }
 @media (max-width: 360px) {
   .town-tools .btn {
@@ -1476,7 +1490,7 @@ textarea.field {
    world scrollable and move its reading panels into the viewport in that case. */
 .town[data-cramped-world="true"] .mind {
   position: fixed;
-  inset: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom)) auto;
+  inset: var(--ui-sheet-top, 0.5rem) 0.75rem calc(0.5rem + env(safe-area-inset-bottom)) auto;
   width: min(27rem, calc(100% - 1.5rem));
   height: auto;
   max-height: none;

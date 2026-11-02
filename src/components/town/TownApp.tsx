@@ -734,8 +734,18 @@ export function TownApp() {
   }
 
   function chooseLibrary(expectedTown: Town, actionId: string) {
-    if (townRef.current !== expectedTown || foregroundPendingRef.current || replayRef.current)
+    if (townRef.current !== expectedTown) {
+      setSendNote("The town changed. Reopen Library project and read its current choices.");
       return;
+    }
+    if (replayRef.current !== null) {
+      setSendNote("Replay is view-only. Choose Back to now before making a library choice.");
+      return;
+    }
+    if (foregroundPendingRef.current) {
+      setSendNote("Wait for your current conversation to finish before making a library choice.");
+      return;
+    }
     const result = applyLibraryAction(expectedTown, actionId);
     if (result.ok) {
       persistTown(expectedTown);
@@ -1107,7 +1117,12 @@ export function TownApp() {
     setBoard(false);
     panelRef.current = null;
     setPanel(null);
-    routeRef.current = null;
+    // Let players read the project checklist while their chosen route finishes.
+    // Other tools stop travel explicitly rather than leaving a stale Walking note.
+    if (page !== "library" && routeRef.current) {
+      routeRef.current = null;
+      setFarNote("Destination walk stopped. Choose a destination to continue travelling.");
+    }
     stepInputRef.current = null;
     if (page === "help") setBrowserBackups(readTownConflicts());
     toolOpenerRef.current =
@@ -1166,12 +1181,17 @@ export function TownApp() {
   }
 
   function cancelAIRequest() {
+    const wasPlayerRequest = activeJobRef.current?.job.kind === "player";
     requestSerial.current += 1;
     activeJobRef.current = null;
     pendingRef.current = false;
     foregroundPendingRef.current = false;
     setThinking("");
-    setSendNote("AI request cancelled. Your line is still here; no local reply was substituted.");
+    setSendNote(
+      wasPlayerRequest
+        ? "AI request cancelled. Your line is still here; no local reply was substituted."
+        : "",
+    );
   }
 
   function setLocalPreference(value: boolean) {
@@ -1222,6 +1242,19 @@ export function TownApp() {
   function stepDirection(code: string) {
     if (replayRef.current !== null || importTextRef.current !== null) return;
     stepInputRef.current = code;
+  }
+
+  function focusTownControls() {
+    if (replayRef.current !== null || importTextRef.current !== null) return;
+    toolsRef.current = null;
+    panelRef.current = null;
+    boardRef.current = false;
+    setTools(null);
+    setPanel(null);
+    setBoard(false);
+    setSocialOpen(false);
+    keysRef.current.clear();
+    requestAnimationFrame(() => canvasRef.current?.focus());
   }
 
   const importing = importText !== null;
@@ -1782,12 +1815,18 @@ export function TownApp() {
       }
       if (!GAME_KEYS.has(event.code)) return;
       event.preventDefault();
+      // A quick tap can begin and end between animation frames. Queue its first
+      // step as well as tracking held keys, so browser and keyboard taps land.
+      if (!event.repeat && !keysRef.current.has(event.code)) stepInputRef.current = event.code;
       keysRef.current.add(event.code);
     };
     const up = (event: KeyboardEvent) => {
       keysRef.current.delete(event.code);
     };
-    const clear = () => keysRef.current.clear();
+    const clear = () => {
+      keysRef.current.clear();
+      stepInputRef.current = null;
+    };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     window.addEventListener("blur", clear);
@@ -1929,7 +1968,7 @@ export function TownApp() {
       player.status = `walking ${placeTitle(zoneAt(nx, ny))}`;
       if (stepCode)
         setFarNote(
-          `Moved ${stepCode === "ArrowUp" ? "north" : stepCode === "ArrowDown" ? "south" : stepCode === "ArrowLeft" ? "west" : "east"}. ${placeTitle(zoneAt(nx, ny))}, tile ${nx}, ${ny}.`,
+          `Moved ${x > 0 ? "east" : x < 0 ? "west" : y > 0 ? "south" : "north"}. ${placeTitle(zoneAt(nx, ny))}, tile ${nx}, ${ny}.`,
         );
       setTick((n) => n + 1);
       if ((live.guide ?? 0) < 1 && zoneAt(nx, ny) === "cafe") {
@@ -2249,6 +2288,7 @@ export function TownApp() {
     const live = townRef.current;
     const canvas = canvasRef.current;
     if (!live || !canvas || replayRef.current !== null) return;
+    canvas.focus();
     const rect = canvas.getBoundingClientRect();
     const sx = event.clientX - rect.left;
     const sy = event.clientY - rect.top;
@@ -3011,7 +3051,7 @@ export function TownApp() {
           </span>
         )}
         {thinking === "player" && (
-          <button className="btn" type="button" onClick={cancelAIRequest}>
+          <button className="btn" type="button" onClick={() => cancelAIRequest()}>
             Cancel AI request
           </button>
         )}
@@ -3259,14 +3299,26 @@ export function TownApp() {
           </p>
         )}
       </div>
-      <div className="world-frame" ref={worldFrameRef}>
-        <canvas
-          ref={canvasRef}
-          className="town-canvas h-full"
-          tabIndex={0}
-          onClick={onCanvasClick}
-          aria-label={`The town, home to ${town.agents.length - 1} neighbors and you. Use the nearby conversation buttons or press Enter to talk.`}
-        />
+      <div className="world-controls" role="group" aria-label="Town movement controls">
+        <button
+          className="btn"
+          type="button"
+          onClick={focusTownControls}
+          disabled={replay !== null || importing}
+          aria-describedby="town-control-help"
+        >
+          Town controls
+        </button>
+        {!tools && !shown && here === "library" && replay === null && (
+          <button className="btn library-board" type="button" onClick={() => openTools("library")}>
+            Library board
+          </button>
+        )}
+        <p id="town-control-help">
+          {replay !== null
+            ? "Replay is view-only. Choose Back to now to move or talk."
+            : "Focus the town to walk with WASD or arrows; Enter talks within two tiles. You can walk while paused."}
+        </p>
         {readingPending && !shown && !tools && !board && !socialOpen && replay === null && (
           <div className="reading-invitation" aria-label="Reading invitation">
             <strong>{reading.label}</strong>
@@ -3303,6 +3355,16 @@ export function TownApp() {
             </button>
           </div>
         )}
+      </div>
+      <div className="world-frame" ref={worldFrameRef}>
+        <canvas
+          ref={canvasRef}
+          className="town-canvas h-full"
+          tabIndex={0}
+          onClick={onCanvasClick}
+          aria-describedby="town-control-help"
+          aria-label={`The town, home to ${town.agents.length - 1} neighbors and you. Use the nearby conversation buttons or press Enter to talk.`}
+        />
         <div className="world-label" aria-hidden>
           <i />
           {replay
@@ -3376,11 +3438,6 @@ export function TownApp() {
               })}
             </div>
           )}
-        {!tools && !shown && here === "library" && replay === null && (
-          <button className="btn library-board" type="button" onClick={() => openTools("library")}>
-            Library board
-          </button>
-        )}
         <div className="dpad" aria-hidden={false}>
           <Pad
             code="ArrowUp"
@@ -3543,6 +3600,7 @@ export function TownApp() {
           id="scrub"
           name="scrub"
           aria-label="Replay minute"
+          aria-description="Arrow keys change the replay time while this slider is focused. Choose Back to now, then Town controls, to walk."
           className="scrub"
           type="range"
           min={0}
@@ -3587,6 +3645,7 @@ export function TownApp() {
             onClick={() => {
               replayRef.current = null;
               setReplay(null);
+              requestAnimationFrame(() => canvasRef.current?.focus());
             }}
           >
             Back to now
@@ -3989,7 +4048,7 @@ function Mind({
                   ? `${player.money} ${player.money === 1 ? "coin" : "coins"}`
                   : canTalk
                     ? "Nearby · you can talk"
-                    : "Walk closer to talk"}
+                    : "Walk within two tiles to talk"}
             </p>
           </div>
         </div>
@@ -4078,6 +4137,16 @@ function Mind({
                 Watch {agent.name}
               </button>
             </div>
+          )}
+          {agent.id === "northern" && (
+            <section className="mt-4" aria-label="Northern's library project">
+              <p className="character-note">
+                The Library project has its work terms, recorded progress and payment receipts.
+              </p>
+              <button className="btn" type="button" onClick={onLibrary}>
+                Library project
+              </button>
+            </section>
           )}
           {watch && <CharacterReflections town={town} id={agent.id} replay={replay} />}
           {pinned && <p className="character-note">Pinned to the front of the resident strip.</p>}
@@ -4183,7 +4252,7 @@ function Mind({
             className="conversation-extras"
             aria-label={`Choices and notes with ${agent.name}`}
           >
-            {agent.id === "kevin" && (
+            {(agent.id === "kevin" || agent.id === "northern") && (
               <button className="btn mb-2" type="button" onClick={onLibrary}>
                 Library project
               </button>
@@ -4221,7 +4290,8 @@ function Mind({
             )}
             {localDialogue && (
               <p className="mb-2 text-xs text-muted" role="note">
-                Local dialogue is active. Open-ended conversation needs a live AI connection.
+                Local dialogue uses authored replies. Library tasks and choices work without AI;
+                open-ended replies need a live AI connection.
               </p>
             )}
           </section>
@@ -4267,7 +4337,9 @@ function Mind({
           }}
         >
           {!canTalk && (
-            <p className="character-note">Walk closer to speak. Your draft stays on this card.</p>
+            <p className="character-note">
+              Walk within two tiles to speak. Your draft stays on this card.
+            </p>
           )}
           <label className="text-sm text-muted" htmlFor="mind-line">
             Your line to {agent.name}

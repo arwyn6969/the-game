@@ -889,6 +889,21 @@ export async function runSkinChecks(browser, url, outputDirectory) {
             for (const skin of SKINS) {
               await chooseSkin(page, skin);
               const before = await saved(page);
+              const chromeRows = await page.evaluate(() => {
+                const box = (selector) => {
+                  const rect = document.querySelector(selector).getBoundingClientRect();
+                  return { top: rect.top, bottom: rect.bottom, height: rect.height };
+                };
+                return {
+                  interfaceSelector: box(".appearance-toolbar"),
+                  status: box(".status-strip"),
+                  toolbar: box(".town-tools"),
+                };
+              });
+              assert.ok(
+                chromeRows.interfaceSelector.bottom <= chromeRows.toolbar.top + 1,
+                `${skin.label}: the interface selector must not cover the narrow toolbar`,
+              );
               const buttons = await reachableTools(page, true);
               const help = tools(page).getByRole("button", {
                 name: "Help & privacy",
@@ -899,7 +914,7 @@ export async function runSkinChecks(browser, url, outputDirectory) {
               await page.getByRole("button", { name: "Close Help & privacy", exact: true }).click();
               await frames(page);
               assert.equal(await saved(page), before);
-              observations.push({ skin: skin.id, buttons, ...(await layout(page)) });
+              observations.push({ skin: skin.id, chromeRows, buttons, ...(await layout(page)) });
               if (skin.id === "hobbs-hearth") await shot("hobbs-hearth-320px-toolbar");
             }
           } finally {
