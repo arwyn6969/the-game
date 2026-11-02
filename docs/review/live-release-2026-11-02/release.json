@@ -1,0 +1,23 @@
+{
+  "at": "2026-11-02T14:40:29.401292Z",
+  "source": "c183e32d3dc4de923490471da2d30a66caf788a7",
+  "worker": "the-game-production",
+  "version": "c4098113-6b5c-43db-8ff4-b39d64e2eb72",
+  "rollbackVersion": "c4b89bfc-d9e4-48d1-ba1d-930280eaa8f5",
+  "matchingPublicAssets": 4,
+  "bindingDefinitionsPreserved": 18,
+  "secretDefinitionsPreserved": 7,
+  "runtimeSettingsUnchanged": true,
+  "routesPreserved": 52,
+  "publicChecksPassed": true,
+  "publicEndpoints": 8,
+  "publicRedirectChecks": 7,
+  "modelCallsDuringPublication": 0,
+  "databaseMigrations": 0,
+  "ci": "https://github.com/arwyn6969/the-game/actions/runs/41456836140",
+  "ciHead": "722a66c7b9dfd4cfe06ff5d403a10ca31c81dc35",
+  "verifiedTree": "acd7473281d444b4f52720bed8067a94b1bef60e",
+  "url": "https://www.arwyn.party/thegame/",
+  "browserChecksPassed": true,
+  "browserViewports": ["1280x800", "390x844"]
+}
