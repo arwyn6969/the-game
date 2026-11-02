@@ -17,6 +17,8 @@ import { placeTitle, placeTitleOf, zoneAt } from "@/game/world";
 import { ManuscriptTools, type ManuscriptControls } from "./ManuscriptTools";
 import { heldItem } from "@/game/physical-items";
 import { CoffeePanel, type CoffeeControls } from "./CoffeePanel";
+import { ModelSettings } from "./ModelSettings";
+import type { PersonalModelSettings } from "@/lib/personal-model";
 
 export type ToolPage = "help" | "journal" | "inventory" | "map" | "library" | "cafe";
 const TITLES: Record<ToolPage, string> = {
@@ -33,6 +35,10 @@ export function PlayerTools({
   town,
   localOnly,
   preferenceNote,
+  personalModelSettings,
+  onPersonalModelSettings,
+  modelSettingsNote,
+  modelSettingsBusy,
   inspectorEnabled,
   inventoryActions,
   busy,
@@ -56,6 +62,10 @@ export function PlayerTools({
   town: Town;
   localOnly: boolean;
   preferenceNote: string;
+  personalModelSettings: PersonalModelSettings;
+  onPersonalModelSettings: (settings: PersonalModelSettings) => void;
+  modelSettingsNote: string;
+  modelSettingsBusy: boolean;
   inspectorEnabled: boolean;
   inventoryActions: PlayerAction[];
   busy: boolean;
@@ -224,12 +234,17 @@ export function PlayerTools({
               </p>
               <p>
                 With AI enabled, your message, relevant memories, recent dialogue and resident
-                profiles are sent to the game’s configured AI service to generate a reply. Replies
-                can be mistaken. Recorded events and explicit choices determine what actually
-                happened.
+                profiles are sent to your selected AI source to generate a reply. Replies can be
+                mistaken. Recorded events and explicit choices determine what actually happened.
               </p>
               {preferenceNote && <p role="status">{preferenceNote}</p>}
             </section>
+            <ModelSettings
+              settings={personalModelSettings}
+              onApply={onPersonalModelSettings}
+              note={modelSettingsNote}
+              busy={modelSettingsBusy}
+            />
             <section>
               <h3>Your saved town</h3>
               <p>
