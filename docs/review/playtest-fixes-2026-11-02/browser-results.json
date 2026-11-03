@@ -1,0 +1,54 @@
+{
+  "liveProviderCalls": 0,
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "networkLeaks": [],
+      "recipientSurvivesPanelReopen": true,
+      "activeActorAndImmediateStop": true,
+      "lateReplyCannotChangeStoppedTrial": true,
+      "completedNoticeStaysInManuscriptPanel": true,
+      "singleSpeakerWithoutInventedListener": true,
+      "replayCannotAdvanceLiveClock": true,
+      "hourExplainsActualAdvance": {
+        "minutes": 4,
+        "message": "Advanced 4 game minutes; stopped because a conversation was ready."
+      },
+      "manuscriptLabelFits": {
+        "client": 128,
+        "scroll": 128
+      },
+      "reloadRetainsActorAndItem": true
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "networkLeaks": [],
+      "recipientSurvivesPanelReopen": true,
+      "activeActorAndImmediateStop": true,
+      "lateReplyCannotChangeStoppedTrial": true,
+      "completedNoticeStaysInManuscriptPanel": true,
+      "singleSpeakerWithoutInventedListener": true,
+      "replayCannotAdvanceLiveClock": true,
+      "hourExplainsActualAdvance": {
+        "minutes": 4,
+        "message": "Advanced 4 game minutes; stopped because a conversation was ready."
+      },
+      "manuscriptLabelFits": {
+        "client": 154,
+        "scroll": 154
+      },
+      "reloadRetainsActorAndItem": true
+    }
+  ],
+  "failures": []
+}

@@ -463,10 +463,12 @@ export function PlayerTools({
                       ? `You carry ${coffeeControls.cups.length} ${coffeeControls.cups.length === 1 ? "cup" : "cups"} of coffee.`
                       : "Accepted items appear here. You can get a loaf from Baba at the grocery."}
               </p>
-              <p className="text-muted">
-                Eating or sharing uses one whole loaf. Any unpaid tab stays open; Journal keeps the
-                payment record.
-              </p>
+              {carried.length > 0 && (
+                <p className="text-muted">
+                  Eating or sharing uses one whole loaf. Any unpaid tab stays open; Journal keeps
+                  the payment record.
+                </p>
+              )}
             </section>
             {carried.length > 0 && (
               <section>

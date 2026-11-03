@@ -13,6 +13,10 @@ import { heldItem } from "@/game/physical-items";
 const nameOf = (town: Town, id: AgentId) => town.agents.find((a) => a.id === id)?.name ?? id;
 const dateOf = (event: { day: number; minute: number }) =>
   `Day ${event.day} · ${formatClock(event.minute)}`;
+const conversationTitle = (town: Town, event: SocialEvent) =>
+  event.participants.length === 1
+    ? `${nameOf(town, event.participants[0]!)} spoke`
+    : event.participants.map((id) => nameOf(town, id)).join(" ↔ ");
 
 export function Portrait({ id }: { id: AgentId }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -431,7 +435,7 @@ export function SocialPanel({
               aria-pressed={current?.id === event.id}
               onClick={() => setChosen(event.id)}
             >
-              <strong>{event.participants.map((id) => nameOf(town, id)).join(" ↔ ")}</strong>
+              <strong>{conversationTitle(town, event)}</strong>
               <small>
                 {dateOf(event)} · {event.place}
               </small>
@@ -603,7 +607,7 @@ export function ConversationCaption({
         Close
       </button>
       <button className="caption-pair" type="button" onClick={onOpen}>
-        {event.participants.map((id) => nameOf(town, id)).join(" ↔ ")}
+        {conversationTitle(town, event)}
         <small>{dateOf(event)}</small>
       </button>
       <p>

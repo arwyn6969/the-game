@@ -627,6 +627,10 @@ export function TownApp() {
   const [inspect, setInspect] = useState(false);
   const [sendNote, setSendNote] = useState("");
   const [physicalNote, setPhysicalNote] = useState("");
+  const [physicalFeedbackDismissed, setPhysicalFeedbackDismissed] = useState(false);
+  const [physicalActor, setPhysicalActor] = useState<NpcId>(
+    () => townRef.current?.physicalItems?.session?.actor ?? "northern",
+  );
   const [coffeeNote, setCoffeeNote] = useState("");
   const [coffeeSaving, setCoffeeSaving] = useState(false);
   const [physicalRead, setPhysicalRead] = useState<PhysicalActionResult["content"] | null>(null);
@@ -925,6 +929,8 @@ export function TownApp() {
     setConnectionNote("");
     setSendNote("");
     setPhysicalNote("");
+    setPhysicalFeedbackDismissed(false);
+    setPhysicalActor(next.physicalItems?.session?.actor ?? "northern");
     setPhysicalRead(null);
     setPhysicalSelected(null);
     physicalSelectedRef.current = null;
@@ -1036,6 +1042,8 @@ export function TownApp() {
     const result = startPhysicalSession(live, actor, 8);
     setPhysicalNote(result.message);
     if (result.ok) {
+      setPhysicalActor(actor);
+      setPhysicalFeedbackDismissed(false);
       setRate(1);
       setWatching(actor);
       watchingRef.current = actor;
@@ -1049,6 +1057,7 @@ export function TownApp() {
     const live = townRef.current;
     if (!live || replayRef.current) return;
     stopPhysicalSession(live);
+    setPhysicalFeedbackDismissed(true);
     setPhysicalNote("Resident trial stopped. The manuscript stays where it is.");
     persistTown(live);
     setTick((n) => n + 1);
@@ -2502,6 +2511,7 @@ export function TownApp() {
   }
 
   function setRate(next: 0 | 1 | 4) {
+    if (replayRef.current !== null) return;
     if (next !== 0 && coffeeSaveBlockedRef.current) {
       setCoffeeNote("Save the current town successfully before advancing café service again.");
       return;
@@ -2523,6 +2533,7 @@ export function TownApp() {
     const live = townRef.current;
     if (
       !live ||
+      replayRef.current !== null ||
       foregroundPendingRef.current ||
       hourLock.current ||
       coffeeSavePendingRef.current > 0 ||
@@ -2534,15 +2545,17 @@ export function TownApp() {
     hourLock.current = true;
     setHourAdvancing(true);
     const coffeeContextGeneration = coffeeContextGenerationRef.current;
-    replayRef.current = null;
-    setReplay(null);
+    const startedAt = (live.day - 1) * 1440 + live.minute;
+    let stopReason = "";
+    let job: ThinkJob | null = null;
     try {
       const minds =
         onlineRef.current && !localOnlyRef.current && document.visibilityState === "visible";
-      let job: ThinkJob | null = null;
       for (let i = 0; i < 60; i++) {
         if (
           townRef.current !== live ||
+          replayRef.current !== null ||
+          importTextRef.current !== null ||
           coffeeSaveBlockedRef.current ||
           coffeeContextGeneration !== coffeeContextGenerationRef.current
         )
@@ -2551,6 +2564,7 @@ export function TownApp() {
         try {
           job = stepMinute(live, minds);
         } catch {
+          stopReason = "a town update could not finish";
           break;
         }
         if (live.coffee?.revision !== coffeeRevision) {
@@ -2558,10 +2572,12 @@ export function TownApp() {
           if (
             !saved.ok ||
             townRef.current !== live ||
-            replayRef.current ||
+            replayRef.current !== null ||
             importTextRef.current !== null
-          )
+          ) {
+            if (!saved.ok) stopReason = "the town needs to be saved before continuing";
             break;
+          }
         }
         if (job) break;
       }
@@ -2589,6 +2605,22 @@ export function TownApp() {
         }
       }
     } finally {
+      if (townRef.current === live && replayRef.current === null) {
+        const minutes = (live.day - 1) * 1440 + live.minute - startedAt;
+        const reason = coffeeSaveBlockedRef.current
+          ? "the town needs to be saved before continuing"
+          : stopReason ||
+            (job
+              ? job.kind === "talk" || job.kind === "player"
+                ? "a conversation was ready"
+                : "a resident decision was ready"
+              : minutes < 60
+                ? "another town action took priority"
+                : "");
+        setFarNote(
+          `Advanced ${minutes} game ${minutes === 1 ? "minute" : "minutes"}${reason ? `; stopped because ${reason}` : ""}.`,
+        );
+      }
       hourLock.current = false;
       setHourAdvancing(false);
       setTick((n) => n + 1);
@@ -3038,6 +3070,14 @@ export function TownApp() {
   const coffees = coffeeView(town, "player");
   const coffeeWork = coffeeWorkView(town, "player");
   const coffeeControlActive = hasActivePlayerCoffeeRoutine(town);
+  const physicalSession = town.physicalItems?.session;
+  const physicalStatusVisible =
+    replay === null &&
+    physicalSession &&
+    (physicalSession.enabled ||
+      (!physicalFeedbackDismissed &&
+        watching === physicalSession.actor &&
+        physicalSession.lastResult?.ok === false));
   const coffeePayable = town.economy?.work?.payables.find(
     (payable) => payable.agreementId === coffeeWork.agreementId && payable.worker === "player",
   );
@@ -3336,6 +3376,8 @@ export function TownApp() {
     selected: physicalSelected,
     note: physicalNote,
     readContent: physicalRead,
+    actor: physicalActor,
+    onActorChange: setPhysicalActor,
     onIntroduce: () => changeManuscript(),
     onStart: watchManuscript,
     onStop: stopManuscript,
@@ -3472,7 +3514,8 @@ export function TownApp() {
               type="button"
               onClick={() => setRate(0)}
               aria-label="Pause"
-              title="Pause"
+              title={replay !== null ? "Return to now to use the town clock" : "Pause"}
+              disabled={replay !== null}
             >
               <Pause className="inline size-4" aria-hidden />
               <span className="transport-pause-label">Pause</span>
@@ -3483,6 +3526,8 @@ export function TownApp() {
               aria-pressed={speed === 1}
               type="button"
               onClick={() => setRate(1)}
+              disabled={replay !== null}
+              title={replay !== null ? "Return to now to use the town clock" : undefined}
             >
               <Play className="inline size-4" aria-hidden /> 1×
             </button>
@@ -3492,15 +3537,21 @@ export function TownApp() {
               aria-pressed={speed === 4}
               type="button"
               onClick={() => setRate(4)}
+              disabled={replay !== null}
+              title={replay !== null ? "Return to now to use the town clock" : undefined}
             >
               4×
             </button>
             <button
               className="btn"
               type="button"
-              title="Advance up to one hour"
+              title={
+                replay !== null
+                  ? "Return to now to use the town clock"
+                  : "Advance up to one hour, stopping for conversations or resident decisions"
+              }
               onClick={nextHour}
-              disabled={thinking === "player" || hourAdvancing}
+              disabled={replay !== null || thinking === "player" || hourAdvancing}
               aria-busy={hourAdvancing}
             >
               <SkipForward className="inline size-4" aria-hidden /> Hour
@@ -3572,7 +3623,7 @@ export function TownApp() {
             AI connection
           </button>
         )}
-        {thinking && (
+        {thinking && (thinking !== "act" || town.physicalItems?.session?.enabled) && (
           <span className="status-message" role="status">
             {thinking === "player" ? "Waiting for your AI reply" : "Residents are thinking"}
           </span>
@@ -3582,14 +3633,21 @@ export function TownApp() {
             Cancel AI request
           </button>
         )}
-        {town.physicalItems?.session && !replay && (
-          <span className="status-message" role="status">
-            {thinking === "act"
-              ? "A resident is deciding what to do with the manuscript."
-              : physicalNote ||
-                town.physicalItems.session.lastResult?.message ||
-                "The manuscript trial is ready."}
-          </span>
+        {physicalStatusVisible && (
+          <>
+            <span className="status-message" role="status">
+              {thinking === "act"
+                ? "A resident is deciding what to do with the manuscript."
+                : physicalNote ||
+                  physicalSession.lastResult?.message ||
+                  "The manuscript trial is ready."}
+            </span>
+            {physicalSession.enabled && (
+              <button className="btn" type="button" onClick={stopManuscript}>
+                Stop manuscript trial
+              </button>
+            )}
+          </>
         )}
         {coffeeControls.work && !replay && (
           <>

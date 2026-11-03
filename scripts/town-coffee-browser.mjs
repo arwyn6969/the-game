@@ -97,16 +97,7 @@ async function advanceHour(page) {
   await closePanel(page);
   const hour = page.getByRole("button", { name: "Hour", exact: true });
   await hour.click();
-  await page.waitForFunction(
-    () => {
-      const button = [...document.querySelectorAll("button")].find(
-        (item) => item.title === "Advance up to one hour",
-      );
-      return button && button.getAttribute("aria-busy") !== "true";
-    },
-    null,
-    { timeout: 20000 },
-  );
+  await hour.and(page.locator('[aria-busy="false"]')).waitFor({ timeout: 20000 });
 }
 async function advanceUntil(page, predicate, max = 8) {
   for (let index = 0; index < max; index++) {

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { NpcId, Town } from "@/game/types";
 import { NPC_IDS } from "@/game/types";
 import type { PhysicalActionResult, PhysicalDecision, PhysicalItem } from "@/game/physical-types";
@@ -12,6 +11,8 @@ export type ManuscriptControls = {
   selected: string | null;
   note: string;
   readContent: PhysicalActionResult["content"] | null;
+  actor: NpcId;
+  onActorChange: (actor: NpcId) => void;
   onIntroduce: () => void;
   onStart: (actor: NpcId) => void;
   onStop: () => void;
@@ -20,9 +21,10 @@ export type ManuscriptControls = {
 
 /** One readable object, without turning the existing loaf into a new inventory format. */
 export function ManuscriptTools({ town, controls }: { town: Town; controls: ManuscriptControls }) {
-  const [actor, setActor] = useState<NpcId>("northern");
   const item = town.physicalItems?.items[0];
   const session = town.physicalItems?.session;
+  const parked = Boolean(session?.enabled && session.waiting && !session.intent && !controls.busy);
+  const actor = session?.enabled && !parked ? session.actor : controls.actor;
   const carried = heldItem(town, "player");
   const nearby = nearbyPhysicalItems(town, "player");
   const canReach = Boolean(
@@ -44,7 +46,6 @@ export function ManuscriptTools({ town, controls }: { town: Town; controls: Manu
     Math.abs(player.tile.x - item.location.tile.x) +
       Math.abs(player.tile.y - item.location.tile.y) <=
       1;
-  const parked = Boolean(session?.enabled && session.waiting && !session.intent && !controls.busy);
   return (
     <section className="manuscript-tools" aria-labelledby="manuscript-title">
       <h3 id="manuscript-title">The shared manuscript</h3>
@@ -161,7 +162,7 @@ export function ManuscriptTools({ town, controls }: { town: Town; controls: Manu
               <select
                 value={actor}
                 disabled={disabled || Boolean(session?.enabled && !parked)}
-                onChange={(event) => setActor(event.target.value as NpcId)}
+                onChange={(event) => controls.onActorChange(event.target.value as NpcId)}
               >
                 {NPC_IDS.map((id) => (
                   <option key={id} value={id}>

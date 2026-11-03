@@ -19,7 +19,55 @@ const { visibleSocialEvents, rememberPaidWork, cleanSocial } =
   await server.ssrLoadModule("/src/game/social.ts");
 const { recentBreadGreeting } = await server.ssrLoadModule("/src/game/local-dialogue.ts");
 const { exportTown, parseTownFile } = await server.ssrLoadModule("/src/game/save.ts");
+const { initializePhysicalItems, applyPhysicalCommand } = await server.ssrLoadModule(
+  "/src/game/physical-items.ts",
+);
 const person = (town, id) => town.agents.find((agent) => agent.id === id);
+
+test("physical speech has one speaker after reload and grants no nearby listener knowledge", () => {
+  let town = createTown("Mira");
+  initializePhysicalItems(town);
+  person(town, "player").tile = { ...person(town, "arwyn").tile };
+  const before = new Map(town.agents.map((agent) => [agent.id, structuredClone(agent.memories)]));
+  const words = "I would like to read the manuscript before offering a page.";
+  assert.equal(applyPhysicalCommand(town, "arwyn", { kind: "speak", text: words }).ok, true);
+  for (const agent of town.agents.filter((agent) => agent.id !== "arwyn"))
+    assert.deepEqual(agent.memories, before.get(agent.id));
+  for (let reload = 0; reload < 2; reload++) {
+    const events = visibleSocialEvents(town, true).filter((event) => event.text.includes(words));
+    assert.equal(events.length, 1);
+    assert.deepEqual(events[0].participants, ["arwyn"]);
+    assert.equal(
+      visibleSocialEvents(town, false).some((event) => event.text.includes(words)),
+      false,
+    );
+    town = parseTownFile(exportTown(town));
+    assert.ok(town);
+  }
+});
+
+test("old self-addressed speech retains its words without exposing a private statement", () => {
+  const town = createTown("Mira");
+  person(town, "arwyn").memories.push(
+    makeMemory(town, town.day, town.minute, "chat", "A retained public statement.", 6, {
+      with: "arwyn",
+      source: "statement",
+    }),
+    makeMemory(town, town.day, town.minute, "chat", "A retained private statement.", 6, {
+      with: "arwyn",
+      source: "statement",
+      seed: true,
+    }),
+  );
+  const events = visibleSocialEvents(town, true);
+  assert.equal(events.length, 1);
+  assert.deepEqual(events[0].participants, ["arwyn"]);
+  assert.equal(events[0].text, "A retained public statement.");
+  assert.equal(
+    person(town, "arwyn").memories.filter((memory) => memory.with === "arwyn").length,
+    2,
+  );
+});
 
 test("compression records the actual new dialogue and cannot duplicate the archived first exchange", () => {
   const town = createTown("Mira");

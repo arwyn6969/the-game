@@ -1,0 +1,11 @@
+{
+  "src/components/town/CharacterSocial.tsx": "4246123ca84ad778760ef7eba1c4da03a99ec217e0835945bd17ad9da7966def",
+  "src/components/town/ManuscriptTools.tsx": "d491b1e3aa4267148e255fcd206570bfbcfa3cc7fbdbb0439ee06584e782ae70",
+  "src/components/town/PlayerTools.tsx": "686512118b1a7eb5dd30a04eb945ca5607ec368e36a3f348b5c832ab74af6063",
+  "src/components/town/TownApp.tsx": "921fd2ede5a81da25f924b4f2c33a38985019964c7bfc4360492daed769928e9",
+  "src/game/social.ts": "fbcd24ba2b99f866550feef644632dbcd8230ebb754fc64f0b1fd0d90e959d03",
+  "src/styles/game-ui/layouts.css": "4263f0400d19ee544331cc939f47de373fa9f30b83cb23ed4f30ce92d50db030",
+  "scripts/playtest-fixes-browser.mjs": "fabd2d907caded23a2b26d73f444c80451651cd3d8599321ede804ba0e7e07e8",
+  "scripts/town-quality-social.test.mjs": "0b0614d8f80a9160a7cbd121c80ac247f07a791360b3e230f7baa99740e5f14c",
+  ".github/workflows/verify.yml": "a26bfabd3fae471b68d2c62bbd9d942a3604f510c34424352852b7574344e8a3"
+}
