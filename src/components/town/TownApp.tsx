@@ -3297,28 +3297,24 @@ export function TownApp() {
             {connectionNote}
           </p>
         )}
-        {aiWarning && (
-          <>
-            <p>A connection check does not resend your message.</p>
-            <button
-              className="btn"
-              type="button"
-              disabled={checking || checkingSession || signingIn}
-              onClick={() => void checkConnection()}
-            >
-              {checking || checkingSession ? "Checking AI connection" : "Check AI connection"}
-            </button>
-            {replyFailure === "sign-in" && (
-              <button
-                className="btn"
-                type="button"
-                disabled={checkingSession || signingIn}
-                onClick={() => void signInAgain()}
-              >
-                {signingIn ? "Opening sign-in" : "Sign in again"}
-              </button>
-            )}
-          </>
+        <p>A connection check does not resend your message.</p>
+        <button
+          className="btn"
+          type="button"
+          disabled={checking || checkingSession || signingIn}
+          onClick={() => void checkConnection()}
+        >
+          {checking || checkingSession ? "Checking AI connection" : "Check AI connection"}
+        </button>
+        {replyFailure === "sign-in" && (
+          <button
+            className="btn"
+            type="button"
+            disabled={checkingSession || signingIn}
+            onClick={() => void signInAgain()}
+          >
+            {signingIn ? "Opening sign-in" : "Sign in again"}
+          </button>
         )}
       </div>
     ) : null;
