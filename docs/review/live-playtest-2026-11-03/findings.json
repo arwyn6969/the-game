@@ -1,0 +1,87 @@
+{
+  "date": "2026-11-03",
+  "surface": "In-app browser, public production game",
+  "url": "https://www.arwyn.party/thegame/?skin=library-ink",
+  "source": "2ea974be7097dff44cbd92daef0db566e79fe750",
+  "mergedSource": "49cf76f2236f12ff79b092f4e1df84e13f9b5a42",
+  "workerVersion": "6bf8d2d2-68ca-4624-8611-67b2c0f18531",
+  "town": "Independent Observer test town, separate from Safari; retained across publication and reload",
+  "initialState": "Day 2 23:50, paused, Library, 4 coins, blank manuscript, closed earlier meeting",
+  "finalState": "Day 3 01:30, paused, Hobbs Cafe, 6 coins, completed library reading, caf\u00e9 pilot enabled, unstarted 0/180 shift with 5 reserved",
+  "freshHostedPlayerReplies": 1,
+  "browserErrors": [],
+  "browserWarnings": [],
+  "passed": [
+    "Existing town, manuscript, balance and conversations retained after loading published assets",
+    "Completed manuscript status removed from global strip; recipient Arwyn retained",
+    "Old self-addressed speech renders Arwyn spoke, one View and Follow, words preserved",
+    "Library source inspections, 2-coin player payment and budget 8 funded/2 paid/6 remaining",
+    "Kevin reference report paid 2 from project budget without charging the player",
+    "Frozen index, direct record lookup and Northern actual walking/independent 2-coin lookup",
+    "Midnight transition, Baba dated note and normal guest movement/wait controls",
+    "Free library reading joined, scene and participant outcome recorded",
+    "Fresh hosted Arwyn reply recalled the actual reading line and Northern hands steadying",
+    "Walk to Kevin, accept one funded caf\u00e9 shift, enable service without coin loss",
+    "Reload retains 6-coin balance, completed reading, caf\u00e9 pilot and full 5-coin reservation"
+  ],
+  "issues": [
+    {
+      "id": "LIVE-01",
+      "priority": "P2",
+      "title": "Shared reading is missing from relationship history presentation",
+      "repro": [
+        "Attend the library reading with Arwyn, Northern and Sub before having a direct player chat with Arwyn/Sub.",
+        "Open Arwyn Overview: No shared history yet; Together says You have not spoken with them yet.",
+        "Ask Arwyn about the reading: the accepted hosted reply recalls its exact scene.",
+        "Reload; completed reading remains saved, while Sub Overview still says No shared history yet."
+      ],
+      "expected": "Recognize witnessed shared activities separately from direct chat; show the shared reading without inventing dialogue or rapport gains.",
+      "cause": "CharacterOverview known checks only direct chat memories; Together lists direct chats only.",
+      "source": "src/components/town/CharacterSocial.tsx:121",
+      "evidence": [
+        "reading-shared-history-missing.png",
+        "reading-history-missing-after-reload.png",
+        "fresh-ai-reading-recall.png"
+      ]
+    },
+    {
+      "id": "LIVE-02",
+      "priority": "P2",
+      "title": "Unrelated commitments appear in every resident Together card",
+      "repro": [
+        "Accept a funded caf\u00e9 shift from Kevin.",
+        "Open Arwyn card and Together.",
+        "What is still open shows the Kevin caf\u00e9 attendance commitment despite no agreement with Arwyn."
+      ],
+      "expected": "Limit resident relationship commitments to the selected resident; put global commitments in the player journal.",
+      "cause": "The resident card maps all open player.projects without filtering by selected agent.",
+      "source": "src/components/town/TownApp.tsx:4898",
+      "evidence": [
+        "unrelated-commitment-arwyn.png"
+      ]
+    },
+    {
+      "id": "LIVE-03",
+      "priority": "P3",
+      "title": "Caf\u00e9 activation denies the already accepted shift",
+      "repro": [
+        "Accept Kevin caf\u00e9 shift before enabling the caf\u00e9 pilot.",
+        "Start caf\u00e9 trial.",
+        "Status says You have not bought coffee or accepted a shift while the same panel shows 0/180 minutes and 5 coins reserved."
+      ],
+      "expected": "Describe the effect of activation, or report actual existing agreements accurately.",
+      "cause": "enable feedback is an unconditional statement about prior player actions.",
+      "source": "src/components/town/TownApp.tsx:821",
+      "evidence": [
+        "cafe-start-contradicts-shift.png"
+      ],
+      "positiveCheck": "Reservation and balance survive activation and reload; this is misleading feedback, not observed money loss."
+    }
+  ],
+  "limitations": [
+    "Desktop in-app live play only; CI covers emulated desktop/phone, not physical devices.",
+    "No live caf\u00e9 order or full/overnight work shift in this follow-up; the caf\u00e9 regression checks both sizes locally and in passing CI.",
+    "One fresh hosted player reply tested; no provider-outage reproduction or multi-player acceptance.",
+    "No runtime fixes for these three findings have been made."
+  ]
+}

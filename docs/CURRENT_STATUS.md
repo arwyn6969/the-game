@@ -6,41 +6,35 @@ Updated 3 November 2026. This file is the single current source/deployment and a
 
 | Layer                   | State                                                                                                                                                                  |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Consolidated source     | PR #67 merged as `c183e32d3dc4de923490471da2d30a66caf788a7`; controls, work guidance, meeting reliability, café and personal-model controls share one baseline         |
-| Source qualification    | [Verify 41456836140](https://github.com/arwyn6969/the-game/actions/runs/41456836140) passed at `722a66c`; its tree matches deployed `c183e32`                          |
-| Production              | Runtime `c183e32d3dc4`, Worker `c4098113-6b5c-43db-8ff4-b39d64e2eb72`, at https://www.arwyn.party/thegame/                                                             |
-| Production verification | 2 November: four public asset hashes match, eight endpoint and seven routing checks pass; all 18 binding definitions, seven secret definitions and 52 routes preserved |
-| Rollback                | Previous Worker version `c4b89bfc-d9e4-48d1-ba1d-930280eaa8f5`; preserve database contents and browser saves                                                           |
+| Consolidated source | PR #69 merged as `6079050`; PR #70 merged as `49cf76f2236f12ff79b092f4e1df84e13f9b5a42`; connection recovery and eight playtest fixes included |
+| Source qualification | [Verify 41616048834](https://github.com/arwyn6969/the-game/actions/runs/41616048834) passed every step at `2ea974b`; its tree exactly matches merged `49cf76f` |
+| Production | Runtime `2ea974be7097`, Worker `6bf8d2d2-68ca-4624-8611-67b2c0f18531`, at https://www.arwyn.party/thegame/ |
+| Production verification | 3 November: four public asset hashes, eight endpoints and seven redirects pass; all 18 bindings, seven secret definitions, runtime settings and 52 routes preserved |
+| Rollback | Worker `c4098113-6b5c-43db-8ff4-b39d64e2eb72`; preserve database contents and browser saves |
 
-The user authorized live publication on 2 November. The release owner was this consolidation/deployment chat on `codex/live-release-20261102`, based on `c183e32`; this follow-up records deployment evidence only. [Release receipt](review/live-release-2026-11-02/README.md). No database migration, model call, budget/secret change or wallet transaction was needed. Grok and historical testing automations remain paused.
+The user authorized merge/publication and another in-app-browser bug hunt on
+3 November. Both PRs merged after passing current checks with no unresolved review
+threads. [Publication and live-play evidence](review/live-playtest-2026-11-03/README.md).
+No database migration, secret/budget change or wallet transaction occurred.
+Publication used no model calls; subsequent authorized play tested one fresh
+hosted Arwyn reply successfully. Grok and historical testing automations remain paused.
 
 ## Next work, in order
 
-Active release: this chat owns publication of connection recovery
-[PR #69](https://github.com/arwyn6969/the-game/pull/69), merged as `6079050`, and
-[PR #70](https://github.com/arwyn6969/the-game/pull/70) on `codex/playtest-fixes`.
-The user authorized publication and another in-app-browser bug hunt on 3 November.
-The integration preserves both fixes, existing saves, AI/accounting contracts,
-production bindings and routes; no database migration or secret/budget change.
+Latest follow-up: this chat completed publication and a live desktop playtest.
+Audit notes are on `codex/live-playtest-20261103`, based on merged main `49cf76f`.
+The source-check/lookup/library-reading path, one hosted reply, shift acceptance,
+pilot activation and reload pass. Three reproduced findings remain: shared
+reading missing from relationship history; unrelated commitments on resident
+Together cards; café activation incorrectly denying an existing shift.
+[Handoff](handoffs/live-playtest-2026-11-03.md) and
+[reproductions](review/live-playtest-2026-11-03/findings.json).
+These are recorded for the next bounded fix, not runtime changes in this audit.
 
-PR #70 fixes manuscript recipient persistence, speech attribution, a visible
-Stop control, scoped activity notices, inventory copy, sidebar labels, replay
-clock guards and explanations for partial Hour skips. Its first CI run passed
-unit/build/general browser checks, then the café check timed out because it
-selected Hour by the previous tooltip. The café check now waits for the named
-Hour button to finish its actual operation. Current integrated CI must pass
-before merge/publication. Focused and existing manuscript browser suites pass
-at desktop and phone sizes; typecheck, lint (one existing warning), 484 town
-tests, full tests and build passed before integration.
-[Playtest handoff](handoffs/playtest-fixes-2026-11-02.md).
-
-The connection fix keeps Check AI connection available while a failed note is
-visible. Its Verify run passed before merge. Synthetic desktop/phone recovery
-preserves the draft and town without a model call or replay from checking.
-[Connection evidence](review/ai-connection-recovery-2026-11-02/README.md).
-
-Publication evidence will be recorded in the release workspace and this PR;
-a source merge alone does not establish a production deployment.
+The prior [eight-fix handoff](handoffs/playtest-fixes-2026-11-02.md) and
+[connection-recovery evidence](review/ai-connection-recovery-2026-11-02/README.md)
+retain their original validation details. The integrated Verify now passes,
+including the corrected café Hour readiness selector.
 
 1. [#64 — consolidated release and useful hosted meeting](https://github.com/arwyn6969/the-game/issues/64): publication complete; next, fresh auth/allowance evidence, one bounded hosted trial, then physical-device/accessibility and five-player return-visit acceptance.
 2. [#65 — café pilot acceptance](https://github.com/arwyn6969/the-game/issues/65): mixed seven-day play, pending-AI Stop, accounting/control interleavings and the three-to-five-person diagnostic.
