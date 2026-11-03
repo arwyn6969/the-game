@@ -273,11 +273,38 @@ async function checkExpiredSessionRecovery(page, viewport, result, authSession) 
     "A confirmed session must clear the expired-session warning",
   );
   assert.equal(await signIn.count(), 0);
-  assert.equal(authSession.calls.length - sessionCallsBefore, 3);
+  // A connection check can fail while availability recovers independently.
+  // Keep a way to retry after that recovery removes the availability warning.
+  await page.evaluate(() => {
+    window.__qualityMindMock.availability = { online: false, configured: false };
+    window.dispatchEvent(new Event("focus"));
+  });
+  await page.locator('[data-ai-status="unavailable"]').waitFor();
+  await checkSession({
+    data: { message: "Synthetic connection interrupted" },
+    status: 503,
+    expectedNotice: /sign-in check could not finish/i,
+  });
+  await page.evaluate(() => {
+    window.__qualityMindMock.availability = { online: true, configured: true };
+    window.dispatchEvent(new Event("online"));
+  });
+  await warning.waitFor({ state: "hidden" });
+  assert.equal(await warning.count(), 0);
+  await page.locator("[data-ai-connection-note]").filter({
+    hasText: /sign-in check could not finish/i,
+  }).waitFor();
+  await page.screenshot({ path: join(out, `${viewport.name}-session-retry-after-online.png`) });
+  await checkSession({
+    data: syntheticSession,
+    expectedNotice: /sign-in is working and AI is configured/i,
+  });
+  assert.equal(authSession.calls.length - sessionCallsBefore, 5);
   result.expiredSessionRecovery = {
     missingSessionKeepsSignInAndDraft: true,
     transportFailureShowsRetryAndKeepsDraft: true,
     confirmedSessionClearsWarningWithoutReplay: true,
+    recoveredAvailabilityKeepsSessionRetryWithoutReload: true,
     sessionChecks: authSession.calls.slice(sessionCallsBefore),
   };
   await page.screenshot({ path: join(out, `${viewport.name}-session-reconnected.png`) });

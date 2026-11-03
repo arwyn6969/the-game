@@ -1,6 +1,6 @@
 # Current project status
 
-Updated 2 November 2026. This file is the single current source/deployment and assignment index. Earlier dated statements are evidence, not active instructions.
+Updated 3 November 2026. This file is the single current source/deployment and assignment index. Earlier dated statements are evidence, not active instructions.
 
 ## Source and deployment
 
@@ -16,19 +16,31 @@ The user authorized live publication on 2 November. The release owner was this c
 
 ## Next work, in order
 
-Active implementation: this chat owns the eight reproduced playtest findings on
-`codex/playtest-fixes`, based on current `origin/main` `6c72f28`; implementation
-`311e2ad`, [draft PR #70](https://github.com/arwyn6969/the-game/pull/70), with CI
-pending. Scope: manuscript
-recipient persistence, truthful speech attribution, a visible Stop control,
-scoped activity notices, inventory copy, sidebar labels, replay clock guards and
-explanations for partial Hour skips. Preserve saves, knowledge boundaries and
-existing AI/accounting contracts. The focused and existing manuscript browser
-suites pass at desktop and phone sizes; typecheck, lint (one existing warning),
-484 town tests, full tests and build pass.
-[Handoff and evidence](handoffs/playtest-fixes-2026-11-02.md). The separate
-connection recovery PR #69 remains independent; no production deployment is
-included here.
+Active release: this chat owns publication of connection recovery
+[PR #69](https://github.com/arwyn6969/the-game/pull/69), merged as `6079050`, and
+[PR #70](https://github.com/arwyn6969/the-game/pull/70) on `codex/playtest-fixes`.
+The user authorized publication and another in-app-browser bug hunt on 3 November.
+The integration preserves both fixes, existing saves, AI/accounting contracts,
+production bindings and routes; no database migration or secret/budget change.
+
+PR #70 fixes manuscript recipient persistence, speech attribution, a visible
+Stop control, scoped activity notices, inventory copy, sidebar labels, replay
+clock guards and explanations for partial Hour skips. Its first CI run passed
+unit/build/general browser checks, then the café check timed out because it
+selected Hour by the previous tooltip. The café check now waits for the named
+Hour button to finish its actual operation. Current integrated CI must pass
+before merge/publication. Focused and existing manuscript browser suites pass
+at desktop and phone sizes; typecheck, lint (one existing warning), 484 town
+tests, full tests and build passed before integration.
+[Playtest handoff](handoffs/playtest-fixes-2026-11-02.md).
+
+The connection fix keeps Check AI connection available while a failed note is
+visible. Its Verify run passed before merge. Synthetic desktop/phone recovery
+preserves the draft and town without a model call or replay from checking.
+[Connection evidence](review/ai-connection-recovery-2026-11-02/README.md).
+
+Publication evidence will be recorded in the release workspace and this PR;
+a source merge alone does not establish a production deployment.
 
 1. [#64 — consolidated release and useful hosted meeting](https://github.com/arwyn6969/the-game/issues/64): publication complete; next, fresh auth/allowance evidence, one bounded hosted trial, then physical-device/accessibility and five-player return-visit acceptance.
 2. [#65 — café pilot acceptance](https://github.com/arwyn6969/the-game/issues/65): mixed seven-day play, pending-AI Stop, accounting/control interleavings and the three-to-five-person diagnostic.
