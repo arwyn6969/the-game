@@ -33,13 +33,13 @@ acknowledges existing agreements. A follow-on seven-day core journey covers
 library/reading/manuscript/café play, full wage earning, refund replay,
 Stop/resume, daily reload and retained cup/wage rights at pilot closure.
 
-Current full suite: 1,191 script + 55 typed tests pass (496 town tests). Typecheck, lint (one inherited
+Current full suite: 1,195 script + 55 typed tests pass (500 town tests). Typecheck, lint (one inherited
 warning), credential-free build, diagnostics and desktop/phone browser journeys
 pass. No live inference or production changes. [Evidence and limits](review/relationship-feedback-2026-11-04/README.md)
 and [continuation handoff](handoffs/relationship-feedback-2026-11-04.md).
 
 The user explicitly authorized upload and draft creation on 4 November.
-Branch head `f2f2d46` is pushed and [draft PR #71](https://github.com/arwyn6969/the-game/pull/71)
+Initial draft head `f2f2d46` was pushed and [draft PR #71](https://github.com/arwyn6969/the-game/pull/71)
 is open against main. The prior automatic approval restriction is resolved for
 this upload. Merge and hosted publication are separate.
 
@@ -64,9 +64,26 @@ Both worker-role orientations pass. [Evidence and checks](review/coffee-shift-ha
 
 Local source gates, build, diagnostics and all four new browser journeys pass.
 The updated PR head needs its own CI result. No production or live inference.
-Next ready local café packet: troubled payroll/refund interleavings, then actual
-concurrent-tab café conflicts and downgrade/recovery protection. Real auth/model
-compatibility, physical devices/screen readers and human acceptance remain open.
+Active packet: this Codex chat owns CI follow-up plus café payroll/refund and
+actual concurrent-tab checks on PR #71, starting at `0f25093` on
+`codex/relationship-feedback`. Fresh main remains `49cf76f`. The user authorized
+checks, fixes for reproduced failures and PR updates on 4 November. [CI 41833236897](https://github.com/arwyn6969/the-game/actions/runs/41833236897)
+passed every step at `0f25093`, including private-wallet checks and Cloudflare
+packaging; no CI failure required a fix.
+
+Payroll/refund and concurrent-tab packet is locally complete in `9549a90`.
+Four source cases preserve earlier troubled wages across ready/library/payroll
+interleaving, and independently settle earned full-purse wages and refunds in
+either order through reload/replay. Four actual desktop/phone tab journeys
+preserve canonical save bytes, complete losing backups/downloads, cup ownership,
+attendance and wage holds; explicit recovery revokes automatic service.
+No additional runtime defect was reproduced. Full suite, source gates, diagnostics,
+credential-free build and all four browser journeys pass. [Evidence and limits](review/coffee-payroll-tabs-2026-11-04/README.md)
+· [handoff](handoffs/coffee-payroll-tabs-2026-11-04.md). Verify includes these tests;
+the updated head requires its own CI result. No production or provider calls.
+Next technical #65 gap: downgrade/recovery protection. Simultaneous ready/cancel,
+broader browsers, real auth/model compatibility, physical devices/screen readers
+and human acceptance remain open.
 
 The prior [eight-fix handoff](handoffs/playtest-fixes-2026-11-02.md) and
 [connection-recovery evidence](review/ai-connection-recovery-2026-11-02/README.md)

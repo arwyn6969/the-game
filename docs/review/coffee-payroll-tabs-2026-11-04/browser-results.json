@@ -1,0 +1,97 @@
+{
+  "url": "http://127.0.0.1:8201/",
+  "previewManagedByHarness": false,
+  "liveInferenceCalls": 0,
+  "authChanged": false,
+  "syntheticFaults": [
+    "A labelled held Web Lock queues two actual tabs' service-save attempts"
+  ],
+  "limitations": [
+    "One Chromium browser context per journey; emulated sizes, no physical devices or human acceptance"
+  ],
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "scenario": "refund-and-owned-cup",
+      "checks": [
+        "Two real tabs cannot refund the same pending ticket twice; the rejected tab retains a full downloadable copy and explicit recovery",
+        "A stale staffing write and retry cannot erase the winning tab's new paid ticket or its protected refund hold",
+        "A real prepared/collected cup, one refund, one later sale and the nonempty five-coin staff wage hold survive stale-tab recovery with conserved money"
+      ],
+      "errors": [],
+      "blockedProviderRequests": [],
+      "screenshots": [
+        "screenshots/desktop-refund-and-owned-cup-stale-refund-conflict.png",
+        "screenshots/desktop-refund-and-owned-cup-stale-service-conflict.png"
+      ]
+    },
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "scenario": "queued-service-control",
+      "checks": [
+        "Two actual tab writers queued behind one Web Lock produce one service-start receipt and one rejected candidate; stale retry never overwrites the winner",
+        "Real winning-tab attendance and its complete wage reservation survive losing-tab retry/recovery; loading requires explicit service authorization again"
+      ],
+      "errors": [],
+      "blockedProviderRequests": [],
+      "screenshots": [
+        "screenshots/desktop-queued-service-control-overlapping-start-conflict.png",
+        "screenshots/desktop-queued-service-control-progress-protected-conflict.png"
+      ],
+      "visibilityAtQueue": [
+        "visible",
+        "visible"
+      ]
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "scenario": "refund-and-owned-cup",
+      "checks": [
+        "Two real tabs cannot refund the same pending ticket twice; the rejected tab retains a full downloadable copy and explicit recovery",
+        "A stale staffing write and retry cannot erase the winning tab's new paid ticket or its protected refund hold",
+        "A real prepared/collected cup, one refund, one later sale and the nonempty five-coin staff wage hold survive stale-tab recovery with conserved money"
+      ],
+      "errors": [],
+      "blockedProviderRequests": [],
+      "screenshots": [
+        "screenshots/phone-refund-and-owned-cup-stale-refund-conflict.png",
+        "screenshots/phone-refund-and-owned-cup-stale-service-conflict.png"
+      ]
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "scenario": "queued-service-control",
+      "checks": [
+        "Two actual tab writers queued behind one Web Lock produce one service-start receipt and one rejected candidate; stale retry never overwrites the winner",
+        "Real winning-tab attendance and its complete wage reservation survive losing-tab retry/recovery; loading requires explicit service authorization again"
+      ],
+      "errors": [],
+      "blockedProviderRequests": [],
+      "screenshots": [
+        "screenshots/phone-queued-service-control-overlapping-start-conflict.png",
+        "screenshots/phone-queued-service-control-progress-protected-conflict.png"
+      ],
+      "visibilityAtQueue": [
+        "visible",
+        "visible"
+      ]
+    }
+  ],
+  "failures": []
+}

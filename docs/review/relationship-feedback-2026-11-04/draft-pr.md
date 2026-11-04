@@ -2,28 +2,38 @@
 
 Two funded café workers could block each other forever while exchanging the
 brewing and placement stations. Give placement priority and stage the incoming
-brewer off shared equipment using the existing navigation pass. Idle authorized
-workers also make room; manual control, collisions, payroll and movement budgets
-remain intact.
+brewer off shared equipment using existing navigation. Idle authorized workers
+make room while preserving manual control, collisions, payroll and movement limits.
 
-Also fix three reproduced presentation issues: witnessed readings now count as
-shared relationship history, resident cards show only their own commitments,
-and café activation acknowledges existing agreements. No invented chat/rapport
-or private audience disclosure.
+Also fix witnessed readings missing from shared history, commitments shown on
+the wrong resident card, and café activation overlooking existing agreements.
+No invented chat/rapport or private audience disclosure.
 
-Qualification includes a mixed seven-day town, pending-AI Stop/stale callbacks,
-full UI wage earning (179 unpaid → 180 paid once), and normal two-worker partial
-order handover at desktop/phone sizes. Matched source demand now completes both
-cups: 32/64 minutes with one worker versus 32/55 with two, with five versus ten
-coins reserved and all 90 coins conserved. Both worker-role orientations pass.
+Acceptance coverage includes a mixed seven-day town, pending-AI Stop/stale
+callbacks, full UI earning (179 unpaid → 180 paid once), two-worker partial-order
+handover, payroll/refund interleavings and actual concurrent tabs at desktop/phone
+sizes. Matched demand finishes at 32/64 minutes with one worker versus 32/55 with
+two, with five versus ten coins reserved and all 90 conserved. Both role
+orientations pass. Earlier wages stay protected across ready/library/payroll
+commits; independent wage/refund liabilities survive full purses, reload and
+either settlement order. Conflicting tabs preserve the winner's exact save and
+complete losing copies, then recover cup/wage/attendance rights with service
+authorization revoked.
 
-Validation: Node 24.22.1; 1,191 script + 55 typed tests, 496 town tests, typecheck,
-lint (one inherited warning), credential-free build with migration skipped,
-clean diagnostics and final desktop/phone journeys pass. New regressions run in
-Verify. Evidence: `docs/review/coffee-shift-handover-2026-11-04/`, with the earlier
-relationship and pending-AI packets linked from current status.
+Validation: Node 24.22.1; 1,195 script + 55 typed tests (500 town), typecheck,
+lint (one inherited warning), credential-free build/migration skip, clean
+diagnostics and four final concurrent-tab journeys pass. The new source cases
+and tab journeys run in Verify. [Starting-head CI at `0f25093`](https://github.com/arwyn6969/the-game/actions/runs/41833236897)
+passed every step. The updated head requires its own CI qualification. No
+additional runtime defect surfaced in the payroll/refund/tab packet.
 
-Advances #65. Troubled payroll/refund interleavings, concurrency/rollback,
-physical-device/screen-reader, human value and real hosted/personal-provider
-acceptance remain open. Synthetic fixtures do not establish those gates or
-indefinite economic sustainability. No production changes or live inference.
+Evidence: `docs/review/coffee-payroll-tabs-2026-11-04/`,
+`docs/review/coffee-shift-handover-2026-11-04/`, and the relationship/pending-AI
+packets linked from current status. Full-purse source fixtures explicitly use
+synthetic opening funds; actual-tab journeys conserve the ordinary 90 coins.
+
+Advances #65. Downgrade/rollback protection, simultaneous ready-versus-cancel,
+broader browsers/physical devices/screen readers, human comprehension/enjoyment
+and actual hosted/personal-provider acceptance remain open. Automated fixtures
+do not establish those gates or indefinite sustainability. No production changes,
+live inference, merge or publication.
