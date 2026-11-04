@@ -3,6 +3,7 @@ import type { CoffeeCommand, CoffeeOrder, CoffeeRoutine } from "./coffee-types";
 import {
   COFFEE_BREW_MINUTES,
   COFFEE_BREW_STAND,
+  COFFEE_CUSTOMER_STAND,
   COFFEE_MAX_SHIFTS,
   COFFEE_PLACE_MINUTES,
   COFFEE_PLACE_STAND,
@@ -18,7 +19,7 @@ import { failEconomy, runEconomyCommand } from "./economy";
 import { activateFundedTown, advanceFundedPayroll } from "./payroll-runtime";
 import { wageInterval, type WorkAgreement } from "./funded-work";
 import { beatAt } from "./plan";
-import { zoneAt } from "./world";
+import { walkable, zoneAt } from "./world";
 
 type Tile = { x: number; y: number };
 type Goals = Partial<Record<AgentId, Tile>>;
@@ -567,9 +568,31 @@ export function afterCoffeePayroll(town: Town): boolean {
   return true;
 }
 
+function serviceWaitingGoal(town: Town, worker: AgentId, goals: Goals, reserved: Goals): Tile {
+  const current = person(town, worker).tile;
+  const stations = [COFFEE_BREW_STAND, COFFEE_PLACE_STAND, COFFEE_CUSTOMER_STAND];
+  if (!stations.some((station) => same(station, current))) return { ...current };
+  const unavailable = [...stations, ...Object.values(goals), ...Object.values(reserved)];
+  return (
+    [
+      { x: current.x + 1, y: current.y },
+      { x: current.x, y: current.y - 1 },
+      { x: current.x - 1, y: current.y },
+      { x: current.x, y: current.y + 1 },
+    ].find(
+      (tile) =>
+        walkable(tile.x, tile.y) &&
+        zoneAt(tile.x, tile.y) === "cafe" &&
+        !unavailable.some((point) => point && same(point, tile)) &&
+        !town.agents.some((actor) => same(actor.tile, tile)),
+    ) ?? { ...current }
+  );
+}
+
 /** This is merged into the single navigation pass; progress and travel never share an interval. */
 export function coffeeMovementGoals(town: Town, reserved: Goals = {}): Goals {
   const goals: Goals = {};
+  const active = new Map<AgentId, CoffeeOrder | undefined>();
   for (const routine of town.coffee?.routines ?? []) {
     if (
       routine.status !== "active" ||
@@ -587,6 +610,7 @@ export function coffeeMovementGoals(town: Town, reserved: Goals = {}): Goals {
     }
     const order = assignedOrder(town, routine);
     const worker = person(town, routine.worker);
+    active.set(routine.worker, order);
     goals[routine.worker] =
       order?.phase === "brewing"
         ? COFFEE_BREW_STAND
@@ -595,6 +619,31 @@ export function coffeeMovementGoals(town: Town, reserved: Goals = {}): Goals {
           : zoneAt(worker.tile.x, worker.tile.y) === "cafe"
             ? { ...worker.tile }
             : { x: 7, y: 18 };
+  }
+  // Placement has priority when two authorized workers need to exchange the
+  // adjacent stations. The incoming brewer waits off the stations, so neither
+  // worker has to swap through the other. A worker who just brewed remains
+  // stationary this interval under the existing navigation work budget.
+  for (const [worker, order] of active) {
+    if (order?.phase !== "brewing") continue;
+    const placing = [...active].some(
+      ([other, otherOrder]) =>
+        other !== worker &&
+        otherOrder?.phase === "placing" &&
+        same(person(town, other).tile, COFFEE_BREW_STAND),
+    );
+    if (placing) goals[worker] = serviceWaitingGoal(town, worker, goals, reserved);
+  }
+  // An idle worker's grant permits making room, but never displaces a paused
+  // player, an unrelated resident or somebody with an earlier appointment.
+  for (const [worker, order] of active) {
+    if (order) continue;
+    const current = person(town, worker).tile;
+    if (
+      (same(current, COFFEE_BREW_STAND) || same(current, COFFEE_PLACE_STAND)) &&
+      [...active.keys()].some((other) => other !== worker && same(goals[other]!, current))
+    )
+      goals[worker] = serviceWaitingGoal(town, worker, goals, reserved);
   }
   return goals;
 }
