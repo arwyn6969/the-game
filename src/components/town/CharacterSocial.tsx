@@ -9,6 +9,7 @@ import { formatClock, mentionsSeed } from "@/game/text";
 import { placeTitle, zoneAt } from "@/game/world";
 import { inTalkRange } from "./talk";
 import { heldItem } from "@/game/physical-items";
+import { hasSharedHistory, sharedActivities } from "./relationship-history";
 
 const nameOf = (town: Town, id: AgentId) => town.agents.find((a) => a.id === id)?.name ?? id;
 const dateOf = (event: { day: number; minute: number }) =>
@@ -118,8 +119,7 @@ export function CharacterOverview({
   replay: boolean;
 }) {
   const player = town.agents.find((a) => a.id === "player")!;
-  const known =
-    agent.id === "player" || agent.memories.some((m) => m.type === "chat" && m.with === "player");
+  const known = hasSharedHistory(town, agent.id);
   const nearby = inTalkRange(player.tile.x, player.tile.y, agent.tile.x, agent.tile.y);
   const profile = characterProfile(agent.id);
   const carried = heldItem(town, agent.id);
@@ -161,6 +161,34 @@ export function CharacterOverview({
         Specialties describe their background. Skill levels have not been measured.
       </p>
     </div>
+  );
+}
+
+export function SharedActivities({
+  town,
+  agent,
+  replay,
+}: {
+  town: Town;
+  agent: Agent;
+  replay: boolean;
+}) {
+  if (replay) return null;
+  const activities = sharedActivities(town, agent.id);
+  if (!activities.length) return null;
+  return (
+    <section className="mt-4" aria-label={`Shared activities with ${agent.name}`}>
+      <h3 className="text-sm uppercase tracking-wide text-muted">Shared activities</h3>
+      <ul className="mt-1 space-y-2 text-sm">
+        {activities.slice(0, 8).map((activity) => (
+          <li key={activity.id}>
+            <p className="text-muted">{dateOf(activity)}</p>
+            <p>{activity.title}</p>
+            <p>{activity.text}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

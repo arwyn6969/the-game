@@ -23,8 +23,10 @@ import {
   ConversationCaption,
   Portrait,
   ResidentStrip,
+  SharedActivities,
   SocialPanel,
 } from "./CharacterSocial";
+import { relationshipCommitments } from "./relationship-commitments";
 import { visibleSocialEvents } from "@/game/social";
 import type { Agent, AgentId, Face, NpcId, PlaceId, ThinkJob, Town } from "@/game/types";
 import type {
@@ -818,7 +820,7 @@ export function TownApp() {
       setWatching(null);
     }
     const feedback: Partial<Record<CoffeeActionKind, string>> = {
-      enable: "Café trial started. You have not bought coffee or accepted a shift.",
+      enable: "Café trial started. Existing orders and shift agreements are kept.",
       buy: "Coffee ordered. Your 2 coins stay reserved until the cup is ready.",
       cancel: "Your refund is recorded. If your purse is full, the 2 coins remain reserved.",
       collect: "You collected your coffee. Keep it or drink it from Inventory.",
@@ -4677,6 +4679,7 @@ function Mind({
     return f.from === agent.id || f.to === agent.id;
   });
   const actions = agent.id === "player" ? [] : playerActions(town, agent.id);
+  const commitments = relationshipCommitments(town, agent.id);
   return (
     <aside className="mind" aria-label={`Talk with ${agent.name}`}>
       <div className="mind-bar">
@@ -4889,22 +4892,21 @@ function Mind({
               })}
             </ul>
           </section>
+          <SharedActivities town={town} agent={agent} replay={replay} />
           <section className="mt-4">
             <h3 className="text-sm uppercase tracking-wide text-muted">What is still open</h3>
             <ul className="mt-1 space-y-1 text-sm">
-              {favors.length === 0 && (player.projects ?? []).every((p) => p.status !== "open") && (
+              {favors.length === 0 && commitments.length === 0 && (
                 <li className="text-muted">Nothing written down between you.</li>
               )}
-              {(player.projects ?? [])
-                .filter((project) => project.status === "open")
-                .map((project) => (
-                  <li key={project.id}>
-                    {project.kind === "other" && project.text === BABA_LOAF
-                      ? "Carrying"
-                      : "Commitment"}
-                    : {project.text}
-                  </li>
-                ))}
+              {commitments.map((project) => (
+                <li key={project.id}>
+                  {project.kind === "other" && project.text === BABA_LOAF
+                    ? "Carrying"
+                    : "Commitment"}
+                  : {project.text}
+                </li>
+              ))}
               {favors.map((favor) => (
                 <li key={favor.id}>
                   {favor.status === "owed" ? "Still owed" : favor.status}: {favor.text}
