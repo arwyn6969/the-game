@@ -23,7 +23,7 @@ hosted Arwyn reply successfully. Grok and historical testing automations remain 
 
 Current owner: this Codex chat, branch `codex/relationship-feedback`, fetched main
 base `49cf76f2236f12ff79b092f4e1df84e13f9b5a42`. Runtime fix `ea55743` and
-mixed-week regression `f9005ac` are committed locally. The 3 November audit is
+mixed-week regression `f9005ac` are committed. The 3 November audit is
 retained as documentation commit `27e486f`.
 
 **LIVE-01, LIVE-02 and LIVE-03 are fixed and locally qualified.** Overview and
@@ -38,14 +38,22 @@ warning), credential-free build, diagnostics and desktop/phone browser journeys
 pass. No live inference or production changes. [Evidence and limits](review/relationship-feedback-2026-11-04/README.md)
 and [continuation handoff](handoffs/relationship-feedback-2026-11-04.md).
 
-Upload is pending explicit user approval: automatic approval review rejected the
-branch push, including after read-only confirmation of public repository/push
-access. No upload or PR was created. [Prepared PR text](review/relationship-feedback-2026-11-04/draft-pr.md)
-is reviewable locally; CI on the new branch is therefore still pending.
+The user explicitly authorized upload and draft creation on 4 November.
+Branch head `f2f2d46` is pushed and [draft PR #71](https://github.com/arwyn6969/the-game/pull/71)
+is open against main. The prior automatic approval restriction is resolved for
+this upload. Merge and hosted publication are separate.
 
-Next ready local packet: #65 pending-synthetic-AI Stop and late-result rejection,
-without changing auth or making provider calls. The seven-day engine proof does
-not close hosted, full UI shift, physical-device or human acceptance.
+The next #65 packet is now locally qualified in `648f697`: eight desktop/phone
+synthetic browser journeys cover pending-AI Stop, valid/unavailable late replies,
+manual takeover, restore, explicit resume and reload authority. No runtime defect
+was reproduced. [Café AI evidence and limits](review/coffee-ai-interruptions-2026-11-04/README.md).
+The harness is added to Verify; CI must qualify the current PR head separately.
+
+Next ready café packet: full human shift earning through ordinary UI, followed by
+two-worker handover and matched one-versus-two capacity. Pending-AI checks use an
+empty cup/order/debt fixture; the seven-day engine proof carries separate
+nonempty-cup/obligation evidence. Real auth/providers, troubled payroll,
+concurrency, rollback, physical devices and human acceptance remain open.
 
 The prior [eight-fix handoff](handoffs/playtest-fixes-2026-11-02.md) and
 [connection-recovery evidence](review/ai-connection-recovery-2026-11-02/README.md)

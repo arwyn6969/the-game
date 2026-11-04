@@ -55,9 +55,14 @@
   "liveInferenceCalls": 0,
   "productionChanged": false,
   "remaining": [
-    "pending-AI Stop",
     "physical devices and human acceptance",
     "hosted trial/allowance qualification",
     "personal-provider compatibility"
-  ]
+  ],
+  "followOnCafeAI": {
+    "codeCommit": "648f697",
+    "journeysPassed": 8,
+    "runtimeChanged": false,
+    "evidence": "../coffee-ai-interruptions-2026-11-04/README.md"
+  }
 }

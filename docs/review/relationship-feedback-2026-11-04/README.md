@@ -71,6 +71,8 @@ corrections. The mixed-week packet reproduced no additional runtime defect.
 No live model calls, budget/secret changes, wallet actions or production changes
 were made. The 3 November publication receipt remains the deployment baseline.
 
-Branch upload and the prepared draft PR are pending explicit user approval.
-Automatic approval review rejected the push, including after read-only
-public-repository/push-access verification. No new remote CI run exists.
+The user explicitly authorized branch upload and draft creation on 4 November.
+[Draft PR #71](https://github.com/arwyn6969/the-game/pull/71) is open at uploaded
+head `f2f2d46`. This resolves the former automatic upload restriction; the
+historical failure remains in Git history. New CI and café AI-interruption
+qualification are tracked in the current status index.

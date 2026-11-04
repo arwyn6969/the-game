@@ -14,19 +14,20 @@ Final full suite: 1,189 script + 55 typed tests pass. Typecheck, lint (one inher
 warning), credential-free build, diagnostics and desktop/phone browser journeys
 pass. [Evidence and limits](../review/relationship-feedback-2026-11-04/README.md).
 
-Next bounded packet: #65 pending-synthetic-AI Stop, without changing auth or using
-a provider. Start a café routine with a delayed synthetic inference request;
-verify Stop immediately revokes serving, late completion cannot resume it or
-duplicate an effect, and reload retains valid progress/holds. Use the existing
-intercepted-promise browser patterns. Keep full UI shift, physical-device/human,
-concurrency, rollback and personal-model compatibility gates explicit.
+The next pending-AI packet is locally qualified at `648f697`: eight desktop/phone
+journeys cover immediate Stop, valid/unavailable late replies, restore/manual
+stale-result rejection, explicit resume and recovered reload control. No runtime
+fix was required. [Café evidence and limitations](../review/coffee-ai-interruptions-2026-11-04/README.md).
+
+Next bounded packet: full human shift earning through normal UI, then two-worker
+handover/capacity. Keep troubled payroll, concurrent tabs, downgrade recovery,
+physical-device/human and personal-model compatibility acceptance explicit.
 
 Source, CI, merge and hosted acceptance remain separate. Production stays at the
 3 November receipt. Grok and historical automations remain paused.
 
-Automatic approval review rejected the GitHub branch push because the task did
-not explicitly authorize source upload. Public-repository and connected push
-permission checks did not resolve that restriction. All work is committed
-locally; no PR or new CI run exists. Ask only for approval to upload
-`codex/relationship-feedback` and create its prepared draft PR. Do not bypass the
-rejection through the connector. Merge and deployment remain separate.
+The prior automatic upload restriction was resolved by the user's explicit
+4 November authorization. Branch head `f2f2d46` is pushed and draft PR #71 is open:
+https://github.com/arwyn6969/the-game/pull/71. The pending-synthetic-AI café packet is now locally qualified on the same
+branch/PR. Merge/publication remain
+separate. Do not ask for the already authorized branch upload again.
