@@ -41,7 +41,8 @@ Evidence: `docs/review/coffee-downgrade-2026-11-04/`,
 `docs/review/coffee-payroll-tabs-2026-11-04/`,
 `docs/review/coffee-shift-handover-2026-11-04/`, and the relationship/pending-AI
 packets linked from current status. Full-purse source fixtures explicitly use
-synthetic opening funds; actual-tab journeys conserve the ordinary 90 coins.
+synthetic opening funds. The earlier concurrent-tab journeys conserve the ordinary
+90 coins; the downgrade fixture conserves its disclosed 2,081-coin opening.
 
 Advances #65. Arbitrary older/deployed/PWA rollback, simultaneous ready-versus-cancel,
 broader browsers/physical devices/screen readers, human comprehension/enjoyment

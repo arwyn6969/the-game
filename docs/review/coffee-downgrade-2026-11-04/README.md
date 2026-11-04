@@ -18,8 +18,8 @@ The harness archives that exact source, verifies identical package/lock/Node
 files, and builds it without private configuration or provider/database credentials.
 Both this archive and the current source build successfully with migration skipped.
 A disposable proxy switches between these builds **on one browser origin**.
-Each visit verifies the selected build's entry assets against fetched hashes;
-current and rollback bundles differ. Service workers are blocked and browser
+Each visit verifies the selected build's hash-named entry paths. Separate fetches
+record the assets' SHA-256 hashes; current and rollback bundles differ. Service workers are blocked and browser
 HTTP cache is bypassed so cached current code cannot mask the older build.
 
 Four Chromium journeys pass: enabled and feature-off saves at 1280×800 and
