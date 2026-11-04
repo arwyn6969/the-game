@@ -62,3 +62,7 @@ Node 24.22.1, syntax, targeted ESLint (zero warnings/errors), formatting and
 whitespace checks pass. No runtime changed, so the previous 1,189 script + 55
 typed test qualification remains applicable. The new eight-journey harness is
 wired into Verify's synthetic development-browser step and artifact upload.
+
+Subsequent packet: [full UI shifts and two-worker handover](../coffee-shift-handover-2026-11-04/README.md)
+are now locally qualified, including a station-deadlock fix. The limitations
+above retain this earlier pending-AI fixture's scope.

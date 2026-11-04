@@ -33,7 +33,7 @@ acknowledges existing agreements. A follow-on seven-day core journey covers
 library/reading/manuscript/café play, full wage earning, refund replay,
 Stop/resume, daily reload and retained cup/wage rights at pilot closure.
 
-Final full suite: 1,189 script + 55 typed tests pass. Typecheck, lint (one inherited
+Current full suite: 1,191 script + 55 typed tests pass (496 town tests). Typecheck, lint (one inherited
 warning), credential-free build, diagnostics and desktop/phone browser journeys
 pass. No live inference or production changes. [Evidence and limits](review/relationship-feedback-2026-11-04/README.md)
 and [continuation handoff](handoffs/relationship-feedback-2026-11-04.md).
@@ -49,15 +49,28 @@ manual takeover, restore, explicit resume and reload authority. No runtime defec
 was reproduced. [Café AI evidence and limits](review/coffee-ai-interruptions-2026-11-04/README.md).
 The harness is added to Verify; CI must qualify the current PR head separately.
 
-Next ready café packet: full human shift earning through ordinary UI, followed by
-two-worker handover and matched one-versus-two capacity. Pending-AI checks use an
-empty cup/order/debt fixture; the seven-day engine proof carries separate
-nonempty-cup/obligation evidence. Real auth/providers, troubled payroll,
-concurrency, rollback, physical devices and human acceptance remain open.
+Full-shift and handover packet completed locally in `54e39e6`, continuing PR #71
+from head `05be3ab` and freshly fetched main `49cf76f`. Both desktop/phone sizes
+qualify 179 unpaid → 180 paid exactly once, no overtime or repeated settlement,
+and ordinary partial-order handover with retained ownership and separate wages.
+
+The checks reproduced and fixed a real two-worker station deadlock. A waiting
+brewer now stages off shared equipment while the other worker moves to placement;
+only active service goals change, preserving normal navigation and manual control.
+The matched two-order runtime comparison finishes at 32/64 minutes with one
+worker and 32/55 with two; reservations are 5 versus 10 coins, total funds 90.
+Both worker-role orientations pass. [Evidence and checks](review/coffee-shift-handover-2026-11-04/README.md)
+· [handoff](handoffs/coffee-shift-handover-2026-11-04.md).
+
+Local source gates, build, diagnostics and all four new browser journeys pass.
+The updated PR head needs its own CI result. No production or live inference.
+Next ready local café packet: troubled payroll/refund interleavings, then actual
+concurrent-tab café conflicts and downgrade/recovery protection. Real auth/model
+compatibility, physical devices/screen readers and human acceptance remain open.
 
 The prior [eight-fix handoff](handoffs/playtest-fixes-2026-11-02.md) and
 [connection-recovery evidence](review/ai-connection-recovery-2026-11-02/README.md)
-retain their original validation details. The integrated Verify now passes,
+retain their original validation details. The merged baseline’s Verify passed,
 including the corrected café Hour readiness selector.
 
 1. [#64 — consolidated release and useful hosted meeting](https://github.com/arwyn6969/the-game/issues/64): publication complete; next, fresh auth/allowance evidence, one bounded hosted trial, then physical-device/accessibility and five-player return-visit acceptance.

@@ -1,0 +1,80 @@
+{
+  "url": "http://127.0.0.1:8201/",
+  "builtPreview": false,
+  "liveInferenceCalls": 0,
+  "fixtureScope": "New paused 15:59 towns with initial actor poses only; no injected economy, agreement, attendance, service, wages or progress",
+  "limitations": [
+    "Emulated Chromium desktop/phone; no physical devices or human acceptance"
+  ],
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "checks": [
+        "Normal enable and Kevin quote reserve the full wage with zero attendance and no advance payment",
+        "179 eligible minutes retain all five reserved coins and create neither payable nor wage payment",
+        "The 180th minute pays exactly five existing caf\u00e9 coins once and ends service control with no overtime grant",
+        "Time after the window, export/import and reload preserve one settlement, all identities and conserved money"
+      ],
+      "hourAdvances": [
+        3,
+        18,
+        5,
+        34,
+        11,
+        49
+      ],
+      "errors": [],
+      "blockedProviderRequests": [],
+      "screenshots": [
+        "desktop-179-unpaid.png",
+        "desktop-180-paid-ended.png"
+      ],
+      "final": {
+        "eligibleMinutes": 180,
+        "wagePayments": 1,
+        "wage": 5,
+        "playerMoney": 9,
+        "totalCoins": 90
+      }
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "checks": [
+        "Normal enable and Kevin quote reserve the full wage with zero attendance and no advance payment",
+        "179 eligible minutes retain all five reserved coins and create neither payable nor wage payment",
+        "The 180th minute pays exactly five existing caf\u00e9 coins once and ends service control with no overtime grant",
+        "Time after the window, export/import and reload preserve one settlement, all identities and conserved money"
+      ],
+      "hourAdvances": [
+        3,
+        18,
+        5,
+        34,
+        11,
+        49
+      ],
+      "errors": [],
+      "blockedProviderRequests": [],
+      "screenshots": [
+        "phone-179-unpaid.png",
+        "phone-180-paid-ended.png"
+      ],
+      "final": {
+        "eligibleMinutes": 180,
+        "wagePayments": 1,
+        "wage": 5,
+        "playerMoney": 9,
+        "totalCoins": 90
+      }
+    }
+  ],
+  "failures": []
+}

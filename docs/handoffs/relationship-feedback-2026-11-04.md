@@ -19,9 +19,10 @@ journeys cover immediate Stop, valid/unavailable late replies, restore/manual
 stale-result rejection, explicit resume and recovered reload control. No runtime
 fix was required. [Café evidence and limitations](../review/coffee-ai-interruptions-2026-11-04/README.md).
 
-Next bounded packet: full human shift earning through normal UI, then two-worker
-handover/capacity. Keep troubled payroll, concurrent tabs, downgrade recovery,
-physical-device/human and personal-model compatibility acceptance explicit.
+The full-shift/handover follow-on is locally qualified in `54e39e6`, including a
+fix for the reproduced two-worker station deadlock. [Current handoff](coffee-shift-handover-2026-11-04.md)
+records full UI wage earning, guarded handover, matched capacity, 1,191 script +
+55 typed tests and the next payroll/concurrency/recovery gaps.
 
 Source, CI, merge and hosted acceptance remain separate. Production stays at the
 3 November receipt. Grok and historical automations remain paused.

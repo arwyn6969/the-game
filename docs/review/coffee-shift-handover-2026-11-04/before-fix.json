@@ -1,0 +1,32 @@
+{
+  "baseline": "05be3abe714fd258a61fa2c8ced9d29a03df3a29",
+  "scope": "Deterministic source reproduction summary, synthetic initial poses and two guarded paid orders",
+  "workers": 2,
+  "minute": 1060,
+  "completedCups": 0,
+  "orders": [
+    {
+      "buyer": "player",
+      "phase": "placing",
+      "brewMinutes": 20,
+      "placeMinutes": 0,
+      "worker": "northern",
+      "tile": {
+        "x": 5,
+        "y": 18
+      }
+    },
+    {
+      "buyer": "sub",
+      "phase": "brewing",
+      "brewMinutes": 0,
+      "placeMinutes": 0,
+      "worker": "player",
+      "tile": {
+        "x": 6,
+        "y": 18
+      }
+    }
+  ],
+  "totalCoins": 90
+}
