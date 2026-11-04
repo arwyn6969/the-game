@@ -38,6 +38,11 @@ warning), credential-free build, diagnostics and desktop/phone browser journeys
 pass. No live inference or production changes. [Evidence and limits](review/relationship-feedback-2026-11-04/README.md)
 and [continuation handoff](handoffs/relationship-feedback-2026-11-04.md).
 
+Upload is pending explicit user approval: automatic approval review rejected the
+branch push, including after read-only confirmation of public repository/push
+access. No upload or PR was created. [Prepared PR text](review/relationship-feedback-2026-11-04/draft-pr.md)
+is reviewable locally; CI on the new branch is therefore still pending.
+
 Next ready local packet: #65 pending-synthetic-AI Stop and late-result rejection,
 without changing auth or making provider calls. The seven-day engine proof does
 not close hosted, full UI shift, physical-device or human acceptance.

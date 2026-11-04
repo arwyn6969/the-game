@@ -23,3 +23,10 @@ concurrency, rollback and personal-model compatibility gates explicit.
 
 Source, CI, merge and hosted acceptance remain separate. Production stays at the
 3 November receipt. Grok and historical automations remain paused.
+
+Automatic approval review rejected the GitHub branch push because the task did
+not explicitly authorize source upload. Public-repository and connected push
+permission checks did not resolve that restriction. All work is committed
+locally; no PR or new CI run exists. Ask only for approval to upload
+`codex/relationship-feedback` and create its prepared draft PR. Do not bypass the
+rejection through the connector. Merge and deployment remain separate.
