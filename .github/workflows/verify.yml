@@ -57,6 +57,7 @@ jobs:
           JS
           node scripts/quality-ai-browser.mjs
           GAME_FIXES_QA_URL=http://127.0.0.1:8094/ node scripts/playtest-fixes-browser.mjs
+          GAME_COFFEE_AI_QA_URL=http://127.0.0.1:8094/ node scripts/coffee-ai-interruptions-browser.mjs
           GAME_PERSONAL_QA_URL=http://127.0.0.1:8094/ node scripts/personal-model-browser.mjs
           DISCUSSION_QA_URL=http://127.0.0.1:8094/ npm run test:browser:meetings
           GAME_SKIN_QA_URL=http://127.0.0.1:8094/ GAME_SKIN_QA_OUT=artifacts/ui-interfaces node scripts/skin-browser.mjs
@@ -95,6 +96,7 @@ jobs:
           path: |
             artifacts/quality-browser
             artifacts/relationship-feedback
+            artifacts/coffee-ai-interruptions
             artifacts/a02-cafe/browser
             artifacts/quality-ai-browser
             artifacts/playtest-fixes
