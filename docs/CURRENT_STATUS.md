@@ -1,6 +1,6 @@
 # Current project status
 
-Updated 3 November 2026. This file is the single current source/deployment and assignment index. Earlier dated statements are evidence, not active instructions.
+Updated 4 November 2026. This file is the single current source/deployment and assignment index. Earlier dated statements are evidence, not active instructions.
 
 ## Source and deployment
 
@@ -21,15 +21,26 @@ hosted Arwyn reply successfully. Grok and historical testing automations remain 
 
 ## Next work, in order
 
-Latest follow-up: this chat completed publication and a live desktop playtest.
-Audit notes are on `codex/live-playtest-20261103`, based on merged main `49cf76f`.
-The source-check/lookup/library-reading path, one hosted reply, shift acceptance,
-pilot activation and reload pass. Three reproduced findings remain: shared
-reading missing from relationship history; unrelated commitments on resident
-Together cards; café activation incorrectly denying an existing shift.
-[Handoff](handoffs/live-playtest-2026-11-03.md) and
-[reproductions](review/live-playtest-2026-11-03/findings.json).
-These are recorded for the next bounded fix, not runtime changes in this audit.
+Current owner: this Codex chat, branch `codex/relationship-feedback`, fetched main
+base `49cf76f2236f12ff79b092f4e1df84e13f9b5a42`. Runtime fix `ea55743` and
+mixed-week regression `f9005ac` are committed locally. The 3 November audit is
+retained as documentation commit `27e486f`.
+
+**LIVE-01, LIVE-02 and LIVE-03 are fixed and locally qualified.** Overview and
+Together recognize witnessed shared activities without invented chat/rapport;
+resident cards scope commitments to the identified counterparty; café activation
+acknowledges existing agreements. A follow-on seven-day core journey covers
+library/reading/manuscript/café play, full wage earning, refund replay,
+Stop/resume, daily reload and retained cup/wage rights at pilot closure.
+
+Final full suite: 1,189 script + 55 typed tests pass. Typecheck, lint (one inherited
+warning), credential-free build, diagnostics and desktop/phone browser journeys
+pass. No live inference or production changes. [Evidence and limits](review/relationship-feedback-2026-11-04/README.md)
+and [continuation handoff](handoffs/relationship-feedback-2026-11-04.md).
+
+Next ready local packet: #65 pending-synthetic-AI Stop and late-result rejection,
+without changing auth or making provider calls. The seven-day engine proof does
+not close hosted, full UI shift, physical-device or human acceptance.
 
 The prior [eight-fix handoff](handoffs/playtest-fixes-2026-11-02.md) and
 [connection-recovery evidence](review/ai-connection-recovery-2026-11-02/README.md)

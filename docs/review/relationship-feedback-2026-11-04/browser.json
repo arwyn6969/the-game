@@ -1,0 +1,49 @@
+{
+  "target": "http://127.0.0.1:8199/?skin=library-ink",
+  "node": "v24.22.1",
+  "builtPreview": true,
+  "liveInferenceCalls": 0,
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "checks": [
+        "A public account of an unattended reading and private dialogue create no shared history",
+        "Witnessed reading appears for Arwyn and Sub without direct chats or rapport gains",
+        "Kevin's accepted shift stays on Kevin's card and the player journal, outside Arwyn/Sub cards",
+        "Starting the caf\u00e9 trial acknowledges activation without denying the existing shift or changing accounts",
+        "Export/import and reload preserve shared reading, scoped commitments, full wage reservation and identities"
+      ],
+      "errors": [],
+      "blockedProviderRequests": [],
+      "screenshots": [
+        "desktop-arwyn-shared-history.png",
+        "desktop-activation-existing-shift.png"
+      ]
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "checks": [
+        "A public account of an unattended reading and private dialogue create no shared history",
+        "Witnessed reading appears for Arwyn and Sub without direct chats or rapport gains",
+        "Kevin's accepted shift stays on Kevin's card and the player journal, outside Arwyn/Sub cards",
+        "Starting the caf\u00e9 trial acknowledges activation without denying the existing shift or changing accounts",
+        "Export/import and reload preserve shared reading, scoped commitments, full wage reservation and identities"
+      ],
+      "errors": [],
+      "blockedProviderRequests": [],
+      "screenshots": [
+        "phone-arwyn-shared-history.png",
+        "phone-activation-existing-shift.png"
+      ]
+    }
+  ],
+  "failures": []
+}

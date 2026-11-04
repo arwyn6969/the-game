@@ -1,0 +1,63 @@
+{
+  "date": "2026-11-04",
+  "node": "v24.22.1",
+  "base": "49cf76f2236f12ff79b092f4e1df84e13f9b5a42",
+  "runtimeCommit": "ea557436dc6b4ae45d8bffd6c598d60b760b7ed2",
+  "testCommit": "f9005acaad34b8ff6936c9e4e1ad565b0beae196",
+  "dependencyInstall": "npm ci --offline --no-audit --no-fund, committed lockfile",
+  "typecheck": "passed",
+  "lint": {
+    "errors": 0,
+    "inheritedWarnings": 1,
+    "warningFile": "src/lib/auth/use-current-user.ts:59"
+  },
+  "townSuite": {
+    "passed": 486,
+    "failed": 0,
+    "scope": "Before history/week tests were added; final full suite below includes all new tests."
+  },
+  "finalFullSuite": {
+    "scriptPassed": 1189,
+    "typedPassed": 55,
+    "failed": 0
+  },
+  "focusedHistory": {
+    "passed": 6,
+    "failed": 0
+  },
+  "focusedCommitments": {
+    "passed": 2,
+    "failed": 0
+  },
+  "mixedWeek": {
+    "passed": 2,
+    "failed": 0
+  },
+  "diagnostics": {
+    "worldAudit": [],
+    "scope": "Deterministic observations, not a release verdict"
+  },
+  "build": {
+    "passed": true,
+    "privateConfigIncluded": false,
+    "databaseMigration": "skipped, DATABASE_URL unset",
+    "authContractChanged": false
+  },
+  "browser": {
+    "sizes": [
+      "1280x800",
+      "390x844"
+    ],
+    "focusedPassed": true,
+    "generalPassed": true,
+    "visualReview": true
+  },
+  "liveInferenceCalls": 0,
+  "productionChanged": false,
+  "remaining": [
+    "pending-AI Stop",
+    "physical devices and human acceptance",
+    "hosted trial/allowance qualification",
+    "personal-provider compatibility"
+  ]
+}
