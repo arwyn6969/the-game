@@ -75,11 +75,17 @@ export function CoffeePanel({
       {!inventoryOnly && (
         <>
           <p>{controls.status}</p>
-          {!controls.enabled && (
+          {!controls.enabled && controls.enable && (
             <p>
               Try seven game days of café service in this town. Coffee costs 2 coins. Completed
               sales support funded staff shifts; no new money is added. Starting the trial does not
               buy coffee or accept work for you.
+            </p>
+          )}
+          {!controls.enabled && !controls.enable && (
+            <p>
+              New coffee orders are closed. Existing tickets, cups and wage reservations remain. You
+              can still collect ready coffee and resolve existing refunds and work.
             </p>
           )}
           {controls.enable && <Choice choice={controls.enable} />}

@@ -33,7 +33,7 @@ jobs:
         run: node scripts/relationship-feedback-browser.mjs
       - name: Built café customer, worker and recovery journeys
         run: node scripts/town-coffee-browser.mjs
-      - name: Built full-shift, handover and concurrent-tab journeys
+      - name: Built café shift, handover, tab and rollback journeys
         run: |
           node scripts/with-app-env.mjs node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 8201 --strictPort > /tmp/game-shift-preview.log 2>&1 &
           qa_pid=$!
@@ -54,6 +54,8 @@ jobs:
           GAME_COFFEE_SHIFT_QA_URL=http://127.0.0.1:8201/ node scripts/coffee-full-shift-browser.mjs
           GAME_COFFEE_HANDOVER_QA_URL=http://127.0.0.1:8201/ node scripts/coffee-handover-browser.mjs
           GAME_COFFEE_TABS_QA_URL=http://127.0.0.1:8201/ node scripts/coffee-concurrent-tabs-browser.mjs
+          git fetch --no-tags --depth=1 origin c183e32d3dc4de923490471da2d30a66caf788a7
+          GAME_COFFEE_DOWNGRADE_QA_URL=http://127.0.0.1:8201/ node scripts/coffee-downgrade-browser.mjs
       - name: Read-only stamp appearance browser checks
         run: |
           npm run test:browser:stamps
@@ -121,6 +123,7 @@ jobs:
             artifacts/coffee-full-shift
             artifacts/coffee-handover
             artifacts/coffee-concurrent-tabs
+            artifacts/coffee-downgrade
             artifacts/a02-cafe/browser
             artifacts/quality-ai-browser
             artifacts/playtest-fixes
