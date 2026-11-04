@@ -1,0 +1,300 @@
+{
+  "node": "v24.22.1",
+  "rollbackSource": "c183e32d3dc4de923490471da2d30a66caf788a7",
+  "liveInferenceCalls": 0,
+  "productionChanged": false,
+  "fixture": "Synthetic opening/time/poses followed by actual source work and transfers; 2081 opening coins",
+  "limitations": [
+    "Only the pinned c183e32 rollback is qualified; not arbitrary historical builds",
+    "Built HTTP previews on a disposable root-base origin; service workers blocked and HTTP cache bypassed",
+    "Chromium desktop/phone emulation; not a deployed Worker rollback or physical-device acceptance",
+    "Final purse-capacity transfers and claim settlement use source APIs, not ordinary UI payouts"
+  ],
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "enabled": true,
+      "checks": [
+        "Current \u2192 pinned c183e32 \u2192 current on the same origin preserves complete books, identities, memories, debts, ready cup, 12-minute pending refund, 20-minute partial wage and 180-minute earned payable through ordinary saves and exports",
+        "Actual old-build export reopens with current source; existing-cash capacity transfers settle the original refund and earned wage once while preserving the partial wage hold",
+        "Ordinary clock, travel, collect and drink controls use the original recovered cup once; wage/refund books stay unchanged during use and reload retains its consumption tombstone"
+      ],
+      "assets": [
+        {
+          "version": "current",
+          "scripts": [
+            "/assets/index-Cd-ZVxPu.js",
+            "/assets/routes-B8G4xgxW.js",
+            "/grok-app-builder/extensions.js"
+          ]
+        },
+        {
+          "version": "rollback",
+          "scripts": [
+            "/assets/index-8u-wWC9T.js",
+            "/assets/routes-Cs8xNE10.js",
+            "/grok-app-builder/extensions.js"
+          ]
+        },
+        {
+          "version": "current",
+          "scripts": [
+            "/assets/index-Cd-ZVxPu.js",
+            "/assets/routes-B8G4xgxW.js",
+            "/grok-app-builder/extensions.js"
+          ]
+        }
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "screenshots": [
+        "screenshots/desktop-on-recovered.png",
+        "screenshots/desktop-on-consumed.png"
+      ]
+    },
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "enabled": false,
+      "checks": [
+        "Current \u2192 pinned c183e32 \u2192 current on the same origin preserves complete books, identities, memories, debts, ready cup, 12-minute pending refund, 20-minute partial wage and 180-minute earned payable through ordinary saves and exports",
+        "Feature-off recovery retains tickets/cups and never presents a new trial or purchase",
+        "Actual old-build export reopens with current source; existing-cash capacity transfers settle the original refund and earned wage once while preserving the partial wage hold",
+        "Both pinned and current builds refuse future caf\u00e9 data without changing its bytes; full raw download and explicit supported-backup recovery retain the original",
+        "Ordinary clock, travel, collect and drink controls use the original recovered cup once; wage/refund books stay unchanged during use and reload retains its consumption tombstone"
+      ],
+      "assets": [
+        {
+          "version": "current",
+          "scripts": [
+            "/assets/index-Cd-ZVxPu.js",
+            "/assets/routes-B8G4xgxW.js",
+            "/grok-app-builder/extensions.js"
+          ]
+        },
+        {
+          "version": "rollback",
+          "scripts": [
+            "/assets/index-8u-wWC9T.js",
+            "/assets/routes-Cs8xNE10.js",
+            "/grok-app-builder/extensions.js"
+          ]
+        },
+        {
+          "version": "current",
+          "scripts": [
+            "/assets/index-Cd-ZVxPu.js",
+            "/assets/routes-B8G4xgxW.js",
+            "/grok-app-builder/extensions.js"
+          ]
+        },
+        {
+          "version": "rollback",
+          "scripts": [
+            "/assets/index-8u-wWC9T.js",
+            "/assets/routes-Cs8xNE10.js",
+            "/grok-app-builder/extensions.js"
+          ]
+        },
+        {
+          "version": "current",
+          "scripts": [
+            "/assets/index-Cd-ZVxPu.js",
+            "/assets/routes-B8G4xgxW.js",
+            "/grok-app-builder/extensions.js"
+          ]
+        }
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "screenshots": [
+        "screenshots/desktop-off-recovered.png",
+        "screenshots/desktop-unsupported-recovered.png",
+        "screenshots/desktop-off-consumed.png"
+      ]
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "enabled": true,
+      "checks": [
+        "Current \u2192 pinned c183e32 \u2192 current on the same origin preserves complete books, identities, memories, debts, ready cup, 12-minute pending refund, 20-minute partial wage and 180-minute earned payable through ordinary saves and exports",
+        "Actual old-build export reopens with current source; existing-cash capacity transfers settle the original refund and earned wage once while preserving the partial wage hold",
+        "Ordinary clock, travel, collect and drink controls use the original recovered cup once; wage/refund books stay unchanged during use and reload retains its consumption tombstone"
+      ],
+      "assets": [
+        {
+          "version": "current",
+          "scripts": [
+            "/assets/index-Cd-ZVxPu.js",
+            "/assets/routes-B8G4xgxW.js",
+            "/grok-app-builder/extensions.js"
+          ]
+        },
+        {
+          "version": "rollback",
+          "scripts": [
+            "/assets/index-8u-wWC9T.js",
+            "/assets/routes-Cs8xNE10.js",
+            "/grok-app-builder/extensions.js"
+          ]
+        },
+        {
+          "version": "current",
+          "scripts": [
+            "/assets/index-Cd-ZVxPu.js",
+            "/assets/routes-B8G4xgxW.js",
+            "/grok-app-builder/extensions.js"
+          ]
+        }
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "screenshots": [
+        "screenshots/phone-on-recovered.png",
+        "screenshots/phone-on-consumed.png"
+      ]
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "enabled": false,
+      "checks": [
+        "Current \u2192 pinned c183e32 \u2192 current on the same origin preserves complete books, identities, memories, debts, ready cup, 12-minute pending refund, 20-minute partial wage and 180-minute earned payable through ordinary saves and exports",
+        "Feature-off recovery retains tickets/cups and never presents a new trial or purchase",
+        "Actual old-build export reopens with current source; existing-cash capacity transfers settle the original refund and earned wage once while preserving the partial wage hold",
+        "Both pinned and current builds refuse future caf\u00e9 data without changing its bytes; full raw download and explicit supported-backup recovery retain the original",
+        "Ordinary clock, travel, collect and drink controls use the original recovered cup once; wage/refund books stay unchanged during use and reload retains its consumption tombstone"
+      ],
+      "assets": [
+        {
+          "version": "current",
+          "scripts": [
+            "/assets/index-Cd-ZVxPu.js",
+            "/assets/routes-B8G4xgxW.js",
+            "/grok-app-builder/extensions.js"
+          ]
+        },
+        {
+          "version": "rollback",
+          "scripts": [
+            "/assets/index-8u-wWC9T.js",
+            "/assets/routes-Cs8xNE10.js",
+            "/grok-app-builder/extensions.js"
+          ]
+        },
+        {
+          "version": "current",
+          "scripts": [
+            "/assets/index-Cd-ZVxPu.js",
+            "/assets/routes-B8G4xgxW.js",
+            "/grok-app-builder/extensions.js"
+          ]
+        },
+        {
+          "version": "rollback",
+          "scripts": [
+            "/assets/index-8u-wWC9T.js",
+            "/assets/routes-Cs8xNE10.js",
+            "/grok-app-builder/extensions.js"
+          ]
+        },
+        {
+          "version": "current",
+          "scripts": [
+            "/assets/index-Cd-ZVxPu.js",
+            "/assets/routes-B8G4xgxW.js",
+            "/grok-app-builder/extensions.js"
+          ]
+        }
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "screenshots": [
+        "screenshots/phone-off-recovered.png",
+        "screenshots/phone-unsupported-recovered.png",
+        "screenshots/phone-off-consumed.png"
+      ]
+    }
+  ],
+  "failures": [],
+  "openingCoins": 2081,
+  "fixtureIds": {
+    "readyOrderId": "coffee-order:1",
+    "readyCupId": "coffee-cup:coffee-order:1",
+    "refundOrderId": "coffee-order:2",
+    "refundHoldId": "coffee-order:2:refund-hold",
+    "partialShiftId": "cafe:player:1:10",
+    "partialHoldId": "hold:cafe:player:1:10",
+    "earnedShiftId": "coffee-shift:northern:1",
+    "earnedPayableId": "payable:coffee-shift:northern:1",
+    "earnedHoldId": "hold:coffee-shift:northern:1"
+  },
+  "builds": {
+    "rollbackSource": "c183e32d3dc4de923490471da2d30a66caf788a7",
+    "rollbackTree": "acd7473281d444b4f52720bed8067a94b1bef60e",
+    "matchingDependencyFiles": {
+      "package.json": "1c5c3e59fff0d4ccdc994f4625241c8d97c0b641b4bbd66dc5f4c1ac36843313",
+      "package-lock.json": "18ef6be2b8b8f42b3261cedbb44d322144a7723774d5365e5878fe1d31ebe3ac",
+      ".nvmrc": "68ca3fba3b7e864770cb61aeb306d4bd4354b68ab4dd38450860c5d823e42a53"
+    },
+    "credentialFreeBuild": true,
+    "privateEnvironmentFilesIncluded": false,
+    "build": {
+      "command": "npm run build",
+      "exitCode": 0,
+      "migrationSkipped": true,
+      "log": "rollback-build.log"
+    },
+    "currentBuild": {
+      "htmlSha256": "d45a63a6e76b8d1793c5b404f7e91013f89c4b713dfcb3ba9c9adfaad0dae419",
+      "assets": [
+        {
+          "path": "/assets/styles-OcXkBWYb.css",
+          "sha256": "8ece1ad5736b1422457f12364744035ba05f8020955cdd1a6af7ae3676f3c9c7"
+        },
+        {
+          "path": "/assets/index-Cd-ZVxPu.js",
+          "sha256": "93e2943e01b802c08d0c91b01337e0d3ca06743fae78deb54ffeb034de32ad44"
+        },
+        {
+          "path": "/assets/routes-B8G4xgxW.js",
+          "sha256": "252a175816c37ca82fed70fc8231ab4fb0594c7eb3c92a379311c04b29da3640"
+        }
+      ]
+    },
+    "rollbackBuild": {
+      "htmlSha256": "dc2d42eaa4e2f3994cefc853a2d1101c2f9fbf0c3a0ffaabf0deef565a3214a0",
+      "assets": [
+        {
+          "path": "/assets/styles-Yj6OXbk8.css",
+          "sha256": "3887bfed86d841f14bd8cbb07be45e47a5dac627659676e7c3800feb6474257e"
+        },
+        {
+          "path": "/assets/index-8u-wWC9T.js",
+          "sha256": "13a5ba5975aada1adb0fbd0d3f66530f37f328e13cf66ecc1ae099cea0b9a815"
+        },
+        {
+          "path": "/assets/routes-Cs8xNE10.js",
+          "sha256": "e60c95a27d855d412777264cce81f7a1a9e105f0497087034f94f085b19e46ad"
+        }
+      ]
+    },
+    "limitations": [
+      "Root-base HTTP preview; browser must bypass service workers/caches; not a deployed Worker rollback"
+    ]
+  }
+}

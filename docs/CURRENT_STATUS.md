@@ -33,7 +33,7 @@ acknowledges existing agreements. A follow-on seven-day core journey covers
 library/reading/manuscript/café play, full wage earning, refund replay,
 Stop/resume, daily reload and retained cup/wage rights at pilot closure.
 
-Current full suite: 1,195 script + 55 typed tests pass (500 town tests). Typecheck, lint (one inherited
+Current full suite: 1,200 script + 55 typed tests pass (505 town tests). Typecheck, lint (one inherited
 warning), credential-free build, diagnostics and desktop/phone browser journeys
 pass. No live inference or production changes. [Evidence and limits](review/relationship-feedback-2026-11-04/README.md)
 and [continuation handoff](handoffs/relationship-feedback-2026-11-04.md).
@@ -64,7 +64,7 @@ Both worker-role orientations pass. [Evidence and checks](review/coffee-shift-ha
 
 Local source gates, build, diagnostics and all four new browser journeys pass.
 The updated PR head needs its own CI result. No production or live inference.
-Active packet: this Codex chat owns CI follow-up plus café payroll/refund and
+Prior packet: this Codex chat owned CI follow-up plus café payroll/refund and
 actual concurrent-tab checks on PR #71, starting at `0f25093` on
 `codex/relationship-feedback`. Fresh main remains `49cf76f`. The user authorized
 checks, fixes for reproduced failures and PR updates on 4 November. [CI 41833236897](https://github.com/arwyn6969/the-game/actions/runs/41833236897)
@@ -81,7 +81,24 @@ No additional runtime defect was reproduced. Full suite, source gates, diagnosti
 credential-free build and all four browser journeys pass. [Evidence and limits](review/coffee-payroll-tabs-2026-11-04/README.md)
 · [handoff](handoffs/coffee-payroll-tabs-2026-11-04.md). Verify includes these tests;
 the updated head requires its own CI result. No production or provider calls.
-Next technical #65 gap: downgrade/recovery protection. Simultaneous ready/cancel,
+Current-head [Verify 41841845121](https://github.com/arwyn6969/the-game/actions/runs/41841845121)
+passed every step at `6e29a0c`, including the new concurrent-tab journeys.
+
+Latest packet: this Codex chat owns café downgrade/recovery on PR #71,
+starting at `6e29a0c` against fetched main `49cf76f`, authorized 4 November.
+Locally complete in `2307655`: execute actual recorded rollback `c183e32` on a
+disposable same-origin town with ready cup, pending refund and partial/earned
+wages, save/export, then reopen with current. Four desktop/phone enabled/off
+journeys and five source cases preserve complete books, identities and claims,
+refuse unsupported data with exact raw recovery, and use the recovered cup once.
+Fixed misleading disabled-pilot copy that still invited a new trial. Current
+recovery explains retained tickets, cups and wage reservations. No schema/API or
+simulation-rule change. Source gates, diagnostics, two credential-free builds
+and final browser journeys pass; updated-head CI is separate. [Evidence and limits](review/coffee-downgrade-2026-11-04/README.md)
+· [handoff](handoffs/coffee-downgrade-2026-11-04.md).
+
+This qualifies only the pinned local browser rollback, not arbitrary older builds,
+deployed/PWA/subpath rollback. No production/provider changes. Simultaneous ready/cancel,
 broader browsers, real auth/model compatibility, physical devices/screen readers
 and human acceptance remain open.
 
