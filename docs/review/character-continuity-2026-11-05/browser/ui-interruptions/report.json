@@ -1,0 +1,176 @@
+{
+  "url": "http://127.0.0.1:8271/",
+  "node": "v24.22.1",
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "blockedProviderRequests": [],
+      "residentReplacesTool": true,
+      "explicitChoiceReview": true,
+      "retainedChoiceDisclosure": true,
+      "keyboardTabs": true,
+      "boardNavigation": {
+        "board": {
+          "x": 384.796875,
+          "y": 220.34375,
+          "width": 672,
+          "height": 409.5
+        },
+        "navigation": {
+          "x": 0,
+          "y": 657.4375,
+          "width": 1280,
+          "height": 92.375
+        },
+        "targets": [
+          {
+            "name": "Café",
+            "center": {
+              "x": 98.6171875,
+              "y": 681.625
+            },
+            "reachable": true
+          },
+          {
+            "name": "Journal",
+            "center": {
+              "x": 279.0703125,
+              "y": 681.625
+            },
+            "reachable": true
+          },
+          {
+            "name": "Inventory",
+            "center": {
+              "x": 459.53125,
+              "y": 681.625
+            },
+            "reachable": true
+          },
+          {
+            "name": "Go somewhere",
+            "center": {
+              "x": 639.9921875,
+              "y": 681.625
+            },
+            "reachable": true
+          },
+          {
+            "name": "Library project",
+            "center": {
+              "x": 820.453125,
+              "y": 681.625
+            },
+            "reachable": true
+          },
+          {
+            "name": "Agent wallets",
+            "center": {
+              "x": 1000.9140625,
+              "y": 681.625
+            },
+            "reachable": true
+          },
+          {
+            "name": "Stamp identity",
+            "center": {
+              "x": 1181.375,
+              "y": 681.625
+            },
+            "reachable": true
+          },
+          {
+            "name": "Help & privacy",
+            "center": {
+              "x": 98.6171875,
+              "y": 725.625
+            },
+            "reachable": true
+          }
+        ]
+      },
+      "exclusivePanels": true,
+      "boardFocus": true,
+      "moneyUnchangedByPanels": true
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "blockedProviderRequests": [],
+      "residentReplacesTool": true,
+      "explicitChoiceReview": true,
+      "retainedChoiceDisclosure": true,
+      "keyboardTabs": true,
+      "boardNavigation": {
+        "board": {
+          "x": 8,
+          "y": 326,
+          "width": 374,
+          "height": 510
+        },
+        "navigation": {
+          "x": 0,
+          "y": 202.28125,
+          "width": 390,
+          "height": 52.375
+        },
+        "targets": [
+          {
+            "name": "Café",
+            "center": {
+              "x": 9.6484375,
+              "y": 228.46875
+            },
+            "reachable": true
+          },
+          {
+            "name": "Journal",
+            "center": {
+              "x": 79.4296875,
+              "y": 228.46875
+            },
+            "reachable": true
+          },
+          {
+            "name": "Inventory",
+            "center": {
+              "x": 175.4921875,
+              "y": 228.46875
+            },
+            "reachable": true
+          },
+          {
+            "name": "Go somewhere",
+            "center": {
+              "x": 265.21875,
+              "y": 228.46875
+            },
+            "reachable": true
+          },
+          {
+            "name": "Library project",
+            "center": {
+              "x": 347.9609375,
+              "y": 228.46875
+            },
+            "reachable": true
+          }
+        ]
+      },
+      "exclusivePanels": true,
+      "boardFocus": true,
+      "moneyUnchangedByPanels": true,
+      "touchCancellation": true
+    }
+  ],
+  "failures": []
+}

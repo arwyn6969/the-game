@@ -1,0 +1,179 @@
+{
+  "reviewedBaselineCommit": "ee5ff6575300bbe8a3ff6509ffb1bc2fcd1e85e3",
+  "mode": "deterministic offline observations of the current checkout; not a passing regression suite",
+  "worldAudit": [],
+  "longevity": [
+    {
+      "day": 1,
+      "minute": 420,
+      "exportCharacters": 45572,
+      "exportUtf8Bytes": 45585,
+      "compactCharacters": 45551,
+      "importsOwnExport": true,
+      "memoryCount": 11,
+      "northernMoney": 2,
+      "northernWages": 0
+    },
+    {
+      "day": 2,
+      "minute": 420,
+      "exportCharacters": 454539,
+      "exportUtf8Bytes": 455007,
+      "compactCharacters": 700901,
+      "importsOwnExport": true,
+      "memoryCount": 235,
+      "northernMoney": 2,
+      "northernWages": 0
+    },
+    {
+      "day": 5,
+      "minute": 420,
+      "exportCharacters": 787310,
+      "exportUtf8Bytes": 788670,
+      "compactCharacters": 1765789,
+      "importsOwnExport": true,
+      "memoryCount": 734,
+      "northernMoney": 2,
+      "northernWages": 0
+    },
+    {
+      "day": 7,
+      "minute": 420,
+      "exportCharacters": 902626,
+      "exportUtf8Bytes": 904090,
+      "compactCharacters": 2369183,
+      "importsOwnExport": true,
+      "memoryCount": 896,
+      "northernMoney": 2,
+      "northernWages": 0
+    },
+    {
+      "day": 14,
+      "minute": 420,
+      "exportCharacters": 1208155,
+      "exportUtf8Bytes": 1209882,
+      "compactCharacters": 2924915,
+      "importsOwnExport": true,
+      "memoryCount": 1309,
+      "northernMoney": 2,
+      "northernWages": 0
+    },
+    {
+      "day": 30,
+      "minute": 420,
+      "exportCharacters": 1267995,
+      "exportUtf8Bytes": 1269816,
+      "compactCharacters": 2988654,
+      "importsOwnExport": true,
+      "memoryCount": 1397,
+      "northernMoney": 2,
+      "northernWages": 0
+    }
+  ],
+  "offlineRepayment": {
+    "debt": [
+      {
+        "id": "f12",
+        "from": "player",
+        "to": "baba",
+        "text": "Bread, to be paid back.",
+        "amount": 2,
+        "status": "paid",
+        "day": 1
+      }
+    ],
+    "playerMoney": 18,
+    "babaMoney": 11
+  },
+  "offlineHostileTrust": {
+    "score": 0,
+    "note": "Ada said: I hate you."
+  },
+  "retrieval": {
+    "queryAwareTop": "My missing emerald violin is hidden beside the fountain.",
+    "actualPromptMemories": [
+      {
+        "id": "m17",
+        "day": 1,
+        "minute": 420,
+        "source": "statement",
+        "text": "My missing emerald violin is hidden beside the fountain.",
+        "type": "chat",
+        "importance": 5
+      },
+      {
+        "id": "m12",
+        "day": 1,
+        "minute": 420,
+        "source": "event",
+        "text": "The grocery ledger bread apples stock 0.",
+        "type": "observe",
+        "importance": 8
+      },
+      {
+        "id": "m13",
+        "day": 1,
+        "minute": 420,
+        "source": "event",
+        "text": "The grocery ledger bread apples stock 1.",
+        "type": "observe",
+        "importance": 8
+      },
+      {
+        "id": "m14",
+        "day": 1,
+        "minute": 420,
+        "source": "event",
+        "text": "The grocery ledger bread apples stock 2.",
+        "type": "observe",
+        "importance": 8
+      }
+    ],
+    "hasRelevantMemory": true
+  },
+  "wrongDebtId": {
+    "favor": {
+      "id": "foreign",
+      "from": "northern",
+      "to": "baba",
+      "amount": 2,
+      "status": "owed",
+      "text": "Bread",
+      "day": 1
+    },
+    "balancesBefore": {
+      "kevin": 11,
+      "arwyn": 8,
+      "northern": 2,
+      "baba": 9,
+      "sub": 5,
+      "player": 4,
+      "data": 6,
+      "amelia": 7,
+      "socrates": 0,
+      "estee": 0
+    },
+    "balancesAfter": {
+      "kevin": 11,
+      "arwyn": 8,
+      "northern": 2,
+      "baba": 9,
+      "sub": 5,
+      "player": 4,
+      "data": 6,
+      "amelia": 7,
+      "socrates": 0,
+      "estee": 0
+    }
+  },
+  "failedSave": {
+    "attempts": 1,
+    "result": "undefined",
+    "status": {
+      "ok": false,
+      "reason": "quota"
+    },
+    "memoryCountBefore": 11,
+    "memoryCountAfter": 11
+  }
+}

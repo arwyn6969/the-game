@@ -2,6 +2,42 @@
 
 Updated 5 November 2026. This file is the single current source/deployment and assignment index. Earlier dated statements are evidence, not active instructions.
 
+## Character continuity and cast arrivals
+
+5 November 2026: this chat owns `codex/character-continuity` in the reused clean
+`candidate-20261021/` checkout. Started at main `49cf76f`; current main
+`c49facc52136cfda0270627e3e6aef51f5ab4588` is incorporated in `a83863e`.
+The local integration deliberately reuses F1 head `58b9616` (which depends on
+PR #71 head `2ee631f`) and resident-growth implementation `0186b96`, cherry-picked
+as `29ff251`. PR #71 is now merged; the merge's tree equals the qualified
+`2ee631f` dependency. F2 and the other owner's subsequent growth UI work are
+outside this snapshot. Their original branches and checkouts remain intact. The older
+ownership paragraphs below are retained input receipts, not new assignments.
+
+Scope: nine resident foundations, personal conversation, Socrates through Plato,
+Estée's sourced sales/marketing role, lighter new-town Arwyn, Sub's art/writing
+context, cross-cast voice continuity, additive arrival and old-save preservation.
+Kevin's exact origin awareness remains undecided and is not invented by prompts.
+The full local companion and resident-growth source is integrated for qualification.
+
+Arrival adds two zero-balance accounts and preserves the 90-coin opening total,
+all prior ledger entries and permanent identities. Exact pre-arrival v2 bytes are
+backed up before the first migrated write. The private registration boundary accepts
+complete historical eight-person and current ten-person rosters; the additive SQL
+constraint migration changes no existing receiving profile or owner.
+
+Source checks pass: 1,257 script + 55 typed tests, 561 town cases, typecheck,
+lint (zero errors; one inherited warning), diagnostics and credential-free build.
+The build explicitly skipped database migration. The complete desktop/phone
+browser gate and all eight combined companion journeys pass. Newcomer portraits,
+conversations, reload and voluntary-facilitator proposals pass at both sizes;
+the screenshots have been inspected. Implementation head: `c084ffb`.
+Human character/growth acceptance and live-model quality remain separate.
+No production migration, publication, paid inference or remote change occurred.
+[Implementation record](implementation/character-development-2026-11-05.md) ·
+[evidence and limits](review/character-continuity-2026-11-05/README.md) ·
+[handoff](handoffs/character-continuity-2026-11-05.md).
+
 ## Resident growth — current local implementation
 
 5 November 2026: this chat owns `codex/resident-growth` in the reused clean
@@ -31,13 +67,17 @@ integration with PR #71/F1 remain separate.
 
 ## Source and deployment
 
-| Layer                   | State                                                                                                                                                                  |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Consolidated source | PR #69 merged as `6079050`; PR #70 merged as `49cf76f2236f12ff79b092f4e1df84e13f9b5a42`; connection recovery and eight playtest fixes included |
-| Source qualification | [Verify 41616048834](https://github.com/arwyn6969/the-game/actions/runs/41616048834) passed every step at `2ea974b`; its tree exactly matches merged `49cf76f` |
-| Production | Runtime `2ea974be7097`, Worker `6bf8d2d2-68ca-4624-8611-67b2c0f18531`, at https://www.arwyn.party/thegame/ |
-| Production verification | 3 November: four public asset hashes, eight endpoints and seven redirects pass; all 18 bindings, seven secret definitions, runtime settings and 52 routes preserved |
-| Rollback | Worker `c4098113-6b5c-43db-8ff4-b39d64e2eb72`; preserve database contents and browser saves |
+| Layer                   | State                                                                                                                                                               |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Consolidated source     | [PR #71](https://github.com/arwyn6969/the-game/pull/71) merged as `c49facc52136cfda0270627e3e6aef51f5ab4588`; this character candidate additionally includes local F1 and resident growth |
+| Source qualification    | [Verify 42009873247](https://github.com/arwyn6969/the-game/actions/runs/42009873247) passed every step at `2ee631f`; its tree exactly matches merged `c49facc`. Character-candidate CI remains separate |
+| Production              | Coordinator's 5 November workspace receipt records runtime `c49facc52136`, Worker `df4fa4fb-8725-42ba-a52a-6e050509f3a5`, at https://www.arwyn.party/thegame/. The character candidate is not published |
+| Production verification | Coordinator's receipt: four public asset hashes, eight endpoints, seven redirects and desktop/phone hydrated entry pass; all 18 bindings, seven secret definitions, runtime settings and 52 routes preserved |
+| Rollback                | Recorded previous Worker `6bf8d2d2-68ca-4624-8611-67b2c0f18531`; preserve database contents and browser saves |
+
+The current publication is owned by the release-coordination chat; consult the
+workspace `START_HERE.md` and its release receipt. The following paragraph
+retains the prior 3 November release account.
 
 The user authorized merge/publication and another in-app-browser bug hunt on
 3 November. Both PRs merged after passing current checks with no unresolved review
@@ -180,7 +220,7 @@ These are acceptance packets, not automatic authorizations or active assignments
 
 ## Implemented boundaries
 
-- Seven residents and the player; movement, conversation, memory, work, inventory, funded library consequences, manuscript interactions and voluntary meetings.
+- Nine residents and the player in this local candidate; movement, conversation, memory, work, inventory, funded library consequences, manuscript interactions and voluntary meetings. Published main still has seven residents and the player.
 - Versioned browser-local saves, old-save import, recovery, identity and restore/fork support. The game is not yet a production shared persistent world.
 - Hosted AI with existing validation/accounting, local authored dialogue, and optional personal-source controls in this source. Personal keys remain tab-only; real provider/local compatibility is open.
 - Café is an explicitly enabled finite pilot. Sales, refunds, cups and wages are separate durable facts. Its seven-day admission and storage bounds are not an indefinitely sustainable-economy claim.
