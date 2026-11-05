@@ -2127,3 +2127,67 @@ textarea.field {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Local companion controls stay outside the canvas and its overlays. */
+.following-panel {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  margin: 0.25rem 0;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border, #847459);
+  border-radius: 0.5rem;
+  overflow-wrap: anywhere;
+}
+.following-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.following-panel p {
+  margin: 0.4rem 0;
+}
+.following-journal {
+  max-height: 22rem;
+  overflow: auto;
+}
+.following-journal summary {
+  cursor: pointer;
+  padding: 0.5rem 0;
+}
+.following-journal article {
+  margin: 0.8rem 0;
+  border-top: 1px solid #847459;
+  padding-top: 0.6rem;
+}
+.following-journal blockquote {
+  margin: 0.6rem 0;
+  padding-left: 0.7rem;
+  border-left: 2px solid #847459;
+}
+.companion-choice {
+  margin: 0.8rem 0;
+  padding: 0.75rem 0;
+  border-top: 1px solid #847459;
+}
+.companion-choice select {
+  padding: 0.4rem;
+  color: inherit;
+  background: var(--color-surface, #f5ecd9);
+}
+.companion-listen {
+  display: flex;
+  gap: 0.5rem;
+  align-items: start;
+  margin: 0.65rem 0;
+}
+
+.companion-note {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+.following-journal details {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}

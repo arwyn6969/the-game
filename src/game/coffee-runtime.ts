@@ -1,3 +1,4 @@
+import { stopFollowing } from "./following-runtime";
 import type { AgentId, Town } from "./types";
 import type { CoffeeCommand, CoffeeOrder, CoffeeRoutine } from "./coffee-types";
 import {
@@ -224,6 +225,8 @@ function control(
           failEconomy("staff-full", "Both funded service places are occupied.");
         if (routine?.status === "active")
           failEconomy("already-serving", "This service routine is already running.");
+        if (command.actor === "player")
+          stopFollowing(draft, "You chose café service. Your companion journal is retained.");
         // Same worker/status preconditions as suspendWorkAgreement, committed
         // together with routine authority so neither half can survive alone.
         if (agreement.status === "suspended") agreement.status = "active";

@@ -78,6 +78,7 @@ jobs:
           }
           if (!ready) throw new Error("AI test preview did not start");
           JS
+          GAME_FOLLOWING_QA_URL=http://127.0.0.1:8094/ node scripts/following-browser.mjs
           node scripts/quality-ai-browser.mjs
           GAME_FIXES_QA_URL=http://127.0.0.1:8094/ node scripts/playtest-fixes-browser.mjs
           GAME_COFFEE_AI_QA_URL=http://127.0.0.1:8094/ node scripts/coffee-ai-interruptions-browser.mjs
@@ -117,6 +118,7 @@ jobs:
         with:
           name: game-browser-quality
           path: |
+            artifacts/following
             artifacts/quality-browser
             artifacts/relationship-feedback
             artifacts/coffee-ai-interruptions

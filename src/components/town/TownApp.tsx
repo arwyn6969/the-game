@@ -1,3 +1,11 @@
+import { CompanionChoice, FollowingPanel } from "./FollowingPanel";
+import {
+  startFollowing,
+  resumeFollowing,
+  stopFollowing,
+  suspendFollowing,
+  followingOwnsMovement,
+} from "@/game/following-runtime";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ACTION_CLIENT_TIMEOUT_MS } from "@/lib/mind-timing";
 import {
@@ -633,6 +641,7 @@ export function TownApp() {
   const [physicalActor, setPhysicalActor] = useState<NpcId>(
     () => townRef.current?.physicalItems?.session?.actor ?? "northern",
   );
+  const [followingNote, setFollowingNote] = useState("");
   const [coffeeNote, setCoffeeNote] = useState("");
   const [coffeeSaving, setCoffeeSaving] = useState(false);
   const [physicalRead, setPhysicalRead] = useState<PhysicalActionResult["content"] | null>(null);
@@ -678,6 +687,13 @@ export function TownApp() {
     return persistTownSave(live).then((result) => {
       if (mounted.current && townRef.current === live) {
         setSaveStatus(result);
+        if (!result.ok) {
+          suspendFollowing(
+            live,
+            "Town could not be saved. Resolve save recovery, then Resume explicitly.",
+          );
+          setTick((n) => n + 1);
+        }
         if (coffeeSave && !result.ok) {
           coffeeActionSerialRef.current += 1;
           coffeeSaveFailureRef.current += 1;
@@ -743,7 +759,13 @@ export function TownApp() {
 
   const interruptCoffeeForMovement = useCallback(() => {
     const live = townRef.current;
-    if (!live || !hasActivePlayerCoffeeRoutine(live)) return;
+    if (!live) return;
+    const pausedFollow = suspendFollowing(live, "You took manual control. Resume explicitly.");
+    if (pausedFollow) {
+      void persistTown(live);
+      setTick((n) => n + 1);
+    }
+    if (!hasActivePlayerCoffeeRoutine(live)) return;
     coffeeActionSerialRef.current += 1;
     coffeeContextGenerationRef.current += 1;
     const result = suspendPlayerCoffeeRoutine(
@@ -758,6 +780,13 @@ export function TownApp() {
   const stopCoffeeForContext = useCallback(
     (reason: string) => {
       const live = townRef.current;
+      if (live && suspendFollowing(live, reason.replace(/^Café service/, "Companion session"))) {
+        speedRef.current = 0;
+        live.paused = true;
+        setSpeed(0);
+        void persistTown(live);
+        setTick((n) => n + 1);
+      }
       if (live?.coffee) coffeeContextGenerationRef.current += 1;
       if (!live?.coffee?.routines.some((routine) => routine.status === "active")) return;
       coffeeActionSerialRef.current += 1;
@@ -798,6 +827,8 @@ export function TownApp() {
       coffeeSaveBlockedRef.current
     )
       return;
+    if (command.kind === "start" || command.kind === "resume")
+      stopFollowing(expectedTown, "You chose café service. Your companion journal is retained.");
     const serial = ++coffeeActionSerialRef.current;
     const result =
       command.kind === "start" || command.kind === "resume"
@@ -975,6 +1006,10 @@ export function TownApp() {
       replayRef.current !== null
     )
       return;
+    stopFollowing(
+      expectedTown,
+      "You chose another resident activity. Your companion journal is retained.",
+    );
     const result = applyPlayerAction(expectedTown, target, actionId);
     if (result.ok) persistTown(expectedTown);
     setSendNote(result.reply);
@@ -994,6 +1029,10 @@ export function TownApp() {
       setSendNote("Wait for your current conversation to finish before making a library choice.");
       return;
     }
+    stopFollowing(
+      expectedTown,
+      "You chose a library activity. Your companion journal is retained.",
+    );
     const result = applyLibraryAction(expectedTown, actionId);
     if (result.ok) {
       persistTown(expectedTown);
@@ -1096,6 +1135,7 @@ export function TownApp() {
       discussionStartedRef.current = null;
       setThinking("");
     }
+    suspendFollowing(live, "Meeting control changed. Resume spending time explicitly.");
     pauseDiscussion(live, reason);
     setDiscussionNote(reason);
     persistTown(live);
@@ -1106,6 +1146,7 @@ export function TownApp() {
   function changeDiscussion(decision: DiscussionInput) {
     const live = townRef.current;
     if (!live || !discussionEnabled || replayRef.current || importTextRef.current !== null) return;
+    suspendFollowing(live, "You changed discussion attention. Resume explicitly when ready.");
     advanceDiscussions(live);
     const view = discussionView(live);
     if (!view.meeting) return;
@@ -1454,6 +1495,10 @@ export function TownApp() {
 
   function setPersonalModelPreference(value: PersonalModelSettings) {
     if (transportBusyRef.current) return;
+    if (townRef.current) {
+      suspendFollowing(townRef.current, "AI controls changed. Resume explicitly.");
+      void persistTown(townRef.current);
+    }
     const next = validatePersonalModelSettings(value);
     stopAutomaticDiscussion("AI source changed. Start meeting decisions explicitly when ready.");
     const live = townRef.current;
@@ -1478,6 +1523,10 @@ export function TownApp() {
   }
 
   function setLocalPreference(value: boolean) {
+    if (townRef.current) {
+      suspendFollowing(townRef.current, "Dialogue control changed. Resume explicitly.");
+      void persistTown(townRef.current);
+    }
     localOnlyRef.current = value;
     setLocalOnly(value);
     if (value) {
@@ -1546,8 +1595,7 @@ export function TownApp() {
   useEffect(() => {
     if (!importing) return;
     const live = townRef.current;
-    if (live?.coffee)
-      stopCoffeeForContext("Café service paused while reviewing an import. Resume explicitly.");
+    if (live) stopCoffeeForContext("Activity paused while reviewing an import. Resume explicitly.");
     if (live && discussionView(live).meeting)
       pauseMeetingRef.current("Meeting paused while reviewing an import.");
     if (live?.physicalItems?.session?.enabled) {
@@ -1575,7 +1623,7 @@ export function TownApp() {
     stepInputRef.current = null;
     if (replay) {
       const live = townRef.current;
-      if (live?.coffee)
+      if (live)
         stopCoffeeForContext(
           "Café service paused for replay. Return to now and resume explicitly.",
         );
@@ -2171,7 +2219,7 @@ export function TownApp() {
       let { x, y } = axis(keysRef.current);
       const stepCode = stepInputRef.current;
       if (x || y || stepCode || routeRef.current) interruptCoffeeForMovement();
-      if (hasActivePlayerCoffeeRoutine(live)) return;
+      if (hasActivePlayerCoffeeRoutine(live) || followingOwnsMovement(live)) return;
       if (!x && !y && (routeRef.current || stepCode) && moveCool > 0) return;
       if (stepCode && moveCool <= 0) {
         ({ x, y } = axis(new Set([stepCode])));
@@ -2318,12 +2366,17 @@ export function TownApp() {
                 discussionRunRef.current?.status !== "running";
               let job: ThinkJob | null = null;
               const coffeeRevision = live.coffee?.revision;
+              const followBefore = JSON.stringify(live.following);
               try {
                 job = stepMinute(live, minds);
               } catch {
                 break;
               }
-              if (live.coffee?.revision !== coffeeRevision || live.minute % 60 === 0)
+              if (
+                live.coffee?.revision !== coffeeRevision ||
+                JSON.stringify(live.following) !== followBefore ||
+                live.minute % 60 === 0
+              )
                 void persistTown(live);
               advanced = true;
               if (takeJob(job)) break;
@@ -3836,12 +3889,34 @@ export function TownApp() {
         )}
         {watching && (
           <button className="btn return-to-player" type="button" onClick={() => setWatching(null)}>
-            Following {agentById(town, watching).name} · Return to me
+            Watching {agentById(town, watching).name} · Return to me
           </button>
         )}
       </div>
 
       <div className="town-updates">
+        <FollowingPanel
+          town={town}
+          disabled={replay !== null || importing || Boolean(saveStatus && !saveStatus.ok)}
+          note={followingNote}
+          onStop={() => {
+            stopFollowing(town);
+            void persistTown(town);
+            setTick((n) => n + 1);
+          }}
+          onResume={() => {
+            const result = resumeFollowing(town);
+            setFollowingNote(result.ok ? "" : result.message);
+            if (result.ok) {
+              routeRef.current = null;
+              keysRef.current.clear();
+              stepInputRef.current = null;
+              void persistTown(town);
+            }
+            setTick((n) => n + 1);
+          }}
+        />
+
         {coffeeSaveBlockedRef.current && (
           <p className="warn" role="alert">
             Café service is paused until this current town is safely saved. Keep a downloaded copy
@@ -4118,6 +4193,27 @@ export function TownApp() {
             watch={watchTown}
             replay={replay !== null}
             onWatch={() => followCharacter(shown)}
+            companionControls={
+              <CompanionChoice
+                town={town}
+                target={shown}
+                disabled={replay !== null || importing || Boolean(saveStatus && !saveStatus.ok)}
+                onStart={(target, duration, listen) => {
+                  const result = startFollowing(town, target, duration, listen);
+                  setFollowingNote(result.ok ? "" : result.message);
+                  if (result.ok) {
+                    keysRef.current.clear();
+                    routeRef.current = null;
+                    stepInputRef.current = null;
+                    setWatching(null);
+                    setPanel(null);
+                    void persistTown(town);
+                    requestAnimationFrame(() => canvasRef.current?.focus());
+                  }
+                  setTick((n) => n + 1);
+                }}
+              />
+            }
 
             draft={draft}
             setDraft={setDraft}
@@ -4598,7 +4694,9 @@ function Mind({
   onSend,
   onAction,
   onLibrary,
+  companionControls,
 }: {
+  companionControls: React.ReactNode;
   town: Town;
   agent: Agent;
   pinned: boolean;
@@ -4798,13 +4896,14 @@ function Mind({
             </section>
           )}
           <CharacterOverview town={town} agent={agent} watch={watch} replay={replay} />
+          {companionControls}
           {agent.id !== "player" && (
             <div className="character-overview-actions">
               <button className="btn" type="button" onClick={() => setTab("together")}>
                 Talk with {agent.name}
               </button>
               <button className="btn" type="button" disabled={replay} onClick={onWatch}>
-                Watch {agent.name}
+                Watch character
               </button>
             </div>
           )}

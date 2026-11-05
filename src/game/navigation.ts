@@ -1,3 +1,4 @@
+import { followingOwnsMovement, publicFollowTile } from "./following-runtime";
 import type { Agent, AgentId, Town } from "./types";
 import { NPC_IDS } from "./types";
 import { beatAt, goalFor } from "./plan";
@@ -175,8 +176,16 @@ export function moveResidents(
         agent.path = routeFor(town, agent, goal);
         next = agent.path[0];
       }
+      if (
+        agent.id === "player" &&
+        followingOwnsMovement(town) &&
+        (!next || !publicFollowTile(next))
+      ) {
+        agent.path = [];
+        break;
+      }
       if (!next || occupant(town, next, agent.id)) {
-        if (!giveWay(agent, goal)) {
+        if ((agent.id === "player" && followingOwnsMovement(town)) || !giveWay(agent, goal)) {
           agent.path = [];
           break;
         }

@@ -1,3 +1,8 @@
+import {
+  recordFollowingSpeech,
+  supersedeFollowingAttention,
+  followingAttentionCommandOwned,
+} from "./following-runtime";
 import type { AgentId, NpcId, Town } from "./types";
 import { NPC_IDS } from "./types";
 import type {
@@ -300,6 +305,20 @@ export function applyDiscussionCommand(
   } else {
     if (!actions(town, meeting, id).some((action) => action.kind === command.kind))
       return fail("That action is not available in the current meeting.");
+    if (
+      id === "player" &&
+      !followingAttentionCommandOwned(town, command) &&
+      [
+        "listen",
+        "participate",
+        "stop-listening",
+        "leave",
+        "request-turn",
+        "withdraw-turn",
+        "close",
+      ].includes(command.kind)
+    )
+      supersedeFollowingAttention(town);
     switch (command.kind) {
       case "read-invitation":
         member.invitation = "delivered";
@@ -386,6 +405,7 @@ export function applyDiscussionCommand(
           mind: id === "player" ? ("player" as const) : ("grok" as const),
         };
         meeting.utterances.push(utterance);
+        recordFollowingSpeech(town, meeting.id, utterance);
         for (const recipientId of [id, ...recipients]) {
           pushMemory(
             actor(town, recipientId)!,

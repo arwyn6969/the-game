@@ -246,6 +246,8 @@ export type Town = {
   physicalItems?: import("./physical-types").PhysicalItemsState;
   /** Optional opt-in local meeting history; old towns have no discussion state. */
   discussions?: import("./discussion-types").DiscussionState;
+  /** Bounded local companion journal; saved records never confer automatic authority. */
+  following?: import("./following-types").Following;
 };
 
 export type ThinkKind = "plan" | "reflect" | "talk" | "player" | "act";

@@ -507,7 +507,7 @@ export function SocialPanel({
                       onClick={() => onFollow(id)}
                     >
                       <Eye size={14} aria-hidden />
-                      Follow
+                      Watch character
                     </button>
                   </div>
                 ))}

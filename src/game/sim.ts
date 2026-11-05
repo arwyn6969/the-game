@@ -1,3 +1,4 @@
+import { followingMovementGoal, advanceFollowing } from "./following-runtime";
 import type { Agent, AgentId, ThinkJob, Town } from "./types";
 import { NPC_IDS } from "./types";
 import { applyResult } from "./effects";
@@ -240,13 +241,14 @@ export function stepMinute(town: Town, online: boolean): ThinkJob | null {
   const physicalReserved = { ...physicalMovementGoals(town, libraryReserved), ...libraryReserved };
   const reserved = { ...meetingMovementGoals(town, physicalReserved), ...physicalReserved };
   const coffeeGoals = coffeeMovementGoals(town, reserved);
+  const followingGoal = followingMovementGoal(town, { ...coffeeGoals, ...reserved });
   const coffeeCustomers = coffeeResidentGoals(town, { ...coffeeGoals, ...reserved });
   moveResidents(
     town,
     hourStart,
     { ...coffeeCustomers, ...coffeeGoals, ...reserved },
     {
-      playerGoal: coffeeGoals.player,
+      playerGoal: coffeeGoals.player ?? followingGoal,
       stationary: coffeeInterval.worked,
     },
   );
@@ -255,6 +257,7 @@ export function stepMinute(town: Town, online: boolean): ThinkJob | null {
   advanceLibraryProject(town);
   advancePhysicalIntents(town, libraryReserved);
   advanceDiscussions(town, physicalReserved);
+  advanceFollowing(town);
   if (hourStart) observe(town);
   updateColocation(town);
   if (!job) {

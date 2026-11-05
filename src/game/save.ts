@@ -1,3 +1,4 @@
+import { recoverFollowing, validateFollowing, suspendFollowing } from "./following-runtime";
 import type { Agent, AgentId, Face, Memory, MemoryType, Town } from "./types";
 import { AGENT_IDS } from "./types";
 import { compressDialogue, compressObservations, keywords } from "./memory";
@@ -233,6 +234,7 @@ export function validateTown(value: unknown): value is Town {
   const town = value as Town;
   const version = (value as { version?: unknown }).version;
   if (version !== 1 && version !== 2) return false;
+  if (validateFollowing(town).length) return false;
   // Check both the extension and orphan coffee ledger effects before normalization.
   if ((Object.hasOwn(value, "coffee") && version !== 2) || validateCoffee(town).length)
     return false;
@@ -525,6 +527,8 @@ function economyProblem(town: Town): string | null {
 }
 
 function serialize(town: Town, omitReplay = false): string {
+  const followingErrors = validateFollowing(town);
+  if (followingErrors.length) throw new Error(followingErrors.join(" "));
   const coffeeErrors = validateCoffee(town);
   if (coffeeErrors.length) throw new Error(coffeeErrors.join(" "));
   if (town.coffee) {
@@ -641,7 +645,14 @@ export function readTownConflicts(): { key: string; raw: string }[] {
 }
 
 function writeTown(town: Town, intent: "save" | "initialize" | "replace"): SaveResult {
-  const done = (result: SaveResult) => (lastSaveResult = result);
+  const done = (result: SaveResult) => {
+    if (!result.ok)
+      suspendFollowing(
+        town,
+        "Town save failed or conflicted. Resolve recovery, then Resume explicitly.",
+      );
+    return (lastSaveResult = result);
+  };
   const discussionErrors = validateDiscussions(town);
   if (discussionErrors.length)
     return done({ ok: false, reason: "serialization", explanation: discussionErrors.join(" ") });
@@ -807,6 +818,7 @@ export function parseTownFile(text: string): Town | null {
       return null;
     const town = data && typeof data === "object" && "town" in data ? data.town : data;
     if (!validateTown(town)) return null;
+    recoverFollowing(town);
     recoverDiscussions(town);
     // A saved service grant preserves its obligation, never unattended control.
     // Recovery is idempotent: an already-paused snapshot gets no new receipt.
@@ -835,6 +847,8 @@ function townFileProblem(text: string): string | null {
     const data = JSON.parse(text);
     const town = data && typeof data === "object" && "town" in data ? data.town : data;
     if (town && typeof town === "object") {
+      const followingErrors = validateFollowing(town as Town);
+      if (followingErrors.length) return followingErrors.join(" ");
       if (Object.hasOwn(town, "coffee") && town.version !== 2)
         return "Coffee records require a version-2 town; preserve the original file for recovery.";
       const errors = validateCoffee(town);
