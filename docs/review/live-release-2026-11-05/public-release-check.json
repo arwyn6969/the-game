@@ -1,0 +1,117 @@
+{
+  "source": "c49facc52136cfda0270627e3e6aef51f5ab4588",
+  "checkedAt": "2026-11-05T17:07:03.644Z",
+  "assets": [
+    {
+      "path": "/thegame/assets/client-C0wjTECU.js",
+      "status": 200,
+      "expectedSha256": "959639c52977b998e309cd5ee9b2b3eaa32e97bd7923298e52159fff1271d645",
+      "actualSha256": "959639c52977b998e309cd5ee9b2b3eaa32e97bd7923298e52159fff1271d645",
+      "matches": true
+    },
+    {
+      "path": "/thegame/assets/index-CQwDIcnY.js",
+      "status": 200,
+      "expectedSha256": "4f3c8dbfc26f52f617dfe0ac064bc4b65be8b0288e7357b00c1918dd3fbca621",
+      "actualSha256": "4f3c8dbfc26f52f617dfe0ac064bc4b65be8b0288e7357b00c1918dd3fbca621",
+      "matches": true
+    },
+    {
+      "path": "/thegame/assets/routes-CbVnXgcK.js",
+      "status": 200,
+      "expectedSha256": "fba1ef7ce42b0c0e1d2a256242a7eed8cac0cf2d4922b9f51bbe9f7a5792e299",
+      "actualSha256": "fba1ef7ce42b0c0e1d2a256242a7eed8cac0cf2d4922b9f51bbe9f7a5792e299",
+      "matches": true
+    },
+    {
+      "path": "/thegame/assets/styles-OcXkBWYb.css",
+      "status": 200,
+      "expectedSha256": "8ece1ad5736b1422457f12364744035ba05f8020955cdd1a6af7ae3676f3c9c7",
+      "actualSha256": "8ece1ad5736b1422457f12364744035ba05f8020955cdd1a6af7ae3676f3c9c7",
+      "matches": true
+    }
+  ],
+  "endpoints": [
+    {
+      "path": "/thegame/",
+      "status": 200
+    },
+    {
+      "path": "/thegame/privacy",
+      "status": 200
+    },
+    {
+      "path": "/thegame/api/auth/get-session",
+      "status": 200
+    },
+    {
+      "path": "/thegame/__grok/manifest.webmanifest",
+      "status": 200
+    },
+    {
+      "path": "/thegame-other",
+      "status": 404,
+      "homepageReleasePreserved": true
+    },
+    {
+      "path": "/thegame%2Fprivacy",
+      "status": 404,
+      "homepageReleasePreserved": true
+    },
+    {
+      "path": "www/",
+      "status": 308,
+      "location": "https://arwyn.party/"
+    },
+    {
+      "path": "www/bitcoinart",
+      "status": 308,
+      "location": "https://arwyn.party/bitcoinart"
+    }
+  ],
+  "links": [
+    {
+      "url": "https://arwyn.party/thegame",
+      "status": 200,
+      "finalUrl": "https://www.arwyn.party/thegame/",
+      "expected": "https://www.arwyn.party/thegame/"
+    },
+    {
+      "url": "https://arwyn.party/thegame/",
+      "status": 200,
+      "finalUrl": "https://www.arwyn.party/thegame/",
+      "expected": "https://www.arwyn.party/thegame/"
+    },
+    {
+      "url": "https://arwyn.party/thegame?routing=20261026",
+      "status": 200,
+      "finalUrl": "https://www.arwyn.party/thegame/?routing=20261026",
+      "expected": "https://www.arwyn.party/thegame/?routing=20261026"
+    },
+    {
+      "url": "https://arwyn.party/thegame/?routing=20261026",
+      "status": 200,
+      "finalUrl": "https://www.arwyn.party/thegame/?routing=20261026",
+      "expected": "https://www.arwyn.party/thegame/?routing=20261026"
+    },
+    {
+      "url": "https://arwyn.party/thegame/privacy?routing=20261026",
+      "status": 200,
+      "finalUrl": "https://www.arwyn.party/thegame/privacy?routing=20261026",
+      "expected": "https://www.arwyn.party/thegame/privacy?routing=20261026"
+    },
+    {
+      "url": "http://arwyn.party/thegame",
+      "status": 200,
+      "finalUrl": "https://www.arwyn.party/thegame/",
+      "expected": "https://www.arwyn.party/thegame/"
+    },
+    {
+      "url": "https://www.arwyn.party/thegame?routing=20261026",
+      "status": 200,
+      "finalUrl": "https://www.arwyn.party/thegame/?routing=20261026",
+      "expected": "https://www.arwyn.party/thegame/?routing=20261026"
+    }
+  ],
+  "passed": true
+}

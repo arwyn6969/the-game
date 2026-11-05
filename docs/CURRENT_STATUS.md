@@ -6,11 +6,18 @@ Updated 5 November 2026. This file is the single current source/deployment and a
 
 | Layer                   | State                                                                                                                                                                  |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Consolidated source | PR #69 merged as `6079050`; PR #70 merged as `49cf76f2236f12ff79b092f4e1df84e13f9b5a42`; connection recovery and eight playtest fixes included |
-| Source qualification | [Verify 41616048834](https://github.com/arwyn6969/the-game/actions/runs/41616048834) passed every step at `2ea974b`; its tree exactly matches merged `49cf76f` |
-| Production | Runtime `2ea974be7097`, Worker `6bf8d2d2-68ca-4624-8611-67b2c0f18531`, at https://www.arwyn.party/thegame/ |
-| Production verification | 3 November: four public asset hashes, eight endpoints and seven redirects pass; all 18 bindings, seven secret definitions, runtime settings and 52 routes preserved |
-| Rollback | Worker `c4098113-6b5c-43db-8ff4-b39d64e2eb72`; preserve database contents and browser saves |
+| Consolidated source | PR #71 merged as `c49facc52136cfda0270627e3e6aef51f5ab4588`; relationship history, scoped commitments, café handover and recovery fixes included |
+| Source qualification | [Verify 42009873247](https://github.com/arwyn6969/the-game/actions/runs/42009873247) passed every step at `2ee631f`; its tree exactly matches merged `c49facc` |
+| Production | Runtime `c49facc52136`, Worker `df4fa4fb-8725-42ba-a52a-6e050509f3a5`, at https://www.arwyn.party/thegame/ |
+| Production verification | 5 November: four public asset hashes, eight endpoints, seven redirects and desktop/phone hydrated entry pass; all 18 bindings, seven secret definitions, runtime settings and 52 routes preserved |
+| Rollback | Worker `6bf8d2d2-68ca-4624-8611-67b2c0f18531`; preserve database contents and browser saves |
+
+The user authorized closing #71, waiting for existing builds, then explicitly
+requested redeployment on 5 November. [Publication receipt and limits](review/live-release-2026-11-05/README.md).
+No database migration, model call, wallet action or production configuration
+change occurred. This release excludes the separate follower/growth/cast builds.
+
+The following 3 November account records the prior release:
 
 The user authorized merge/publication and another in-app-browser bug hunt on
 3 November. Both PRs merged after passing current checks with no unresolved review
@@ -19,7 +26,28 @@ No database migration, secret/budget change or wallet transaction occurred.
 Publication used no model calls; subsequent authorized play tested one fresh
 hosted Arwyn reply successfully. Grok and historical testing automations remain paused.
 
-## Next work, in order
+## Active work and next handoffs
+
+The user asked to wait for the existing builds before moving forward. The
+roadmap-review chat (`01a1ac68-650c-7c43-99ef-d697d4a9fc36`) owns release
+coordination and the 30-minute build watch. Its release records are on local
+`codex/release-20261105`, based on merged `c49facc`. Current observed builders:
+
+| Owner chat | Scope and observed source |
+| --- | --- |
+| Implement local following sessions — `01a1ac5a-e83d-7773-8c99-0c3619ddc703` | F1 complete at `58b9616`; F2 active in `a01-replay/`, `codex/followers-learning`. |
+| Improve resident character growth — `01a1ac83-ccdf-71c0-8274-efc0f35cfb00` | First pass at `0186b96` in `a02-economy/`, `codex/resident-growth`; preparing a growth-history UI handoff. |
+| Improve and expand characters — `01a1ac4a-f413-75f2-ad8b-eaeee370409b` | Character definitions, voices and continuity implementation active; exact head/evidence due in its handoff. |
+
+Read the workspace `START_HERE.md` and `review/build-watch-2026-11-05.json` for
+newer watch checkpoints. Preserve the owners' work. When handoffs arrive, compare
+the actual diffs and evidence against merged #71 and propose the next integration
+step. Completion does not imply upload, merge, publication or human acceptance.
+
+## Completed #71 packets — dated history
+
+All packet ownership, CI-pending and draft-publication statements below describe
+their original stage. PR #71 is now merged and published as recorded above.
 
 5 November: this Codex chat owns the bounded ready-versus-cancel check on PR #71,
 starting at `966baae`, main base `49cf76f`. Reuse the existing concurrent-tab
@@ -116,6 +144,8 @@ The prior [eight-fix handoff](handoffs/playtest-fixes-2026-11-02.md) and
 [connection-recovery evidence](review/ai-connection-recovery-2026-11-02/README.md)
 retain their original validation details. The merged baseline’s Verify passed,
 including the corrected café Hour readiness selector.
+
+## Remaining acceptance
 
 1. [#64 — consolidated release and useful hosted meeting](https://github.com/arwyn6969/the-game/issues/64): publication complete; next, fresh auth/allowance evidence, one bounded hosted trial, then physical-device/accessibility and five-player return-visit acceptance.
 2. [#65 — café pilot acceptance](https://github.com/arwyn6969/the-game/issues/65): mixed seven-day play, pending-AI Stop, accounting/control interleavings and the three-to-five-person diagnostic.
