@@ -19,6 +19,34 @@ No database migration, secret/budget change or wallet transaction occurred.
 Publication used no model calls; subsequent authorized play tested one fresh
 hosted Arwyn reply successfully. Grok and historical testing automations remain paused.
 
+## F1 local following — bounded implementation owner
+
+5 November 2026: this Codex chat owns F1 “accompany and remember”, including
+its independent deterministic controller and coordinated additive save/UI/simulation
+integration. Branch `codex/followers-local`, implementation checkout `a01-replay/`
+(reused clean historical checkout; its prior branch remains intact).
+Fetched main: `49cf76f2236f12ff79b092f4e1df84e13f9b5a42`.
+Starting base/head: `2ee631fa62ca9ecbba9aab4453d7bfd7c3b69399`.
+Explicit unmerged dependency: PR #71's truthful shared-activity presentation and
+café station handover fix, needed for F1 journal/activity and conflicting-control
+acceptance. #71 remains owned by its existing chat; `product/` is untouched.
+The managed worktree tool rejected nested `product/` because the chat's registered
+workspace is the empty wrapper; this clean existing product worktree is reused.
+Acceptance: one nearby resident, ordinary movement, exact discussion receipts,
+immediate takeover, explicit Resume, bounded saved journal, old-save/recovery
+compatibility, synthetic source/browser checks at 1280×800 and 390×844. No F2–F4,
+provider/hosting/payment changes, upload, merge, publication or paid inference.
+Local implementation is complete. Twenty focused source cases, 525 town tests,
+1,220 script + 55 typed tests, typecheck, lint (one inherited warning), diagnostics,
+credential-free build and eight desktop/phone synthetic browser journeys pass.
+All four existing interface layouts fit. Four explicitly requested synthetic
+speaker calls and zero follower/live calls were measured. No remote action.
+[Consolidated evidence and limits](review/followers-local-2026-11-05/README.md) ·
+[proposed PR](review/followers-local-2026-11-05/proposed-pr.md) ·
+[handoff](handoffs/followers-local-2026-11-05.md).
+A short human playtest, physical devices/screen readers and future integration CI
+remain open. Implementation head: `40c67dc7c2699a295698aacac0b22283625bddeb` (local, unuploaded).
+
 ## Next work, in order
 
 5 November: this Codex chat owns the bounded ready-versus-cancel check on PR #71,

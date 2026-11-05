@@ -1,0 +1,121 @@
+{
+  "date": "2026-11-05",
+  "owner": "This Codex chat; F1 local companion controller and coordinated integration only",
+  "branch": "codex/followers-local",
+  "checkout": "/Users/arwynhughes/Documents/ChatGPT/THE GAME/a01-replay",
+  "fetchedMain": "49cf76f2236f12ff79b092f4e1df84e13f9b5a42",
+  "base": "2ee631fa62ca9ecbba9aab4453d7bfd7c3b69399",
+  "implementationHead": "40c67dc7c2699a295698aacac0b22283625bddeb",
+  "unmergedDependency": {
+    "pr": 71,
+    "head": "2ee631fa62ca9ecbba9aab4453d7bfd7c3b69399",
+    "reason": "Truthful witnessed shared activity and cafe station handover; product checkout preserved"
+  },
+  "node": "v24.22.1",
+  "lockfileInstall": {
+    "command": "npm ci --offline --no-audit --no-fund",
+    "exitCode": 0
+  },
+  "checks": [
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "errors": 0,
+      "inheritedWarnings": ["Unused eslint-disable src/lib/auth/use-current-user.ts:59"]
+    },
+    {
+      "command": "node --test scripts/town-following*.test.mjs",
+      "exitCode": 0,
+      "passed": 20
+    },
+    {
+      "command": "npm run test:town",
+      "exitCode": 0,
+      "passed": 525
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "scriptTests": 1220,
+      "typedTests": 55,
+      "passed": 1275
+    },
+    {
+      "command": "npm run diagnose:town",
+      "exitCode": 0,
+      "worldAudit": []
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "environmentAllowlist": ["PATH"],
+      "dotenvFiles": [],
+      "databaseUrlPresent": false,
+      "migrationSkipped": true,
+      "advisory": "Existing chunk-size warning"
+    },
+    {
+      "command": "node scripts/following-browser.mjs",
+      "exitCode": 0,
+      "journeys": 8,
+      "viewports": ["1280x800", "390x844"],
+      "skinGeometryCases": 8,
+      "explicitSyntheticSpeakerCalls": 4,
+      "followerInferenceCalls": 0,
+      "liveInferenceCalls": 0,
+      "unexpectedProviderRequests": 0,
+      "browserErrors": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "initialResolvedFindings": [
+    "Sandbox localhost binding restrictions: full suite rerun credential-free with local access",
+    "New validation lint regex corrected",
+    "Harness meeting tab, desktop pointer visibility and canonical-vs-live recovery assertions corrected",
+    "Desktop companion panel moved into existing updates row; contrast and source-reference presentation corrected",
+    "Terminal transition clears its old movement path; full paused journals cannot acquire authority"
+  ],
+  "sourceSha256": {
+    ".github/workflows/verify.yml": "cb8b87fa5cb123a223151b49a5a2af7be0faa6e1b09cc3736abf7304fa25f793",
+    "scripts/fixtures/following.mjs": "ade6b4cf2d3a1aca4b0176307de835eefc87cffa9e56af3e0254b76552323eaa",
+    "scripts/following-browser.mjs": "00c81fef12c833f3fc2e108519a4d0adee1a2977540bfe45e4ad1ef80a512191",
+    "scripts/town-following-controller.test.mjs": "0f67e26945c801bcd5eac97d9ac18b69568b85786db3206688fc97bfcb47ce5e",
+    "scripts/town-following.test.mjs": "76aa1458b4308dd53e0e9e63fa7a98f79a09c700cd774cc73dc2b3c29db0a108",
+    "src/components/town/CharacterSocial.tsx": "a507aed1fe3c727e005327bec248c632d2c91f6f443fb3f4921fc568f9e5b6b4",
+    "src/components/town/FollowingPanel.tsx": "2758a039ac74ab67ccb6631362105bb8d7f071e39f40a70b0f754d9c12ac548e",
+    "src/components/town/TownApp.tsx": "802564932dc8c423aa37d54afbc4304f6cbd88073c6779c7cf7857387ff6d208",
+    "src/game/coffee-runtime.ts": "bf738d9e7034684d0a90594aa952921d6d649ad358aab25aa4c50b59907e855d",
+    "src/game/discussions.ts": "65c2ec1fef1554ef9bc584b0f8fe509b0cec8a898bece6e0fc1dcd5afa60bc0f",
+    "src/game/following-runtime.ts": "2feb2f31f61ebeb365bfb141e70988ea0eb9ec6d20d1349872a86ac85460c539",
+    "src/game/following-types.ts": "c6cd1e51576205094d6b0e4bfd39e2cce334bc49fe25380713ccf01735dc1ea0",
+    "src/game/following.ts": "b7dc3eb1fcdfa944613220eceb6fafcdfd7aeb5650dc7db39692aeda976bfceb",
+    "src/game/navigation.ts": "e3a75aafa0ab6b4c634d7a2405371cf804a95c73d1ff8b39558eee26a0bfb75d",
+    "src/game/save.ts": "a8b5ff3e0ceee43bbdba724f393eb4fc57d4548316740f40e64a5431caa23127",
+    "src/game/sim.ts": "4e8e32e811340b972268c5c7b056a39e8422ba71aa82381d653d75baef689e98",
+    "src/game/types.ts": "f49e8ca311cdc83e288dfb3264643aaa8193ca5fad75ddd8b3b1f9e27a9833ad",
+    "src/styles.css": "45195c4353487d4849f13a200fc67623ac64e16bbb7e54a55fb38fbf00b6a0c1"
+  },
+  "remainingLimits": [
+    "Short human comprehension and repeat-visit playtest",
+    "Physical phone and screen reader",
+    "Broader browser and deployed/PWA/provider compatibility",
+    "Remote CI on a future authorized integration head"
+  ],
+  "notPerformed": [
+    "Upload",
+    "PR creation",
+    "Merge",
+    "Publication",
+    "Paid/live inference",
+    "F2-F4",
+    "Server migration",
+    "Hosting/provider/payment changes"
+  ]
+}
