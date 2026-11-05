@@ -145,6 +145,8 @@ test("real engine loads from the pinned source without application config, envir
     "player",
     "data",
     "amelia",
+    "socrates",
+    "estee",
   ]);
   assert.deepEqual(networkAttempts, []);
 });
@@ -210,7 +212,7 @@ test("raw v1 migration retains original bytes and normalized history through rep
   const initial = run.authority.snapshot();
   assert.equal(initial.sourceImport.raw, raw);
   assert.deepEqual(initial.town, jsonCopy(expected.town));
-  assert.equal(initial.town.agents.length, 8);
+  assert.equal(initial.town.agents.length, 10);
   const original = JSON.parse(raw).town;
   for (const resident of original.agents) {
     const migrated = person(initial.town, resident.id);
@@ -295,10 +297,10 @@ test("legacy v2 without identities normalizes once; invalid/corrupt imports reta
   }
 });
 
-test("all eight canonical roles persist; only the synthetic owner controls player and imports cannot overwrite", (t) => {
+test("all ten canonical roles persist; only the synthetic owner controls player and imports cannot overwrite", (t) => {
   const run = setup(t);
   const state = run.authority.snapshot();
-  assert.equal(Object.keys(state.members).length, 8);
+  assert.equal(Object.keys(state.members).length, 10);
   for (const [role, member] of Object.entries(state.members)) {
     assert.equal(member.ownerAccountId, role === "player" ? OWNER.accountId : null);
     assert.notEqual(member.characterId, member.portable.characterId);
