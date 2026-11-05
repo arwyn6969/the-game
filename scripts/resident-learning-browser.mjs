@@ -274,9 +274,9 @@ try {
         await screenshot("demonstration-result");
       }
       if (name === "absent") {
-        await page.getByRole("button", { name: "Watch Arwyn", exact: true }).click();
+        await page.getByRole("button", { name: "Watch character", exact: true }).click();
         await page
-          .getByRole("button", { name: "Following Arwyn · Return to me", exact: true })
+          .getByRole("button", { name: "Watching Arwyn · Return to me", exact: true })
           .click();
         await openCard();
         await page.getByText("Latest recorded reflections", { exact: true }).waitFor();
