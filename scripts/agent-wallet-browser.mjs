@@ -516,11 +516,11 @@ try {
     await panel(page).getByLabel("Resident", { exact: true }).waitFor();
     assert.equal(
       await panel(page).getByLabel("Resident", { exact: true }).locator("option").count(),
-      8,
+      10,
     );
     journey.checks.push(
       "optional tools do not contact auth or registry before opening",
-      "a real account registers all eight residents privately",
+      "a real account registers all nine residents and the player privately",
     );
     const completionsBeforeCancel = completionCount;
     await pendingProof(page, "data", index * 2);

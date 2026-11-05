@@ -1,0 +1,56 @@
+{
+  "node": "v24.22.1",
+  "startingHead": "a2d0c86a68e2f43dd32df5dc15069a8371915f38",
+  "dependency": "0186b964a0590511b301d91fe0c9605872feb9fa",
+  "fetchedMain": "c49facc52136cfda0270627e3e6aef51f5ab4588",
+  "checks": [
+    {
+      "name": "typecheck",
+      "status": 0,
+      "signal": null
+    },
+    {
+      "name": "lint",
+      "status": 0,
+      "signal": null
+    },
+    {
+      "name": "test-town",
+      "status": 0,
+      "signal": null,
+      "tests": 523
+    },
+    {
+      "name": "test",
+      "status": 0,
+      "signal": null,
+      "scriptTests": 1218,
+      "typedTests": 55
+    },
+    {
+      "name": "diagnose-town",
+      "status": 0,
+      "signal": null
+    },
+    {
+      "name": "focused resident source regressions",
+      "status": 0,
+      "tests": 39
+    },
+    {
+      "name": "credential-free build",
+      "status": 0,
+      "authEnabled": true,
+      "envFiles": [],
+      "appEnvFile": false,
+      "migrations": "DATABASE_URL not set \u2014 skipping"
+    },
+    {
+      "name": "built Chromium desktop/phone",
+      "status": 0,
+      "viewportSizes": ["1280x800", "390x844"],
+      "inferenceRequests": 0
+    }
+  ],
+  "implementationCommit": "e0e2b5c1c4c63fb66679e6cd974236e4f745d370"
+}

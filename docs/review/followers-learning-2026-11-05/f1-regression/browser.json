@@ -1,0 +1,236 @@
+{
+  "syntheticTransport": true,
+  "liveInferenceCalls": 0,
+  "followerInferenceCalls": 0,
+  "journeys": [
+    {
+      "viewport": "desktop",
+      "scenario": "library",
+      "checks": [
+        "Actual 1\u00d7 movement reaches the discussion; journal excludes the pre-arrival line and retains the committed attributed reply",
+        "Keyboard and clicked destination revoke movement immediately; the phone also uses a real touch tap; explicit Resume is required each time",
+        "Reload and ordinary export/import preserve excerpts and revoke authority; Stop ends locally with history"
+      ],
+      "screenshots": [
+        "desktop-library-start-controls.png",
+        "desktop-library-retained-journal.png"
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "transportKinds": [
+        "act"
+      ],
+      "geometry": {
+        "panel": 1256,
+        "canvas": 1090.40625,
+        "viewport": 1280
+      },
+      "skinGeometry": [
+        {
+          "skin": "original",
+          "panel": 1280,
+          "height": 226.140625,
+          "canvas": 1230,
+          "viewport": 1280
+        },
+        {
+          "skin": "plaza-cream",
+          "panel": 1256,
+          "height": 226.140625,
+          "canvas": 1252,
+          "viewport": 1280
+        },
+        {
+          "skin": "library-ink",
+          "panel": 1256,
+          "height": 226.140625,
+          "canvas": 1136,
+          "viewport": 1280
+        },
+        {
+          "skin": "hobbs-hearth",
+          "panel": 1256,
+          "height": 226.140625,
+          "canvas": 1090.40625,
+          "viewport": 1280
+        }
+      ],
+      "syntheticSpeakerCalls": 1
+    },
+    {
+      "viewport": "desktop",
+      "scenario": "leave-pending",
+      "checks": [
+        "Stop works while speaker transport is pending; committed reply excludes the former follower and enters no journal"
+      ],
+      "screenshots": [
+        "desktop-leave-pending-stopped-pending.png"
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "transportKinds": [
+        "act"
+      ],
+      "geometry": {
+        "panel": 1256,
+        "canvas": 1090.40625,
+        "viewport": 1280
+      },
+      "syntheticSpeakerCalls": 1
+    },
+    {
+      "viewport": "desktop",
+      "scenario": "quiet",
+      "checks": [
+        "Second target Sub completes a 30-minute quiet visit with an honest journal and zero inference"
+      ],
+      "screenshots": [
+        "desktop-quiet-honest-quiet-journal.png"
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "transportKinds": [],
+      "geometry": {
+        "panel": 1256,
+        "canvas": 1090.40625,
+        "viewport": 1280
+      },
+      "syntheticSpeakerCalls": 0
+    },
+    {
+      "viewport": "desktop",
+      "scenario": "save-recovery",
+      "checks": [
+        "Page hiding suspends and stays suspended after restore; save conflict and malformed extension preserve exact canonical recovery bytes"
+      ],
+      "screenshots": [
+        "desktop-save-recovery-conflict.png",
+        "desktop-save-recovery-malformed-recovery.png"
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "transportKinds": [],
+      "geometry": {
+        "panel": 1256,
+        "canvas": 1090.40625,
+        "viewport": 1280
+      },
+      "syntheticSpeakerCalls": 0
+    },
+    {
+      "viewport": "phone",
+      "scenario": "library",
+      "checks": [
+        "Actual 1\u00d7 movement reaches the discussion; journal excludes the pre-arrival line and retains the committed attributed reply",
+        "Keyboard and clicked destination revoke movement immediately; the phone also uses a real touch tap; explicit Resume is required each time",
+        "Reload and ordinary export/import preserve excerpts and revoke authority; Stop ends locally with history"
+      ],
+      "screenshots": [
+        "phone-library-start-controls.png",
+        "phone-library-retained-journal.png"
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "transportKinds": [
+        "act"
+      ],
+      "geometry": {
+        "panel": 369.21875,
+        "canvas": 370,
+        "viewport": 390
+      },
+      "skinGeometry": [
+        {
+          "skin": "original",
+          "panel": 390,
+          "height": 269.328125,
+          "canvas": 364,
+          "viewport": 390
+        },
+        {
+          "skin": "plaza-cream",
+          "panel": 369.21875,
+          "height": 269.328125,
+          "canvas": 370,
+          "viewport": 390
+        },
+        {
+          "skin": "library-ink",
+          "panel": 369.21875,
+          "height": 269.328125,
+          "canvas": 370,
+          "viewport": 390
+        },
+        {
+          "skin": "hobbs-hearth",
+          "panel": 369.21875,
+          "height": 269.328125,
+          "canvas": 370,
+          "viewport": 390
+        }
+      ],
+      "syntheticSpeakerCalls": 1
+    },
+    {
+      "viewport": "phone",
+      "scenario": "leave-pending",
+      "checks": [
+        "Stop works while speaker transport is pending; committed reply excludes the former follower and enters no journal"
+      ],
+      "screenshots": [
+        "phone-leave-pending-stopped-pending.png"
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "transportKinds": [
+        "act"
+      ],
+      "geometry": {
+        "panel": 369.21875,
+        "canvas": 370,
+        "viewport": 390
+      },
+      "syntheticSpeakerCalls": 1
+    },
+    {
+      "viewport": "phone",
+      "scenario": "quiet",
+      "checks": [
+        "Second target Sub completes a 30-minute quiet visit with an honest journal and zero inference"
+      ],
+      "screenshots": [
+        "phone-quiet-honest-quiet-journal.png"
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "transportKinds": [],
+      "geometry": {
+        "panel": 369.21875,
+        "canvas": 370,
+        "viewport": 390
+      },
+      "syntheticSpeakerCalls": 0
+    },
+    {
+      "viewport": "phone",
+      "scenario": "save-recovery",
+      "checks": [
+        "Page hiding suspends and stays suspended after restore; save conflict and malformed extension preserve exact canonical recovery bytes"
+      ],
+      "screenshots": [
+        "phone-save-recovery-conflict.png",
+        "phone-save-recovery-malformed-recovery.png"
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "transportKinds": [],
+      "geometry": {
+        "panel": 369.21875,
+        "canvas": 370,
+        "viewport": 390
+      },
+      "syntheticSpeakerCalls": 0
+    }
+  ],
+  "failures": []
+}

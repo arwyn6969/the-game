@@ -18,6 +18,7 @@ const report = {
     "Synthetic opening/time/poses followed by actual source work and transfers; 2081 opening coins",
   limitations: [
     "Only the pinned c183e32 rollback is qualified; not arbitrary historical builds",
+    "The old eight-person runtime refuses the expanded cast; it must preserve exact recovery bytes until a compatible build returns",
     "Built HTTP previews on a disposable root-base origin; service workers blocked and HTTP cache bypassed",
     "Chromium desktop/phone emulation; not a deployed Worker rollback or physical-device acceptance",
     "Final purse-capacity transfers and claim settlement use source APIs, not ordinary UI payouts",
@@ -272,29 +273,30 @@ try {
       await importTown(page, exportTown(initial));
       const baseline = await assertPaused(page);
       await ordinarySave(page);
-      await visit("rollback");
-      const downgraded = await assertPaused(page);
-      assert.deepEqual(
-        facts(downgraded),
-        facts(baseline),
-        "The actual rollback build retains the full current coffee town",
+      const beforeRollback = await raw(page);
+      await visit("rollback", true);
+      assert.equal(
+        await raw(page),
+        beforeRollback,
+        "The old roster cannot overwrite the expanded town",
       );
-      await ordinarySave(page);
       const rollbackRaw = await download(
         page,
         `${viewport.name}-${enabled ? "on" : "off"}-rollback.json`,
+        true,
       );
+      assert.equal(rollbackRaw, beforeRollback, "Recovery downloads every original byte");
       assert.deepEqual(facts(JSON.parse(rollbackRaw).town), facts(baseline));
       await visit("current");
       const restored = await assertPaused(page);
       assert.deepEqual(
         facts(restored),
         facts(baseline),
-        "Re-upgrade retains all books, cups, refund and wage claims after an old-build save/export",
+        "A compatible build restores all books, cups, refund and wage claims after old-build refusal",
       );
       await ordinarySave(page);
       result.checks.push(
-        "Current → pinned c183e32 → current on the same origin preserves complete books, identities, memories, debts, ready cup, 12-minute pending refund, 20-minute partial wage and 180-minute earned payable through ordinary saves and exports",
+        "Current → pinned c183e32 recovery refusal → current on the same origin preserves exact raw bytes, complete books, identities, memories, debts, ready cup, 12-minute pending refund, 20-minute partial wage and 180-minute earned payable",
       );
       await cafe(page);
       if (!enabled) {
@@ -322,7 +324,7 @@ try {
       result.screenshots.push(shot);
       await closePanels(page);
 
-      // Settlement is a source API follow-up to the actual old-build export.
+      // Settlement is a source API follow-up to the exact old-build recovery download.
       // Create capacity by moving existing fixture coins, never editing balances.
       const recoveredFile = readTownFile(rollbackRaw);
       assert.equal(recoveredFile.status, "ready", recoveredFile.reason);
@@ -407,7 +409,7 @@ try {
         baseline.coffee.cups.find((cup) => cup.id === fixture.ids.readyCupId),
       );
       result.checks.push(
-        "Actual old-build export reopens with current source; existing-cash capacity transfers settle the original refund and earned wage once while preserving the partial wage hold",
+        "The original recovery download reopens with compatible source; existing-cash capacity transfers settle the original refund and earned wage once while preserving the partial wage hold",
       );
 
       if (!enabled) {

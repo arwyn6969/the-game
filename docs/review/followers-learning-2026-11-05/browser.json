@@ -1,0 +1,603 @@
+{
+  "syntheticTransport": true,
+  "liveInferenceCalls": 0,
+  "journeys": [
+    {
+      "viewport": "desktop",
+      "scenario": "complete",
+      "checks": [
+        "F1 starts and listens with zero inference; Ask and learn is a separate explicit grant",
+        "Distinct before/after/changed cases use two requests each; deterministic inspections score actual submissions; interpretation stays separate; reload/export/import retain the same evidence without authority"
+      ],
+      "calls": [
+        {
+          "kind": "act",
+          "purpose": "baseline-plan",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "baseline-submit",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "invite",
+          "actor": "arwyn",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "question",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "answer",
+          "actor": "arwyn",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "question",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "answer",
+          "actor": "arwyn",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "after-plan",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "after-submit",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "transfer-plan",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "transfer-submit",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "reflection",
+          "actor": "player",
+          "privateLeak": false
+        }
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "screenshots": [
+        "desktop-complete-setup.png",
+        "desktop-complete-comparison.png"
+      ],
+      "attribution": {
+        "speaker": 3,
+        "learner": 9
+      }
+    },
+    {
+      "viewport": "desktop",
+      "scenario": "decline",
+      "checks": [
+        "F1 starts and listens with zero inference; Ask and learn is a separate explicit grant",
+        "Resident refusal creates one attributed line and no teaching method, question, practice permission or rapport reward"
+      ],
+      "calls": [
+        {
+          "kind": "act",
+          "purpose": "baseline-plan",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "baseline-submit",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "invite",
+          "actor": "arwyn",
+          "privateLeak": false
+        }
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "screenshots": [
+        "desktop-decline-refusal.png"
+      ],
+      "attribution": {
+        "speaker": 1,
+        "learner": 2
+      }
+    },
+    {
+      "viewport": "desktop",
+      "scenario": "exhaustion",
+      "checks": [
+        "F1 starts and listens with zero inference; Ask and learn is a separate explicit grant",
+        "Synthetic capacity denial pauses without invented results, refunds or retries; attempt uncertainty remains visible"
+      ],
+      "calls": [
+        {
+          "kind": "act",
+          "purpose": "baseline-plan",
+          "actor": "player",
+          "privateLeak": false
+        }
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "screenshots": [
+        "desktop-exhaustion-capacity.png"
+      ],
+      "attribution": {
+        "speaker": 0,
+        "learner": 1
+      }
+    },
+    {
+      "viewport": "desktop",
+      "scenario": "late-takeover",
+      "checks": [
+        "F1 starts and listens with zero inference; Ask and learn is a separate explicit grant",
+        "Keyboard (desktop), touch (phone) and clicked destination revoke pending player participation immediately; late questions add no speech; Resume is explicit and never dispatches"
+      ],
+      "calls": [
+        {
+          "kind": "act",
+          "purpose": "baseline-plan",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "baseline-submit",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "invite",
+          "actor": "arwyn",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "question",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "question",
+          "actor": "player",
+          "privateLeak": false
+        }
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "screenshots": [
+        "desktop-late-takeover-late-rejected.png"
+      ],
+      "attribution": {
+        "speaker": 1,
+        "learner": 4
+      }
+    },
+    {
+      "viewport": "desktop",
+      "scenario": "practice-failure",
+      "checks": [
+        "F1 starts and listens with zero inference; Ask and learn is a separate explicit grant",
+        "Distinct before/after/changed cases use two requests each; deterministic inspections score actual submissions; interpretation stays separate; reload/export/import retain the same evidence without authority"
+      ],
+      "calls": [
+        {
+          "kind": "act",
+          "purpose": "baseline-plan",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "baseline-submit",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "invite",
+          "actor": "arwyn",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "after-plan",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "after-submit",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "transfer-plan",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "transfer-submit",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "reflection",
+          "actor": "player",
+          "privateLeak": false
+        }
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "screenshots": [
+        "desktop-practice-failure-setup.png",
+        "desktop-practice-failure-comparison.png"
+      ],
+      "attribution": {
+        "speaker": 1,
+        "learner": 7
+      }
+    },
+    {
+      "viewport": "desktop",
+      "scenario": "reload-pending",
+      "checks": [
+        "F1 starts and listens with zero inference; Ask and learn is a separate explicit grant",
+        "Reload of a pending learner action keeps unknown usage and the used slot; neither movement nor inference resumes"
+      ],
+      "calls": [
+        {
+          "kind": "act",
+          "purpose": "baseline-plan",
+          "actor": "player",
+          "privateLeak": false
+        }
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "screenshots": [
+        "desktop-reload-pending-pending-restored.png"
+      ],
+      "attribution": {
+        "speaker": 0,
+        "learner": 1
+      }
+    },
+    {
+      "viewport": "phone",
+      "scenario": "complete",
+      "checks": [
+        "F1 starts and listens with zero inference; Ask and learn is a separate explicit grant",
+        "Distinct before/after/changed cases use two requests each; deterministic inspections score actual submissions; interpretation stays separate; reload/export/import retain the same evidence without authority"
+      ],
+      "calls": [
+        {
+          "kind": "act",
+          "purpose": "baseline-plan",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "baseline-submit",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "invite",
+          "actor": "arwyn",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "question",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "answer",
+          "actor": "arwyn",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "question",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "answer",
+          "actor": "arwyn",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "after-plan",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "after-submit",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "transfer-plan",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "transfer-submit",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "reflection",
+          "actor": "player",
+          "privateLeak": false
+        }
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "screenshots": [
+        "phone-complete-setup.png",
+        "phone-complete-comparison.png"
+      ],
+      "attribution": {
+        "speaker": 3,
+        "learner": 9
+      }
+    },
+    {
+      "viewport": "phone",
+      "scenario": "decline",
+      "checks": [
+        "F1 starts and listens with zero inference; Ask and learn is a separate explicit grant",
+        "Resident refusal creates one attributed line and no teaching method, question, practice permission or rapport reward"
+      ],
+      "calls": [
+        {
+          "kind": "act",
+          "purpose": "baseline-plan",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "baseline-submit",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "invite",
+          "actor": "arwyn",
+          "privateLeak": false
+        }
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "screenshots": [
+        "phone-decline-refusal.png"
+      ],
+      "attribution": {
+        "speaker": 1,
+        "learner": 2
+      }
+    },
+    {
+      "viewport": "phone",
+      "scenario": "exhaustion",
+      "checks": [
+        "F1 starts and listens with zero inference; Ask and learn is a separate explicit grant",
+        "Synthetic capacity denial pauses without invented results, refunds or retries; attempt uncertainty remains visible"
+      ],
+      "calls": [
+        {
+          "kind": "act",
+          "purpose": "baseline-plan",
+          "actor": "player",
+          "privateLeak": false
+        }
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "screenshots": [
+        "phone-exhaustion-capacity.png"
+      ],
+      "attribution": {
+        "speaker": 0,
+        "learner": 1
+      }
+    },
+    {
+      "viewport": "phone",
+      "scenario": "late-takeover",
+      "checks": [
+        "F1 starts and listens with zero inference; Ask and learn is a separate explicit grant",
+        "Keyboard (desktop), touch (phone) and clicked destination revoke pending player participation immediately; late questions add no speech; Resume is explicit and never dispatches"
+      ],
+      "calls": [
+        {
+          "kind": "act",
+          "purpose": "baseline-plan",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "baseline-submit",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "invite",
+          "actor": "arwyn",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "question",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "question",
+          "actor": "player",
+          "privateLeak": false
+        }
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "screenshots": [
+        "phone-late-takeover-late-rejected.png"
+      ],
+      "attribution": {
+        "speaker": 1,
+        "learner": 4
+      }
+    },
+    {
+      "viewport": "phone",
+      "scenario": "practice-failure",
+      "checks": [
+        "F1 starts and listens with zero inference; Ask and learn is a separate explicit grant",
+        "Distinct before/after/changed cases use two requests each; deterministic inspections score actual submissions; interpretation stays separate; reload/export/import retain the same evidence without authority"
+      ],
+      "calls": [
+        {
+          "kind": "act",
+          "purpose": "baseline-plan",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "baseline-submit",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "invite",
+          "actor": "arwyn",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "after-plan",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "after-submit",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "transfer-plan",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "transfer-submit",
+          "actor": "player",
+          "privateLeak": false
+        },
+        {
+          "kind": "act",
+          "purpose": "reflection",
+          "actor": "player",
+          "privateLeak": false
+        }
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "screenshots": [
+        "phone-practice-failure-setup.png",
+        "phone-practice-failure-comparison.png"
+      ],
+      "attribution": {
+        "speaker": 1,
+        "learner": 7
+      }
+    },
+    {
+      "viewport": "phone",
+      "scenario": "reload-pending",
+      "checks": [
+        "F1 starts and listens with zero inference; Ask and learn is a separate explicit grant",
+        "Reload of a pending learner action keeps unknown usage and the used slot; neither movement nor inference resumes"
+      ],
+      "calls": [
+        {
+          "kind": "act",
+          "purpose": "baseline-plan",
+          "actor": "player",
+          "privateLeak": false
+        }
+      ],
+      "errors": [],
+      "providerRequests": [],
+      "screenshots": [
+        "phone-reload-pending-pending-restored.png"
+      ],
+      "attribution": {
+        "speaker": 0,
+        "learner": 1
+      }
+    }
+  ],
+  "failures": [],
+  "limits": [
+    "Scripted decisions test execution and accounting; they do not qualify live-model learning or provider behaviour",
+    "Chromium emulated sizes; F1 human/device acceptance remains open"
+  ]
+}

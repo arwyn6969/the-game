@@ -29,6 +29,8 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: node scripts/quality-browser.mjs
+      - name: Witnessed learning history on character cards
+        run: node scripts/resident-learning-browser.mjs
       - name: Witnessed relationship history and café feedback
         run: node scripts/relationship-feedback-browser.mjs
       - name: Built café customer, worker and recovery journeys
@@ -121,6 +123,7 @@ jobs:
           path: |
             artifacts/following
             artifacts/follower-learning
+            artifacts/resident-learning-browser
             artifacts/quality-browser
             artifacts/relationship-feedback
             artifacts/coffee-ai-interruptions

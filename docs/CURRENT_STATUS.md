@@ -2,6 +2,27 @@
 
 Updated 5 November 2026. This file is the single current source/deployment and assignment index. Earlier dated statements are evidence, not active instructions.
 
+## Character, teaching and learning-history release integration
+
+5 November 2026: this chat owns the user-authorized integration, PR, preview
+qualification, merge and live publication on `codex/character-learning-release`
+in the reused clean `candidate-20261021/` checkout. Freshly fetched main:
+`c49facc52136cfda0270627e3e6aef51f5ab4588`. Explicit inputs: character head
+`e90667a`, witnessed-history UI `e0e2b5c` integrated as `d0e59a8`, and voluntary
+teaching/practice `185eab7` integrated as `68a91f4`. Original owner checkouts,
+branches and independently owned provider-routing changes remain untouched.
+
+Acceptance: one combined source/build and desktop/phone qualification, including
+Socrates/Estée, F1/F2, witnessed learning history, old-save arrivals and lesson
+receipts, privacy, manual takeover, reload/import/export, authenticated private
+registration and conserved finances. Then required PR Verify and resolved review,
+named-target migration preview/recovery, bounded configured-free-model checks and
+the existing production publication workflow. No provider switch, budget increase,
+secret change or server-world migration is part of this release.
+
+Implementation is being reconciled. Prior sections below are retained input
+receipts and do not qualify the combined release head.
+
 ## Character continuity and cast arrivals
 
 5 November 2026: this chat owns `codex/character-continuity` in the reused clean

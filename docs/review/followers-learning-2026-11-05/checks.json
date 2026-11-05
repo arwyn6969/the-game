@@ -1,0 +1,172 @@
+{
+  "date": "2026-11-05",
+  "recordedAtUtc": "2026-11-05T17:52:18.299057+00:00",
+  "owner": "This Codex chat: bounded F2 controller, coordinated additive integration and acceptance only",
+  "branch": "codex/followers-learning",
+  "checkout": "/Users/arwynhughes/Documents/ChatGPT/THE GAME/a01-replay",
+  "base": "58b9616f473aa960b39793ee375703ca9e705dbc",
+  "implementationHead": "185eab7b030b88c09bd2f27a18032e8430c1f396",
+  "fetchedMainAtStart": "49cf76f2236f12ff79b092f4e1df84e13f9b5a42",
+  "fetchedMainAfterExternalMerge": "c49facc52136cfda0270627e3e6aef51f5ab4588",
+  "dependencies": [
+    {
+      "branch": "codex/followers-local",
+      "head": "58b9616f473aa960b39793ee375703ca9e705dbc",
+      "status": "preserved local unmerged F1 dependency"
+    },
+    {
+      "pr": 71,
+      "head": "2ee631fa62ca9ecbba9aab4453d7bfd7c3b69399",
+      "status": "merged by separate release owner during F2",
+      "merge": "c49facc52136cfda0270627e3e6aef51f5ab4588"
+    }
+  ],
+  "preservedCheckouts": {
+    "product": "Not edited/switched by F2; independently observed clean on codex/release-20261105 at 9e693a56c0c1acfaf4024a7106c049ace6b0950f",
+    "a02-economy": "Separately owned resident-growth work, not integrated or edited"
+  },
+  "node": "v24.22.1",
+  "lockfileInstall": {
+    "command": "npm ci --offline --no-audit --no-fund",
+    "exitCode": 0
+  },
+  "checks": [
+    {
+      "check": "typecheck",
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "seconds": 3.91,
+      "logSha256": "8fa1cf5506304e8abac55868e7f1a136c9b1dde57a3981a382da4c21ea129a6f"
+    },
+    {
+      "check": "lint",
+      "command": "npm run lint",
+      "exitCode": 0,
+      "seconds": 4.29,
+      "logSha256": "339027dadfd1550bc336ec4f8446f94bb2bfb723ac6135707413b7772373904e",
+      "errors": 0,
+      "inheritedWarnings": [
+        "Unused eslint-disable src/lib/auth/use-current-user.ts:59"
+      ]
+    },
+    {
+      "check": "town-tests",
+      "command": "npm run test:town",
+      "exitCode": 0,
+      "seconds": 34.16,
+      "logSha256": "36da12175e34d06cf5404a2e5b77e80296a8e30748bcb58388c630e913e8654b",
+      "passed": 545
+    },
+    {
+      "check": "full-tests",
+      "command": "npm test",
+      "exitCode": 0,
+      "seconds": 56.98,
+      "logSha256": "38eb7c8c6c1854060519fda4b8c1a4f781a9aa5de96f59c008029efaf32c9b3e",
+      "scriptTests": 1240,
+      "typedTests": 55,
+      "passed": 1295
+    },
+    {
+      "check": "diagnostics",
+      "command": "npm run diagnose:town",
+      "exitCode": 0,
+      "seconds": 4.59,
+      "logSha256": "e925099d1e633bbcf370dc200e8336d67be9f3c2bdafa8d1276087aee1c861e1",
+      "worldAudit": []
+    },
+    {
+      "check": "build",
+      "command": "npm run build",
+      "exitCode": 0,
+      "seconds": 2.18,
+      "logSha256": "48ea9a7a996e01eda1ad829303fb8d574c4db9742c609d22be8c5bda98df9f5e",
+      "environmentAllowlist": [
+        "PATH"
+      ],
+      "dotenvFiles": [],
+      "databaseUrlPresent": false,
+      "migrationSkipped": true,
+      "migrationMessage": "[migrate] DATABASE_URL not set \u2014 skipping (the PGLite fallback migrates itself).",
+      "advisories": [
+        "Chunk size",
+        "Ineffective dynamic import",
+        "Native build architecture"
+      ]
+    }
+  ],
+  "focusedF2SourceCases": 20,
+  "browserChecks": [
+    {
+      "command": "node scripts/learning-browser.mjs",
+      "exitCode": 0,
+      "report": "browser.json",
+      "journeys": 12,
+      "viewports": [
+        "1280x800",
+        "390x844"
+      ],
+      "liveInferenceCalls": 0,
+      "failures": [],
+      "syntheticSpeakerCalls": 12,
+      "syntheticLearnerCalls": 48
+    },
+    {
+      "command": "node scripts/following-browser.mjs",
+      "exitCode": 0,
+      "report": "f1-regression/browser.json",
+      "journeys": 8,
+      "viewports": [
+        "1280x800",
+        "390x844"
+      ],
+      "liveInferenceCalls": 0,
+      "failures": [],
+      "syntheticSpeakerCalls": 4,
+      "followerInferenceCalls": 0
+    }
+  ],
+  "sourceSha256": {
+    ".github/workflows/verify.yml": "6359b87d7bd17d38f75902332a51159a28f62ec4db365210507434abd2c7af51",
+    "scripts/learning-browser.mjs": "765f833023b6128de384f79d7e01449bd423da4bebdf02d272d8810f4749ff19",
+    "scripts/town-learning.test.mjs": "e961d0f82bab499e7c9fffbbf875e7066697f020d816685497e034ef35c03a73",
+    "src/components/town/FollowingPanel.tsx": "830fd409c67a09f455ad681a04bfcb9bc784ee3733f8f68072144f3708277f6b",
+    "src/components/town/LearningPanel.tsx": "305629c9b77a8f1bc74b6b112d6101838320dd81ce750b888d5cd3db58effc0d",
+    "src/components/town/TownApp.tsx": "35f70d834687124576d663690a7168cd785fb5e5383dda319a940e3b40e43a86",
+    "src/game/community.ts": "8f0ff6d95bb5a56c5fa1d857933a3d7c253d48013f72e288a40d2cded2e6a1fe",
+    "src/game/discussions.ts": "dc1c64ceebb9f9c53dc414a48d8fa65f025937adddde59197dd622823896130a",
+    "src/game/following-runtime.ts": "132436d8a31e9fb00f64d4188ba8a686e5be8b43616aac15fedb777834aef2f3",
+    "src/game/learning-controller.ts": "29e56bff0c955740cbeb25885b1148eb71d269d3bab65825e3cbc2bcce46ebbf",
+    "src/game/learning-practice.ts": "2c595ffffaf2b1cc7eedb44f3d7fa24f8f9bfa4bb9a97c8fbe96366578d923a1",
+    "src/game/learning-runtime.ts": "50f7d44b5d87e823bcf221fea1553bce4936c64e9cb1a8c68768751c0e31e074",
+    "src/game/learning-types.ts": "42611b43f7b6a8ef0a6c66d5656c0198960d0134dfa925b1fb04bbf8173adc6c",
+    "src/game/learning-validation.ts": "0c4bdd2d4c4648bc7a0df3f9507cb9daf5cbcf34a952c6786f592f632664849e",
+    "src/game/library-reference.ts": "5cbdc02eff1eb4a665117536f6dea4b4dec2b186252ceae5e9c53a9c66806ed1",
+    "src/game/save.ts": "d4f5de061b0e76442aabe53407b7af8df502bee81b41a1857cc062be9d2e7d9c",
+    "src/game/types.ts": "765099bcf8ffb69896e5abcd5aa243d8840fc9deaeddce449a8a821b64345820",
+    "src/lib/learning-actions.ts": "1c0a02002de6c24c772a56ee8d5c79326f2cede87a1ff7aa892dfd279ecbf64e",
+    "src/lib/mind-pool/server.ts": "84bc7ba3e8c362d88b6954f85b09f2c5ef5aea1b57b0ca2034d3f8c9b5b13530",
+    "src/lib/mind-pool/transport.ts": "86b42651a3ebe046572b6662db46d702a3d9aa7d201970f6ea658303d952efff",
+    "src/lib/mind-pool/types.ts": "69f7a62c70fe432070d410ca5edc1db81e411a99e8e8eb93c7d42a4b4c510a2c",
+    "src/styles.css": "9099cbece750cbc00d07cb54e4d39930505853695845ac3b55018d5803bd69d5"
+  },
+  "limits": [
+    "All automated inference is synthetic; no live or paid inference ran. Scripted scoring does not qualify model learning or provider behaviour.",
+    "F1 human comprehension/repeat-visit, physical device, screen-reader and hosted acceptance remain open.",
+    "Finite practice cases do not establish general competence; matching compute metadata is necessary but not proof of learning.",
+    "Existing gated action capacity is unchanged; unavailable capacity remains unavailable.",
+    "F1 is an unmerged local dependency. Reconciled-main integration and remote CI remain separate.",
+    "No upload, merge, publication, closed-browser operation, general skill framework, guild or production configuration change."
+  ],
+  "finalProductObservation": {
+    "head": "9e693a56c0c1acfaf4024a7106c049ace6b0950f",
+    "branch": "codex/release-20261105",
+    "externalUncommittedPaths": [
+      "src/lib/mind-budget/runner.ts",
+      "src/lib/mind-pool/router.ts",
+      "src/lib/mind-pool/server.ts",
+      "src/lib/mind-pool/store.ts"
+    ],
+    "action": "Left untouched; not part of the F2 diff"
+  }
+}
