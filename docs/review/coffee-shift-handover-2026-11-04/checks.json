@@ -1,0 +1,60 @@
+{
+  "date": "2026-11-04",
+  "node": "v24.22.1",
+  "base": "49cf76f2236f12ff79b092f4e1df84e13f9b5a42",
+  "priorPrHead": "05be3abe714fd258a61fa2c8ced9d29a03df3a29",
+  "codeCommit": "54e39e61449f7dd9817d546e70137dea2cd36b9e",
+  "runtimeFileSha256": "5242e3dfbd6459682af0a8beb4ba868e780780d861624f2f035e1dab03c08476",
+  "runtimeMatchesBuiltStage": true,
+  "typecheck": "passed",
+  "lint": {
+    "errors": 0,
+    "inheritedWarnings": 1
+  },
+  "town": {
+    "passed": 496,
+    "failed": 0
+  },
+  "npmTest": {
+    "scriptPassed": 1191,
+    "typedPassed": 55,
+    "failed": 0
+  },
+  "cafeFocused": {
+    "passed": 45,
+    "failed": 0,
+    "scope": "Before the reversed-order variant was added; final full suite includes that variant."
+  },
+  "handoverFocused": {
+    "passed": 2,
+    "failed": 0,
+    "capacityVariants": 3
+  },
+  "build": {
+    "passed": true,
+    "privateConfigIncluded": false,
+    "databaseMigration": "skipped, DATABASE_URL unset"
+  },
+  "diagnostics": {
+    "worldAudit": []
+  },
+  "browser": {
+    "sizes": [
+      "1280x800",
+      "390x844"
+    ],
+    "fullShiftJourneysPassed": 2,
+    "handoverJourneysPassed": 2,
+    "liveInferenceCalls": 0
+  },
+  "saveSchemaChanged": false,
+  "productionChanged": false,
+  "remaining": [
+    "troubled payroll/refund interleavings",
+    "concurrent tabs",
+    "downgrade/recovery",
+    "physical-device/screen-reader checks",
+    "human comprehension and enjoyment",
+    "real hosted/personal provider compatibility"
+  ]
+}

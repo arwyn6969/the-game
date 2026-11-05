@@ -1,0 +1,154 @@
+{
+  "node": "v24.22.1",
+  "url": "http://127.0.0.1:8201/",
+  "liveInferenceCalls": 0,
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "blockedProviderRequests": [],
+      "checks": [
+        "Partial brew keeps its original customer, payment hold and progress through ordinary Stop, manual override and funded successor consent",
+        "Two live worker routines preserve assignment ownership; the same cup completes once with 20 brew and 10 placement minutes",
+        "One customer payment releases once while both independent five-coin wage reservations remain intact",
+        "Reload revokes both service grants while preserving completed cup, contribution provenance and wage holds"
+      ],
+      "manualOverride": {
+        "before": {
+          "x": 5,
+          "y": 18
+        },
+        "after": {
+          "x": 4,
+          "y": 18
+        },
+        "input": "keyboard"
+      },
+      "order": {
+        "id": "coffee-order:1",
+        "brewMinutes": 20,
+        "placeMinutes": 10,
+        "contributions": [
+          {
+            "worker": "player",
+            "agreementId": "cafe:player:1:10",
+            "phase": "brewing",
+            "start": 963,
+            "end": 968
+          },
+          {
+            "worker": "northern",
+            "agreementId": "coffee-shift:northern:1",
+            "phase": "brewing",
+            "start": 970,
+            "end": 985
+          },
+          {
+            "worker": "northern",
+            "agreementId": "coffee-shift:northern:1",
+            "phase": "placing",
+            "start": 986,
+            "end": 996
+          }
+        ],
+        "cup": {
+          "id": "coffee-cup:coffee-order:1",
+          "orderId": "coffee-order:1",
+          "owner": "sub",
+          "custody": "inventory",
+          "revision": 1
+        }
+      },
+      "wages": [
+        {
+          "worker": "player",
+          "minutes": 33,
+          "hold": "hold:cafe:player:1:10"
+        },
+        {
+          "worker": "northern",
+          "minutes": 28,
+          "hold": "hold:coffee-shift:northern:1"
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "blockedProviderRequests": [],
+      "checks": [
+        "Partial brew keeps its original customer, payment hold and progress through ordinary Stop, manual override and funded successor consent",
+        "Two live worker routines preserve assignment ownership; the same cup completes once with 20 brew and 10 placement minutes",
+        "One customer payment releases once while both independent five-coin wage reservations remain intact",
+        "Reload revokes both service grants while preserving completed cup, contribution provenance and wage holds"
+      ],
+      "manualOverride": {
+        "before": {
+          "x": 5,
+          "y": 18
+        },
+        "after": {
+          "x": 4,
+          "y": 18
+        },
+        "input": "touch"
+      },
+      "order": {
+        "id": "coffee-order:1",
+        "brewMinutes": 20,
+        "placeMinutes": 10,
+        "contributions": [
+          {
+            "worker": "player",
+            "agreementId": "cafe:player:1:10",
+            "phase": "brewing",
+            "start": 963,
+            "end": 968
+          },
+          {
+            "worker": "northern",
+            "agreementId": "coffee-shift:northern:1",
+            "phase": "brewing",
+            "start": 970,
+            "end": 985
+          },
+          {
+            "worker": "northern",
+            "agreementId": "coffee-shift:northern:1",
+            "phase": "placing",
+            "start": 986,
+            "end": 996
+          }
+        ],
+        "cup": {
+          "id": "coffee-cup:coffee-order:1",
+          "orderId": "coffee-order:1",
+          "owner": "sub",
+          "custody": "inventory",
+          "revision": 1
+        }
+      },
+      "wages": [
+        {
+          "worker": "player",
+          "minutes": 33,
+          "hold": "hold:cafe:player:1:10"
+        },
+        {
+          "worker": "northern",
+          "minutes": 28,
+          "hold": "hold:coffee-shift:northern:1"
+        }
+      ]
+    }
+  ],
+  "failures": []
+}

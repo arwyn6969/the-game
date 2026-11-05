@@ -1,0 +1,82 @@
+{
+  "date": "2026-11-04",
+  "base": "49cf76f2236f12ff79b092f4e1df84e13f9b5a42",
+  "startingHead": "0f25093f64d1f713dd500d689196428faf155fe5",
+  "codeCommit": "9549a901c83aa09c9f8d7e2a104ba74bc5f1b790",
+  "node": "v24.22.1",
+  "runtimeChangedInThisPacket": false,
+  "typecheck": {
+    "exitCode": 0
+  },
+  "lint": {
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": [
+      "Inherited unused eslint-disable at src/lib/auth/use-current-user.ts:59"
+    ]
+  },
+  "townTests": {
+    "exitCode": 0,
+    "tests": 500,
+    "passed": 500,
+    "failed": 0
+  },
+  "npmTest": {
+    "exitCode": 0,
+    "scriptTests": 1195,
+    "typedTests": 55,
+    "passed": 1250,
+    "failed": 0,
+    "environmentNote": "Initial sandbox run blocked three loopback preview tests with EPERM; rerun with loopback access passed the complete suite."
+  },
+  "focusedPayrollRefund": {
+    "exitCode": 0,
+    "tests": 4,
+    "passed": 4
+  },
+  "formatAndTargetLint": {
+    "exitCode": 0
+  },
+  "diagnostics": {
+    "exitCode": 0,
+    "worldAudit": []
+  },
+  "build": {
+    "exitCode": 0,
+    "credentialFreeStage": true,
+    "runtimeFilesCompared": 185,
+    "runtimeMismatches": [],
+    "databaseUrl": "unset/blank",
+    "migration": "DATABASE_URL not set \u2014 skipping"
+  },
+  "browser": {
+    "exitCode": 0,
+    "journeys": 4,
+    "assertionGroups": 10,
+    "viewports": [
+      "1280x800",
+      "390x844"
+    ],
+    "source": "caller-managed credential-free built preview on loopback 8201",
+    "screenshotsVisuallyInspected": [
+      "desktop-queued-service-control-progress-protected-conflict.png",
+      "phone-refund-and-owned-cup-stale-service-conflict.png"
+    ],
+    "failures": []
+  },
+  "financeFixtures": {
+    "ordinaryBrowserOpeningCoins": 90,
+    "fullPurseSourceOpeningCoins": 2082,
+    "fullPurseFixtureSynthetic": true,
+    "newMoneyCreated": false
+  },
+  "liveInferenceCalls": 0,
+  "productionChanged": false,
+  "mergePerformed": false,
+  "priorHeadCI": {
+    "head": "0f25093f64d1f713dd500d689196428faf155fe5",
+    "run": "https://github.com/arwyn6969/the-game/actions/runs/41833236897",
+    "conclusion": "success"
+  },
+  "currentHeadCI": "Check separately after push; prior green does not qualify this code."
+}

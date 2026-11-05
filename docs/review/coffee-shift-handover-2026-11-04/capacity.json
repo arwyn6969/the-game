@@ -1,0 +1,106 @@
+{
+  "syntheticInitialPoses": true,
+  "liveInferenceCalls": 0,
+  "runs": [
+    {
+      "workers": 1,
+      "routineOrder": [
+        "northern"
+      ],
+      "windowMinutes": 100,
+      "completedCups": 2,
+      "readyWaitMinutes": [
+        {
+          "buyer": "player",
+          "minutes": 32
+        },
+        {
+          "buyer": "sub",
+          "minutes": 64
+        }
+      ],
+      "promisedWages": 5,
+      "paidWages": 0,
+      "protectedWages": 5,
+      "eligibleMinutes": [
+        {
+          "worker": "northern",
+          "minutes": 100
+        }
+      ],
+      "parallelMinutes": 0,
+      "unreservedAtStart": 12,
+      "totalCoins": 90
+    },
+    {
+      "workers": 2,
+      "routineOrder": [
+        "northern",
+        "player"
+      ],
+      "windowMinutes": 100,
+      "completedCups": 2,
+      "readyWaitMinutes": [
+        {
+          "buyer": "player",
+          "minutes": 32
+        },
+        {
+          "buyer": "sub",
+          "minutes": 55
+        }
+      ],
+      "promisedWages": 10,
+      "paidWages": 0,
+      "protectedWages": 10,
+      "eligibleMinutes": [
+        {
+          "worker": "northern",
+          "minutes": 100
+        },
+        {
+          "worker": "player",
+          "minutes": 100
+        }
+      ],
+      "parallelMinutes": 8,
+      "unreservedAtStart": 7,
+      "totalCoins": 90
+    },
+    {
+      "workers": 2,
+      "routineOrder": [
+        "player",
+        "northern"
+      ],
+      "windowMinutes": 100,
+      "completedCups": 2,
+      "readyWaitMinutes": [
+        {
+          "buyer": "player",
+          "minutes": 56
+        },
+        {
+          "buyer": "sub",
+          "minutes": 33
+        }
+      ],
+      "promisedWages": 10,
+      "paidWages": 0,
+      "protectedWages": 10,
+      "eligibleMinutes": [
+        {
+          "worker": "northern",
+          "minutes": 100
+        },
+        {
+          "worker": "player",
+          "minutes": 100
+        }
+      ],
+      "parallelMinutes": 8,
+      "unreservedAtStart": 7,
+      "totalCoins": 90
+    }
+  ]
+}

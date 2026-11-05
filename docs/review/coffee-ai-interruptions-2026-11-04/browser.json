@@ -1,0 +1,152 @@
+{
+  "url": "http://127.0.0.1:8096/",
+  "mockedTransport": true,
+  "authModulesChanged": false,
+  "liveInferenceCalls": 0,
+  "limitations": [
+    "Synthetic development transport and emulated sizes; no live provider or physical-device acceptance"
+  ],
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "scenario": "stop-valid",
+      "errors": [],
+      "blockedProviderRequests": [],
+      "moduleReplacements": 2,
+      "checks": [
+        "Foreground AI wait freezes town minutes, service progress and accounts even with 4\u00d7 selected",
+        "Unrelated valid late dialogue lands once, without reviving caf\u00e9 service or changing wages",
+        "Explicit resume advances each attendance minute once; reload retains progress/full hold and requires another resume"
+      ],
+      "screenshots": [
+        "desktop-stop-valid-pending-stop.png"
+      ]
+    },
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "scenario": "stop-unavailable",
+      "errors": [],
+      "blockedProviderRequests": [],
+      "moduleReplacements": 2,
+      "checks": [
+        "Foreground AI wait freezes town minutes, service progress and accounts even with 4\u00d7 selected",
+        "Unavailable late dialogue adds no chat, payment or renewed service",
+        "Explicit resume advances each attendance minute once; reload retains progress/full hold and requires another resume"
+      ],
+      "screenshots": []
+    },
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "scenario": "restore-stale",
+      "errors": [],
+      "blockedProviderRequests": [],
+      "moduleReplacements": 1,
+      "checks": [
+        "Foreground AI wait freezes town minutes, service progress and accounts even with 4\u00d7 selected",
+        "Restoring the checkpoint revokes service and rejects the previous town's late AI result while retaining earned minutes and funds"
+      ],
+      "screenshots": [
+        "desktop-restore-stale-final.png"
+      ]
+    },
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "scenario": "movement-stale",
+      "errors": [],
+      "blockedProviderRequests": [],
+      "moduleReplacements": 1,
+      "checks": [
+        "Foreground AI wait freezes town minutes, service progress and accounts even with 4\u00d7 selected",
+        "Manual movement immediately takes control and rejects an out-of-earshot late reply without restarting work"
+      ],
+      "screenshots": []
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "scenario": "stop-valid",
+      "errors": [],
+      "blockedProviderRequests": [],
+      "moduleReplacements": 2,
+      "checks": [
+        "Foreground AI wait freezes town minutes, service progress and accounts even with 4\u00d7 selected",
+        "Unrelated valid late dialogue lands once, without reviving caf\u00e9 service or changing wages",
+        "Explicit resume advances each attendance minute once; reload retains progress/full hold and requires another resume"
+      ],
+      "screenshots": [
+        "phone-stop-valid-pending-stop.png"
+      ]
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "scenario": "stop-unavailable",
+      "errors": [],
+      "blockedProviderRequests": [],
+      "moduleReplacements": 2,
+      "checks": [
+        "Foreground AI wait freezes town minutes, service progress and accounts even with 4\u00d7 selected",
+        "Unavailable late dialogue adds no chat, payment or renewed service",
+        "Explicit resume advances each attendance minute once; reload retains progress/full hold and requires another resume"
+      ],
+      "screenshots": []
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "scenario": "restore-stale",
+      "errors": [],
+      "blockedProviderRequests": [],
+      "moduleReplacements": 1,
+      "checks": [
+        "Foreground AI wait freezes town minutes, service progress and accounts even with 4\u00d7 selected",
+        "Restoring the checkpoint revokes service and rejects the previous town's late AI result while retaining earned minutes and funds"
+      ],
+      "screenshots": []
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "scenario": "movement-stale",
+      "errors": [],
+      "blockedProviderRequests": [],
+      "moduleReplacements": 1,
+      "checks": [
+        "Foreground AI wait freezes town minutes, service progress and accounts even with 4\u00d7 selected",
+        "Manual movement immediately takes control and rejects an out-of-earshot late reply without restarting work"
+      ],
+      "screenshots": [
+        "phone-movement-stale-final.png"
+      ]
+    }
+  ],
+  "failures": []
+}

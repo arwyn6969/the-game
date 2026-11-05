@@ -1,0 +1,62 @@
+{
+  "checkpoints": [
+    {
+      "day": 1,
+      "playerCoins": 11,
+      "orders": 2,
+      "cups": 2,
+      "debts": 1,
+      "paidWages": 6
+    },
+    {
+      "day": 2,
+      "playerCoins": 7,
+      "orders": 5,
+      "cups": 4,
+      "debts": 1,
+      "paidWages": 6
+    },
+    {
+      "day": 3,
+      "playerCoins": 7,
+      "orders": 5,
+      "cups": 4,
+      "debts": 1,
+      "paidWages": 6
+    },
+    {
+      "day": 4,
+      "playerCoins": 7,
+      "orders": 5,
+      "cups": 4,
+      "debts": 1,
+      "paidWages": 7
+    },
+    {
+      "day": 5,
+      "playerCoins": 7,
+      "orders": 5,
+      "cups": 4,
+      "debts": 1,
+      "paidWages": 7
+    },
+    {
+      "day": 6,
+      "playerCoins": 7,
+      "orders": 5,
+      "cups": 4,
+      "debts": 1,
+      "paidWages": 7
+    },
+    {
+      "day": 7,
+      "playerCoins": 7,
+      "orders": 5,
+      "cups": 4,
+      "debts": 1,
+      "paidWages": 7
+    }
+  ],
+  "totalCoins": 90,
+  "liveInferenceCalls": 0
+}

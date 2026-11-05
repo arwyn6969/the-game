@@ -1,0 +1,8 @@
+{
+  "source": "6e29a0c6aed9b9b73eab2627ddd6eaaba2e58739",
+  "case": "desktop feature-off recovery",
+  "expectedFailure": true,
+  "assertion": "Recovery guidance must replace the invitation to start a new pilot",
+  "observed": "Closed pilot still displays Try seven game days; new recovery guidance absent",
+  "log": "{\"viewport\":\"desktop\",\"enabled\":true,\"ok\":true,\"checks\":3}\nlocator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('New coffee orders are closed. Existing tickets, cups and wage reservations remain.') to be visible\u001b[22m\n\n    at /Users/arwynhughes/Documents/ChatGPT/THE GAME/product/scripts/coffee-downgrade-browser.mjs:314:12\n"
+}
