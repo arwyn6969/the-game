@@ -1,3 +1,4 @@
+import { learningOwnsCommand } from "./learning-runtime";
 import {
   recordFollowingSpeech,
   supersedeFollowingAttention,
@@ -234,6 +235,7 @@ function actions(town: Town, meeting: DiscussionSession, id: AgentId): Discussio
     return result;
   }
   add("stop-listening", "Stop listening");
+  if (id === "player" && member.mode === "participating") add("listen", "Return to listening");
   if (member.mode === "listening") {
     add("listen", "Keep listening");
     add("participate", "Join as a speaker");
@@ -311,6 +313,7 @@ export function applyDiscussionCommand(
     if (
       id === "player" &&
       !followingAttentionCommandOwned(town, command) &&
+      !learningOwnsCommand(town, command) &&
       [
         "listen",
         "participate",
@@ -353,6 +356,8 @@ export function applyDiscussionCommand(
           close(meeting, "The proposed facilitator declined. This meeting will not proceed.");
         break;
       case "listen":
+        meeting.queue = meeting.queue.filter((other) => other !== id);
+        if (meeting.floor?.actor === id) meeting.floor = null;
         member.mode = "listening";
         member.decisionNeeded = false;
         break;
@@ -678,6 +683,19 @@ export function markDiscussionRequest(town: Town, job: DiscussionJob): boolean {
   const marked = requests.get(town) ?? new Set<string>();
   marked.add(requestKey(job));
   requests.set(town, marked);
+  return true;
+}
+/** Revoke only this marked request; listeners and other people's choices remain intact. */
+export function cancelDiscussionRequest(town: Town, job: DiscussionJob): boolean {
+  const meeting = active(town, job.meetingId);
+  if (!meeting || meeting.pending?.key !== requestKey(job)) return false;
+  if (meeting.decisions >= DISCUSSION_LIMITS.decisions) close(meeting, EXHAUSTED_DISCUSSION_REASON);
+  else {
+    meeting.pending = null;
+    meeting.epoch++;
+    meeting.reason = "The requested decision was interrupted. No speech was substituted.";
+    touch(meeting);
+  }
   return true;
 }
 export function recordDiscussionUsage(

@@ -252,6 +252,8 @@ export type Town = {
   discussions?: import("./discussion-types").DiscussionState;
   /** Bounded local companion journal; saved records never confer automatic authority. */
   following?: import("./following-types").Following;
+  /** Bounded local F2 lesson and practice receipts; never saved automatic authority. */
+  followerLearning?: import("./learning-types").LearningState;
 };
 
 export type ThinkKind = "plan" | "reflect" | "talk" | "player" | "act";

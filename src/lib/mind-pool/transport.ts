@@ -1,3 +1,4 @@
+import { parseLearningEnvelope } from "../learning-actions.ts";
 import { parsePhysicalDecision } from "../mind-actions.ts";
 import { parseDiscussionEnvelope } from "../discussion-actions.ts";
 import type { Candidate, CompletionDiagnostics, MindJsonFailure, MindKind } from "./types.ts";
@@ -134,6 +135,8 @@ export function mindJsonFailure(kind: MindKind, text: string): MindJsonFailure |
     const v = JSON.parse(raw);
     if (!v || typeof v !== "object" || Array.isArray(v)) return "not-object";
     if (kind === "act") {
+      if (v.task === "follower-learning")
+        return parseLearningEnvelope(v) ? null : "missing-envelope";
       if (v.task === "discussion") return parseDiscussionEnvelope(v) ? null : "missing-envelope";
       return Object.keys(v).length === 1 && parsePhysicalDecision(v.decision)
         ? null

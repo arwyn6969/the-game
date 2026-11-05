@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { AgentId, NpcId, Town } from "@/game/types";
 import { currentFollow } from "@/game/following";
 import { followConflict, observableCompanion } from "@/game/following-runtime";
@@ -68,8 +68,10 @@ export function FollowingPanel({
   note,
   onResume,
   onStop,
+  learning,
 }: {
   town: Town;
+  learning?: ReactNode;
   disabled: boolean;
   note: string;
   onResume: () => void;
@@ -113,6 +115,7 @@ export function FollowingPanel({
         </>
       )}
       {note && <p role="status">{note}</p>}
+      {learning}
       {town.following && (
         <details className="following-journal">
           <summary>Companion journal ({town.following.sessions.length})</summary>

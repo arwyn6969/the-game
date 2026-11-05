@@ -78,6 +78,8 @@ export interface QuotaStore {
   finish(candidate: Candidate, lease: Lease, completion: Completion): Promise<void>;
 }
 export type PoolDiagnostics = {
+  /** Actual normalized output allowance of the transmitted route, when known. */
+  maxOutputTokens?: number | null;
   mode: "pool";
   provider: string | null;
   model: string | null;

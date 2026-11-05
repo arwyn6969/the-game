@@ -1,3 +1,5 @@
+import { validateFollowerLearning } from "./learning-validation";
+import { recoverLearning } from "./learning-runtime";
 import { recoverFollowing, validateFollowing, suspendFollowing } from "./following-runtime";
 import type { Agent, AgentId, Face, Memory, MemoryType, Town } from "./types";
 import { AGENT_IDS, BASE_AGENT_IDS } from "./types";
@@ -234,7 +236,7 @@ export function validateTown(value: unknown): value is Town {
   const town = value as Town;
   const version = (value as { version?: unknown }).version;
   if (version !== 1 && version !== 2) return false;
-  if (validateFollowing(town).length) return false;
+  if (validateFollowing(town).length || validateFollowerLearning(town).length) return false;
   // Check both the extension and orphan coffee ledger effects before normalization.
   if ((Object.hasOwn(value, "coffee") && version !== 2) || validateCoffee(town).length)
     return false;
@@ -545,6 +547,8 @@ function economyProblem(town: Town): string | null {
 }
 
 function serialize(town: Town, omitReplay = false): string {
+  const learningErrors = validateFollowerLearning(town);
+  if (learningErrors.length) throw new Error(learningErrors.join(" "));
   const followingErrors = validateFollowing(town);
   if (followingErrors.length) throw new Error(followingErrors.join(" "));
   const coffeeErrors = validateCoffee(town);
@@ -841,6 +845,7 @@ export function parseTownFile(text: string): Town | null {
     const town = data && typeof data === "object" && "town" in data ? data.town : data;
     if (!validateTown(town)) return null;
     recoverFollowing(town);
+    recoverLearning(town);
     recoverDiscussions(town);
     // A saved service grant preserves its obligation, never unattended control.
     // Recovery is idempotent: an already-paused snapshot gets no new receipt.
@@ -884,6 +889,8 @@ function townFileProblem(text: string): string | null {
     const data = JSON.parse(text);
     const town = data && typeof data === "object" && "town" in data ? data.town : data;
     if (town && typeof town === "object") {
+      const learningErrors = validateFollowerLearning(town as Town);
+      if (learningErrors.length) return learningErrors.join(" ");
       const followingErrors = validateFollowing(town as Town);
       if (followingErrors.length) return followingErrors.join(" ");
       if (Object.hasOwn(town, "coffee") && town.version !== 2)

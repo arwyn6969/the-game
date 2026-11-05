@@ -1,3 +1,4 @@
+import { revokeLearning, advanceLearning } from "./learning-runtime";
 import { z } from "zod";
 import type { AgentId, NpcId, Town } from "./types";
 import { NPC_IDS, AGENT_IDS } from "./types";
@@ -120,6 +121,13 @@ function releaseListener(town: Town, s: FollowSession) {
     command(town, s, owned.contextId, "stop-listening");
 }
 function release(town: Town, s: FollowSession) {
+  revokeLearning(
+    town,
+    s.state === "ended"
+      ? s.reason
+      : "Companion control was interrupted. Resume learning explicitly.",
+    s.state === "ended",
+  );
   // A terminal transition increments the revision before releasing its old path.
   if (grants.get(town)?.id === s.id) {
     const player = person(town, "player");
@@ -147,6 +155,7 @@ export function supersedeFollowingAttention(town: Town) {
 export function stopFollowing(town: Town, reason = "You stopped spending time together.") {
   const s = currentFollow(town.following);
   if (!s || s.state === "ended") return;
+  revokeLearning(town, reason, true);
   release(town, s);
   endFollow(s, followTime(town), reason);
   trim(town);
@@ -307,6 +316,7 @@ function trim(town: Town) {
   }
 }
 export function advanceFollowing(town: Town) {
+  advanceLearning(town);
   const s = currentFollow(town.following);
   if (!s || !followRunning(s) || !hasGrant(town, s)) return;
   advanceDiscussions(town);

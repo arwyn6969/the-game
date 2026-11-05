@@ -1,3 +1,4 @@
+import { LIBRARY_BOX_IDS } from "./library-reference";
 import type { AgentId, Plan, Town } from "./types";
 import { PLACE_IDS } from "./types";
 import type { PlayerAction } from "./effects";
@@ -39,7 +40,7 @@ import {
 } from "./reading-evening";
 
 export const LIBRARY_PROJECT = "library-index";
-export const BOX_IDS = ["Birch", "Alder", "Cedar"] as const;
+export const BOX_IDS = LIBRARY_BOX_IDS;
 export type BoxId = (typeof BOX_IDS)[number];
 export const RECORD_IDS = ["hobbs-equipment", "dorm-repair", "room-access"] as const;
 export type RecordId = (typeof RECORD_IDS)[number];
