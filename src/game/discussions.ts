@@ -10,6 +10,7 @@ import type {
   DiscussionActionResult,
   DiscussionCommand,
   DiscussionDecision,
+  DiscussionFacilitator,
   DiscussionJob,
   DiscussionMember,
   DiscussionResult,
@@ -17,6 +18,7 @@ import type {
   DiscussionUsageSample,
   DiscussionView,
 } from "./discussion-types";
+import { DISCUSSION_FACILITATORS, discussionResidents } from "./discussion-types";
 import { canHear, attentiveDiscussionRecipients } from "./attention";
 import { absMinute, makeMemory, pushMemory } from "./memory";
 import { wageInterval } from "./funded-work";
@@ -26,12 +28,13 @@ export const DISCUSSION_LIMITS = { turns: 6, decisions: 16, closed: 8, text: 400
 export const DISCUSSION_VENUE = { x: 43, y: 21 };
 const EXHAUSTED_DISCUSSION_REASON =
   "The meeting stopped at its sixteen-decision limit. No replacement dialogue was added; its actual discussion is preserved.";
-const CAST: NpcId[] = ["northern", "arwyn", "sub"];
 const SEATS: Partial<Record<AgentId, { x: number; y: number }>> = {
   northern: { x: 42, y: 21 },
   arwyn: { x: 44, y: 21 },
   sub: { x: 43, y: 20 },
   player: { x: 43, y: 22 },
+  socrates: { x: 42, y: 21 },
+  estee: { x: 44, y: 21 },
 };
 const actor = (town: Town, id: AgentId) => town.agents.find((agent) => agent.id === id);
 const at = (town: Town) => ({ day: town.day, minute: town.minute });
@@ -138,18 +141,18 @@ function prune(town: Town) {
 export function createLibraryDiscussion(
   town: Town,
   topic: string,
-  facilitator: "northern" | "arwyn" = "northern",
+  facilitator: DiscussionFacilitator = "northern",
 ): DiscussionActionResult {
   if (!safeText(topic, 160))
     return { ok: false, message: "Give the meeting a topic of 1–160 characters." };
-  if (!["northern", "arwyn"].includes(facilitator))
-    return { ok: false, message: "Choose Northern or Arwyn as the proposed facilitator." };
+  if (!(DISCUSSION_FACILITATORS as readonly string[]).includes(facilitator))
+    return { ok: false, message: "Choose one of the available proposed facilitators." };
   if (town.discussions?.sessions.some((meeting) => meeting.status !== "closed"))
     return { ok: false, message: "Finish or close the current meeting first." };
   const usedIds = new Set(town.discussions?.sessions.map((meeting) => meeting.id) ?? []);
   let id = `discussion:${town.nextId++}`;
   while (usedIds.has(id)) id = `discussion:${town.nextId++}`;
-  const proposedCast = [facilitator, ...CAST.filter((id) => id !== facilitator)];
+  const proposedCast = discussionResidents(facilitator);
   const members: DiscussionMember[] = [...proposedCast, "player" as const].map((id) => ({
     id,
     invitation: id === "player" ? "delivered" : "unseen",
@@ -890,7 +893,7 @@ export function validateDiscussions(town: Town): string[] {
         meeting.epoch < 1 ||
         !safeText(meeting.topic, 160) ||
         meeting.venue !== "library" ||
-        !["northern", "arwyn"].includes(meeting.facilitator) ||
+        !(DISCUSSION_FACILITATORS as readonly string[]).includes(meeting.facilitator) ||
         !["gathering", "active", "paused", "closed"].includes(meeting.status) ||
         typeof meeting.reason !== "string" ||
         meeting.reason.length > 240 ||
@@ -914,10 +917,14 @@ export function validateDiscussions(town: Town): string[] {
       )
         return invalid();
       ids.add(meeting.id);
+      const expectedMembers = new Set<AgentId>([
+        ...discussionResidents(meeting.facilitator as DiscussionFacilitator),
+        "player",
+      ]);
       const members = new Set<AgentId>();
       for (const member of meeting.members) {
         if (
-          ![...CAST, "player"].includes(member.id) ||
+          !expectedMembers.has(member.id) ||
           members.has(member.id) ||
           !["unseen", "delivered"].includes(member.invitation) ||
           !["pending", "accepted", "declined", "left"].includes(member.choice) ||

@@ -45,7 +45,7 @@ function healthy(town) {
   assert.equal(total(town), 90, "Existing coins include all project custody; holds are not money");
   assert.deepEqual(auditEconomy(town), []);
   assert.deepEqual(validateCoffee(town), []);
-  assert.equal(new Set(town.agents.map(({ tile }) => `${tile.x},${tile.y}`)).size, 8);
+  assert.equal(new Set(town.agents.map(({ tile }) => `${tile.x},${tile.y}`)).size, 10);
 }
 
 function tick(town, count = 1) {

@@ -94,6 +94,24 @@ const PALETTE: Record<AgentId, Appearance> = {
     shoe: "#191025",
     extra: "#c8ff6a",
   },
+  socrates: {
+    skin: "#c59c77",
+    hair: "#b7b0a1",
+    shirt: "#d7d0b7",
+    pants: "#726b54",
+    shoe: "#493d2e",
+    extra: "#f0e5c7",
+    accessory: "scarf",
+  },
+  estee: {
+    skin: "#edc3a4",
+    hair: "#6a432f",
+    shirt: "#67b8b3",
+    pants: "#304d5c",
+    shoe: "#282138",
+    extra: "#e7d4a2",
+    accessory: "scarf",
+  },
 };
 
 type Glide = { x: number; y: number };

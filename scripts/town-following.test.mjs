@@ -171,7 +171,7 @@ test("navigation uses ordinary bounded steps and free non-door stand points with
     const distance = c.followDistance(before, after);
     assert.ok(distance <= 3);
     moved ||= distance > 0;
-    assert.equal(new Set(t.agents.map((a) => `${a.tile.x},${a.tile.y}`)).size, 8);
+    assert.equal(new Set(t.agents.map((a) => `${a.tile.x},${a.tile.y}`)).size, 10);
   }
   assert.ok(moved);
   assert.deepEqual(

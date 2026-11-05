@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AGENT_IDS } from "../../game/types";
+import { AGENT_IDS, BASE_AGENT_IDS } from "../../game/types";
 
 export function ownerRequestSchema<T extends z.ZodTypeAny>(input: T) {
   return z.object({ expectedOwnerRef: z.string().regex(/^owner_[0-9a-f]{64}$/), input }).strict();
@@ -22,14 +22,18 @@ export const worldRegistrationSchema = z
           })
           .strict(),
       )
-      .length(AGENT_IDS.length),
+      .min(BASE_AGENT_IDS.length)
+      .max(AGENT_IDS.length),
   })
   .strict()
-  .refine(
-    (value) =>
-      new Set(value.characters.map((c) => c.role)).size === AGENT_IDS.length &&
-      new Set(value.characters.map((c) => c.sourceCharacterId)).size === AGENT_IDS.length,
-  );
+  .refine((value) => {
+    const expected = value.characters.length === BASE_AGENT_IDS.length ? BASE_AGENT_IDS : AGENT_IDS;
+    return (
+      value.characters.length === expected.length &&
+      expected.every((id) => value.characters.some((c) => c.role === id)) &&
+      new Set(value.characters.map((c) => c.sourceCharacterId)).size === expected.length
+    );
+  });
 export const sourceWorldSchema = z
   .object({ sourceWorldId: z.string().regex(/^world_[0-9a-f]{64}$/) })
   .strict();

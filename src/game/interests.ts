@@ -30,7 +30,20 @@ const MEMORY_INTERESTS: Partial<Record<AgentId, { keywords: readonly string[]; w
       weight: 0.25,
     },
     sub: {
-      keywords: ["writing", "manuscript", "story", "stories", "revision", "reader"],
+      keywords: [
+        "writing",
+        "manuscript",
+        "story",
+        "stories",
+        "revision",
+        "reader",
+        "art",
+        "artist",
+        "meme",
+        "memes",
+        "pepe",
+        "counterparty",
+      ],
       weight: 0.25,
     },
     data: {
@@ -39,6 +52,22 @@ const MEMORY_INTERESTS: Partial<Record<AgentId, { keywords: readonly string[]; w
     },
     amelia: {
       keywords: ["budget", "budgets", "funding", "cost", "costs", "incentive", "affordability"],
+      weight: 0.25,
+    },
+    socrates: {
+      keywords: ["question", "justice", "fairness", "friendship", "virtue", "reason", "reasons"],
+      weight: 0.25,
+    },
+    estee: {
+      keywords: [
+        "customer",
+        "customers",
+        "sales",
+        "presentation",
+        "demonstration",
+        "feedback",
+        "marketing",
+      ],
       weight: 0.25,
     },
   };

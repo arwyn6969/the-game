@@ -30,6 +30,12 @@ before(async () => {
   await database.exec(
     await readFile(new URL("../migrations/20261016_agent_registry.sql", import.meta.url), "utf8"),
   );
+  await database.exec(
+    await readFile(
+      new URL("../migrations/20261105_character_arrivals.sql", import.meta.url),
+      "utf8",
+    ),
+  );
 });
 beforeEach(async () => {
   await database.exec(
@@ -112,13 +118,30 @@ async function confirm(record, at = now, changes = {}) {
 }
 const hasCode = (code) => (error) => error.code === code;
 
-test("registration atomically assigns eight server residents and unpublished empty receiving profiles", async () => {
+test("historical eight-person private registrations remain readable without adding or remapping profiles", async () => {
+  const legacy = input();
+  legacy.characters = legacy.characters.filter(
+    ({ role }) => role !== "socrates" && role !== "estee",
+  );
+  const original = await store.registerWorld("owner-one", legacy, now);
+  const before = await store.getWorld("owner-one", original.registrationId);
+  assert.equal(before.world.residents.length, 8);
+  assert.equal(before.profiles.length, 8);
+  const again = await store.registerWorld("owner-one", legacy, now + 1);
+  assert.equal(again.registrationId, original.registrationId);
+  assert.deepEqual(await store.getWorld("owner-one", original.registrationId), before);
+  const partial = input(2);
+  partial.characters.pop();
+  await assert.rejects(store.registerWorld("owner-one", partial, now), hasCode("invalid"));
+});
+
+test("registration atomically assigns ten server residents and unpublished empty receiving profiles", async () => {
   const { world, profiles } = await setup();
   assert.match(world.registrationId, /^registration_[a-f0-9]{64}$/);
   assert.equal(world.sourceWorldId, input().sourceWorldId);
-  assert.equal(world.residents.length, 8);
-  assert.equal(new Set(world.residents.map((resident) => resident.residentId)).size, 8);
-  assert.equal(profiles.length, 8);
+  assert.equal(world.residents.length, 10);
+  assert.equal(new Set(world.residents.map((resident) => resident.residentId)).size, 10);
+  assert.equal(profiles.length, 10);
   for (const profile of profiles) {
     assert.match(profile.profileId, /^profile_[a-f0-9]{64}$/);
     assert.equal(profile.state, "unconfigured");
@@ -144,7 +167,7 @@ test("parallel duplicate registrations return one idempotent private copy withou
   assert.equal(
     (await database.query("select count(*)::int as count from agent_receiving_profiles")).rows[0]
       .count,
-    8,
+    10,
   );
   assert.deepEqual(await store.findWorld("owner-one", input().sourceWorldId), results[0]);
 });
@@ -186,7 +209,7 @@ test("ten unique owner slots enforce the world cap during parallel creation, whi
   for (const result of results.filter((item) => item.status === "rejected"))
     assert.equal(result.reason.code, "limit");
   const rows = await database.query("select count(*)::int as count from agent_receiving_profiles");
-  assert.equal(rows.rows[0].count, 80);
+  assert.equal(rows.rows[0].count, 100);
   const first = results.find((result) => result.status === "fulfilled").value;
   assert.deepEqual(
     await store.registerWorld(

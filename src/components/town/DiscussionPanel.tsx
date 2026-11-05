@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { NPC_IDS } from "@/game/types";
 import type { AgentId, Town } from "@/game/types";
-import type { DiscussionDecision, DiscussionView } from "@/game/discussion-types";
+import {
+  DISCUSSION_FACILITATORS as FACILITATOR_IDS,
+  discussionResidents,
+} from "@/game/discussion-types";
+import type {
+  DiscussionDecision,
+  DiscussionView,
+  DiscussionFacilitator,
+} from "@/game/discussion-types";
+export type { DiscussionFacilitator } from "@/game/discussion-types";
 import { formatClock } from "@/game/text";
 
 export type DiscussionInput = DiscussionDecision | { kind: "invite"; invitee: AgentId };
-export type DiscussionFacilitator = "northern" | "arwyn";
-
-const FACILITATOR_IDS = NPC_IDS.filter(
-  (id): id is DiscussionFacilitator => id === "northern" || id === "arwyn",
-);
 
 export type DiscussionControls = {
   view: DiscussionView;
@@ -134,9 +137,9 @@ export function DiscussionPanel({ town, controls }: { town: Town; controls: Disc
               ))}
             </select>
             <p className="character-note">
-              {name("northern")}, {name("arwyn")} and {name("sub")} may read the library invitation
-              and decide for themselves. A proposal does not promise their attendance or choose
-              their words.
+              {discussionResidents(facilitator).map(name).join(", ")} may read the library
+              invitation and decide for themselves. A proposal does not promise their attendance or
+              choose their words.
             </p>
             <button
               className="btn"

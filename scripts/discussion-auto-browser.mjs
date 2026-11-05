@@ -185,7 +185,7 @@ export async function runAutomaticMeetingJourneys(helpers, viewport) {
     assert.equal(await selector.inputValue(), "arwyn");
     assert.deepEqual(
       await selector.locator("option").evaluateAll((options) => options.map((o) => o.value).sort()),
-      ["arwyn", "northern"],
+      ["arwyn", "estee", "northern", "socrates"],
     );
     await page.getByLabel("Propose one topic", { exact: true }).fill(topic);
     await page.getByRole("button", { name: "Propose library meeting", exact: true }).click();

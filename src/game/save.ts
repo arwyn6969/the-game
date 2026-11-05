@@ -1,6 +1,6 @@
 import { recoverFollowing, validateFollowing, suspendFollowing } from "./following-runtime";
 import type { Agent, AgentId, Face, Memory, MemoryType, Town } from "./types";
-import { AGENT_IDS } from "./types";
+import { AGENT_IDS, BASE_AGENT_IDS } from "./types";
 import { compressDialogue, compressObservations, keywords } from "./memory";
 import { addSpecialists, SEED_TEXT } from "./town";
 import { mentionsSeed, plain, purse } from "./text";
@@ -10,7 +10,7 @@ import { auditEconomy, initializeEconomy } from "./economy";
 import { validateLibraryState } from "./community";
 import type { FundedTown } from "./economy-types";
 import { cleanSocial } from "./social";
-import { legacyTownIdentity, validateTownIdentity } from "./identity";
+import { extendTownIdentity, legacyTownIdentity, validateTownIdentity } from "./identity";
 import { validatePhysicalItems } from "./physical-items";
 import { validateCoffee } from "./coffee-validation";
 import { recoverCoffeeControl } from "./coffee-runtime";
@@ -251,14 +251,19 @@ export function validateTown(value: unknown): value is Town {
   // Six-actor experimental books require their own explicit migration. Current
   // v2 books are audited before any legacy normalization can conceal damage.
   if (hasEconomy && (version !== 2 || economyProblem(town))) return false;
-  const expectedIds = version === 1 ? LEGACY_IDS : AGENT_IDS;
+  const expectedIds =
+    version === 1
+      ? LEGACY_IDS
+      : Array.isArray(town.agents) && town.agents.length === BASE_AGENT_IDS.length
+        ? BASE_AGENT_IDS
+        : AGENT_IDS;
   if (!Array.isArray(town.agents) || town.agents.length !== expectedIds.length) return false;
   const ids = new Set(town.agents.map((a) => a?.id));
   if (expectedIds.some((id) => !ids.has(id))) return false;
   // Check existing identities before any repair. Corruption is recoverable data,
   // never permission to manufacture a replacement person or world.
   const hasIdentities = Object.hasOwn(town, "identityRegistry");
-  if (hasIdentities && (version !== 2 || !validateTownIdentity(town.identityRegistry, AGENT_IDS)))
+  if (hasIdentities && (version !== 2 || !validateTownIdentity(town.identityRegistry, expectedIds)))
     return false;
   // Capture legacy identity from the original input, before seed/roster/economy
   // migration changes its content. The same old file always restores the same IDs.
@@ -444,9 +449,22 @@ export function validateTown(value: unknown): value is Town {
     for (const memory of agent.memories ?? []) memory.id = unique(memory.id, "m");
   }
   town.nextId = Math.max(maxId, Number.isFinite(town.nextId) ? Math.floor(town.nextId) : 1);
-  if (version === 1) {
+  if (version === 1 || originalRoster.length === BASE_AGENT_IDS.length) {
     town.version = 2;
     addSpecialists(town);
+    if (hasIdentities) {
+      identityRegistry = extendTownIdentity(identityRegistry!, originalRoster, AGENT_IDS);
+    }
+    if (hasEconomy) {
+      const economy = (town as FundedTown).economy!;
+      // Existing books passed their audit above. Arrival introduces no money,
+      // rewrites no receipt and preserves every original opening account.
+      economy.openingBalances = Object.freeze({
+        ...economy.openingBalances,
+        "agent:socrates": 0,
+        "agent:estee": 0,
+      });
+    }
   }
   for (const agent of town.agents) refreshResidentStatus(town, agent);
   if (!hasEconomy) {
@@ -707,7 +725,11 @@ function writeTown(town: Town, intent: "save" | "initialize" | "replace"): SaveR
   }
   // The first identity migration keeps the exact pre-migration file. Do this
   // after the stale-tab check and before writing, and retain it across retries.
-  if (intent === "save" && previous !== null && !rawHasIdentities(previous)) {
+  if (
+    intent === "save" &&
+    previous !== null &&
+    (!rawHasIdentities(previous) || rawNeedsArrivals(previous))
+  ) {
     try {
       // A v1 source already remains under its untouched legacy key. Only the
       // pre-identity v2 file is about to be replaced and needs another raw copy.
@@ -837,6 +859,21 @@ function rawHasIdentities(text: string): boolean {
     const data = JSON.parse(text);
     const town = data && typeof data === "object" && "town" in data ? data.town : data;
     return Boolean(town && typeof town === "object" && Object.hasOwn(town, "identityRegistry"));
+  } catch {
+    return false;
+  }
+}
+
+function rawNeedsArrivals(text: string): boolean {
+  try {
+    const data = JSON.parse(text);
+    const town = data && typeof data === "object" && "town" in data ? data.town : data;
+    return (
+      town?.version === 2 &&
+      Array.isArray(town.agents) &&
+      town.agents.length === BASE_AGENT_IDS.length &&
+      BASE_AGENT_IDS.every((id) => town.agents.some((agent: { id?: unknown }) => agent?.id === id))
+    );
   } catch {
     return false;
   }

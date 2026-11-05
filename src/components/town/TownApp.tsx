@@ -55,7 +55,12 @@ import {
   recordPhysicalUsage,
 } from "@/game/physical-items";
 import type { ManuscriptControls } from "./ManuscriptTools";
-import { DiscussionPanel, type DiscussionControls, type DiscussionInput } from "./DiscussionPanel";
+import {
+  DiscussionPanel,
+  type DiscussionControls,
+  type DiscussionInput,
+  type DiscussionFacilitator,
+} from "./DiscussionPanel";
 import {
   advanceDiscussions,
   applyDiscussionCommand,
@@ -1163,7 +1168,7 @@ export function TownApp() {
     setTick((n) => n + 1);
   }
 
-  function proposeDiscussion(topic: string, facilitator: "northern" | "arwyn") {
+  function proposeDiscussion(topic: string, facilitator: DiscussionFacilitator) {
     const live = townRef.current;
     if (
       !live ||

@@ -1,6 +1,6 @@
 # THE GAME — project instructions
 
-THE GAME is a persistent, open-ended pixel town with seven residents and the player. Preserve its cast, tone, existing towns, and the premise that the player is a resident. The consolidated main combines released art, coherent conversation, Data and Amelia, opt-in provider routing and version-2 saves with version-1 import. Start with `docs/CURRENT_STATUS.md` for current source, deployment evidence and named ownership, and `docs/ROADMAP.md` for milestones.
+THE GAME is a persistent, open-ended pixel town with nine residents and the player. Preserve its cast, tone, existing towns, and the premise that the player is a resident. Socrates and Estée join the original seven through additive zero-balance arrival; older version-1 and version-2 towns retain their people, permanent identities and financial history. Start with `docs/CURRENT_STATUS.md` for current source, deployment evidence and named ownership, and `docs/ROADMAP.md` for milestones.
 
 ## Start and scope
 

@@ -31,15 +31,15 @@ after(async () => {
 });
 const agent = (town, id) => town.agents.find((resident) => resident.id === id);
 
-test("new towns have seven distinct residents plus the player", () => {
+test("new towns have nine distinct residents plus the player", () => {
   const town = createTown("Ada");
   assert.equal(town.version, 2);
   assert.deepEqual(
     town.agents.map((a) => a.id),
-    ["kevin", "arwyn", "northern", "baba", "sub", "player", "data", "amelia"],
+    ["kevin", "arwyn", "northern", "baba", "sub", "player", "data", "amelia", "socrates", "estee"],
   );
-  assert.equal(new Set(town.agents.map((a) => `${a.tile.x},${a.tile.y}`)).size, 8);
-  for (const id of ["data", "amelia"]) {
+  assert.equal(new Set(town.agents.map((a) => `${a.tile.x},${a.tile.y}`)).size, 10);
+  for (const id of ["data", "amelia", "socrates", "estee"]) {
     const resident = agent(town, id);
     assert.ok(walkable(resident.home.x, resident.home.y));
     assert.ok(walkable(resident.tile.x, resident.tile.y));
@@ -74,7 +74,7 @@ test("a genuine v1 town migrates once without replacing the original residents",
   const migrated = save.parseTownFile(fixture);
   assert.ok(migrated);
   assert.equal(migrated.version, 2);
-  assert.equal(migrated.agents.length, 8);
+  assert.equal(migrated.agents.length, 10);
   for (const previous of old.agents) {
     const next = agent(migrated, previous.id);
     for (const key of [
@@ -103,7 +103,7 @@ test("a genuine v1 town migrates once without replacing the original residents",
   addSpecialists(migrated);
   assert.deepEqual(migrated, once, "arrival is idempotent");
   const restored = save.parseTownFile(save.exportTown(migrated));
-  assert.equal(restored.agents.length, 8);
+  assert.equal(restored.agents.length, 10);
   assert.equal(agent(restored, "data").memories.filter((m) => /arrived/.test(m.text)).length, 1);
 });
 
@@ -127,7 +127,7 @@ test("migration retains the old bytes even if saving the new town fails", () => 
   fail = false;
   assert.equal(save.saveTownWithStatus(report.town).ok, true);
   assert.equal(items.get(save.LEGACY_TOWN_STORAGE_KEY), fixture);
-  assert.equal(save.readTownSave().town.agents.length, 8);
+  assert.equal(save.readTownSave().town.agents.length, 10);
   items.set(save.TOWN_STORAGE_KEY, "{broken newer save");
   assert.deepEqual(save.readTownSave(), { status: "unreadable", raw: "{broken newer save" });
   items.set(save.TOWN_STORAGE_KEY, "");
@@ -198,12 +198,12 @@ test("structured conversation turns and attribution survive export and reload", 
   assert.deepEqual(memory.turns, agent(town, "data").memories.at(-1).turns);
 });
 
-test("seven residents plan in bounded batches without losing any resident", () => {
+test("nine residents plan in bounded batches without losing any resident", () => {
   const town = createTown("Ada");
   town.day = 2;
   town.minute = 299;
   const planned = [];
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 5; i++) {
     const job = stepMinute(town, true);
     assert.equal(job.kind, "plan");
     assert.ok(job.agents.length >= 1 && job.agents.length <= 2);
@@ -219,7 +219,7 @@ test("seven residents plan in bounded batches without losing any resident", () =
   }
   assert.deepEqual(
     planned.sort(),
-    ["kevin", "arwyn", "northern", "baba", "sub", "data", "amelia"].sort(),
+    ["kevin", "arwyn", "northern", "baba", "sub", "data", "amelia", "socrates", "estee"].sort(),
   );
 });
 
@@ -233,14 +233,14 @@ test("dawn resumes unapplied plans after a reload, even after the normal batch w
   // The request was interrupted before its result reached the saved town.
   restored.minute = 310;
   const planned = [];
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 5; i++) {
     const job = stepMinute(restored, true);
     assert.equal(job.kind, "plan");
     assert.ok(job.agents.length <= 2);
     planned.push(...job.agents);
     applyResult(restored, offlineResult(restored, job));
   }
-  assert.equal(new Set(planned).size, 7);
+  assert.equal(new Set(planned).size, 9);
   assert.ok(restored.agents.filter((a) => a.id !== "player").every((a) => a.plan.day === 2));
 });
 
@@ -260,7 +260,7 @@ test("specialists remain themselves through a week and a save round trip", () =>
   advanceTown(town, 7 * 1440);
   const loaded = save.parseTownFile(save.exportTown(town));
   assert.ok(loaded);
-  for (const id of ["data", "amelia"]) {
+  for (const id of ["data", "amelia", "socrates", "estee"]) {
     const resident = agent(loaded, id);
     assert.ok(Number.isFinite(resident.money));
     assert.ok(walkable(resident.tile.x, resident.tile.y));

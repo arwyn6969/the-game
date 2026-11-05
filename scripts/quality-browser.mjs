@@ -275,7 +275,7 @@ try {
     await importFile(page, legacy, "legacy-six-resident-town.json");
     const migrated = await town(page);
     assert.equal(migrated.version, 2);
-    assert.equal(migrated.agents.length, 8);
+    assert.equal(migrated.agents.length, 10);
     assert.ok(migrated.economy);
     result.v1Migration = true;
     const identities = migrated.identityRegistry;
@@ -340,6 +340,8 @@ try {
     await page.screenshot({ path: join(out, `${viewport.name}.png`) });
     await context.close();
   }
+  const { runCharacterChecks } = await import("./character-browser.mjs");
+  report.characters = await runCharacterChecks(browser, target.href, join(out, "characters"));
   const { runLibraryChecks } = await import("./library-browser.mjs");
   report.library = await runLibraryChecks(browser, target.href, join(out, "library"));
   const { runPlayerControlChecks } = await import("./player-controls-browser.mjs");

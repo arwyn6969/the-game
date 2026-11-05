@@ -1,4 +1,4 @@
-export const AGENT_IDS = [
+export const BASE_AGENT_IDS = [
   "kevin",
   "arwyn",
   "northern",
@@ -8,6 +8,8 @@ export const AGENT_IDS = [
   "data",
   "amelia",
 ] as const;
+
+export const AGENT_IDS = [...BASE_AGENT_IDS, "socrates", "estee"] as const;
 
 export type AgentId = (typeof AGENT_IDS)[number];
 
@@ -50,6 +52,8 @@ export const NPC_IDS = [
   "sub",
   "data",
   "amelia",
+  "socrates",
+  "estee",
 ] as const satisfies readonly AgentId[];
 
 export type NpcId = (typeof NPC_IDS)[number];
