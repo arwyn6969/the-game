@@ -1,0 +1,108 @@
+{
+  "date": "2026-11-05",
+  "startingHead": "966baae69230d274230763f1156f746be328c636",
+  "runtimeChanged": false,
+  "focusedDomainRuntimeTests": {
+    "passed": 36,
+    "failed": 0
+  },
+  "existingBrowserHarness": {
+    "journeys": 8,
+    "passed": 8,
+    "newRaceJourneys": 4,
+    "failures": []
+  },
+  "build": {
+    "credentialFree": true,
+    "migrationSkipped": true
+  },
+  "races": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "winner": "ready-first",
+      "phase": "ready",
+      "cups": 1,
+      "sales": 1,
+      "refunds": 0,
+      "playerCoins": 2,
+      "refundHold": 0,
+      "originalWageHold": 5,
+      "checks": [
+        "ready-first: both actual tab writers queue before release; one durable outcome, never cup plus refund; original sale/wage hold and 90 coins preserved through stale retry/recovery"
+      ],
+      "errors": [],
+      "providerRequests": []
+    },
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "winner": "cancel-first",
+      "phase": "refunded",
+      "cups": 0,
+      "sales": 1,
+      "refunds": 1,
+      "playerCoins": 4,
+      "refundHold": 0,
+      "originalWageHold": 5,
+      "checks": [
+        "cancel-first: both actual tab writers queue before release; one durable outcome, never cup plus refund; original sale/wage hold and 90 coins preserved through stale retry/recovery"
+      ],
+      "errors": [],
+      "providerRequests": []
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "winner": "ready-first",
+      "phase": "ready",
+      "cups": 1,
+      "sales": 1,
+      "refunds": 0,
+      "playerCoins": 2,
+      "refundHold": 0,
+      "originalWageHold": 5,
+      "checks": [
+        "ready-first: both actual tab writers queue before release; one durable outcome, never cup plus refund; original sale/wage hold and 90 coins preserved through stale retry/recovery"
+      ],
+      "errors": [],
+      "providerRequests": []
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "winner": "cancel-first",
+      "phase": "refunded",
+      "cups": 0,
+      "sales": 1,
+      "refunds": 1,
+      "playerCoins": 4,
+      "refundHold": 0,
+      "originalWageHold": 5,
+      "checks": [
+        "cancel-first: both actual tab writers queue before release; one durable outcome, never cup plus refund; original sale/wage hold and 90 coins preserved through stale retry/recovery"
+      ],
+      "errors": [],
+      "providerRequests": []
+    }
+  ],
+  "limitations": [
+    "Deterministic Web Lock queue order in pairs of actual Chromium tabs; not a shared-server transaction test",
+    "Prepared fixture has 29 actual source work minutes; completion/cancellation use ordinary Hour/Cancel UI",
+    "Reload releases unfinished equipment assignments; all financial/progress facts compared"
+  ],
+  "liveInferenceCalls": 0,
+  "productionChanged": false
+}

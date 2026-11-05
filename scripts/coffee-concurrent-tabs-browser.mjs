@@ -7,7 +7,8 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 
 // Real pairs of tabs share localStorage and Web Locks. Initial time/poses are
-// synthetic; all café choices, money movements and work use ordinary controls.
+// synthetic. Race fixtures prepare 29 actual source work minutes; subsequent
+// competing completion/cancellation and saves use ordinary browser controls.
 const target = new URL(process.env.GAME_COFFEE_TABS_QA_URL || "http://127.0.0.1:8201/");
 assert.equal(target.protocol, "http:");
 assert.ok(["127.0.0.1", "localhost"].includes(target.hostname));
@@ -18,7 +19,7 @@ const report = {
   previewManagedByHarness: !process.env.GAME_COFFEE_TABS_QA_URL,
   liveInferenceCalls: 0,
   authChanged: false,
-  syntheticFaults: ["A labelled held Web Lock queues two actual tabs' service-save attempts"],
+  syntheticFaults: ["A labelled held Web Lock queues two actual tabs' competing save attempts"],
   limitations: [
     "One Chromium browser context per journey; emulated sizes, no physical devices or human acceptance",
   ],
@@ -116,6 +117,26 @@ async function hour(page) {
   await button.click();
   await button.and(page.locator('[aria-busy="false"]')).waitFor({ timeout: 20000 });
 }
+async function holdSaves(page) {
+  await page.evaluate(async () => {
+    await new Promise((acquired) => {
+      void navigator.locks.request("the-game-town-save", async () => {
+        acquired();
+        await new Promise((resolve) => {
+          window.__coffeeTabsUnlock = resolve;
+        });
+      });
+    });
+  });
+}
+async function waitForSaveQueue(page, count) {
+  await page.waitForFunction(
+    async (count) =>
+      (await navigator.locks.query()).pending.filter((lock) => lock.name === "the-game-town-save")
+        .length >= count,
+    count,
+  );
+}
 async function conflict(page, winnerRaw, result, name) {
   await page.getByRole("button", { name: "Load saved town", exact: true }).waitFor();
   assert.equal(
@@ -183,9 +204,22 @@ async function recover(page, expected, result, name) {
     page,
     `${result.viewport.name}-${result.scenario}-${name}-recovered.json`,
   );
+  const expectedFacts = durableFacts(expected);
+  // Reload revokes unfinished equipment leases. Preserve every financial and
+  // preparation field while accounting for those three documented control edits.
+  expectedFacts.orders = expectedFacts.orders.map((order) =>
+    order.assignedAgreementId && ["queued", "brewing", "placing"].includes(order.phase)
+      ? {
+          ...order,
+          assignedAgreementId: null,
+          assignmentRevision: order.assignmentRevision + 1,
+          revision: order.revision + 1,
+        }
+      : order,
+  );
   assert.deepEqual(
     durableFacts(restored.town),
-    durableFacts(expected),
+    expectedFacts,
     "Recovery retains every financial, cup, work-progress and identity fact",
   );
   assert.equal(
@@ -208,6 +242,10 @@ try {
   const { exportTown, readTownFile } = await source.ssrLoadModule("/src/game/save.ts");
   readSnapshot = readTownFile;
   const { auditEconomy } = await source.ssrLoadModule("/src/game/economy.ts");
+  const { advanceTown } = await source.ssrLoadModule("/src/game/sim.ts");
+  const { applyCoffeeAction, makeCoffeeCommand } =
+    await source.ssrLoadModule("/src/game/coffee.ts");
+  const { requestCoffeeStaff } = await source.ssrLoadModule("/src/game/coffee-residents.ts");
   function fixture(name, worker) {
     const town = createTown(name);
     town.minute = 960;
@@ -223,6 +261,23 @@ try {
     const raw = exportTown(town);
     assert.equal(readTownFile(raw).status, "ready");
     return raw;
+  }
+  function raceFixture(name) {
+    const town = JSON.parse(fixture(name, false)).town;
+    const ok = (result) =>
+      assert.equal(result.ok, true, result.reason ?? result.message ?? result.reply);
+    ok(applyCoffeeAction(town, makeCoffeeCommand(town, "player", "enable")));
+    ok(requestCoffeeStaff(town, makeCoffeeCommand(town, "player", "staff-request")));
+    ok(applyCoffeeAction(town, makeCoffeeCommand(town, "player", "buy")));
+    person(town, "player").tile = { x: 8, y: 19 }; // labelled adjacent setup input
+    for (let minute = 0; minute < 80 && ownOrder(town).placeMinutes < 9; minute++)
+      advanceTown(town, 1);
+    assert.equal(ownOrder(town).brewMinutes, 20);
+    assert.equal(ownOrder(town).placeMinutes, 9);
+    assert.equal(ownOrder(town).phase, "placing");
+    assert.equal(total(town), 90);
+    town.paused = true;
+    return exportTown(town);
   }
   if (!process.env.GAME_COFFEE_TABS_QA_URL) {
     preview = spawn(
@@ -267,7 +322,12 @@ try {
     { name: "desktop", width: 1280, height: 800 },
     { name: "phone", width: 390, height: 844 },
   ]) {
-    for (const scenario of ["refund-and-owned-cup", "queued-service-control"]) {
+    for (const scenario of [
+      "refund-and-owned-cup",
+      "queued-service-control",
+      "ready-first",
+      "cancel-first",
+    ]) {
       const result = {
         viewport,
         scenario,
@@ -321,14 +381,92 @@ try {
         "function",
         "Real browser Web Locks are required for this concurrency packet",
       );
+      const racing = ["ready-first", "cancel-first"].includes(scenario);
       await importTown(
         first,
-        fixture(`Tabs ${viewport.name}`, scenario === "queued-service-control"),
+        racing
+          ? raceFixture(`Tabs ${viewport.name}`)
+          : fixture(`Tabs ${viewport.name}`, scenario === "queued-service-control"),
       );
       await coffeePanel(first);
-      await first.getByRole("button", { name: "Start café trial", exact: true }).click();
-      await waitStored(first, (town) => town.coffee?.enabled);
-      if (scenario === "refund-and-owned-cup") {
+      if (!racing) {
+        await first.getByRole("button", { name: "Start café trial", exact: true }).click();
+        await waitStored(first, (town) => town.coffee?.enabled);
+      }
+      if (racing) {
+        // Reload/import revoked the prepared assignment. Re-authorize only
+        // the ready tab, then let the cancel tab read that same saved origin.
+        await first
+          .getByRole("button", { name: "Ask Kevin for staffed service", exact: true })
+          .click();
+        await waitStored(first, (town) =>
+          town.coffee.routines.some(
+            (routine) => routine.worker === "northern" && routine.status === "active",
+          ),
+        );
+        const before = await stored(first);
+        const targetOrder = ownOrder(before);
+        const staff = before.economy.work.agreements.find(
+          (agreement) => agreement.worker === "northern" && agreement.kind === "cafe-shift",
+        );
+        const second = (activePage = await context.newPage());
+        watch(second);
+        await ready(second);
+        await coffeePanel(second);
+        await closePanel(first);
+        await holdSaves(first);
+        const queueReady = () => first.getByRole("button", { name: "Hour", exact: true }).click();
+        const queueCancel = () =>
+          second
+            .getByRole("button", { name: "Cancel for a full refund — 2 coins", exact: true })
+            .click();
+        const readyWins = scenario === "ready-first";
+        await (readyWins ? queueReady() : queueCancel());
+        await waitForSaveQueue(first, 1);
+        await (readyWins ? queueCancel() : queueReady());
+        await waitForSaveQueue(first, 2);
+        await first.evaluate(() => window.__coffeeTabsUnlock());
+        const loser = readyWins ? second : first;
+        await loser.getByRole("button", { name: "Load saved town", exact: true }).waitFor();
+        await first
+          .getByRole("button", { name: "Hour", exact: true })
+          .and(first.locator('[aria-busy="false"]'))
+          .waitFor();
+        const winnerRaw = await storedRaw(first);
+        const winner = JSON.parse(winnerRaw).town;
+        const ticket = winner.coffee.orders.find((order) => order.id === targetOrder.id);
+        const cups = winner.coffee.cups.filter((cup) => cup.orderId === targetOrder.id);
+        const sales = winner.economy.transactions.filter(
+          (transaction) => transaction.id === ticket.saleId,
+        );
+        const refunds = winner.economy.transactions.filter(
+          (transaction) => transaction.id === ticket.refundId,
+        );
+        assert.equal(ticket.phase, readyWins ? "ready" : "refunded");
+        assert.equal(cups.length, readyWins ? 1 : 0);
+        assert.equal(sales.length, 1);
+        assert.equal(refunds.length, readyWins ? 0 : 1);
+        assert.equal(person(winner, "player").money, readyWins ? 2 : 4);
+        assert.equal(winner.economy.holds.find((hold) => hold.id === ticket.holdId).remaining, 0);
+        assert.equal(winner.economy.holds.find((hold) => hold.id === staff.holdId).remaining, 5);
+        assert.deepEqual(winner.identityRegistry, before.identityRegistry);
+        assert.equal(total(winner), 90);
+        assert.deepEqual(auditEconomy(winner), []);
+        const losingCopy = await conflict(loser, winnerRaw, result, scenario);
+        assert.equal(
+          losingCopy.coffee.orders.find((order) => order.id === targetOrder.id).phase,
+          readyWins ? "refunded" : "ready",
+        );
+        await recover(loser, winner, result, scenario);
+        assert.equal(
+          await storedRaw(loser),
+          winnerRaw,
+          "Recovery cannot replace the winning canonical outcome",
+        );
+        result.checks.push(
+          `${scenario}: both actual tab writers queue before release; one durable outcome, never cup plus refund; original sale/wage hold and 90 coins preserved through stale retry/recovery`,
+        );
+      } else if (scenario === "refund-and-owned-cup") {
         await first
           .getByRole("button", { name: "Ask Kevin for staffed service", exact: true })
           .click();
@@ -515,32 +653,11 @@ try {
           first.evaluate(() => document.visibilityState),
           second.evaluate(() => document.visibilityState),
         ]);
-        await first.evaluate(async () => {
-          const acquired = new Promise((resolve) => {
-            window.__coffeeTabsLockAcquired = resolve;
-          });
-          void navigator.locks.request("the-game-town-save", async () => {
-            window.__coffeeTabsLockAcquired();
-            await new Promise((resolve) => {
-              window.__coffeeTabsUnlock = resolve;
-            });
-          });
-          await acquired;
-        });
+        await holdSaves(first);
         await first.getByRole("button", { name: "Start serving", exact: true }).click();
-        await first.waitForFunction(
-          async () =>
-            (await navigator.locks.query()).pending.filter(
-              (lock) => lock.name === "the-game-town-save",
-            ).length >= 1,
-        );
+        await waitForSaveQueue(first, 1);
         await second.getByRole("button", { name: "Start serving", exact: true }).click();
-        await first.waitForFunction(
-          async () =>
-            (await navigator.locks.query()).pending.filter(
-              (lock) => lock.name === "the-game-town-save",
-            ).length >= 2,
-        );
+        await waitForSaveQueue(first, 2);
         await first.evaluate(() => window.__coffeeTabsUnlock());
         await second.getByRole("button", { name: "Load saved town", exact: true }).waitFor();
         const winnerRaw = await storedRaw(first);

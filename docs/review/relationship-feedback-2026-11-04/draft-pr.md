@@ -21,6 +21,13 @@ either settlement order. Conflicting tabs preserve the winner's exact save and
 complete losing copies, then recover cup/wage/attendance rights with service
 authorization revoked.
 
+Both actual-tab ready-versus-cancel save orders now pass at desktop/phone sizes.
+Ready-first preserves one cup and no refund; cancel-first preserves one refund
+and no cup. Each keeps the original sale, five-coin wage hold, identities and all
+90 coins. Both writers queue before the Web Lock is released; rejected writes,
+retries and explicit recovery cannot replace the winning saved bytes. This reuses
+the existing harness and adds no runtime code.
+
 Pinned rollback source `c183e32` (the recorded rollback Worker) is built and
 executed on the same disposable browser origin: current → old save/export →
 current. Four desktop/phone enabled/feature-off journeys preserve ready cups,
@@ -33,9 +40,13 @@ Validation: Node 24.22.1; 1,200 script + 55 typed tests (505 town), typecheck,
 lint (one inherited warning), credential-free build/migration skip, clean
 diagnostics and four final downgrade/recovery journeys pass. The pinned historical
 build also passes with migration skipped. New source/browser checks run in Verify.
-[Starting-head CI at `6e29a0c`](https://github.com/arwyn6969/the-game/actions/runs/41841845121)
+[Starting-head CI at `966baae`](https://github.com/arwyn6969/the-game/actions/runs/41856251217)
 passed every step. The updated head requires its own CI qualification. No
 financial/save-loss defect surfaced for this rollback candidate.
+
+5 November race follow-up: 36 focused domain/runtime tests, all eight tab browser
+journeys, targeted lint/formatting and a credential-free build pass. The normal
+full Verify runs on the consolidated update; its result is separate from prior CI.
 
 Evidence: `docs/review/coffee-downgrade-2026-11-04/`,
 `docs/review/coffee-payroll-tabs-2026-11-04/`,
@@ -44,7 +55,7 @@ packets linked from current status. Full-purse source fixtures explicitly use
 synthetic opening funds. The earlier concurrent-tab journeys conserve the ordinary
 90 coins; the downgrade fixture conserves its disclosed 2,081-coin opening.
 
-Advances #65. Arbitrary older/deployed/PWA rollback, simultaneous ready-versus-cancel,
+Advances #65. Arbitrary older/deployed/PWA rollback, broader browser/server races,
 broader browsers/physical devices/screen readers, human comprehension/enjoyment
 and actual hosted/personal-provider acceptance remain open. Automated fixtures
 do not establish those gates or indefinite sustainability. No production changes,

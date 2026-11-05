@@ -1,5 +1,14 @@
 # Café payroll/refund and concurrent-tab qualification
 
+5 November follow-up: the existing tab harness now covers ready-first and
+cancel-first queued saves at both sizes. All eight journeys and 36 focused
+domain/runtime tests pass. No product defect or runtime edit was needed; one
+canonical cup-or-refund outcome, original wage hold and 90 coins survive retry
+and recovery. [Results](../review/coffee-payroll-tabs-2026-11-04/ready-cancel-results-2026-11-05.json).
+The user requested faster delivery. Stop extending automatic acceptance packets
+after this check; next prioritize PR integration review and a brief human playtest.
+Normal full Verify runs once after the consolidated push; no merge/publication.
+
 Owner: this Codex chat; `product/`, `codex/relationship-feedback`, draft PR #71.
 Starting head `0f25093`, main base `49cf76f`, new coverage code `9549a90`.
 User authorized checks, reproduced fixes and PR updates on 4 November.

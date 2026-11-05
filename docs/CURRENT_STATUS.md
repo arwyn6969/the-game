@@ -1,6 +1,6 @@
 # Current project status
 
-Updated 4 November 2026. This file is the single current source/deployment and assignment index. Earlier dated statements are evidence, not active instructions.
+Updated 5 November 2026. This file is the single current source/deployment and assignment index. Earlier dated statements are evidence, not active instructions.
 
 ## Source and deployment
 
@@ -20,6 +20,16 @@ Publication used no model calls; subsequent authorized play tested one fresh
 hosted Arwyn reply successfully. Grok and historical testing automations remain paused.
 
 ## Next work, in order
+
+5 November: this Codex chat owns the bounded ready-versus-cancel check on PR #71,
+starting at `966baae`, main base `49cf76f`. Reuse the existing concurrent-tab
+harness for both save orderings; preserve one outcome, the wage hold and 90 coins.
+Both orderings now pass at both sizes, along with all eight tab journeys and 36
+focused domain/runtime tests. No runtime defect or edit was needed. [Results](review/coffee-payroll-tabs-2026-11-04/ready-cancel-results-2026-11-05.json).
+The starting head's [Verify](https://github.com/arwyn6969/the-game/actions/runs/41856251217)
+passed every step. The user requested faster delivery: finish this focused gap,
+update the PR once, then prioritize integration review and a short human playtest
+over further automatic edge-case packets. Merge/publication remain separate.
 
 Current owner: this Codex chat, branch `codex/relationship-feedback`, fetched main
 base `49cf76f2236f12ff79b092f4e1df84e13f9b5a42`. Runtime fix `ea55743` and
@@ -98,7 +108,7 @@ and final browser journeys pass; updated-head CI is separate. [Evidence and limi
 · [handoff](handoffs/coffee-downgrade-2026-11-04.md).
 
 This qualifies only the pinned local browser rollback, not arbitrary older builds,
-deployed/PWA/subpath rollback. No production/provider changes. Simultaneous ready/cancel,
+deployed/PWA/subpath rollback. No production/provider changes. Broader browser/server races,
 broader browsers, real auth/model compatibility, physical devices/screen readers
 and human acceptance remain open.
 

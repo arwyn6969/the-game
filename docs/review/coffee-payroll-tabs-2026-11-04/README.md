@@ -1,5 +1,18 @@
 # Café payroll, refunds and concurrent tabs
 
+5 November extension: both actual-tab ready-versus-cancel save orders now pass
+at desktop and phone sizes, using the existing harness. Ready-first retains one
+cup and no refund; cancel-first retains one refund and no cup. Each keeps one
+sale, the original five-coin wage hold, identities and all 90 coins. Both writers
+queue behind a real Web Lock before release; stale retry/recovery preserves the
+winner's exact saved bytes. Prepared fixtures use 29 actual source work minutes;
+the competing actions are ordinary Hour/Cancel controls. Reload may revoke an
+unfinished NPC equipment assignment; financial and preparation records stay exact.
+[Results](ready-cancel-results-2026-11-05.json): 36 focused source tests and all
+eight existing/new browser journeys pass. No runtime defect was found and no
+runtime change was needed. New checks run in the existing Verify step. This closes
+the named controlled browser race gap; broader browser/server races remain separate.
+
 4 November 2026. Code `9549a901c83aa09c9f8d7e2a104ba74bc5f1b790` on
 `codex/relationship-feedback`, continuing draft [PR #71](https://github.com/arwyn6969/the-game/pull/71)
 from `0f25093` and main base `49cf76f`. The user authorized CI follow-up,
