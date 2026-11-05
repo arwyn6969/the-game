@@ -10,6 +10,7 @@ import { placeTitle, zoneAt } from "@/game/world";
 import { inTalkRange } from "./talk";
 import { heldItem } from "@/game/physical-items";
 import { hasSharedHistory, sharedActivities } from "./relationship-history";
+import { publicLearningHistory, type PublicLearningStage } from "@/game/learning";
 
 const nameOf = (town: Town, id: AgentId) => town.agents.find((a) => a.id === id)?.name ?? id;
 const dateOf = (event: { day: number; minute: number }) =>
@@ -319,6 +320,52 @@ export function CharacterProgress({
         ))}
       </ul>
     </section>
+  );
+}
+
+const learningStageLabels: Record<PublicLearningStage, string> = {
+  "needs-correction": "Needs correction",
+  "ready-to-try": "Ready to try",
+  "observed-reuse": "Observed a test",
+  "demonstrated-reuse": "Demonstrated once",
+  "lookup-succeeded": "One lookup succeeded",
+};
+
+export function CharacterLearning({
+  town,
+  id,
+  replay,
+}: {
+  town: Town;
+  id: AgentId;
+  replay: boolean;
+}) {
+  if (replay) return null;
+  const history = publicLearningHistory(town, id);
+  const latest = history.at(-1);
+  return (
+    <details className="character-reflections character-learning">
+      <summary>Learning you've seen</summary>
+      {!latest ? (
+        <p className="character-note">No shared learning evidence yet.</p>
+      ) : (
+        <>
+          <p className="character-note">Last known state: {learningStageLabels[latest.stage]}.</p>
+          <ol>
+            {history.map((entry) => (
+              <li key={entry.id}>
+                <small>{dateOf(entry)}</small>
+                <p className="learning-stage">{learningStageLabels[entry.stage]}</p>
+                <p>{entry.summary}</p>
+              </li>
+            ))}
+          </ol>
+          <p className="character-note">
+            Only evidence known to both you and this resident appears here.
+          </p>
+        </>
+      )}
+    </details>
   );
 }
 

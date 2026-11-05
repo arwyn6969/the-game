@@ -5,6 +5,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createServer } from "vite";
+import { residentLearningFixture } from "./fixtures/resident-learning.mjs";
 
 const cacheDir = await mkdtemp(join(tmpdir(), "town-resident-learning-"));
 const server = await createServer({
@@ -21,7 +22,7 @@ after(async () => {
   await rm(cacheDir, { recursive: true, force: true });
 });
 const { createTown } = await server.ssrLoadModule("/src/game/town.ts");
-const { libraryActions, applyLibraryAction, advanceLibraryProject, validateLibraryState } =
+const { advanceLibraryProject, validateLibraryState } =
   await server.ssrLoadModule("/src/game/community.ts");
 const { learningContext } = await server.ssrLoadModule("/src/game/learning.ts");
 const { buildPrompt } = await server.ssrLoadModule("/src/game/prompt.ts");
@@ -30,66 +31,12 @@ const { initializePhysicalItems, startPhysicalSession, stopPhysicalSession } =
 const { createLibraryDiscussion, applyDiscussionCommand } = await server.ssrLoadModule(
   "/src/game/discussions.ts",
 );
-const { advanceTown } = await server.ssrLoadModule("/src/game/sim.ts");
 const { exportTown, parseTownFile } = await server.ssrLoadModule("/src/game/save.ts");
 const { makeMemory, pushMemory } = await server.ssrLoadModule("/src/game/memory.ts");
 const { auditEconomy } = await server.ssrLoadModule("/src/game/economy.ts");
 const { ANCHORS } = await server.ssrLoadModule("/src/game/world.ts");
-const resident = (town, id) => town.agents.find((agent) => agent.id === id);
-const state = (town) => town.economy.projects.library;
-const act = (town, kind, argument) => {
-  const action = libraryActions(town).find((action) => {
-    const [candidate, arg] = JSON.parse(action.id);
-    return candidate === kind && (argument === undefined || argument === arg);
-  });
-  assert.ok(action, `${kind}:${argument} must be available`);
-  assert.equal(action.disabledReason, undefined, action.disabledReason);
-  const result = applyLibraryAction(town, action.id);
-  assert.equal(result.ok, true, result.reply);
-  return result;
-};
-function testedIndex(mapping = "Birch") {
-  const town = createTown("Mira");
-  act(town, "accept", "reference");
-  resident(town, "player").tile = { ...ANCHORS.library };
-  for (const key of [
-    "card:equipment",
-    "card:dorm",
-    "card:room",
-    "card:kevin",
-    "box:Birch",
-    "box:Alder",
-    "box:Cedar",
-  ])
-    act(town, "inspect", key);
-  act(town, "report", "reference");
-  act(town, "request", "source");
-  for (const [record, box] of [
-    ["hobbs-equipment", "Birch"],
-    ["dorm-repair", "Alder"],
-    ["room-access", mapping],
-  ])
-    act(town, "map", `${record}:${box}`);
-  act(town, "submit", "player");
-  act(town, "test");
-  for (let minute = 0; minute < 100 && state(town).lookup.status === "routing"; minute++)
-    advanceTown(town, 1);
-  assert.equal(state(town).lookup.status, "done");
-  return town;
-}
-function reviewFailure(town, observer = false) {
-  town.day++;
-  town.minute = 8 * 60;
-  resident(town, "arwyn").tile = { x: 43, y: 20 };
-  resident(town, "data").tile = observer ? { x: 44, y: 20 } : { x: 6, y: 6 };
-  advanceLibraryProject(town);
-  assert.equal(learningContext(town, "arwyn")[0]?.status, "needs-correction");
-}
-function correct(town) {
-  resident(town, "player").tile = { ...ANCHORS.library };
-  act(town, "correct");
-  assert.equal(learningContext(town, "arwyn")[0]?.status, "ready-to-try");
-}
+const { resident, state, act, testedIndex, reviewFailure, correct } =
+  await residentLearningFixture(server);
 const reuseEvents = (town) =>
   state(town).events.filter((event) => event.id.includes("method-reuse"));
 

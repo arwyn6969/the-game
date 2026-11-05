@@ -25,6 +25,7 @@ import { ArcadeMark, PixelUniverse } from "./ArcadeArt";
 import { TownUiIcon } from "./appearance/TownUiIcon";
 import {
   CharacterOverview,
+  CharacterLearning,
   CharacterProgress,
   CharacterReflections,
   CharacterStrengths,
@@ -4901,6 +4902,7 @@ function Mind({
             </section>
           )}
           <CharacterOverview town={town} agent={agent} watch={watch} replay={replay} />
+          <CharacterLearning town={town} id={agent.id} replay={replay} />
           {companionControls}
           {agent.id !== "player" && (
             <div className="character-overview-actions">

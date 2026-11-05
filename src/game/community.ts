@@ -1390,6 +1390,41 @@ export type LibraryLearningEvidence = {
   reuse?: { id: string; summary: string; demonstrator: AgentId };
 };
 
+/** Read-only shared receipts, independent of the resident-only learning prompt. */
+export function publicLibraryLearningEvents(town: Town, resident: AgentId) {
+  const state = getState(town);
+  if (!state || validateLibraryState(town).length || !failedLibraryTrial(town, state)) return [];
+  // A posted notice or project-wide view is not a receipt. Match a real event
+  // and require an observation source, so chat/reflection claims cannot qualify.
+  const knows = (item: PublicEvent, id: AgentId) =>
+    item.participants.includes(id) ||
+    item.witnesses.includes(id) ||
+    agentById(town, id).memories.some(
+      (memory) =>
+        memory.type === "observe" &&
+        memory.source === "event" &&
+        !memory.seed &&
+        memory.text === item.text &&
+        learningTime(memory) >= learningTime(item) &&
+        learningTime(memory) <= learningTime(town),
+    );
+  const shared = state.events.filter((item) => knows(item, resident) && knows(item, "player"));
+  const failure = shared.find(
+    (item) =>
+      item.id === "library:lookup" || item.id === `library:tomorrow:${state.lookup!.revision}`,
+  );
+  const revision = correctedLibraryMethod(town, state);
+  const correction = revision && shared.find((item) => item.id === "library:correction");
+  const reuse = revision && shared.find((item) => item.id === reuseId(revision));
+  return [
+    ...(failure ? [{ ...failure, kind: "failure" as const }] : []),
+    ...(correction ? [{ ...correction, kind: "correction" as const }] : []),
+    ...(reuse ? [{ ...reuse, kind: "reuse" as const }] : []),
+  ]
+    .sort((a, b) => learningTime(a) - learningTime(b))
+    .map(({ id, day, minute, kind }) => ({ id, day, minute, kind }));
+}
+
 /** Only this resident's experienced or explicitly read project evidence is available. */
 export function libraryLearningEvidence(
   town: Town,

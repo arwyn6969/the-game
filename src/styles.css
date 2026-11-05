@@ -1844,6 +1844,20 @@ textarea.field {
 .character-reflections small {
   color: var(--color-muted);
 }
+.character-learning ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.character-learning li {
+  border-left: 2px solid var(--color-purple);
+  padding: 0.5rem 0.75rem;
+  margin-top: 0.7rem;
+  line-height: 1.6;
+}
+.character-learning .learning-stage {
+  font-weight: 600;
+}
 .contribution-list {
   list-style: none;
   padding: 0 !important;
