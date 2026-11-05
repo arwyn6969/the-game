@@ -1,8 +1,8 @@
 import type { Agent, ThinkJob, Town } from "./types";
-import { absMinute, logRetrieval, scoreResidentMemories } from "./memory";
+import { absMinute, logRetrieval, scoreResidentContext } from "./memory";
 import { clip, mentionsSeed, plain } from "./text";
 import { placeTitle, zoneAt } from "./world";
-import { memorySource, sharedMemories } from "./conversation";
+import { memorySource, recentConversation, sharedMemories } from "./conversation";
 
 // Both prompt construction and its diagnostic use this resident's own memory stream.
 export function promptMemories(town: Town, agent: Agent, job: ThinkJob) {
@@ -16,19 +16,23 @@ export function promptMemories(town: Town, agent: Agent, job: ThinkJob) {
       ? plain(job.text, 400)
       : job.kind === "act"
         ? "manuscript physical action previous result own creative intentions"
-        : job.kind === "talk"
-          ? `${job.a} ${job.b}`
+        : other
+          ? recentConversation({ ...agent, memories: stream }, other.id, 1)
+              .map((turn) => turn.text)
+              .join(" ")
           : job.kind;
-  const query = `${question} ${placeTitle(zoneAt(agent.tile.x, agent.tile.y))} ${(other
+  const background = `${placeTitle(zoneAt(agent.tile.x, agent.tile.y))} ${(other
     ? []
     : (agent.threads ?? [])
   )
     .filter((t) => t.open)
     .map((t) => t.text)
     .join(" ")} ${other ? "" : (agent.want ?? "")}`;
-  const ranked = scoreResidentMemories(
+  const query = `${question} ${background}`;
+  const ranked = scoreResidentContext(
     { id: agent.id, memories: stream },
-    query,
+    question,
+    background,
     absMinute(town.day, town.minute),
   );
   const selected = ranked.slice(0, 4);

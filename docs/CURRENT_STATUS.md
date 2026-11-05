@@ -2,6 +2,33 @@
 
 Updated 5 November 2026. This file is the single current source/deployment and assignment index. Earlier dated statements are evidence, not active instructions.
 
+## Resident growth — current local implementation
+
+5 November 2026: this chat owns `codex/resident-growth` in the reused clean
+`a02-economy/` checkout, starting from freshly fetched main
+`49cf76f2236f12ff79b092f4e1df84e13f9b5a42`. The historical branch is preserved;
+the PR #71 and F1 checkouts remain untouched. Scope: cross-cast recall,
+privacy-safe personality context, distinct relationship evidence, grounded
+identity revisions and a bounded library method-reuse demonstration. Root owns
+integration/effects/relationships; delegated edits own memory/retrieval/interests,
+prompts, and library learning respectively. No persisted schema migration.
+Acceptance: old direct/indirect recall, private-knowledge isolation, no fabricated
+trust or competence, failure/correction/different-record reuse and save/reload,
+plus repository source checks and credential-free build. This is local work;
+shared-server continuity, full lifetime storage, general research/tools, new cast
+biographies and live-model/human acceptance remain separate milestones.
+
+Local implementation is complete: 27 focused resident-development cases, 511 town
+cases, and 1,206 script + 55 typed cases pass on Node 24.22.1. Typecheck, lint
+(zero errors; one inherited warning), diagnostics and credential-free build pass;
+database migration is explicitly skipped. Independent reviews resolved internal
+provenance disclosure, sleeping/competing-activity reuse, contradictory chronology
+and practice after financial closure. No UI files, providers, production settings,
+remote branch or live town changed. Browser/live-model/human acceptance and
+integration with PR #71/F1 remain separate.
+[Implementation evidence and broader improvement outcomes](review/resident-growth-2026-11-05/README.md)
+· [handoff](handoffs/resident-growth-2026-11-05.md).
+
 ## Source and deployment
 
 | Layer                   | State                                                                                                                                                                  |

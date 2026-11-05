@@ -316,6 +316,8 @@ export type PlanDraft = {
   blocks: Block[];
   want?: string;
   selfSentence?: string;
+  selfEvidence?: string[];
+  selfReason?: string;
   project?: ProjectEdit;
   thread?: ThreadEdit;
 };

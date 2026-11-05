@@ -22,6 +22,8 @@ import { characterProfile } from "./characters";
 import { fundedWorkSummary } from "./funded-work";
 import type { FundedTown } from "./economy-types";
 import { residentLibraryReply } from "./community";
+import { learningContext } from "./learning";
+import { relationshipContext } from "./relationships";
 
 export function planResidents(job: Extract<ThinkJob, { kind: "plan" }>) {
   const requested = (job as typeof job & { agents?: import("./types").AgentId[] }).agents;
@@ -48,7 +50,7 @@ function fitPacket<
   };
   // Recent turns and current records outrank repeated excerpts and private colour.
   trim("memories", 0);
-  for (const field of ["relationships", "projects", "threads"]) trim(field, 0);
+  for (const field of ["relationships", "projects", "threads", "learning"]) trim(field, 0);
   for (const field of ["selfSentence", "want", "identity"]) {
     if (size() <= budget) break;
     if (field in packet) {
@@ -75,10 +77,12 @@ function packet(town: Town, agent: Agent, job: ThinkJob) {
   const memories = promptMemories(town, agent, job);
   const profile = characterProfile(agent.id);
   const perspective = {
+    publicRole: profile.publicRole,
     publicInfo: profile.publicInfo,
     voice: profile.voice,
     specialties: profile.specialties,
     limitations: profile.limitations,
+    startingPrinciple: profile.reflection,
   };
   if (job.kind === "talk") {
     const other = agentById(town, job.a === agent.id ? job.b : job.a);
@@ -91,6 +95,7 @@ function packet(town: Town, agent: Agent, job: ThinkJob) {
         name: clip(agent.name, 40),
         role: clip(agent.role, 80),
         perspective,
+        relationship: relationshipContext(town, agent.id, other.id, true),
         place: placeTitle(zoneAt(agent.tile.x, agent.tile.y)),
         status: clip(agent.status, 80),
         memories,
@@ -122,6 +127,7 @@ function packet(town: Town, agent: Agent, job: ThinkJob) {
       name: clip(agent.name, 40),
       role: clip(agent.role, 80),
       perspective,
+      learning: learningContext(town, agent.id),
       identity: clip(agent.identity, 600),
       selfSentence: clip(agent.selfSentence, 160),
       want: clip(agent.want, 180),
@@ -165,6 +171,7 @@ function packet(town: Town, agent: Agent, job: ThinkJob) {
       memories,
       ...(job.kind === "player"
         ? {
+            relationship: relationshipContext(town, agent.id, "player"),
             recentConversation: recentConversation(agent, "player"),
             currentFacts: playerFacts(town, agent),
           }
@@ -499,9 +506,9 @@ Current observation: ${JSON.stringify(observation)}`;
     const people = planResidents(job).map((id) => packet(town, agentById(town, id), job));
     return `${clock} Write the dawn plan ONLY for the listed residents. Places must be one of: ${places}. Spot is "home" or "out". Use "home" only for resting at that resident's own homePlace, with place equal to homePlace. For public visits and work use "out", including Kevin working in the cafe and Baba working in the grocery. Cover 0–24 with blocks, no gaps; include plausible rest, work and breaks rather than one all-day activity. A plan is an intention, not proof of completed work. Preserve existing commitments. Status lines are what a neighbor would see — Kevin does not announce who he is in a status, and where he came from is that question, not a place. He may revise his private want. ${
       job.weekly
-        ? "It is a 7th dawn: each resident rewrites selfSentence, one sentence, who they are right now. Identity drifts. It does not reset."
-        : "Do not include selfSentence."
-    } Projects have no guaranteed success; they may start or drop one. Threads close or rewrite only if that person decides. Return one JSON object with a "plans" array containing exactly one filled plan per listed resident. Each plan needs "id" (that resident's supplied id), a nonempty "summary", and "blocks". Each block needs numeric "from" and "to" hours, "place", "spot", and a nonempty "status". Optional fields are "want", "selfSentence" when requested, and "project" or "thread" edits; omit edits when no change is intended. Generate actual values, not an empty example.
+        ? "It is a 7th dawn: keep the current selfSentence unless supplied experiences justify a specific change. Stability is a valid outcome. For a change, include selfSentence, selfEvidence (one to three IDs of supplied own non-seed memories), and selfReason explaining what those experiences changed. A statement supports only what was said, not that its claim is true; an interpretation alone does not establish an event. Preserve the starting identity and do not infer a personality transformation from one success."
+        : "Do not include selfSentence, selfEvidence or selfReason."
+    } Projects have no guaranteed success; they may start or drop one. Threads close or rewrite only if that person decides. Return one JSON object with a "plans" array containing exactly one filled plan per listed resident. Each plan needs "id" (that resident's supplied id), a nonempty "summary", and "blocks". Each block needs numeric "from" and "to" hours, "place", "spot", and a nonempty "status". Optional fields are "want", the evidenced selfSentence/selfEvidence/selfReason change when requested, and "project" or "thread" edits; omit edits when no change is intended. Generate actual values, not an empty example.
 People: ${JSON.stringify(people)}`;
   }
   if (job.kind === "reflect") {
@@ -516,22 +523,20 @@ People: ${JSON.stringify(people)}`;
         },
       };
     });
-    return `${clock} Write exactly 2 first-person reflections for each listed resident, grounded in their supplied evidence. Only evidence.events supports occurrences, and only what the event explicitly records. evidence.statements records words spoken, including your own offers: preserve the speaker, conditional and future tense. evidence.interpretations contains beliefs or plans, not completed actions. Each evidence day/minute is the record's timestamp, not an action time for a promise. "I'll start the kettle if you like" supports "I offered to start the kettle", never "I started the kettle at 07:00". An offered cup does not establish that anyone drank it. Current status and plan summaries do not prove actions occurred. Reflections are interpretations, not new facts or completed actions; preserve attribution and uncertainty. No advice to the player about software. ${
-      job.weekly ? "Also rewrite selfSentence." : "Do not include selfSentence."
-    } Return one JSON object with an "agents" array containing exactly one filled entry per listed resident. Each entry needs "id" (that resident's supplied id) and "reflections" (exactly two nonempty first-person strings). Include "selfSentence" only when requested. Generate actual reflections, not an empty example.
+    return `${clock} Write one or two first-person reflections for each listed resident, grounded in their supplied evidence. Keep the authored perspective distinct from a changing outlook: experience may refine a method or preference without replacing the person. Stability is valid; when nothing supports a change, say briefly what remains uncertain or unchanged instead of inventing growth. When evidence does suggest a lesson, name the particular experience, a tentative method for next time, and an observable result that would support or challenge it. A plan to try is not a learned skill; learning records describe only their bounded demonstrations, not general mastery. Only evidence.events supports occurrences, and only what the event explicitly records. evidence.statements records words spoken, including your own offers: preserve the speaker, conditional and future tense. evidence.interpretations contains beliefs or plans, not completed actions. Each evidence day/minute is the record's timestamp, not an action time for a promise. "I'll start the kettle if you like" supports "I offered to start the kettle", never "I started the kettle at 07:00". An offered cup does not establish that anyone drank it. Current status and plan summaries do not prove actions occurred. Reflections are interpretations, not new facts or completed actions; preserve attribution and uncertainty. No advice to the player about software. Do not include selfSentence; identity changes belong to the evidenced dawn review. Return one JSON object with an "agents" array containing exactly one filled entry per listed resident. Each entry needs "id" (that resident's supplied id) and "reflections" (one or two nonempty first-person strings). Generate actual reflections, not an empty example.
 People: ${JSON.stringify(people)}`;
   }
   if (job.kind === "talk") {
     const a = packet(town, agentById(town, job.a), job);
     const b = packet(town, agentById(town, job.b), job);
-    return `${clock} These two are in the same place. Write at most 4 short spoken lines. This is their shared context only: neither speaker may invent access to private histories, hidden motives or absent people's conversations. Ground the exchange in the shared evidence or ordinary public activity; ask a question when evidence is missing. A statement is what someone said, not proof it happened. They may propose a same-pair favor, open or rewrite their own thread, pin their own public note, start or drop their own project, or replan remaining hours. A proposal is not a completed action: speak conditionally until the game confirms it. Never mark a project done or invent completed work. Relationship delta is -1, 0, or 1. No ending, no party. JSON: {"lines":[{"speaker":"kevin","text":""}],"relationships":[{"owner":"kevin","about":"arwyn","delta":0,"note":""}],"favor":null,"thread":null,"notice":null,"project":null,"replan":[],"revealedSeed":false}
+    return `${clock} These two are in the same place. Write at most 4 short spoken lines. Keep each public perspective distinct: its startingPrinciple is an authored starting outlook, not proof of experience or an obligation to agree. Let shared experiences shape the subject, questions and practical next step while retaining each voice. Relationship evidence separates familiarity, regard and kept commitments; repeated contact is not trust, affection or agreement, and disagreement alone is not betrayal. This is their shared context only: neither speaker may invent access to private histories, hidden motives or absent people's conversations. Ground the exchange in the shared evidence or ordinary public activity; ask a question when evidence is missing. A statement is what someone said, not proof it happened. They may propose a same-pair favor, open or rewrite their own thread, pin their own public note, start or drop their own project, or replan remaining hours. A proposal is not a completed action: speak conditionally until the game confirms it. Never mark a project done or invent completed work. Relationship delta is -1, 0, or 1 and must follow the actual exchange. Zero is valid: do not reward every polite conversation or penalize a reasoned disagreement. No ending, no party. JSON: {"lines":[{"speaker":"kevin","text":""}],"relationships":[{"owner":"kevin","about":"arwyn","delta":0,"note":""}],"favor":null,"thread":null,"notice":null,"project":null,"replan":[],"revealedSeed":false}
 A: ${JSON.stringify(a)}
 B: ${JSON.stringify(b)}`;
   }
   const agent = agentById(town, job.agentId);
   const body = packet(town, agent, job);
   const said = plain(job.text, 400);
-  return `${clock} The player, ${plain(town.playerName, 18)}, says to ${clip(agent.name, 40)}: "${said}". Answer their actual question in character, usually one to three sentences. Use recentConversation for follow-ups such as "why?" or "that" before searching older memories. Use retrieved memories and ongoing concerns only when relevant to this message. Discuss their subject naturally, without naming internal retrieval or open threads. Memory source "statement" records words spoken, not verified facts; "reflection" records a belief or intention. Dates are game dates: resolve yesterday/tomorrow relative to the original event, not now. Current facts and receipts outrank remembered claims. Admit missing knowledge and ask one concrete clarification rather than inventing an answer. You may ask for help with work inside this town. You may start or drop one project of your own, never claim its completion without a verified event. JSON: {"reply":"","delta":0,"note":"","favor":null,"thread":null,"notice":null,"project":null}
+  return `${clock} The player, ${plain(town.playerName, 18)}, says to ${clip(agent.name, 40)}: "${said}". Answer their actual question in character, usually one to three sentences. Use recentConversation for follow-ups such as "why?" or "that" before searching older memories. Use retrieved memories and ongoing concerns only when relevant to this message. Discuss their subject naturally, without naming internal retrieval or open threads. Memory source "statement" records words spoken, not verified facts; "reflection" records a belief or intention. Dates are game dates: resolve yesterday/tomorrow relative to the original event, not now. Current facts and receipts outrank remembered claims. Keep authored perspective, current outlook, relationship evidence and demonstrated methods distinct. Familiarity is not trust or affection; a disagreement can coexist with respect. A proposed method is not mastery, and a library demonstration does not establish a broader skill. Admit missing knowledge and ask one concrete clarification rather than inventing an answer. You may ask for help with work inside this town. You may start or drop one project of your own, never claim its completion without a verified event. JSON: {"reply":"","delta":0,"note":"","favor":null,"thread":null,"notice":null,"project":null}
 Speech cannot buy, pay, accept or cancel work, or edit the player's projects, threads or schedule. Those require the player's separate quoted action button. Keep favor null and never claim an action completed because of text alone.
 Resident: ${JSON.stringify(body)}
 Current beat: ${clip(beatAt(agent, town.minute).status, 110)}`;
@@ -651,6 +656,14 @@ export function parseMind(job: ThinkJob, text: string): MindResult | null {
             .filter((block) => block !== null),
           want: typeof row.want === "string" ? row.want : undefined,
           selfSentence: typeof row.selfSentence === "string" ? row.selfSentence : undefined,
+          selfEvidence:
+            Array.isArray(row.selfEvidence) &&
+            row.selfEvidence.length >= 1 &&
+            row.selfEvidence.length <= 3 &&
+            row.selfEvidence.every((id) => typeof id === "string" && id.trim() && id.length <= 80)
+              ? (row.selfEvidence as string[])
+              : undefined,
+          selfReason: typeof row.selfReason === "string" ? row.selfReason : undefined,
           project: parseProject(row.project),
           thread: parseThread(row.thread),
         };

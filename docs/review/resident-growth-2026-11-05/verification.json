@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-05",
+  "branch": "codex/resident-growth",
+  "base": "49cf76f2236f12ff79b092f4e1df84e13f9b5a42",
+  "node": "24.22.1",
+  "validation": {
+    "newFocusedCases": 27,
+    "townTests": 511,
+    "scriptTests": 1206,
+    "typedTests": 55,
+    "typecheck": "pass",
+    "lintErrors": 0,
+    "inheritedLintWarnings": 1,
+    "diagnostics": "completed",
+    "credentialFreeBuild": "pass",
+    "databaseMigration": "skipped: DATABASE_URL absent"
+  },
+  "remoteActions": [],
+  "liveInferenceCalls": 0,
+  "browserAcceptance": "not run; no UI files changed",
+  "humanAcceptance": "not run",
+  "scopeLimits": [
+    "Bounded local memory, not lifetime storage",
+    "One engine-guided library method, not general mastery",
+    "Identity gate proves provenance, not semantic truth",
+    "No Est\u00e9e/Socrates runtime addition",
+    "No browser-closed shared world",
+    "No general research/tools"
+  ]
+}

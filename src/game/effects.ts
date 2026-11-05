@@ -13,13 +13,13 @@ import type {
   Town,
 } from "./types";
 import { AGENT_IDS } from "./types";
-import { makeMemory, pushMemory } from "./memory";
+import { makeMemory, pushMemory, resolveMemoryReference } from "./memory";
 import { blocksToBeats, isPlace, planFromBlocks } from "./plan";
 import { refreshResidentStatus } from "./navigation";
 import { clip, mentionsSeed, purse } from "./text";
 import { formatClock } from "./text";
 import { placeTitle, zoneAt } from "./world";
-import { groundPlayerReply, groundSharedLine } from "./conversation";
+import { groundPlayerReply, groundSharedLine, memorySource } from "./conversation";
 import { settleLegacyDebt, availableFunds } from "./economy";
 import type { FundedTown } from "./economy-types";
 import { libraryView, refreshLibraryReading } from "./community";
@@ -368,7 +368,14 @@ export function applyResult(
         reflected.add(agent.id);
         for (const line of (item.reflections ?? []).slice(0, 2)) {
           const text = clip(String(line ?? ""), 320);
-          if (!text) continue;
+          if (
+            !text ||
+            agent.memories.some(
+              (memory) =>
+                memory.type === "reflect" && memory.text.toLowerCase() === text.toLowerCase(),
+            )
+          )
+            continue;
           pushMemory(
             agent,
             makeMemory(town, town.day, town.minute, "reflect", text, 8, {
@@ -1216,8 +1223,31 @@ function applyPlanDraft(town: Town, draft: PlanDraft, mind: "grok" | "offline", 
   if (next.beats.length === 24) agent.plan = next;
   else if (next.summary && agent.plan) agent.plan.summary = next.summary;
   if (draft.want?.trim()) agent.want = clip(draft.want, 280);
-  if (weekly && draft.selfSentence?.trim()) {
-    agent.selfSentence = clip(draft.selfSentence, 220);
+  const nextSelf = clip(draft.selfSentence ?? "", 220);
+  const reason = clip(draft.selfReason ?? "", 100);
+  const references = Array.isArray(draft.selfEvidence) ? [...new Set(draft.selfEvidence)] : [];
+  const evidence = references.map((id) =>
+    typeof id === "string" && id.length <= 80
+      ? resolveMemoryReference(agent.memories, id)
+      : undefined,
+  );
+  // A citation establishes provenance, not whether an interpretation is true.
+  // Authored seeds and earlier interpretations cannot self-confirm an identity rewrite.
+  const grounded =
+    references.length > 0 &&
+    references.length <= 3 &&
+    evidence.every(
+      (memory) =>
+        memory &&
+        !memory.seed &&
+        !mentionsSeed(memory.text) &&
+        memorySource(memory) !== "reflection" &&
+        memory.type !== "reflect" &&
+        memory.type !== "plan" &&
+        (memory.day - 1) * 1440 + memory.minute <= (town.day - 1) * 1440 + town.minute,
+    );
+  if (weekly && nextSelf && nextSelf !== agent.selfSentence && reason && grounded) {
+    agent.selfSentence = nextSelf;
     pushMemory(
       agent,
       makeMemory(town, town.day, town.minute, "reflect", agent.selfSentence, 9, {
@@ -1225,6 +1255,18 @@ function applyPlanDraft(town: Town, draft: PlanDraft, mind: "grok" | "offline", 
         mind,
       }),
     );
+    const provenance = makeMemory(
+      town,
+      town.day,
+      town.minute,
+      "reflect",
+      `Self-description revision. Reason: ${reason} Evidence: ${references.join(", ")}. Interpretation only.`,
+      8,
+      { protected: true, mind },
+    );
+    // Internal plan provenance stays portable without entering the public reflection feed.
+    provenance.id = `plan-self-${provenance.id}`;
+    pushMemory(agent, provenance);
   }
   pushMemory(
     agent,
