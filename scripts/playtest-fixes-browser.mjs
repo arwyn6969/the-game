@@ -131,7 +131,7 @@ try {
       1,
     );
     assert.equal(
-      await conversation.getByRole("button", { name: "Follow", exact: true }).count(),
+      await conversation.getByRole("button", { name: "Watch character", exact: true }).count(),
       1,
     );
     assert.match(await conversation.innerText(), new RegExp(words));
