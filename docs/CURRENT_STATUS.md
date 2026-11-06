@@ -1,6 +1,6 @@
 # Current project status
 
-Updated 5 November 2026. This file is the single current source/deployment and assignment index. Earlier dated statements are evidence, not active instructions.
+Updated 6 November 2026. This file is the single current source/deployment and assignment index. Earlier dated statements are evidence, not active instructions.
 
 ## Character, teaching and learning-history release integration
 
@@ -20,8 +20,26 @@ named-target migration preview/recovery, bounded configured-free-model checks an
 the existing production publication workflow. No provider switch, budget increase,
 secret change or server-world migration is part of this release.
 
-Implementation is being reconciled. Prior sections below are retained input
-receipts and do not qualify the combined release head.
+6 November continuation: the user explicitly requested fixing the CI timeout,
+merging PR #72 after passing checks, then live deployment and verification.
+The combined implementation is complete at starting head `be2ab88` in
+[PR #72](https://github.com/arwyn6969/the-game/pull/72). The last sequential
+Verify run reached its 40-minute boundary with progressing browser checks;
+it was cancelled and is not a passing release check. Source/build verification
+and four isolated browser groups now feed the same protected `verify` check.
+All 19 prior command steps remain, with independent artifacts per browser group.
+The aggregate fails if source or any browser group fails, cancels or is skipped.
+
+Local combined qualification: 1,293 script + 55 typed cases, 597 town cases,
+42 authority experiments, source checks/build and desktop/phone cast, history,
+teaching, following, registration, accessibility, personal-model and recovery
+journeys pass. Both newcomers produced real configured-free-model replies on
+the isolated preview; Socrates's exchange survived reload. One Estée timeout
+retained its draft before a successful bounded retry. Existing preview migration
+and binding/settings comparisons pass. Production has not been changed by this
+packet. Required current-head CI, reviews, production migration and publication
+remain pending. Prior sections below are retained input receipts, not release
+qualification for the current combined head.
 
 ## Character continuity and cast arrivals
 

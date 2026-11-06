@@ -1,17 +1,21 @@
+# Keep the protected verify check as the aggregate of every source/browser lane.
 name: Verify
-on:
-  pull_request:
+"on":
+  pull_request: null
   push:
-    branches: [main, codex/agent-collaboration-setup]
+    branches:
+      - main
+      - codex/agent-collaboration-setup
 permissions:
   contents: read
+env:
+  DATABASE_URL: ""
+  XAI_API_KEY: ""
 jobs:
-  verify:
+  source:
+    name: Source and build
     runs-on: ubuntu-latest
-    timeout-minutes: 40
-    env:
-      DATABASE_URL: ""
-      XAI_API_KEY: ""
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,15 +30,41 @@ jobs:
       - name: Local authority and recovery experiments
         run: node --test experiments/server-authority/authority.test.mjs experiments/server-adapter/adapter.test.mjs
       - run: npm run diagnose:town
+      - name: Build Cloudflare target without migrations
+        run: npm run build:cloudflare
+  browser:
+    name: Browser (${{ matrix.group }})
+    needs: source
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        group:
+          - town
+          - cafe
+          - ai
+          - accounts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: node scripts/quality-browser.mjs
+        if: matrix.group == 'town'
       - name: Witnessed learning history on character cards
         run: node scripts/resident-learning-browser.mjs
+        if: matrix.group == 'town'
       - name: Witnessed relationship history and café feedback
         run: node scripts/relationship-feedback-browser.mjs
+        if: matrix.group == 'town'
       - name: Built café customer, worker and recovery journeys
         run: node scripts/town-coffee-browser.mjs
+        if: matrix.group == 'cafe'
       - name: Built café shift, handover, tab and rollback journeys
         run: |
           node scripts/with-app-env.mjs node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 8201 --strictPort > /tmp/game-shift-preview.log 2>&1 &
@@ -58,10 +88,12 @@ jobs:
           GAME_COFFEE_TABS_QA_URL=http://127.0.0.1:8201/ node scripts/coffee-concurrent-tabs-browser.mjs
           git fetch --no-tags --depth=1 origin c183e32d3dc4de923490471da2d30a66caf788a7
           GAME_COFFEE_DOWNGRADE_QA_URL=http://127.0.0.1:8201/ node scripts/coffee-downgrade-browser.mjs
+        if: matrix.group == 'cafe'
       - name: Read-only stamp appearance browser checks
         run: |
           npm run test:browser:stamps
           GAME_STAMP_QA_WALLET=leather GAME_STAMP_QA_OUT=artifacts/stamp-identity-browser/leather npm run test:browser:stamps
+        if: matrix.group == 'accounts'
       - name: Delayed AI and replay browser checks
         run: |
           node scripts/with-app-env.mjs node node_modules/vite/bin/vite.js dev --host 127.0.0.1 --port 8094 --force > /tmp/game-ai-preview.log 2>&1 &
@@ -88,6 +120,7 @@ jobs:
           GAME_PERSONAL_QA_URL=http://127.0.0.1:8094/ node scripts/personal-model-browser.mjs
           DISCUSSION_QA_URL=http://127.0.0.1:8094/ npm run test:browser:meetings
           GAME_SKIN_QA_URL=http://127.0.0.1:8094/ GAME_SKIN_QA_OUT=artifacts/ui-interfaces node scripts/skin-browser.mjs
+        if: matrix.group == 'ai'
       - name: Accessibility checks
         run: |
           node scripts/with-app-env.mjs node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 8198 --strictPort > /tmp/game-a11y-preview.log 2>&1 &
@@ -107,6 +140,7 @@ jobs:
           if (!ready) throw new Error("Accessibility preview did not start");
           JS
           GAME_A11Y_QA_URL=http://127.0.0.1:8198/ npm run test:browser:a11y
+        if: matrix.group == 'town'
       - name: Authenticated private agent-wallet browser checks
         env:
           VITE_AUTH_ENABLED: "true"
@@ -114,12 +148,11 @@ jobs:
           npm run build
           npm run test:browser:agent-wallets
           GAME_AGENT_QA_WALLET=leather GAME_AGENT_QA_OUT=artifacts/agent-wallet-browser/leather npm run test:browser:agent-wallets
-      - name: Build Cloudflare target without migrations
-        run: npm run build:cloudflare
+        if: matrix.group == 'accounts'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: game-browser-quality
+          name: game-browser-quality-${{ matrix.group }}
           path: |
             artifacts/following
             artifacts/follower-learning
@@ -141,3 +174,19 @@ jobs:
             artifacts/accessibility-browser
             artifacts/ui-interfaces
           if-no-files-found: ignore
+  verify:
+    name: verify
+    needs:
+      - source
+      - browser
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every verification group
+        env:
+          SOURCE_RESULT: ${{ needs.source.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
+        run: |
+          test "$SOURCE_RESULT" = success
+          test "$BROWSER_RESULT" = success
