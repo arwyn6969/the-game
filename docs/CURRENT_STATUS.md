@@ -30,6 +30,13 @@ and four isolated browser groups now feed the same protected `verify` check.
 All 19 prior command steps remain, with independent artifacts per browser group.
 The aggregate fails if source or any browser group fails, cancels or is skipped.
 
+The first parallel run completed every group within its limit. Its meeting
+browser exposed a terminal-boundary race: the no-background assertion inspected
+the interval after the final reply had closed the meeting and released ordinary
+background work. The assertion now checks before settling each armed decision;
+the existing checks still require natural closure, no subsequent meeting request,
+reload recovery, exact audiences, paced calls and conserved accounts.
+
 Local combined qualification: 1,293 script + 55 typed cases, 597 town cases,
 42 authority experiments, source checks/build and desktop/phone cast, history,
 teaching, following, registration, accessibility, personal-model and recovery
