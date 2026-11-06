@@ -71,13 +71,9 @@ export async function runCompleteMeetingJourney(helpers, viewport) {
         : { kind };
     assertOfferedDecision(offered, decision);
     choices.push({ actor: offered.actor, kind });
-    await respond(page, choices.length - 1, decision);
-    const current = await savedTown(page);
-    const errors = await page.evaluate(async (town) => {
-      const { auditEconomy } = await import("/src/game/economy.ts");
-      return auditEconomy(town);
-    }, current);
-    assert.deepEqual(errors, []);
+    // Check the armed interval before settling this decision. The final reply
+    // closes the meeting and legitimately releases ordinary background AI;
+    // slower runners may dispatch that work before the next browser round trip.
     const armed = await page.evaluate(
       (from) => window.__discussionMock.allInvocations.slice(from),
       armedFrom,
@@ -86,6 +82,13 @@ export async function runCompleteMeetingJourney(helpers, viewport) {
       armed.every((call) => call.kind === "act"),
       "No background AI while the meeting is armed",
     );
+    await respond(page, choices.length - 1, decision);
+    const current = await savedTown(page);
+    const errors = await page.evaluate(async (town) => {
+      const { auditEconomy } = await import("/src/game/economy.ts");
+      return auditEconomy(town);
+    }, current);
+    assert.deepEqual(errors, []);
   }
   const completed = await meeting(page);
   assert.equal(completed.status, "closed");

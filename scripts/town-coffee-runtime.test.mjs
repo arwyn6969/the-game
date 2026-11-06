@@ -89,7 +89,7 @@ function ticks(town, count) {
     assert.deepEqual(auditEconomy(town), []);
     assert.deepEqual(validateCoffee(town), []);
     assert.equal(total(town), 90);
-    assert.equal(new Set(town.agents.map((actor) => `${actor.tile.x},${actor.tile.y}`)).size, 8);
+    assert.equal(new Set(town.agents.map((actor) => `${actor.tile.x},${actor.tile.y}`)).size, 10);
   }
 }
 

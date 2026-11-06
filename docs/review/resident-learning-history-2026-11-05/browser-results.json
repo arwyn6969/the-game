@@ -1,0 +1,162 @@
+{
+  "node": "v24.22.1",
+  "url": "http://127.0.0.1:8198/",
+  "builtPreview": true,
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "providerRequests": [],
+      "stages": [
+        {
+          "fixture": "empty",
+          "rows": 0,
+          "stage": "empty"
+        },
+        {
+          "fixture": "failure",
+          "rows": 1,
+          "stage": "needs-correction"
+        },
+        {
+          "fixture": "correction",
+          "rows": 2,
+          "stage": "ready-to-try"
+        },
+        {
+          "fixture": "demonstration",
+          "rows": 3,
+          "stage": "demonstrated-reuse"
+        },
+        {
+          "fixture": "partial",
+          "rows": 2,
+          "stage": "ready-to-try"
+        },
+        {
+          "fixture": "absent",
+          "rows": 0,
+          "stage": "empty"
+        },
+        {
+          "fixture": "laterOnly",
+          "rows": 1,
+          "stage": "lookup-succeeded"
+        }
+      ],
+      "screenshots": [
+        "desktop-empty.png",
+        "desktop-failure.png",
+        "desktop-correction.png",
+        "desktop-demonstration.png",
+        "desktop-demonstration-result.png",
+        "desktop-partial.png",
+        "desktop-absent.png",
+        "desktop-laterOnly.png",
+        "desktop-observed.png",
+        "desktop-replay.png",
+        "desktop-reloaded.png"
+      ],
+      "watchPrivacy": true,
+      "replayPrivacy": true,
+      "offlineConversation": true,
+      "movement": {
+        "input": "keyboard",
+        "before": {
+          "x": 42,
+          "y": 20
+        },
+        "after": {
+          "x": 41,
+          "y": 20
+        }
+      },
+      "pause": true,
+      "reload": true,
+      "portableRoundTrip": true
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "providerRequests": [],
+      "stages": [
+        {
+          "fixture": "empty",
+          "rows": 0,
+          "stage": "empty"
+        },
+        {
+          "fixture": "failure",
+          "rows": 1,
+          "stage": "needs-correction"
+        },
+        {
+          "fixture": "correction",
+          "rows": 2,
+          "stage": "ready-to-try"
+        },
+        {
+          "fixture": "demonstration",
+          "rows": 3,
+          "stage": "demonstrated-reuse"
+        },
+        {
+          "fixture": "partial",
+          "rows": 2,
+          "stage": "ready-to-try"
+        },
+        {
+          "fixture": "absent",
+          "rows": 0,
+          "stage": "empty"
+        },
+        {
+          "fixture": "laterOnly",
+          "rows": 1,
+          "stage": "lookup-succeeded"
+        }
+      ],
+      "screenshots": [
+        "phone-empty.png",
+        "phone-failure.png",
+        "phone-correction.png",
+        "phone-demonstration.png",
+        "phone-demonstration-result.png",
+        "phone-partial.png",
+        "phone-absent.png",
+        "phone-laterOnly.png",
+        "phone-observed.png",
+        "phone-history-scrolled.png",
+        "phone-replay.png",
+        "phone-reloaded.png"
+      ],
+      "watchPrivacy": true,
+      "touchHistoryScroll": true,
+      "replayPrivacy": true,
+      "offlineConversation": true,
+      "movement": {
+        "input": "touch",
+        "before": {
+          "x": 42,
+          "y": 20
+        },
+        "after": {
+          "x": 41,
+          "y": 20
+        }
+      },
+      "pause": true,
+      "reload": true,
+      "portableRoundTrip": true
+    }
+  ],
+  "failures": []
+}

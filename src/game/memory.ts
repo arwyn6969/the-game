@@ -12,6 +12,8 @@ const STOP = new Set(
 
 export function keywords(text: string): string[] {
   const parts = text
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ")
     .split(/\s+/)
@@ -64,9 +66,44 @@ export type Scored = {
   relevance: number;
 };
 
+// A deliberately small vocabulary bridge, not a claim of general semantic recall.
+// Matching a concept only retrieves the original record; it cannot verify its words.
+const RECALL_CONCEPTS = [
+  ["wage", "wages", "payroll", "salary", "payment", "paid", "earnings"],
+  ["receipt", "receipts", "proof", "evidence", "source", "sources", "verification"],
+  ["lesson", "lessons", "practice", "practise", "practiced", "practised", "learning", "training"],
+  ["repair", "repairs", "repaired", "fault", "faults", "broken", "fix", "fixed"],
+  ["manuscript", "draft", "drafts", "revision", "revisions", "rewrite", "rewriting"],
+  ["budget", "budgets", "funding", "funded", "afford", "affordable", "affordability"],
+] as const;
+
+function recallWords(text: string): Set<string> {
+  // Read the actual bounded record instead of relying on old cached keywords. This makes
+  // accent normalization and words near the end work for existing saves too.
+  const words =
+    text
+      .slice(0, 1600)
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .match(/[a-z0-9]+/g) ?? [];
+  return new Set(words.filter((word) => (word.length > 3 || word === "fix") && !STOP.has(word)));
+}
+
+function recallRelevance(query: Set<string>, words: Set<string>): number {
+  let overlap = 0;
+  for (const word of words) if (query.has(word)) overlap++;
+  // Two useful matching words can keep an old answer above fresh unrelated
+  // observations. Recency still resolves similarly relevant, dated accounts.
+  const direct = Math.min(1, overlap / Math.min(2, Math.max(1, query.size)));
+  const indirect = RECALL_CONCEPTS.some(
+    (terms) => terms.some((term) => query.has(term)) && terms.some((term) => words.has(term)),
+  );
+  return Math.max(direct * 2, indirect ? 1.25 : 0);
+}
+
 export function scoreMemories(memories: Memory[], query: string, nowAbs: number): Scored[] {
-  const qk = keywords(query);
-  const qset = new Set(qk);
+  const qset = recallWords(query);
   return memories
     .map((memory) => {
       const stamp = absMinute(
@@ -76,10 +113,8 @@ export function scoreMemories(memories: Memory[], query: string, nowAbs: number)
       const ageHours = Math.max(0, (nowAbs - stamp) / 60);
       const recency = Number.isFinite(ageHours) ? Math.pow(0.995, ageHours) : 0;
       const importance = Number.isFinite(memory.importance) ? memory.importance / 10 : 0.5;
-      const words = Array.isArray(memory.keywords) ? memory.keywords : [];
-      let overlap = 0;
-      for (const w of words) if (typeof w === "string" && qset.has(w)) overlap++;
-      const relevance = Math.min(1, overlap / 3);
+      const words = recallWords(memory.text);
+      const relevance = recallRelevance(qset, words);
       const score = recency + importance + relevance;
       return { memory, score, recency, importance, relevance };
     })
@@ -110,6 +145,35 @@ export function retrieveResident(
   k = 8,
 ) {
   return scoreResidentMemories(agent, query, nowAbs).slice(0, k);
+}
+
+/** Keep explicit questions stronger than location, wants and recurring concerns. */
+export function scoreResidentContext(
+  agent: Pick<Agent, "id" | "memories">,
+  question: string,
+  background: string,
+  nowAbs: number,
+) {
+  const contextual = new Map(
+    scoreMemories(agent.memories ?? [], background, nowAbs).map((hit) => [
+      hit.memory.id,
+      Math.min(0.2, hit.relevance / 10),
+    ]),
+  );
+  return scoreResidentMemories(agent, question, nowAbs)
+    .map((hit) => ({ ...hit, score: hit.score + (contextual.get(hit.memory.id) ?? 0) }))
+    .sort((a, b) => b.score - a.score || b.memory.importance - a.memory.importance);
+}
+
+/** Older saves encode archive membership in IDs; accept either form as a reference. */
+export function resolveMemoryReference(memories: Memory[], id: string): Memory | undefined {
+  if (typeof id !== "string" || !id) return undefined;
+  const canonical = (value: string) => value.replace(/^archive-(?:chat|observe|plan)-/, "");
+  const matches = memories.filter(
+    (memory) => typeof memory.id === "string" && canonical(memory.id) === canonical(id),
+  );
+  // Ambiguous imported IDs are not an evidentiary link, even when one is exact.
+  return matches.length === 1 ? matches[0] : undefined;
 }
 
 export function logRetrieval(town: Town, agent: Agent, question: string): RetrievalLog {
@@ -186,7 +250,24 @@ function archiveMemories(agent: Agent, kind: ArchiveKind, memories: Memory[]) {
     );
   const keep = new Set<string>();
   const pairCounts = new Map<string, number>();
+  // Reserve one significant early encounter per partner (or one observation).
+  // Otherwise equally important recent routine records erase every older event.
+  // This shares the existing caps; it is not unbounded/lifetime storage.
+  if (kind !== "plan") {
+    const landmarks = [...archives].sort(
+      (a, b) =>
+        b.importance - a.importance || absMinute(a.day, a.minute) - absMinute(b.day, b.minute),
+    );
+    for (const memory of landmarks) {
+      const pair = kind === "chat" ? (memory.with ?? "legacy-unattributed") : "observation";
+      if (keep.size >= ARCHIVE_LIMITS[kind]) break;
+      if (pairCounts.has(pair)) continue;
+      keep.add(memory.id);
+      pairCounts.set(pair, 1);
+    }
+  }
   for (const memory of archives) {
+    if (keep.has(memory.id)) continue;
     const pair = memory.with ?? "legacy-unattributed";
     if (keep.size >= ARCHIVE_LIMITS[kind]) break;
     if (kind === "chat" && (pairCounts.get(pair) ?? 0) >= PAIR_ARCHIVE_LIMIT) continue;

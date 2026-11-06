@@ -1,6 +1,6 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex } from "@noble/hashes/utils.js";
-import { AGENT_IDS } from "./types";
+import { AGENT_IDS, BASE_AGENT_IDS } from "./types";
 import { recoverCoffeeControl } from "./coffee-runtime";
 import { validateCoffee } from "./coffee-validation";
 import type {
@@ -58,6 +58,10 @@ function assertAgentIds(ids: readonly AgentId[]): void {
 
 function digest(text: string): string {
   return bytesToHex(sha256(new TextEncoder().encode(text)));
+}
+
+function arrivalCharacterId(worldId: string, id: AgentId): string {
+  return `character_${digest(`the-game:resident-arrival:v1\n${worldId}\n${id}`)}`;
 }
 
 function randomHex(): string {
@@ -123,8 +127,18 @@ export function validateTownIdentity(
         return false;
       currentIds.add(character.characterId);
       if (forked) {
+        // A resident may arrive after the world was forked. Their own life
+        // begins here and has no invented parent incarnation.
+        if (character.originWorldId === value.worldId) {
+          if (
+            BASE_AGENT_IDS.some((id) => id === agentId) ||
+            Object.hasOwn(character, "forkedFromCharacterId") ||
+            character.characterId !== arrivalCharacterId(value.worldId, agentId)
+          )
+            return false;
+          continue;
+        }
         if (
-          character.originWorldId === value.worldId ||
           typeof character.forkedFromCharacterId !== "string" ||
           !CHARACTER_ID.test(character.forkedFromCharacterId) ||
           previousIds.has(character.forkedFromCharacterId)
@@ -166,6 +180,32 @@ export function createTownIdentity(agentIds: readonly AgentId[]): TownIdentityRe
   if (!validateTownIdentity(registry, agentIds))
     throw new Error("Fresh world identity is invalid.");
   return registry;
+}
+
+/** Extend an already validated world without replacing any existing identity. */
+export function extendTownIdentity(
+  registry: TownIdentityRegistry,
+  previousIds: readonly AgentId[],
+  nextIds: readonly AgentId[],
+): TownIdentityRegistry {
+  if (
+    !validateTownIdentity(registry, previousIds) ||
+    previousIds.some((id) => !nextIds.includes(id))
+  )
+    throw new Error("Resident arrival requires a valid preserved identity registry.");
+  const characters = { ...registry.characters };
+  for (const id of nextIds) {
+    if (Object.hasOwn(characters, id)) continue;
+    characters[id] = {
+      characterId: arrivalCharacterId(registry.worldId, id),
+      archetypeId: id,
+      originWorldId: registry.worldId,
+    };
+  }
+  const extended = { ...registry, characters };
+  if (!validateTownIdentity(extended, nextIds))
+    throw new Error("Resident arrival identity is invalid.");
+  return extended;
 }
 
 function canonicalLegacyTown(value: unknown): string {

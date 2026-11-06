@@ -197,8 +197,8 @@ async function replayCase(core, spec) {
   const town = makeTown(core, spec);
   const before = invariants(town, d),
     beforeUsage = clone(session(town).usage);
-  assert.equal(town.agents.length, 8);
-  assert.equal(Object.keys(town.identityRegistry.characters).length, 8);
+  assert.equal(town.agents.length, 10);
+  assert.equal(Object.keys(town.identityRegistry.characters).length, 10);
   assert.ok(town.agents.every((person) => person.memories.length));
   assert.ok(town.economy);
   assert.ok(town.economy.transactions.length);

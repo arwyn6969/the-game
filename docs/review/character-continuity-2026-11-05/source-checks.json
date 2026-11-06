@@ -1,0 +1,65 @@
+{
+  "source": "c084ffba1d875eef7b5f71d775a84c9ce44b46f1",
+  "baseMain": "c49facc52136cfda0270627e3e6aef51f5ab4588",
+  "node": "v24.22.1",
+  "checks": [
+    {
+      "command": "npm ci",
+      "ok": true,
+      "lockedDependencies": true
+    },
+    {
+      "command": "npm test",
+      "ok": true,
+      "scriptTests": 1257,
+      "typedTests": 55,
+      "failures": 0
+    },
+    {
+      "command": "npm run test:town",
+      "ok": true,
+      "tests": 561,
+      "failures": 0
+    },
+    {
+      "command": "npm run typecheck",
+      "ok": true
+    },
+    {
+      "command": "npm run lint",
+      "ok": true,
+      "errors": 0,
+      "warnings": 1,
+      "inheritedWarning": "src/lib/auth/use-current-user.ts:59 unused eslint-disable directive"
+    },
+    {
+      "command": "npm run diagnose:town",
+      "ok": true,
+      "interpretation": "observations, not a release verdict"
+    },
+    {
+      "command": "npm run build",
+      "ok": true,
+      "DATABASE_URL": "absent",
+      "databaseMigration": "explicitly skipped"
+    },
+    {
+      "command": "GAME_QA_URL=http://127.0.0.1:8271/ node scripts/quality-browser.mjs",
+      "ok": true,
+      "builtProductionPreview": true,
+      "report": "browser/results.json"
+    },
+    {
+      "command": "GAME_FOLLOWING_QA_URL=http://127.0.0.1:8272/ node scripts/following-browser.mjs",
+      "ok": true,
+      "journeys": 8,
+      "report": "following/browser.json"
+    }
+  ],
+  "sourceLimitations": [
+    "No live inference or production migration",
+    "No remote upload, PR, merge or publication",
+    "Human voice/fidelity/enjoyment review and physical devices remain open",
+    "Ongoing F2 and subsequent growth UI excluded"
+  ]
+}

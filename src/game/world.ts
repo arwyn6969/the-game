@@ -263,6 +263,8 @@ export const HOMES = {
   player: { x: 52, y: 36 },
   data: { x: 12, y: 6 },
   amelia: { x: 14, y: 9 },
+  socrates: { x: 5, y: 9 },
+  estee: { x: 15, y: 5 },
 } as const;
 
 export function zoneAt(x: number, y: number): string {

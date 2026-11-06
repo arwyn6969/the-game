@@ -1,0 +1,72 @@
+[
+  {
+    "viewport": "desktop",
+    "legacyArrival": true,
+    "conversations": [
+      {
+        "id": "socrates",
+        "localDialogue": true,
+        "reloadRetained": true,
+        "noTransactions": true
+      },
+      {
+        "id": "estee",
+        "localDialogue": true,
+        "reloadRetained": true,
+        "noTransactions": true
+      }
+    ],
+    "facilitators": [
+      {
+        "id": "socrates",
+        "proposed": true,
+        "attendanceUnpromised": true
+      },
+      {
+        "id": "estee",
+        "proposed": true,
+        "attendanceUnpromised": true
+      }
+    ],
+    "errors": [],
+    "screenshots": [
+      "docs/review/character-continuity-2026-11-05/browser/characters/desktop-socrates.png",
+      "docs/review/character-continuity-2026-11-05/browser/characters/desktop-estee.png"
+    ]
+  },
+  {
+    "viewport": "phone",
+    "legacyArrival": true,
+    "conversations": [
+      {
+        "id": "socrates",
+        "localDialogue": true,
+        "reloadRetained": true,
+        "noTransactions": true
+      },
+      {
+        "id": "estee",
+        "localDialogue": true,
+        "reloadRetained": true,
+        "noTransactions": true
+      }
+    ],
+    "facilitators": [
+      {
+        "id": "socrates",
+        "proposed": true,
+        "attendanceUnpromised": true
+      },
+      {
+        "id": "estee",
+        "proposed": true,
+        "attendanceUnpromised": true
+      }
+    ],
+    "errors": [],
+    "screenshots": [
+      "docs/review/character-continuity-2026-11-05/browser/characters/phone-socrates.png",
+      "docs/review/character-continuity-2026-11-05/browser/characters/phone-estee.png"
+    ]
+  }
+]

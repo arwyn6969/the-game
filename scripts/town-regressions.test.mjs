@@ -155,7 +155,7 @@ test("older v1 files repair absent optional fields while keeping personal histor
   const town = debtTown();
   town.version = 1;
   delete town.identityRegistry; // Genuine v1 towns predate permanent identities.
-  town.agents = town.agents.filter((a) => a.id !== "data" && a.id !== "amelia");
+  town.agents = town.agents.filter((a) => !["data", "amelia", "socrates", "estee"].includes(a.id));
   town.playerName = "Iris";
   const kevin = agent(town, "kevin");
   kevin.want =
@@ -903,7 +903,7 @@ test("legacy missing timetables and conflicting projects cannot produce false sh
     const raw = createTown("Ada");
     raw.version = 1;
     delete raw.identityRegistry; // Genuine v1 towns predate permanent identities.
-    raw.agents = raw.agents.filter((a) => a.id !== "data" && a.id !== "amelia");
+    raw.agents = raw.agents.filter((a) => !["data", "amelia", "socrates", "estee"].includes(a.id));
     const player = agent(raw, "player");
     if (scenario === "missing-plan") delete player.plan;
     if (scenario === "empty-beats") player.plan.beats = [];

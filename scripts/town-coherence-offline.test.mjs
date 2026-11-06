@@ -18,7 +18,7 @@ const { applyResult } = await server.ssrLoadModule("/src/game/effects.ts");
 const { characterProfile } = await server.ssrLoadModule("/src/game/characters.ts");
 const { mentionsSeed } = await server.ssrLoadModule("/src/game/text.ts");
 
-const roster = ["kevin", "arwyn", "northern", "baba", "sub", "data", "amelia"];
+const roster = ["kevin", "arwyn", "northern", "baba", "sub", "data", "amelia", "socrates", "estee"];
 const person = (town, id) => town.agents.find((agent) => agent.id === id);
 const townWithArrivals = () => {
   const town = createTown("Ada");
@@ -66,7 +66,7 @@ const remember = (town, id, question, answer) => {
   });
 };
 
-test("all seven residents answer education and energy through distinct, bounded perspectives", () => {
+test("all nine residents answer education and energy through distinct, bounded perspectives", () => {
   const town = townWithArrivals();
   for (const question of ["How could we improve education?", "How would solar energy work here?"]) {
     const replies = roster.map((id) => ask(town, id, question));

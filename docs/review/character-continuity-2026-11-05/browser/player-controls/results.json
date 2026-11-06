@@ -1,0 +1,183 @@
+{
+  "url": "http://127.0.0.1:8271/",
+  "localOnly": true,
+  "journeys": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1280,
+        "height": 800
+      },
+      "errors": [],
+      "blockedProviderRequests": [],
+      "cleanLocalFeedback": true,
+      "canvasClickFocus": true,
+      "quickLetter": {
+        "before": {
+          "x": 26,
+          "y": 22
+        },
+        "after": {
+          "x": 27,
+          "y": 22
+        },
+        "input": "d"
+      },
+      "quickArrow": {
+        "before": {
+          "x": 27,
+          "y": 22
+        },
+        "after": {
+          "x": 26,
+          "y": 22
+        },
+        "input": "ArrowLeft"
+      },
+      "afterReplay": {
+        "before": {
+          "x": 26,
+          "y": 22
+        },
+        "after": {
+          "x": 27,
+          "y": 22
+        },
+        "input": "d"
+      },
+      "focusAndReplay": true,
+      "layouts": [
+        {
+          "skin": "plaza-cream",
+          "width": 1256,
+          "left": 12,
+          "right": 1268,
+          "bottom": 262.53125,
+          "worldTop": 267.3125,
+          "horizontalOverflow": false,
+          "viewportWidth": 1280
+        },
+        {
+          "skin": "hobbs-hearth",
+          "width": 1088,
+          "left": 180,
+          "right": 1268,
+          "bottom": 197.5625,
+          "worldTop": 202.34375,
+          "horizontalOverflow": false,
+          "viewportWidth": 1280
+        },
+        {
+          "skin": "library-ink",
+          "width": 1112,
+          "left": 156,
+          "right": 1268,
+          "bottom": 262.53125,
+          "worldTop": 264.125,
+          "horizontalOverflow": false,
+          "viewportWidth": 1280
+        },
+        {
+          "skin": "original",
+          "width": 1232,
+          "left": 24,
+          "right": 1256,
+          "bottom": 332.109375,
+          "worldTop": 348.109375,
+          "horizontalOverflow": false,
+          "viewportWidth": 1280
+        }
+      ],
+      "captionDoesNotCoverLibrary": true
+    },
+    {
+      "viewport": {
+        "name": "phone",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "blockedProviderRequests": [],
+      "cleanLocalFeedback": true,
+      "canvasClickFocus": true,
+      "quickLetter": {
+        "before": {
+          "x": 26,
+          "y": 22
+        },
+        "after": {
+          "x": 27,
+          "y": 22
+        },
+        "input": "d"
+      },
+      "quickArrow": {
+        "before": {
+          "x": 27,
+          "y": 22
+        },
+        "after": {
+          "x": 26,
+          "y": 22
+        },
+        "input": "ArrowLeft"
+      },
+      "afterReplay": {
+        "before": {
+          "x": 26,
+          "y": 22
+        },
+        "after": {
+          "x": 27,
+          "y": 22
+        },
+        "input": "d"
+      },
+      "focusAndReplay": true,
+      "layouts": [
+        {
+          "skin": "plaza-cream",
+          "width": 366,
+          "left": 12,
+          "right": 378,
+          "bottom": 431.5625,
+          "worldTop": 437.15625,
+          "horizontalOverflow": false,
+          "viewportWidth": 390
+        },
+        {
+          "skin": "hobbs-hearth",
+          "width": 366,
+          "left": 12,
+          "right": 378,
+          "bottom": 431.5625,
+          "worldTop": 437.15625,
+          "horizontalOverflow": false,
+          "viewportWidth": 390
+        },
+        {
+          "skin": "library-ink",
+          "width": 366,
+          "left": 12,
+          "right": 378,
+          "bottom": 431.5625,
+          "worldTop": 437.15625,
+          "horizontalOverflow": false,
+          "viewportWidth": 390
+        },
+        {
+          "skin": "original",
+          "width": 366,
+          "left": 12,
+          "right": 378,
+          "bottom": 440.296875,
+          "worldTop": 450.6875,
+          "horizontalOverflow": false,
+          "viewportWidth": 390
+        }
+      ],
+      "captionDoesNotCoverLibrary": true
+    }
+  ],
+  "failures": []
+}

@@ -117,6 +117,10 @@ export async function thinkWithPool(
         mode: "pool",
         provider: last?.provider ?? null,
         model: last?.model ?? null,
+        maxOutputTokens: last
+          ? (config.providers.find((provider) => provider.id === last.provider)?.routes[kind]
+              ?.maxTokens ?? null)
+          : null,
         attempts: attempts.length,
         elapsedMs: Date.now() - started,
         outcome: last?.completion.outcome ?? null,

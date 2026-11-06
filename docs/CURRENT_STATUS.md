@@ -1,16 +1,129 @@
 # Current project status
 
-Updated 5 November 2026. This file is the single current source/deployment and assignment index. Earlier dated statements are evidence, not active instructions.
+Updated 6 November 2026. This file is the single current source/deployment and assignment index. Earlier dated statements are evidence, not active instructions.
+
+## Character, teaching and learning-history release integration
+
+5 November 2026: this chat owns the user-authorized integration, PR, preview
+qualification, merge and live publication on `codex/character-learning-release`
+in the reused clean `candidate-20261021/` checkout. Freshly fetched main:
+`c49facc52136cfda0270627e3e6aef51f5ab4588`. Explicit inputs: character head
+`e90667a`, witnessed-history UI `e0e2b5c` integrated as `d0e59a8`, and voluntary
+teaching/practice `185eab7` integrated as `68a91f4`. Original owner checkouts,
+branches and independently owned provider-routing changes remain untouched.
+
+Acceptance: one combined source/build and desktop/phone qualification, including
+Socrates/Estée, F1/F2, witnessed learning history, old-save arrivals and lesson
+receipts, privacy, manual takeover, reload/import/export, authenticated private
+registration and conserved finances. Then required PR Verify and resolved review,
+named-target migration preview/recovery, bounded configured-free-model checks and
+the existing production publication workflow. No provider switch, budget increase,
+secret change or server-world migration is part of this release.
+
+6 November continuation: the user explicitly requested fixing the CI timeout,
+merging PR #72 after passing checks, then live deployment and verification.
+The combined implementation is complete at starting head `be2ab88` in
+[PR #72](https://github.com/arwyn6969/the-game/pull/72). The last sequential
+Verify run reached its 40-minute boundary with progressing browser checks;
+it was cancelled and is not a passing release check. Source/build verification
+and four isolated browser groups now feed the same protected `verify` check.
+All 19 prior command steps remain, with independent artifacts per browser group.
+The aggregate fails if source or any browser group fails, cancels or is skipped.
+
+The first parallel run completed every group within its limit. Its meeting
+browser exposed a terminal-boundary race: the no-background assertion inspected
+the interval after the final reply had closed the meeting and released ordinary
+background work. The assertion now checks before settling each armed decision;
+the existing checks still require natural closure, no subsequent meeting request,
+reload recovery, exact audiences, paced calls and conserved accounts.
+
+Local combined qualification: 1,293 script + 55 typed cases, 597 town cases,
+42 authority experiments, source checks/build and desktop/phone cast, history,
+teaching, following, registration, accessibility, personal-model and recovery
+journeys pass. Both newcomers produced real configured-free-model replies on
+the isolated preview; Socrates's exchange survived reload. One Estée timeout
+retained its draft before a successful bounded retry. Existing preview migration
+and binding/settings comparisons pass. Production has not been changed by this
+packet. Required current-head CI, reviews, production migration and publication
+remain pending. Prior sections below are retained input receipts, not release
+qualification for the current combined head.
+
+## Character continuity and cast arrivals
+
+5 November 2026: this chat owns `codex/character-continuity` in the reused clean
+`candidate-20261021/` checkout. Started at main `49cf76f`; current main
+`c49facc52136cfda0270627e3e6aef51f5ab4588` is incorporated in `a83863e`.
+The local integration deliberately reuses F1 head `58b9616` (which depends on
+PR #71 head `2ee631f`) and resident-growth implementation `0186b96`, cherry-picked
+as `29ff251`. PR #71 is now merged; the merge's tree equals the qualified
+`2ee631f` dependency. F2 and the other owner's subsequent growth UI work are
+outside this snapshot. Their original branches and checkouts remain intact. The older
+ownership paragraphs below are retained input receipts, not new assignments.
+
+Scope: nine resident foundations, personal conversation, Socrates through Plato,
+Estée's sourced sales/marketing role, lighter new-town Arwyn, Sub's art/writing
+context, cross-cast voice continuity, additive arrival and old-save preservation.
+Kevin's exact origin awareness remains undecided and is not invented by prompts.
+The full local companion and resident-growth source is integrated for qualification.
+
+Arrival adds two zero-balance accounts and preserves the 90-coin opening total,
+all prior ledger entries and permanent identities. Exact pre-arrival v2 bytes are
+backed up before the first migrated write. The private registration boundary accepts
+complete historical eight-person and current ten-person rosters; the additive SQL
+constraint migration changes no existing receiving profile or owner.
+
+Source checks pass: 1,257 script + 55 typed tests, 561 town cases, typecheck,
+lint (zero errors; one inherited warning), diagnostics and credential-free build.
+The build explicitly skipped database migration. The complete desktop/phone
+browser gate and all eight combined companion journeys pass. Newcomer portraits,
+conversations, reload and voluntary-facilitator proposals pass at both sizes;
+the screenshots have been inspected. Implementation head: `c084ffb`.
+Human character/growth acceptance and live-model quality remain separate.
+No production migration, publication, paid inference or remote change occurred.
+[Implementation record](implementation/character-development-2026-11-05.md) ·
+[evidence and limits](review/character-continuity-2026-11-05/README.md) ·
+[handoff](handoffs/character-continuity-2026-11-05.md).
+
+## Resident growth — current local implementation
+
+5 November 2026: this chat owns `codex/resident-growth` in the reused clean
+`a02-economy/` checkout, starting from freshly fetched main
+`49cf76f2236f12ff79b092f4e1df84e13f9b5a42`. The historical branch is preserved;
+the PR #71 and F1 checkouts remain untouched. Scope: cross-cast recall,
+privacy-safe personality context, distinct relationship evidence, grounded
+identity revisions and a bounded library method-reuse demonstration. Root owns
+integration/effects/relationships; delegated edits own memory/retrieval/interests,
+prompts, and library learning respectively. No persisted schema migration.
+Acceptance: old direct/indirect recall, private-knowledge isolation, no fabricated
+trust or competence, failure/correction/different-record reuse and save/reload,
+plus repository source checks and credential-free build. This is local work;
+shared-server continuity, full lifetime storage, general research/tools, new cast
+biographies and live-model/human acceptance remain separate milestones.
+
+Local implementation is complete: 27 focused resident-development cases, 511 town
+cases, and 1,206 script + 55 typed cases pass on Node 24.22.1. Typecheck, lint
+(zero errors; one inherited warning), diagnostics and credential-free build pass;
+database migration is explicitly skipped. Independent reviews resolved internal
+provenance disclosure, sleeping/competing-activity reuse, contradictory chronology
+and practice after financial closure. No UI files, providers, production settings,
+remote branch or live town changed. Browser/live-model/human acceptance and
+integration with PR #71/F1 remain separate.
+[Implementation evidence and broader improvement outcomes](review/resident-growth-2026-11-05/README.md)
+· [handoff](handoffs/resident-growth-2026-11-05.md).
 
 ## Source and deployment
 
-| Layer                   | State                                                                                                                                                                  |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Consolidated source | PR #69 merged as `6079050`; PR #70 merged as `49cf76f2236f12ff79b092f4e1df84e13f9b5a42`; connection recovery and eight playtest fixes included |
-| Source qualification | [Verify 41616048834](https://github.com/arwyn6969/the-game/actions/runs/41616048834) passed every step at `2ea974b`; its tree exactly matches merged `49cf76f` |
-| Production | Runtime `2ea974be7097`, Worker `6bf8d2d2-68ca-4624-8611-67b2c0f18531`, at https://www.arwyn.party/thegame/ |
-| Production verification | 3 November: four public asset hashes, eight endpoints and seven redirects pass; all 18 bindings, seven secret definitions, runtime settings and 52 routes preserved |
-| Rollback | Worker `c4098113-6b5c-43db-8ff4-b39d64e2eb72`; preserve database contents and browser saves |
+| Layer                   | State                                                                                                                                                               |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Consolidated source     | [PR #71](https://github.com/arwyn6969/the-game/pull/71) merged as `c49facc52136cfda0270627e3e6aef51f5ab4588`; this character candidate additionally includes local F1 and resident growth |
+| Source qualification    | [Verify 42009873247](https://github.com/arwyn6969/the-game/actions/runs/42009873247) passed every step at `2ee631f`; its tree exactly matches merged `c49facc`. Character-candidate CI remains separate |
+| Production              | Coordinator's 5 November workspace receipt records runtime `c49facc52136`, Worker `df4fa4fb-8725-42ba-a52a-6e050509f3a5`, at https://www.arwyn.party/thegame/. The character candidate is not published |
+| Production verification | Coordinator's receipt: four public asset hashes, eight endpoints, seven redirects and desktop/phone hydrated entry pass; all 18 bindings, seven secret definitions, runtime settings and 52 routes preserved |
+| Rollback                | Recorded previous Worker `6bf8d2d2-68ca-4624-8611-67b2c0f18531`; preserve database contents and browser saves |
+
+The current publication is owned by the release-coordination chat; consult the
+workspace `START_HERE.md` and its release receipt. The following paragraph
+retains the prior 3 November release account.
 
 The user authorized merge/publication and another in-app-browser bug hunt on
 3 November. Both PRs merged after passing current checks with no unresolved review
@@ -18,6 +131,34 @@ threads. [Publication and live-play evidence](review/live-playtest-2026-11-03/RE
 No database migration, secret/budget change or wallet transaction occurred.
 Publication used no model calls; subsequent authorized play tested one fresh
 hosted Arwyn reply successfully. Grok and historical testing automations remain paused.
+
+## F1 local following — bounded implementation owner
+
+5 November 2026: this Codex chat owns F1 “accompany and remember”, including
+its independent deterministic controller and coordinated additive save/UI/simulation
+integration. Branch `codex/followers-local`, implementation checkout `a01-replay/`
+(reused clean historical checkout; its prior branch remains intact).
+Fetched main: `49cf76f2236f12ff79b092f4e1df84e13f9b5a42`.
+Starting base/head: `2ee631fa62ca9ecbba9aab4453d7bfd7c3b69399`.
+Explicit unmerged dependency: PR #71's truthful shared-activity presentation and
+café station handover fix, needed for F1 journal/activity and conflicting-control
+acceptance. #71 remains owned by its existing chat; `product/` is untouched.
+The managed worktree tool rejected nested `product/` because the chat's registered
+workspace is the empty wrapper; this clean existing product worktree is reused.
+Acceptance: one nearby resident, ordinary movement, exact discussion receipts,
+immediate takeover, explicit Resume, bounded saved journal, old-save/recovery
+compatibility, synthetic source/browser checks at 1280×800 and 390×844. No F2–F4,
+provider/hosting/payment changes, upload, merge, publication or paid inference.
+Local implementation is complete. Twenty focused source cases, 525 town tests,
+1,220 script + 55 typed tests, typecheck, lint (one inherited warning), diagnostics,
+credential-free build and eight desktop/phone synthetic browser journeys pass.
+All four existing interface layouts fit. Four explicitly requested synthetic
+speaker calls and zero follower/live calls were measured. No remote action.
+[Consolidated evidence and limits](review/followers-local-2026-11-05/README.md) ·
+[proposed PR](review/followers-local-2026-11-05/proposed-pr.md) ·
+[handoff](handoffs/followers-local-2026-11-05.md).
+A short human playtest, physical devices/screen readers and future integration CI
+remain open. Implementation head: `40c67dc7c2699a295698aacac0b22283625bddeb` (local, unuploaded).
 
 ## Next work, in order
 
@@ -125,7 +266,7 @@ These are acceptance packets, not automatic authorizations or active assignments
 
 ## Implemented boundaries
 
-- Seven residents and the player; movement, conversation, memory, work, inventory, funded library consequences, manuscript interactions and voluntary meetings.
+- Nine residents and the player in this local candidate; movement, conversation, memory, work, inventory, funded library consequences, manuscript interactions and voluntary meetings. Published main still has seven residents and the player.
 - Versioned browser-local saves, old-save import, recovery, identity and restore/fork support. The game is not yet a production shared persistent world.
 - Hosted AI with existing validation/accounting, local authored dialogue, and optional personal-source controls in this source. Personal keys remain tab-only; real provider/local compatibility is open.
 - Café is an explicitly enabled finite pilot. Sales, refunds, cups and wages are separate durable facts. Its seven-day admission and storage bounds are not an indefinitely sustainable-economy claim.

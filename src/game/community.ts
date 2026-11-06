@@ -1,3 +1,4 @@
+import { LIBRARY_BOX_IDS } from "./library-reference";
 import type { AgentId, Plan, Town } from "./types";
 import { PLACE_IDS } from "./types";
 import type { PlayerAction } from "./effects";
@@ -21,6 +22,7 @@ import { agentById, makeMemory, pushMemory } from "./memory";
 import { findPath } from "./path";
 import { ANCHORS, zoneAt } from "./world";
 import { formatClock } from "./text";
+import { beatAt } from "./plan";
 import { advanceTown } from "./sim";
 import {
   createReadingEvening,
@@ -38,7 +40,7 @@ import {
 } from "./reading-evening";
 
 export const LIBRARY_PROJECT = "library-index";
-export const BOX_IDS = ["Birch", "Alder", "Cedar"] as const;
+export const BOX_IDS = LIBRARY_BOX_IDS;
 export type BoxId = (typeof BOX_IDS)[number];
 export const RECORD_IDS = ["hobbs-equipment", "dorm-repair", "room-access"] as const;
 export type RecordId = (typeof RECORD_IDS)[number];
@@ -1313,6 +1315,7 @@ export function advanceLibraryProject(town: Town) {
   advanceReadingEvening(town, getState(town)!, (id, text, participants) =>
     event(town, getState(town)!, id, text, participants),
   );
+  advanceLibraryLearning(town, getState(town)!);
 }
 /** A resident knows a public event after witnessing it or reading its notice. */
 export function residentLibraryReply(town: Town, resident: AgentId): string | null {
@@ -1329,6 +1332,171 @@ function knownProjectEvents(town: Town, state: LibraryState, resident: AgentId) 
         (memory) => memory.source === "event" && memory.text === item.text,
       ),
   );
+}
+
+const REUSE_RECORD = LIBRARY_RECORDS[0];
+const learningTime = (value: { day: number; minute: number }) => value.day * 1440 + value.minute;
+const reuseId = (revision: Revision) => `library:method-reuse:${revision.id}:${REUSE_RECORD.id}`;
+const reuseText = (revision: Revision) =>
+  `Arwyn tried the revised checking method on a different record: he checked the stable box ID against a directly verified entry, then searched for the ${REUSE_RECORD.label}. ${findResult(revision, REUSE_RECORD)} This demonstrates this one library lookup, not general research mastery.`;
+
+/** Existing receipts establish the trial; prose about improvement cannot create one. */
+function failedLibraryTrial(town: Town, state: LibraryState): boolean {
+  const lookup = state.lookup;
+  const revision = state.revisions.find((item) => item.id === lookup?.revision);
+  return Boolean(
+    lookup?.status === "done" &&
+    lookup.result === "failure" &&
+    revision &&
+    revision.mappings["room-access"] !== "Cedar" &&
+    town.economy?.work?.receipts.some(
+      (receipt) =>
+        receipt.agreementId === lookup.agreementId &&
+        receipt.worker === "northern" &&
+        receipt.outcome === "failure",
+    ),
+  );
+}
+function correctedLibraryMethod(town: Town, state: LibraryState): Revision | null {
+  const revision = state.revisions.at(-1);
+  const report = state.reports.find((item) => item.role === "correction");
+  const correction = state.events.find((item) => item.id === "library:correction");
+  return state.corrected &&
+    state.delivery &&
+    revision &&
+    correction &&
+    learningTime(correction) === learningTime(revision) &&
+    revision.id > (state.lookup?.revision ?? Infinity) &&
+    RECORD_IDS.every(
+      (id) =>
+        revision.verified.includes(id) &&
+        revision.mappings[id] === LIBRARY_RECORDS.find((record) => record.id === id)?.box &&
+        state.observations.some((item) => item.key === `box:${revision.mappings[id]}`),
+    ) &&
+    report &&
+    town.economy?.work?.receipts.some(
+      (receipt) =>
+        receipt.agreementId === report.agreementId &&
+        receipt.worker === report.worker &&
+        receipt.outcome === "success" &&
+        learningTime(receipt.at) === learningTime(revision),
+    )
+    ? revision
+    : null;
+}
+
+export type LibraryLearningEvidence = {
+  failure: { id: string; summary: string };
+  correction?: { id: string; summary: string };
+  reuse?: { id: string; summary: string; demonstrator: AgentId };
+};
+
+/** Read-only shared receipts, independent of the resident-only learning prompt. */
+export function publicLibraryLearningEvents(town: Town, resident: AgentId) {
+  const state = getState(town);
+  if (!state || validateLibraryState(town).length || !failedLibraryTrial(town, state)) return [];
+  // A posted notice or project-wide view is not a receipt. Match a real event
+  // and require an observation source, so chat/reflection claims cannot qualify.
+  const knows = (item: PublicEvent, id: AgentId) =>
+    item.participants.includes(id) ||
+    item.witnesses.includes(id) ||
+    agentById(town, id).memories.some(
+      (memory) =>
+        memory.type === "observe" &&
+        memory.source === "event" &&
+        !memory.seed &&
+        memory.text === item.text &&
+        learningTime(memory) >= learningTime(item) &&
+        learningTime(memory) <= learningTime(town),
+    );
+  const shared = state.events.filter((item) => knows(item, resident) && knows(item, "player"));
+  const failure = shared.find(
+    (item) =>
+      item.id === "library:lookup" || item.id === `library:tomorrow:${state.lookup!.revision}`,
+  );
+  const revision = correctedLibraryMethod(town, state);
+  const correction = revision && shared.find((item) => item.id === "library:correction");
+  const reuse = revision && shared.find((item) => item.id === reuseId(revision));
+  return [
+    ...(failure ? [{ ...failure, kind: "failure" as const }] : []),
+    ...(correction ? [{ ...correction, kind: "correction" as const }] : []),
+    ...(reuse ? [{ ...reuse, kind: "reuse" as const }] : []),
+  ]
+    .sort((a, b) => learningTime(a) - learningTime(b))
+    .map(({ id, day, minute, kind }) => ({ id, day, minute, kind }));
+}
+
+/** Only this resident's experienced or explicitly read project evidence is available. */
+export function libraryLearningEvidence(
+  town: Town,
+  resident: AgentId,
+): LibraryLearningEvidence | null {
+  const state = getState(town);
+  if (!state || !failedLibraryTrial(town, state)) return null;
+  const known = knownProjectEvents(town, state, resident);
+  const failure = known.find(
+    (item) =>
+      item.id === "library:lookup" || item.id === `library:tomorrow:${state.lookup!.revision}`,
+  );
+  if (!failure) return null;
+  const result: LibraryLearningEvidence = {
+    failure: {
+      id: failure.id,
+      summary: `Northern's search for room-access failed using revision ${state.lookup!.revision}.`,
+    },
+  };
+  const revision = correctedLibraryMethod(town, state);
+  const correction = known.find((item) => item.id === "library:correction");
+  if (!revision || !correction) return result;
+  result.correction = {
+    id: correction.id,
+    summary: `Revision ${revision.id} corrects the mappings using direct box inspections.`,
+  };
+  const reuse = known.find(
+    (item) =>
+      item.id === reuseId(revision) &&
+      item.text === reuseText(revision) &&
+      learningTime(item) > learningTime(revision),
+  );
+  if (reuse)
+    result.reuse = {
+      id: reuse.id,
+      summary: `Arwyn found ${REUSE_RECORD.label} in ${REUSE_RECORD.box} using revision ${revision.id}.`,
+      demonstrator: "arwyn",
+    };
+  return result;
+}
+
+/** A bounded, engine-guided transfer trial, using the same direct lookup rule as Find. */
+function advanceLibraryLearning(town: Town, state: LibraryState) {
+  const evidence = libraryLearningEvidence(town, "arwyn");
+  if (!evidence?.correction || evidence.reuse) return;
+  const revision = correctedLibraryMethod(town, state)!;
+  const correction = state.events.find((item) => item.id === evidence.correction!.id)!;
+  const arwyn = agentById(town, "arwyn");
+  const beat = beatAt(arwyn, town.minute);
+  if (
+    state.events.some((item) => item.id === reuseId(revision)) ||
+    beat.place !== "library" ||
+    beat.spot !== "out" ||
+    zoneAt(arwyn.tile.x, arwyn.tile.y) !== "library" ||
+    learningTime(town) <= learningTime(correction) ||
+    (town.physicalItems?.session?.enabled && town.physicalItems.session.actor === arwyn.id) ||
+    town.discussions?.sessions.some(
+      (meeting) =>
+        meeting.status !== "closed" &&
+        meeting.members.some((member) => member.id === arwyn.id && member.choice === "accepted"),
+    ) ||
+    (state.evening?.choice === "library" && ["routing", "ready"].includes(state.evening.status)) ||
+    town.economy?.work?.agreements.some(
+      (agreement) =>
+        agreement.worker === arwyn.id &&
+        agreement.status === "active" &&
+        (agreement.kind === "check" || wageInterval(town, agreement)),
+    )
+  )
+    return;
+  event(town, state, reuseId(revision), reuseText(revision), ["arwyn"]);
 }
 /** Reading questions cannot borrow an unrelated payment or index discussion. */
 export function residentReadingReply(town: Town, resident: AgentId): string | null {
@@ -1544,6 +1712,22 @@ export function validateLibraryState(town: Town): string[] {
     )
       errors.push("Invalid sourced public project event.");
     eventIds.add(item.id);
+    if (item.id.startsWith("library:method-reuse:")) {
+      const revision = correctedLibraryMethod(town, state);
+      const correction = state.events.find((event) => event.id === "library:correction");
+      if (
+        !failedLibraryTrial(town, state) ||
+        !revision ||
+        !correction ||
+        item.id !== reuseId(revision) ||
+        item.text !== reuseText(revision) ||
+        item.participants.length !== 1 ||
+        item.participants[0] !== "arwyn" ||
+        learningTime(item) <= learningTime(correction) ||
+        learningTime(item) <= learningTime(revision)
+      )
+        errors.push("A learned-method trial lacks its failed search, correction or actual reuse.");
+    }
   }
   return [...errors, ...validateReadingEvening(town, state)];
 }

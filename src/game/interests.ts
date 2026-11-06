@@ -17,6 +17,59 @@ export const TECHNOLOGY_KEYWORDS = [
 const MEMORY_INTERESTS: Partial<Record<AgentId, { keywords: readonly string[]; weight: number }>> =
   {
     kevin: { keywords: TECHNOLOGY_KEYWORDS, weight: 0.25 },
+    arwyn: {
+      keywords: ["records", "record", "sources", "source", "library", "evidence"],
+      weight: 0.25,
+    },
+    northern: {
+      keywords: ["study", "studying", "lesson", "practice", "student", "wage", "wages"],
+      weight: 0.25,
+    },
+    baba: {
+      keywords: ["grocery", "stock", "bread", "receipt", "receipts", "tab", "tabs"],
+      weight: 0.25,
+    },
+    sub: {
+      keywords: [
+        "writing",
+        "manuscript",
+        "story",
+        "stories",
+        "revision",
+        "reader",
+        "art",
+        "artist",
+        "meme",
+        "memes",
+        "pepe",
+        "counterparty",
+      ],
+      weight: 0.25,
+    },
+    data: {
+      keywords: [...TECHNOLOGY_KEYWORDS, "experiment", "measurement", "hypothesis", "testing"],
+      weight: 0.25,
+    },
+    amelia: {
+      keywords: ["budget", "budgets", "funding", "cost", "costs", "incentive", "affordability"],
+      weight: 0.25,
+    },
+    socrates: {
+      keywords: ["question", "justice", "fairness", "friendship", "virtue", "reason", "reasons"],
+      weight: 0.25,
+    },
+    estee: {
+      keywords: [
+        "customer",
+        "customers",
+        "sales",
+        "presentation",
+        "demonstration",
+        "feedback",
+        "marketing",
+      ],
+      weight: 0.25,
+    },
   };
 
 export function memoryInterestScore(agentId: AgentId, eventText: string): number {

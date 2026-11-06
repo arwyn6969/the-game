@@ -1,4 +1,4 @@
-export const AGENT_IDS = [
+export const BASE_AGENT_IDS = [
   "kevin",
   "arwyn",
   "northern",
@@ -8,6 +8,8 @@ export const AGENT_IDS = [
   "data",
   "amelia",
 ] as const;
+
+export const AGENT_IDS = [...BASE_AGENT_IDS, "socrates", "estee"] as const;
 
 export type AgentId = (typeof AGENT_IDS)[number];
 
@@ -50,6 +52,8 @@ export const NPC_IDS = [
   "sub",
   "data",
   "amelia",
+  "socrates",
+  "estee",
 ] as const satisfies readonly AgentId[];
 
 export type NpcId = (typeof NPC_IDS)[number];
@@ -246,6 +250,10 @@ export type Town = {
   physicalItems?: import("./physical-types").PhysicalItemsState;
   /** Optional opt-in local meeting history; old towns have no discussion state. */
   discussions?: import("./discussion-types").DiscussionState;
+  /** Bounded local companion journal; saved records never confer automatic authority. */
+  following?: import("./following-types").Following;
+  /** Bounded local F2 lesson and practice receipts; never saved automatic authority. */
+  followerLearning?: import("./learning-types").LearningState;
 };
 
 export type ThinkKind = "plan" | "reflect" | "talk" | "player" | "act";
@@ -314,6 +322,8 @@ export type PlanDraft = {
   blocks: Block[];
   want?: string;
   selfSentence?: string;
+  selfEvidence?: string[];
+  selfReason?: string;
   project?: ProjectEdit;
   thread?: ThreadEdit;
 };

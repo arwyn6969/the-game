@@ -6,6 +6,7 @@ import { everydayReply, recentBreadGreeting, recentCafePaymentGreeting } from ".
 import { promptMemories } from "./retrieval";
 import { beatAt } from "./plan";
 import { localReflections } from "./reflections";
+import { characterPersonalReply, characterSpecialtyReply } from "./character-foundations";
 import { clip, formatClock, mentionsSeed } from "./text";
 import { placeTitle, placeTitleOf, zoneAt } from "./world";
 import { residentLibraryReply, residentReadingReply } from "./community";
@@ -110,7 +111,7 @@ function offlinePlan(town: Town, weekly: boolean, ids: AgentId[]): MindResult {
     }
     if (id === "sub" && known) {
       summary =
-        "Turn the cafe conversation into a page, and try — this once — not to sand it into a better lie.";
+        "Consider a page about the cafe conversation, asking before using another resident's personal account.";
     }
     if (id === "baba") {
       summary = "Keep the grocery even, and do not let a story erase a tab.";
@@ -152,9 +153,7 @@ function weeklyLine(agent: Agent, known: boolean): string {
       : "Right now I am still the apron and the kettle, and the question is still only mine.";
   }
   if (agent.id === "arwyn") {
-    return known
-      ? "Right now I am a person holding someone else's origin question as if it were a document."
-      : "Right now I am still the one who reads a life before I interrupt it.";
+    return agent.selfSentence;
   }
   if (agent.id === "northern") {
     return known
@@ -165,9 +164,7 @@ function weeklyLine(agent: Agent, known: boolean): string {
     return "Right now I am the ledger, and I have not agreed to become the story.";
   }
   if (agent.id === "sub") {
-    return known
-      ? "Right now I am a writer who already bent someone's confession and has not decided to unbend it."
-      : "Right now I am still sanding other people's days until they fit a page.";
+    return agent.selfSentence;
   }
   return characterProfile(agent.id).reflection;
 }
@@ -684,9 +681,13 @@ function offlinePlayer(town: Town, id: AgentId, text: string): MindResult {
     /who are you|who you are|man under|where (?:did|do) you come|your (?:story|past|origins?)|who is kevin|kevin's (?:story|past|origins?)/i.test(
       text,
     );
-  const topic = discussionTopic(text) ?? (followup(text) ? previousTopic(town, agent) : null);
-  const everyday = topic ? null : everydayReply(town, agent, text);
-  let reply = publicReply(town, agent, text, topic);
+  const personal =
+    characterPersonalReply(agent.id, text) ?? characterSpecialtyReply(agent.id, text);
+  const topic = personal
+    ? null
+    : (discussionTopic(text) ?? (followup(text) ? previousTopic(town, agent) : null));
+  const everyday = topic || personal ? null : everydayReply(town, agent, text);
+  let reply = personal ?? publicReply(town, agent, text, topic);
   if (agent.id === "kevin" && probing && !topic) {
     reply =
       "I run Hobbs, but I still want to find out who I am — the man under the apron, not a place I came from. I am willing to talk about it, if you mean to listen.";

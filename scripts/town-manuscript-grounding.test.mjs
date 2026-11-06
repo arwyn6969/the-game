@@ -233,6 +233,8 @@ test("long own records and a maximum read remain bounded without dropping actual
     [-1, -1],
     [1, -1],
     [-1, 1],
+    [1, 1],
+    [2, 0],
   ];
   town.agents
     .filter((agent) => agent.id !== actor.id)

@@ -94,7 +94,7 @@ test("recorded pre-step04 Arwyn attention offers have complete strict wire choic
     day: 1,
     minute: 420,
     agentId: "arwyn",
-    meetingId: "discussion:10",
+    meetingId: town.discussions.sessions.at(-1).id,
     sessionRevision: 1,
     actorRevision: 5,
     turnId: null,
@@ -436,10 +436,28 @@ test("maximum bounded received dialogue fits the prompt without borrowing other 
     importance: 7,
     keywords: ["discussion"],
   }));
+  town.retrievals.push({
+    agentId: "northern",
+    top: [1, 2, 3],
+    seedRank: 3,
+    seedInStream: true,
+    missed: false,
+  });
+  const previousRetrievals = structuredClone(town.retrievals);
   const { prompt, resident, observation } = context(town);
+  assert.deepEqual(
+    town.retrievals,
+    previousRetrievals,
+    "discussion trimming cannot rewrite a previous conversation's retrieval diagnostics",
+  );
   assert.ok(prompt.length <= 10000, `actual prompt characters: ${prompt.length}`);
   assert.equal(observation.receivedTurns.length, 6);
-  assert.equal(resident.memories.length, 3);
+  assert.equal(
+    resident.memories.length + (resident.omittedContext?.memories ?? 0),
+    3,
+    "bounded recall accounts for omitted memories while retaining all received speech",
+  );
+  assert.ok(resident.memories.length <= 3);
   assert.ok(resident.memories.every((memory) => memory.text.length <= 220));
   assert.doesNotMatch(prompt, /PRIVATE_OTHER_RESIDENT_RECORD|SPECTATOR_ONLY_GLOBAL_TRANSCRIPT/);
 });

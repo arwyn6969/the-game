@@ -50,7 +50,7 @@ export async function createCoffeeRecoveryFixture(load) {
     assert.deepEqual(auditEconomy(town), []);
     assert.deepEqual(validateCoffee(town), []);
     assert.equal(total(town), openingCoins);
-    assert.equal(new Set(town.agents.map(({ tile }) => `${tile.x},${tile.y}`)).size, 8);
+    assert.equal(new Set(town.agents.map(({ tile }) => `${tile.x},${tile.y}`)).size, 10);
   };
   const tick = () => {
     advanceTown(town, 1);

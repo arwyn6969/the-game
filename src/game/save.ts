@@ -1,5 +1,8 @@
+import { validateFollowerLearning } from "./learning-validation";
+import { recoverLearning } from "./learning-runtime";
+import { recoverFollowing, validateFollowing, suspendFollowing } from "./following-runtime";
 import type { Agent, AgentId, Face, Memory, MemoryType, Town } from "./types";
-import { AGENT_IDS } from "./types";
+import { AGENT_IDS, BASE_AGENT_IDS } from "./types";
 import { compressDialogue, compressObservations, keywords } from "./memory";
 import { addSpecialists, SEED_TEXT } from "./town";
 import { mentionsSeed, plain, purse } from "./text";
@@ -9,7 +12,7 @@ import { auditEconomy, initializeEconomy } from "./economy";
 import { validateLibraryState } from "./community";
 import type { FundedTown } from "./economy-types";
 import { cleanSocial } from "./social";
-import { legacyTownIdentity, validateTownIdentity } from "./identity";
+import { extendTownIdentity, legacyTownIdentity, validateTownIdentity } from "./identity";
 import { validatePhysicalItems } from "./physical-items";
 import { validateCoffee } from "./coffee-validation";
 import { recoverCoffeeControl } from "./coffee-runtime";
@@ -233,6 +236,7 @@ export function validateTown(value: unknown): value is Town {
   const town = value as Town;
   const version = (value as { version?: unknown }).version;
   if (version !== 1 && version !== 2) return false;
+  if (validateFollowing(town).length || validateFollowerLearning(town).length) return false;
   // Check both the extension and orphan coffee ledger effects before normalization.
   if ((Object.hasOwn(value, "coffee") && version !== 2) || validateCoffee(town).length)
     return false;
@@ -249,14 +253,19 @@ export function validateTown(value: unknown): value is Town {
   // Six-actor experimental books require their own explicit migration. Current
   // v2 books are audited before any legacy normalization can conceal damage.
   if (hasEconomy && (version !== 2 || economyProblem(town))) return false;
-  const expectedIds = version === 1 ? LEGACY_IDS : AGENT_IDS;
+  const expectedIds =
+    version === 1
+      ? LEGACY_IDS
+      : Array.isArray(town.agents) && town.agents.length === BASE_AGENT_IDS.length
+        ? BASE_AGENT_IDS
+        : AGENT_IDS;
   if (!Array.isArray(town.agents) || town.agents.length !== expectedIds.length) return false;
   const ids = new Set(town.agents.map((a) => a?.id));
   if (expectedIds.some((id) => !ids.has(id))) return false;
   // Check existing identities before any repair. Corruption is recoverable data,
   // never permission to manufacture a replacement person or world.
   const hasIdentities = Object.hasOwn(town, "identityRegistry");
-  if (hasIdentities && (version !== 2 || !validateTownIdentity(town.identityRegistry, AGENT_IDS)))
+  if (hasIdentities && (version !== 2 || !validateTownIdentity(town.identityRegistry, expectedIds)))
     return false;
   // Capture legacy identity from the original input, before seed/roster/economy
   // migration changes its content. The same old file always restores the same IDs.
@@ -442,9 +451,22 @@ export function validateTown(value: unknown): value is Town {
     for (const memory of agent.memories ?? []) memory.id = unique(memory.id, "m");
   }
   town.nextId = Math.max(maxId, Number.isFinite(town.nextId) ? Math.floor(town.nextId) : 1);
-  if (version === 1) {
+  if (version === 1 || originalRoster.length === BASE_AGENT_IDS.length) {
     town.version = 2;
     addSpecialists(town);
+    if (hasIdentities) {
+      identityRegistry = extendTownIdentity(identityRegistry!, originalRoster, AGENT_IDS);
+    }
+    if (hasEconomy) {
+      const economy = (town as FundedTown).economy!;
+      // Existing books passed their audit above. Arrival introduces no money,
+      // rewrites no receipt and preserves every original opening account.
+      economy.openingBalances = Object.freeze({
+        ...economy.openingBalances,
+        "agent:socrates": 0,
+        "agent:estee": 0,
+      });
+    }
   }
   for (const agent of town.agents) refreshResidentStatus(town, agent);
   if (!hasEconomy) {
@@ -525,6 +547,10 @@ function economyProblem(town: Town): string | null {
 }
 
 function serialize(town: Town, omitReplay = false): string {
+  const learningErrors = validateFollowerLearning(town);
+  if (learningErrors.length) throw new Error(learningErrors.join(" "));
+  const followingErrors = validateFollowing(town);
+  if (followingErrors.length) throw new Error(followingErrors.join(" "));
   const coffeeErrors = validateCoffee(town);
   if (coffeeErrors.length) throw new Error(coffeeErrors.join(" "));
   if (town.coffee) {
@@ -641,7 +667,14 @@ export function readTownConflicts(): { key: string; raw: string }[] {
 }
 
 function writeTown(town: Town, intent: "save" | "initialize" | "replace"): SaveResult {
-  const done = (result: SaveResult) => (lastSaveResult = result);
+  const done = (result: SaveResult) => {
+    if (!result.ok)
+      suspendFollowing(
+        town,
+        "Town save failed or conflicted. Resolve recovery, then Resume explicitly.",
+      );
+    return (lastSaveResult = result);
+  };
   const discussionErrors = validateDiscussions(town);
   if (discussionErrors.length)
     return done({ ok: false, reason: "serialization", explanation: discussionErrors.join(" ") });
@@ -696,7 +729,11 @@ function writeTown(town: Town, intent: "save" | "initialize" | "replace"): SaveR
   }
   // The first identity migration keeps the exact pre-migration file. Do this
   // after the stale-tab check and before writing, and retain it across retries.
-  if (intent === "save" && previous !== null && !rawHasIdentities(previous)) {
+  if (
+    intent === "save" &&
+    previous !== null &&
+    (!rawHasIdentities(previous) || rawNeedsArrivals(previous))
+  ) {
     try {
       // A v1 source already remains under its untouched legacy key. Only the
       // pre-identity v2 file is about to be replaced and needs another raw copy.
@@ -807,6 +844,8 @@ export function parseTownFile(text: string): Town | null {
       return null;
     const town = data && typeof data === "object" && "town" in data ? data.town : data;
     if (!validateTown(town)) return null;
+    recoverFollowing(town);
+    recoverLearning(town);
     recoverDiscussions(town);
     // A saved service grant preserves its obligation, never unattended control.
     // Recovery is idempotent: an already-paused snapshot gets no new receipt.
@@ -830,11 +869,30 @@ function rawHasIdentities(text: string): boolean {
   }
 }
 
+function rawNeedsArrivals(text: string): boolean {
+  try {
+    const data = JSON.parse(text);
+    const town = data && typeof data === "object" && "town" in data ? data.town : data;
+    return (
+      town?.version === 2 &&
+      Array.isArray(town.agents) &&
+      town.agents.length === BASE_AGENT_IDS.length &&
+      BASE_AGENT_IDS.every((id) => town.agents.some((agent: { id?: unknown }) => agent?.id === id))
+    );
+  } catch {
+    return false;
+  }
+}
+
 function townFileProblem(text: string): string | null {
   try {
     const data = JSON.parse(text);
     const town = data && typeof data === "object" && "town" in data ? data.town : data;
     if (town && typeof town === "object") {
+      const learningErrors = validateFollowerLearning(town as Town);
+      if (learningErrors.length) return learningErrors.join(" ");
+      const followingErrors = validateFollowing(town as Town);
+      if (followingErrors.length) return followingErrors.join(" ");
       if (Object.hasOwn(town, "coffee") && town.version !== 2)
         return "Coffee records require a version-2 town; preserve the original file for recovery.";
       const errors = validateCoffee(town);

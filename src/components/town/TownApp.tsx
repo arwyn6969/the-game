@@ -1,3 +1,24 @@
+import { LearningPanel } from "./LearningPanel";
+import {
+  enableLearning,
+  resumeLearning,
+  stopLearning,
+  learningRequest,
+  freshLearningJob,
+  applyLearningDecision,
+  failLearningRequest,
+  recordLearningUsage,
+} from "@/game/learning-runtime";
+import { parseLearningResponse } from "@/lib/learning-actions";
+import type { LearningPurpose } from "@/game/learning-types";
+import { CompanionChoice, FollowingPanel } from "./FollowingPanel";
+import {
+  startFollowing,
+  resumeFollowing,
+  stopFollowing,
+  suspendFollowing,
+  followingOwnsMovement,
+} from "@/game/following-runtime";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ACTION_CLIENT_TIMEOUT_MS } from "@/lib/mind-timing";
 import {
@@ -17,6 +38,7 @@ import { ArcadeMark, PixelUniverse } from "./ArcadeArt";
 import { TownUiIcon } from "./appearance/TownUiIcon";
 import {
   CharacterOverview,
+  CharacterLearning,
   CharacterProgress,
   CharacterReflections,
   CharacterStrengths,
@@ -47,7 +69,12 @@ import {
   recordPhysicalUsage,
 } from "@/game/physical-items";
 import type { ManuscriptControls } from "./ManuscriptTools";
-import { DiscussionPanel, type DiscussionControls, type DiscussionInput } from "./DiscussionPanel";
+import {
+  DiscussionPanel,
+  type DiscussionControls,
+  type DiscussionInput,
+  type DiscussionFacilitator,
+} from "./DiscussionPanel";
 import {
   advanceDiscussions,
   applyDiscussionCommand,
@@ -633,6 +660,10 @@ export function TownApp() {
   const [physicalActor, setPhysicalActor] = useState<NpcId>(
     () => townRef.current?.physicalItems?.session?.actor ?? "northern",
   );
+  const [followingNote, setFollowingNote] = useState("");
+  const [learningNote, setLearningNote] = useState("");
+  const [learningBusy, setLearningBusy] = useState(false);
+  const learningBusyRef = useRef(false);
   const [coffeeNote, setCoffeeNote] = useState("");
   const [coffeeSaving, setCoffeeSaving] = useState(false);
   const [physicalRead, setPhysicalRead] = useState<PhysicalActionResult["content"] | null>(null);
@@ -678,6 +709,13 @@ export function TownApp() {
     return persistTownSave(live).then((result) => {
       if (mounted.current && townRef.current === live) {
         setSaveStatus(result);
+        if (!result.ok) {
+          suspendFollowing(
+            live,
+            "Town could not be saved. Resolve save recovery, then Resume explicitly.",
+          );
+          setTick((n) => n + 1);
+        }
         if (coffeeSave && !result.ok) {
           coffeeActionSerialRef.current += 1;
           coffeeSaveFailureRef.current += 1;
@@ -743,7 +781,13 @@ export function TownApp() {
 
   const interruptCoffeeForMovement = useCallback(() => {
     const live = townRef.current;
-    if (!live || !hasActivePlayerCoffeeRoutine(live)) return;
+    if (!live) return;
+    const pausedFollow = suspendFollowing(live, "You took manual control. Resume explicitly.");
+    if (pausedFollow) {
+      void persistTown(live);
+      setTick((n) => n + 1);
+    }
+    if (!hasActivePlayerCoffeeRoutine(live)) return;
     coffeeActionSerialRef.current += 1;
     coffeeContextGenerationRef.current += 1;
     const result = suspendPlayerCoffeeRoutine(
@@ -758,6 +802,13 @@ export function TownApp() {
   const stopCoffeeForContext = useCallback(
     (reason: string) => {
       const live = townRef.current;
+      if (live && suspendFollowing(live, reason.replace(/^Café service/, "Companion session"))) {
+        speedRef.current = 0;
+        live.paused = true;
+        setSpeed(0);
+        void persistTown(live);
+        setTick((n) => n + 1);
+      }
       if (live?.coffee) coffeeContextGenerationRef.current += 1;
       if (!live?.coffee?.routines.some((routine) => routine.status === "active")) return;
       coffeeActionSerialRef.current += 1;
@@ -798,6 +849,8 @@ export function TownApp() {
       coffeeSaveBlockedRef.current
     )
       return;
+    if (command.kind === "start" || command.kind === "resume")
+      stopFollowing(expectedTown, "You chose café service. Your companion journal is retained.");
     const serial = ++coffeeActionSerialRef.current;
     const result =
       command.kind === "start" || command.kind === "resume"
@@ -846,6 +899,153 @@ export function TownApp() {
       !coffeeSaveBlockedRef.current
     )
       setCoffeeNote(successMessage);
+  }
+
+  async function requestLearning(purpose: LearningPurpose) {
+    const live = townRef.current;
+    if (
+      !live ||
+      replayRef.current ||
+      importTextRef.current !== null ||
+      document.visibilityState !== "visible" ||
+      learningBusyRef.current ||
+      pendingRef.current ||
+      transportBusyRef.current
+    )
+      return;
+    if (
+      personalModelRef.current.mode !== "hosted" ||
+      localOnlyRef.current ||
+      !actionsAvailableRef.current ||
+      !onlineRef.current ||
+      (saveStatus && !saveStatus.ok)
+    ) {
+      setLearningNote(
+        "The existing AI action allowance or safe save is unavailable. No lesson request was sent.",
+      );
+      return;
+    }
+    const previous = lastMindRequestStartedAtRef.current;
+    if (previous !== null && performance.now() - previous < DISCUSSION_RUN_INTERVAL_MS) {
+      setLearningNote(
+        "Wait between AI actions (up to 31 seconds). No request or attempt slot was used.",
+      );
+      return;
+    }
+    learningBusyRef.current = true;
+    setLearningBusy(true);
+    const requested = learningRequest(live, purpose);
+    if (!requested.ok) {
+      void persistTown(live);
+      setLearningNote(requested.message);
+      learningBusyRef.current = false;
+      setLearningBusy(false);
+      setTick((n) => n + 1);
+      return;
+    }
+    const { job, prompt } = requested;
+    const serial = ++requestSerial.current;
+    const started = performance.now();
+    let response: unknown;
+    let timer: number | undefined;
+    let applied = false;
+    let dispatched = false;
+    pendingRef.current = true;
+    foregroundPendingRef.current = true;
+    setThinking("learning");
+    try {
+      const saved = await persistTown(live);
+      if (
+        !saved.ok ||
+        townRef.current !== live ||
+        serial !== requestSerial.current ||
+        !freshLearningJob(live, job)
+      ) {
+        failLearningRequest(
+          live,
+          job,
+          "The lesson changed before dispatch. No automatic retry was made.",
+        );
+        return;
+      }
+      dispatched = true;
+      const result = await Promise.race([
+        requestMind("act", prompt),
+        new Promise<never>((_, reject) => {
+          timer = window.setTimeout(() => reject(new Error("timeout")), ACTION_CLIENT_TIMEOUT_MS);
+        }),
+      ]);
+      response = result;
+      if (
+        townRef.current !== live ||
+        serial !== requestSerial.current ||
+        document.visibilityState !== "visible" ||
+        replayRef.current ||
+        importTextRef.current !== null ||
+        !freshLearningJob(live, job)
+      ) {
+        failLearningRequest(
+          live,
+          job,
+          "This response arrived after permission or context changed. It was not applied.",
+        );
+        setLearningNote("The late lesson response was rejected. Its attempt is retained.");
+        return;
+      }
+      if (!result.ok) {
+        failLearningRequest(
+          live,
+          job,
+          "AI capacity or a response was unavailable. No lesson speech or success was substituted.",
+        );
+        setLearningNote(
+          "AI capacity or a response was unavailable. The bounded attempt remains recorded.",
+        );
+        return;
+      }
+      const decision = parseLearningResponse(result.text);
+      if (!decision) {
+        failLearningRequest(
+          live,
+          job,
+          "The lesson response was malformed. No speech or practice success was invented.",
+        );
+        setLearningNote("The malformed lesson response was rejected.");
+        return;
+      }
+      const committed = applyLearningDecision(live, job, decision);
+      applied = committed.ok;
+      setLearningNote(committed.message);
+    } catch {
+      failLearningRequest(
+        live,
+        job,
+        "The lesson request failed or timed out. Its outcome is unknown; no automatic retry was made.",
+      );
+      if (townRef.current === live)
+        setLearningNote("The request failed or timed out. History and used attempts remain.");
+    } finally {
+      if (timer !== undefined) window.clearTimeout(timer);
+      recordLearningUsage(
+        live,
+        job,
+        dispatched
+          ? physicalUsageSample(response, performance.now() - started, applied)
+          : { elapsedMs: performance.now() - started, attempts: 0, totalTokens: 0, success: false },
+        response,
+      );
+      if (townRef.current === live) void persistTown(live);
+      if (serial === requestSerial.current) {
+        pendingRef.current = false;
+        foregroundPendingRef.current = false;
+        setThinking("");
+      }
+      learningBusyRef.current = false;
+      if (mounted.current) {
+        setLearningBusy(false);
+        setTick((n) => n + 1);
+      }
+    }
   }
 
   function requestMind(kind: ThinkJob["kind"], user: string) {
@@ -975,6 +1175,10 @@ export function TownApp() {
       replayRef.current !== null
     )
       return;
+    stopFollowing(
+      expectedTown,
+      "You chose another resident activity. Your companion journal is retained.",
+    );
     const result = applyPlayerAction(expectedTown, target, actionId);
     if (result.ok) persistTown(expectedTown);
     setSendNote(result.reply);
@@ -994,6 +1198,10 @@ export function TownApp() {
       setSendNote("Wait for your current conversation to finish before making a library choice.");
       return;
     }
+    stopFollowing(
+      expectedTown,
+      "You chose a library activity. Your companion journal is retained.",
+    );
     const result = applyLibraryAction(expectedTown, actionId);
     if (result.ok) {
       persistTown(expectedTown);
@@ -1096,6 +1304,7 @@ export function TownApp() {
       discussionStartedRef.current = null;
       setThinking("");
     }
+    suspendFollowing(live, "Meeting control changed. Resume spending time explicitly.");
     pauseDiscussion(live, reason);
     setDiscussionNote(reason);
     persistTown(live);
@@ -1106,6 +1315,7 @@ export function TownApp() {
   function changeDiscussion(decision: DiscussionInput) {
     const live = townRef.current;
     if (!live || !discussionEnabled || replayRef.current || importTextRef.current !== null) return;
+    suspendFollowing(live, "You changed discussion attention. Resume explicitly when ready.");
     advanceDiscussions(live);
     const view = discussionView(live);
     if (!view.meeting) return;
@@ -1122,7 +1332,7 @@ export function TownApp() {
     setTick((n) => n + 1);
   }
 
-  function proposeDiscussion(topic: string, facilitator: "northern" | "arwyn") {
+  function proposeDiscussion(topic: string, facilitator: DiscussionFacilitator) {
     const live = townRef.current;
     if (
       !live ||
@@ -1454,6 +1664,10 @@ export function TownApp() {
 
   function setPersonalModelPreference(value: PersonalModelSettings) {
     if (transportBusyRef.current) return;
+    if (townRef.current) {
+      suspendFollowing(townRef.current, "AI controls changed. Resume explicitly.");
+      void persistTown(townRef.current);
+    }
     const next = validatePersonalModelSettings(value);
     stopAutomaticDiscussion("AI source changed. Start meeting decisions explicitly when ready.");
     const live = townRef.current;
@@ -1478,6 +1692,10 @@ export function TownApp() {
   }
 
   function setLocalPreference(value: boolean) {
+    if (townRef.current) {
+      suspendFollowing(townRef.current, "Dialogue control changed. Resume explicitly.");
+      void persistTown(townRef.current);
+    }
     localOnlyRef.current = value;
     setLocalOnly(value);
     if (value) {
@@ -1546,8 +1764,7 @@ export function TownApp() {
   useEffect(() => {
     if (!importing) return;
     const live = townRef.current;
-    if (live?.coffee)
-      stopCoffeeForContext("Café service paused while reviewing an import. Resume explicitly.");
+    if (live) stopCoffeeForContext("Activity paused while reviewing an import. Resume explicitly.");
     if (live && discussionView(live).meeting)
       pauseMeetingRef.current("Meeting paused while reviewing an import.");
     if (live?.physicalItems?.session?.enabled) {
@@ -1575,7 +1792,7 @@ export function TownApp() {
     stepInputRef.current = null;
     if (replay) {
       const live = townRef.current;
-      if (live?.coffee)
+      if (live)
         stopCoffeeForContext(
           "Café service paused for replay. Return to now and resume explicitly.",
         );
@@ -2171,7 +2388,7 @@ export function TownApp() {
       let { x, y } = axis(keysRef.current);
       const stepCode = stepInputRef.current;
       if (x || y || stepCode || routeRef.current) interruptCoffeeForMovement();
-      if (hasActivePlayerCoffeeRoutine(live)) return;
+      if (hasActivePlayerCoffeeRoutine(live) || followingOwnsMovement(live)) return;
       if (!x && !y && (routeRef.current || stepCode) && moveCool > 0) return;
       if (stepCode && moveCool <= 0) {
         ({ x, y } = axis(new Set([stepCode])));
@@ -2318,12 +2535,17 @@ export function TownApp() {
                 discussionRunRef.current?.status !== "running";
               let job: ThinkJob | null = null;
               const coffeeRevision = live.coffee?.revision;
+              const followBefore = JSON.stringify(live.following);
               try {
                 job = stepMinute(live, minds);
               } catch {
                 break;
               }
-              if (live.coffee?.revision !== coffeeRevision || live.minute % 60 === 0)
+              if (
+                live.coffee?.revision !== coffeeRevision ||
+                JSON.stringify(live.following) !== followBefore ||
+                live.minute % 60 === 0
+              )
                 void persistTown(live);
               advanced = true;
               if (takeJob(job)) break;
@@ -3625,11 +3847,13 @@ export function TownApp() {
             AI connection
           </button>
         )}
-        {thinking && (thinking !== "act" || town.physicalItems?.session?.enabled) && (
-          <span className="status-message" role="status">
-            {thinking === "player" ? "Waiting for your AI reply" : "Residents are thinking"}
-          </span>
-        )}
+        {thinking &&
+          thinking !== "learning" &&
+          (thinking !== "act" || town.physicalItems?.session?.enabled) && (
+            <span className="status-message" role="status">
+              {thinking === "player" ? "Waiting for your AI reply" : "Residents are thinking"}
+            </span>
+          )}
         {thinking === "player" && (
           <button className="btn" type="button" onClick={() => cancelAIRequest()}>
             Cancel AI request
@@ -3836,12 +4060,71 @@ export function TownApp() {
         )}
         {watching && (
           <button className="btn return-to-player" type="button" onClick={() => setWatching(null)}>
-            Following {agentById(town, watching).name} · Return to me
+            Watching {agentById(town, watching).name} · Return to me
           </button>
         )}
       </div>
 
       <div className="town-updates">
+        <FollowingPanel
+          town={town}
+          disabled={replay !== null || importing || Boolean(saveStatus && !saveStatus.ok)}
+          note={followingNote}
+          learning={
+            <LearningPanel
+              town={town}
+              available={
+                personalModelSettings.mode === "hosted" && !localOnly && actionsAvailable && online
+              }
+              disabled={replay !== null || importing || Boolean(saveStatus && !saveStatus.ok)}
+              busy={learningBusy || transportBusy || Boolean(thinking)}
+              note={learningNote}
+              onEnable={(pauseTime) => {
+                const result = enableLearning(town);
+                setLearningNote(result.message);
+                if (result.ok) {
+                  if (pauseTime) {
+                    speedRef.current = 0;
+                    town.paused = true;
+                    setSpeed(0);
+                  }
+                  void persistTown(town);
+                }
+                setTick((n) => n + 1);
+              }}
+              onResume={() => {
+                const result = resumeLearning(town);
+                setLearningNote(result.message);
+                if (result.ok) void persistTown(town);
+                setTick((n) => n + 1);
+              }}
+              onStop={() => {
+                stopLearning(town);
+                setLearningNote("Lesson stopped. No reflection was generated.");
+                void persistTown(town);
+                setTick((n) => n + 1);
+              }}
+              onRequest={(purpose) => void requestLearning(purpose)}
+            />
+          }
+          onStop={() => {
+            stopFollowing(town);
+            void persistTown(town);
+            setTick((n) => n + 1);
+          }}
+          onResume={() => {
+            const result = resumeFollowing(town);
+            setFollowingNote(result.ok ? "" : result.message);
+            if (result.ok) {
+              routeRef.current = null;
+              keysRef.current.clear();
+              stepInputRef.current = null;
+              void persistTown(town);
+            }
+            setTick((n) => n + 1);
+          }}
+        />
+
         {coffeeSaveBlockedRef.current && (
           <p className="warn" role="alert">
             Café service is paused until this current town is safely saved. Keep a downloaded copy
@@ -4118,6 +4401,27 @@ export function TownApp() {
             watch={watchTown}
             replay={replay !== null}
             onWatch={() => followCharacter(shown)}
+            companionControls={
+              <CompanionChoice
+                town={town}
+                target={shown}
+                disabled={replay !== null || importing || Boolean(saveStatus && !saveStatus.ok)}
+                onStart={(target, duration, listen) => {
+                  const result = startFollowing(town, target, duration, listen);
+                  setFollowingNote(result.ok ? "" : result.message);
+                  if (result.ok) {
+                    keysRef.current.clear();
+                    routeRef.current = null;
+                    stepInputRef.current = null;
+                    setWatching(null);
+                    setPanel(null);
+                    void persistTown(town);
+                    requestAnimationFrame(() => canvasRef.current?.focus());
+                  }
+                  setTick((n) => n + 1);
+                }}
+              />
+            }
 
             draft={draft}
             setDraft={setDraft}
@@ -4598,7 +4902,9 @@ function Mind({
   onSend,
   onAction,
   onLibrary,
+  companionControls,
 }: {
+  companionControls: React.ReactNode;
   town: Town;
   agent: Agent;
   pinned: boolean;
@@ -4798,13 +5104,15 @@ function Mind({
             </section>
           )}
           <CharacterOverview town={town} agent={agent} watch={watch} replay={replay} />
+          <CharacterLearning town={town} id={agent.id} replay={replay} />
+          {companionControls}
           {agent.id !== "player" && (
             <div className="character-overview-actions">
               <button className="btn" type="button" onClick={() => setTab("together")}>
                 Talk with {agent.name}
               </button>
               <button className="btn" type="button" disabled={replay} onClick={onWatch}>
-                Watch {agent.name}
+                Watch character
               </button>
             </div>
           )}

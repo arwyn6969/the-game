@@ -1,4 +1,4 @@
-import { AGENT_IDS, type AgentId } from "./types";
+import { AGENT_IDS, BASE_AGENT_IDS, type AgentId } from "./types";
 import type { FundedTown as Town } from "./economy-types";
 import { validateFundedWork } from "./funded-work";
 import { validateCoffee } from "./coffee-validation";
@@ -278,8 +278,16 @@ export function auditEconomy(town: Town): string[] {
   if (timestamp(economy.initializedAt) > nowStamp)
     issues.push("Opening balances are dated after the town.");
   const expected: Record<string, number> = {};
+  // Audit a complete pre-arrival town before its zero-balance newcomers are added.
+  // Partial/duplicated rosters still take the full-roster path and fail closed.
+  const residentIds =
+    Array.isArray(town.agents) &&
+    town.agents.length === BASE_AGENT_IDS.length &&
+    BASE_AGENT_IDS.every((id) => town.agents.filter((agent) => agent.id === id).length === 1)
+      ? BASE_AGENT_IDS
+      : AGENT_IDS;
   const known = new Set<string>([
-    ...AGENT_IDS.map((id) => `agent:${id}`),
+    ...residentIds.map((id) => `agent:${id}`),
     "till:cafe",
     "till:grocery",
   ]);
@@ -299,7 +307,7 @@ export function auditEconomy(town: Town): string[] {
   }
   for (const id of known)
     if (!Object.hasOwn(expected, id)) issues.push(`Account ${id} has no opening balance.`);
-  for (const id of AGENT_IDS)
+  for (const id of residentIds)
     if (!Array.isArray(town.agents) || town.agents.filter((agent) => agent.id === id).length !== 1)
       issues.push(`Account agent:${id} does not resolve to one resident.`);
   const receipts = new Map<string, EconomyState["commandReceipts"][number]>();

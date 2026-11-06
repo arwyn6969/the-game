@@ -1,6 +1,21 @@
 import type { AgentId, NpcId } from "./types";
 import type { PhysicalUsage, PhysicalUsageSample } from "./physical-types";
 
+export const DISCUSSION_FACILITATORS = [
+  "northern",
+  "arwyn",
+  "socrates",
+  "estee",
+] as const satisfies readonly NpcId[];
+export type DiscussionFacilitator = (typeof DISCUSSION_FACILITATORS)[number];
+
+/** Keep each meeting to three invited residents and the player. */
+export function discussionResidents(facilitator: DiscussionFacilitator): NpcId[] {
+  if (facilitator === "socrates") return ["socrates", "arwyn", "sub"];
+  if (facilitator === "estee") return ["estee", "northern", "sub"];
+  return facilitator === "arwyn" ? ["arwyn", "northern", "sub"] : ["northern", "arwyn", "sub"];
+}
+
 export type DiscussionTime = { day: number; minute: number };
 export type DiscussionDecision =
   | {

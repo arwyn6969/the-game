@@ -1,6 +1,5 @@
 import { randomBytes } from "node:crypto";
 import type { Sql } from "../db";
-import { AGENT_IDS } from "../../game/types";
 import { validateP2wpkhAddress } from "../stamps/proof.server";
 import {
   worldRegistrationSchema,
@@ -90,8 +89,7 @@ function decodeWorld(row: Row): RegisteredWorld {
     typeof row.title !== "string" ||
     !row.title.trim() ||
     row.title.length > 80 ||
-    !Array.isArray(row.residents) ||
-    row.residents.length !== AGENT_IDS.length
+    !Array.isArray(row.residents)
   )
     throw new AgentRegistryStoreError("invalid");
   const residents = row.residents as Row[];
@@ -107,7 +105,7 @@ function decodeWorld(row: Row): RegisteredWorld {
   if (
     !input.success ||
     residents.some((resident) => !residentIdSchema.safeParse(resident.resident_id).success) ||
-    new Set(residents.map((resident) => resident.resident_id)).size !== AGENT_IDS.length
+    new Set(residents.map((resident) => resident.resident_id)).size !== residents.length
   )
     throw new AgentRegistryStoreError("invalid");
   return {
@@ -208,7 +206,7 @@ export class SqlAgentRegistryStore {
           else (select jsonb_agg(to_jsonb(r) order by role) from agent_registered_residents r
             where r.registration_id=s.registration_id) end as residents
         from selected s where not exists(select 1 from inserted_world)
-          or (select count(*) from inserted_profiles)=8
+          or (select count(*) from inserted_profiles)=jsonb_array_length($6::jsonb)
         union all
         select case when not exists(select 1 from locked_owner) then 'invalid'
           when not exists(select 1 from available_slot) then 'limit' else 'retry' end,
@@ -262,9 +260,10 @@ export class SqlAgentRegistryStore {
       [ownerId, registrationId],
     );
     if (!rows[0]) return null;
-    if (!Array.isArray(rows[0].profiles) || rows[0].profiles.length !== AGENT_IDS.length)
+    const world = decodeWorld(rows[0]);
+    if (!Array.isArray(rows[0].profiles) || rows[0].profiles.length !== world.residents.length)
       throw new AgentRegistryStoreError("invalid");
-    return { world: decodeWorld(rows[0]), profiles: rows[0].profiles.map(decodeProfile) };
+    return { world, profiles: rows[0].profiles.map(decodeProfile) };
   }
 
   async getProfile(

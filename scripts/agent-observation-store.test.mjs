@@ -31,6 +31,7 @@ before(async () => {
     "auth/0001_auth.sql",
     "20261016_agent_registry.sql",
     "20261017_agent_observations.sql",
+    "20261105_character_arrivals.sql",
   ])
     await database.exec(await readFile(new URL(`../migrations/${name}`, import.meta.url), "utf8"));
 });
