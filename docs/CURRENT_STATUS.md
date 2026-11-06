@@ -1,6 +1,21 @@
 # Current project status
 
-Updated 5 November 2026. This file is the single current source/deployment and assignment index. Earlier dated statements are evidence, not active instructions.
+Updated 6 November 2026. This file is the source/deployment and assignment index for this checkout. The workspace coordination index reconciles the separate local candidates. Earlier dated statements are evidence, not active instructions.
+
+## Server developer pickup — 6 November
+
+Use the [current server developer handoff](handoffs/server-developer-2026-11-06.md) for setup, deployment boundaries, the first persistent-world packet and kickoff decisions, with the [portable planning framework](planning/resident-development/PLANNING_FRAMEWORK.md) for full contracts. Branch `codex/server-developer-handoff-20261106` publishes documentation only, based on main `c49facc` with the preserved #71 publication receipt `9e693a5`. Its runtime matches main; the combined candidate remains independently owned in PR #72. This documentation publication changes no production service.
+
+| Layer / owner | Current checkpoint and next boundary |
+| --- | --- |
+| Published baseline | Main `c49facc52136cfda0270627e3e6aef51f5ab4588`; retained publication receipt below. Production was not freshly audited for this handoff. |
+| **Improve and expand characters** — `01a1ac4a-f413-75f2-ad8b-eaeee370409b` | Owns the combined [PR #72](https://github.com/arwyn6969/the-game/pull/72), observed head `8b89537322b99271e778e82c2a7e70d324715e43` at approximately 15:46 UTC. [Verify 42245485263](https://github.com/arwyn6969/the-game/actions/runs/42245485263) was in progress. Refresh actual-head checks, reviews, preview accounting/reload, named-target migration and publication evidence through this owner. |
+| **Prepare combined integration candidate** — `01a1b0d4-3ea4-7cf3-bce4-bbd54fddf7f9` | Independent local receipt `46816311ade4b025e8d600aa0de2e62e4d8abf91`, code `556d73263819e2f034b2b1679880daeb603e5092`, inherited implementation `be2ab88`. Strong synthetic source/browser evidence; it does not qualify every later PR head or establish human acceptance. |
+| Incoming server developer | Record accepted owner, branch/base, explicit dependencies and one bounded result at kickoff. First settle A03/A04/A09 contracts and prove one synthetic A05 activity. Existing experiments are local foundations; a deployed continuing world is not implemented. |
+
+F1/F2, resident growth/history and the additive Socrates/Estée arrivals are already combined in PR #72. They are no longer separate unfinished implementation lanes. The candidate has nine residents plus the player while the published baseline below has seven. The old build watch is complete; Grok and historical test automations remain paused.
+
+Server time must be authoritative, with ordinary-player time controls removed in server mode and a durable authorized developer freeze of time and all actions until explicit unpause, without catch-up. Clock ratio, scheduler/storage details, recovery targets, operator/environment and measured capacity/budget remain kickoff decisions. [Roadmap](ROADMAP.md) orders the server slice before unpaid away qualification and funded service. Normal online usefulness, live teaching, physical-device/accessibility and human enjoyment remain acceptance gaps.
 
 ## Source and deployment
 
@@ -26,7 +41,9 @@ No database migration, secret/budget change or wallet transaction occurred.
 Publication used no model calls; subsequent authorized play tested one fresh
 hosted Arwyn reply successfully. Grok and historical testing automations remain paused.
 
-## Active work and next handoffs
+## Historical build-watch handoff — 5 November
+
+The following assignments describe that dated watch. The completed combined implementation and current release owner are recorded in the 6 November pickup section above; do not restart these old lanes.
 
 The user asked to wait for the existing builds before moving forward. The
 roadmap-review chat (`01a1ac68-650c-7c43-99ef-d697d4a9fc36`) owns release

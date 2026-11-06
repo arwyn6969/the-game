@@ -1,6 +1,6 @@
 # THE GAME — production plan to a live server world
 
-**Current execution:** the [active delivery tracker](DELIVERY_TRACKER.md) records the parallel round authorized on 21 October, accepted owners, exact checkouts, blockers and next actions. The unassigned-owner language in the original planning baseline below describes that earlier planning pass; use the tracker for current dispatch status.
+**Current execution — 6 November 2026:** [CURRENT_STATUS.md](CURRENT_STATUS.md) records current owners, source, deployment and acceptance. The [server developer handoff](handoffs/server-developer-2026-11-06.md) defines the incoming developer's starting point. The [21 October delivery tracker](DELIVERY_TRACKER.md) is a historical receipt. The schedule, estimates, source snapshots and next-work list below retain their original planning date; use their dependency contracts, rather than treating them as current assignments or delivery promises.
 
 Planning baseline: **21 October 2026**. This is the delivery schedule and dependency map; [ROADMAP.md](ROADMAP.md) records feature status, and [RELEASE.md](RELEASE.md) records actual publications. Estimates below are provisional engineering estimates, not promised dates or scheduled work. No delivery owner has accepted an assignment in this planning pass.
 

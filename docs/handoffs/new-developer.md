@@ -1,4 +1,6 @@
-# Technical contributor handoff
+# Historical technical contributor handoff — 12 October 2026
+
+**Superseded for new work on 6 November 2026.** Start with the [current server developer handoff](server-developer-2026-11-06.md) and [current status](../CURRENT_STATUS.md). AI usage accounting and budget guards below are already implemented. The old host, revisions, budget context and proposed assignment in the preserved dated body are historical evidence, not instructions to repeat that work or publish an old commit.
 
 Welcome to THE GAME and The Freeman Show. The consolidation candidate is a browser-based pixel town with seven residents and the player. The Freeman Show is the openly documented story of building and living in that world. The next product proof is a meaningful contribution that is remembered tomorrow; the next operational need is knowing what the AI actually costs.
 
