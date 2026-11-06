@@ -1,8 +1,8 @@
 # THE GAME
 
-**Start here:** [current project status](docs/CURRENT_STATUS.md) records the development baseline, deployed-version evidence and the three acceptance packets. The [2 November consolidation](docs/CONSOLIDATION.md) brings together controls, work guidance, meeting reliability, the opt-in café pilot and personal-model controls; check the status index for its exact source state.
+**Start here:** [current project status](docs/CURRENT_STATUS.md) records the development baseline, deployed-version evidence and remaining acceptance. The [server developer handoff](docs/handoffs/server-developer-2026-11-06.md) separates deploying this browser-local app from implementing the persistent world. The [2 November consolidation](docs/CONSOLIDATION.md) preserves the earlier integrated inputs.
 
-A pixel town. Seven people already have days. You are their new neighbour. There is no ending.
+A pixel town. Its residents already have days. You are their new neighbour. There is no ending.
 
 This is the current web game: `arwyn6969/the-game`. The separate `arwyn6969/THE_GAME` repository is an older Python simulator. New game development belongs here. The hosted game is https://www.arwyn.party/thegame/. Publishing it is separate from updating GitHub.
 
@@ -32,9 +32,9 @@ After the lookup, choose a small park reading with Northern and Sub or wait for 
 
 The town saves in this browser. Conflicting tabs cannot silently overwrite newer saved progress. A failed save or conflict shows recovery and download actions. Import preserves a recovery copy before replacing the town. Download and import retain debts, notes, identities and validated financial records, including migration from ordinary version-1 towns. Portable files omit disposable replay frames and use an 8 MiB limit. Keep backups: browser shutdown saving is best effort.
 
-The current development version has seven residents: Kevin, Arwyn, Northern, Baba, Sub, Data and Amelia, plus the player. Data brings a testing and technology perspective; Amelia brings economics and fair terms. Recent conversation turns persist, and characters receive dated memories with a distinction between spoken claims and recorded events. Local replies provide authored perspectives and follow-ups when the AI service is unavailable.
+The published baseline has seven residents: Kevin, Arwyn, Northern, Baba, Sub, Data and Amelia, plus the player. The combined candidate in [PR #72](https://github.com/arwyn6969/the-game/pull/72) adds Socrates and Estée, accompaniment, voluntary teaching and witnessed learning history: nine residents plus the player. Its release remains separate from local qualification; check [current status](docs/CURRENT_STATUS.md). Recent conversation turns persist, and characters receive dated memories with a distinction between spoken claims and recorded events. Authored player replies are available through the explicit **Local-only dialogue** preference; failed online requests retain the draft and show their reason.
 
-Version-1 towns migrate to version 2 with their original residents and history retained, then add Data and Amelia once. The original browser save remains under its old storage key; new saves use a separate key. Keep a downloaded backup before trying a development version. Older game versions cannot read version-2 exports. See [the seven-resident handoff](docs/handoffs/seven-resident-coherence.md) for checks and limits.
+Version-1 towns migrate to version 2 with their original residents and history retained, then add Data and Amelia once. The combined candidate additionally introduces Socrates and Estée once with zero balances, preserving existing identities, histories and financial obligations. The original browser save remains under its old storage key; new saves use a separate key. Keep a downloaded backup before trying a development version. Older game versions cannot read version-2 exports. See [the seven-resident handoff](docs/handoffs/seven-resident-coherence.md) for the earlier migration's checks and limits.
 
 ## What is in this repo
 
@@ -50,11 +50,11 @@ The [Kevin World notes](docs/KEVIN_WORLD.md) preserve Arwyn's original vision an
 
 ## New contributors
 
-Start with [current project status](docs/CURRENT_STATUS.md), [AGENTS.md](AGENTS.md), the [delivery notes](docs/implementation/game-quality-delivery.md) and the [roadmap](docs/ROADMAP.md). The earlier [technical contributor handoff](docs/handoffs/new-developer.md) retains useful background; its AI-metering assignment predates this implementation. The browser-local game and a future continuously running shared town remain separate scopes.
+Start with the [server developer handoff](docs/handoffs/server-developer-2026-11-06.md), [current project status](docs/CURRENT_STATUS.md), [AGENTS.md](AGENTS.md) and the [roadmap](docs/ROADMAP.md). The earlier [technical contributor handoff](docs/handoffs/new-developer.md) is a historical receipt; its AI-metering assignment is already implemented. The browser-local game and a future continuously running shared town remain separate scopes.
 
 ## Development and collaboration
 
-Use Node 24 (`.nvmrc`), then `npm ci` and `npm run dev`. The development server uses port 8080. Hosted AI uses the existing server provider configuration. The player can select a personal endpoint/local server or **Local-only dialogue** in Help & privacy. Personal keys are entered in the dedicated tab-only controls, never in source code. Do not put keys in browser code or a `VITE_` variable. Deployed paid calls require shared accounting and explicit conservative tariffs for both provider modes; see [budget configuration](src/lib/mind-budget/README.md). Missing or failed accounting falls back locally.
+Use Node 24 (`.nvmrc`), then `npm ci` and `npm run dev`. The development server uses port 8080. Hosted AI uses the existing server provider configuration. The player can select a personal endpoint/local server or **Local-only dialogue** in Help & privacy. Personal keys are entered in the dedicated tab-only controls, never in source code. Do not put keys in browser code or a `VITE_` variable. Deployed paid calls require shared accounting and explicit conservative tariffs for both provider modes; see [budget configuration](src/lib/mind-budget/README.md). Unavailable accounting blocks the online request; authored player dialogue requires the explicit local-only preference.
 
 Start follow-on work on a new feature branch from current `origin/main` for one acceptance packet. Read [current status](docs/CURRENT_STATUS.md), [AGENTS.md](AGENTS.md), [branch policy](docs/BRANCHES.md) and [collaboration](docs/COLLABORATION.md). Recovery tags and the consolidation manifest preserve earlier source. Historical prompts are evidence, not assignments to restart completed lanes.
 

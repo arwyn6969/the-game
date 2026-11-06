@@ -1,0 +1,25 @@
+{
+  "checkedAt": "2026-11-05T17:07:52.175Z",
+  "source": "c49facc52136cfda0270627e3e6aef51f5ab4588",
+  "results": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "hydratedEntry": true,
+      "pageErrors": []
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "hydratedEntry": true,
+      "pageErrors": []
+    }
+  ],
+  "personalBrowserAttached": false,
+  "townCreated": false,
+  "modelCalls": 0
+}

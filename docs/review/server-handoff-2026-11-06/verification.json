@@ -1,0 +1,50 @@
+{
+  "reviewed_at": "2026-11-06 15:55:02 UTC",
+  "publication_prepared_at": "2026-11-06 15:58:56 UTC",
+  "source": {
+    "main": "c49facc52136cfda0270627e3e6aef51f5ab4588",
+    "pr": 72,
+    "pr_state": "open",
+    "pr_head": "8b89537322b99271e778e82c2a7e70d324715e43",
+    "verify_run": 42245485263,
+    "verify_observed_state": "in_progress",
+    "reviews": 0,
+    "review_threads": 0,
+    "local_integration_receipt": "46816311ade4b025e8d600aa0de2e62e4d8abf91",
+    "qualified_code": "556d73263819e2f034b2b1679880daeb603e5092",
+    "runtime_migration_files_matching_manifest_and_candidate": 45
+  },
+  "documentation": {
+    "delivery_branch": "codex/server-developer-handoff-20261106",
+    "base_main": "c49facc52136cfda0270627e3e6aef51f5ab4588",
+    "inherited_publication_receipt": "9e693a5",
+    "scope": "Documentation only; runtime unchanged from main.",
+    "handoff": "docs/handoffs/server-developer-2026-11-06.md",
+    "portable_framework": "docs/planning/resident-development/PLANNING_FRAMEWORK.md",
+    "workspace_index": "START_HERE.md remains workspace-local because it links sibling checkouts and workstation evidence.",
+    "page": "https://chatgpt.com/space/page_fc96fe02e3308191b9e5df9e3bbade81",
+    "page_saved_sequence": 10,
+    "page_original_untouched_blocks_verified": 405,
+    "page_unexpected_preservation_changes": 0
+  },
+  "evidence": {
+    "audit": "Retained source manifests, six source-check logs and five final browser reports were inspected in the independent local integration checkout. All manifest hashes matched; all five final browser reports had empty top-level failures.",
+    "availability": "The independent integration branch and its raw reports remain local. Its commits are provenance references, not a claim that its evidence has been uploaded.",
+    "reported_passes": {
+      "script_tests": 1293,
+      "typed_tests": 55,
+      "town_cases_overlapping_script_tests": 597,
+      "authority_adapter_cases": 42
+    },
+    "limits": "Synthetic qualification does not establish human enjoyment, useful live teaching, physical-device/accessibility acceptance or production recovery."
+  },
+  "checks": {
+    "product_diff_check": "passed",
+    "technical_handoff_review": "passed",
+    "game_tests": "retained evidence audited, not rerun for documentation publication",
+    "live_model_calls": 0,
+    "migrations": 0,
+    "deployments": 0
+  },
+  "readiness": "Ready for developer kickoff and isolated server foundation work; ongoing release gates and production shared-world implementation remain open."
+}

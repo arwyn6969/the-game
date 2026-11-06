@@ -1,3 +1,18 @@
+# Current publication — 5 November 2026
+
+Merged PR #71 is live at [THE GAME](https://www.arwyn.party/thegame/), runtime
+`c49facc52136`, Worker `df4fa4fb-8725-42ba-a52a-6e050509f3a5`. Its source tree
+matches CI-qualified head `2ee631f`. Four asset hashes, eight endpoints, seven
+redirects and desktop/phone entry hydration pass. Existing bindings, secret
+definitions, runtime settings and routes are unchanged. No database migration
+or model call occurred.
+
+Immediate rollback Worker: `6bf8d2d2-68ca-4624-8611-67b2c0f18531`; preserve
+database contents and browser saves. [Release receipt and acceptance limits](review/live-release-2026-11-05/README.md).
+[CURRENT_STATUS.md](CURRENT_STATUS.md) owns later source/deployment evidence and
+active assignments. The separate follower, growth and character-continuity work
+is outside this publication. Earlier release entries below are dated history.
+
 # Cloudflare browser hosting — 22 October 2026
 
 The browser game is live at <https://www.arwyn.party/thegame/>. Recovery runtime `cfe997e39b55dedcc8b7900fdde9eeb78a1ae4a0` is deployed as Worker `e7893cf2-9c08-4cb8-9f94-cd82a38b15f0` in [PR #41](https://github.com/arwyn6969/the-game/pull/41). Availability checks retry automatically; failed player AI requests retain the draft and show a persistent reason, without substituting local dialogue. Background failures no longer overwrite player AI status. Only an explicit local-only preference uses authored player replies.
